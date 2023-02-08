@@ -1,0 +1,53 @@
+﻿@model IEnumerable<Domain.Models.Competitor>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>Renners</h1>
+
+<p>
+    <a asp-action="Create">Maak nieuw</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.FirstName)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.LastName)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Team)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Country)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.FirstName)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.LastName)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Team.TeamName)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Country.CountryNameShort)
+            </td>
+            <td>
+                <a asp-action="Edit" asp-route-id="@item.CompetitorId">Wijzig</a> |
+                <a asp-action="Details" asp-route-id="@item.CompetitorId">Details</a> |
+                <a asp-action="Delete" asp-route-id="@item.CompetitorId">Verwijder</a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table>
