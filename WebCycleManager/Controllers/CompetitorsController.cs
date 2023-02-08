@@ -1,4 +1,5 @@
 ﻿using Domain.Context;
+using DataAccessEF.Extensions;
 using Domain.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -16,10 +17,32 @@ namespace WebCycleManager.Controllers
         }
 
         // GET: Competitors
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string currentFilter, string searchString, int? pageNumber)
         {
-            var databaseContext = _context.Competitors.Include(c => c.Team).OrderBy(cp => cp.LastName);
-            return View(await databaseContext.ToListAsync());
+            if (searchString != null)
+            {
+                pageNumber = 1;
+            }
+            else
+            {
+                searchString = currentFilter;
+            }
+            
+            ViewData["CurrentFilter"] = searchString;
+            var pageSize = 20;
+
+            var competitors = from s in _context.Competitors
+                              .Include(c => c.Team)
+                              .Include(c => c.Country)
+                              .OrderBy(cp => cp.LastName)
+                              select s;
+            if (!String.IsNullOrEmpty(searchString))
+            {
+                competitors = competitors.Where(s => s.FirstName.Contains(searchString)
+                                       || s.LastName.Contains(searchString));
+            }
+
+            return View(await PaginatedList<Competitor>.CreateAsync(competitors.AsNoTracking(), pageNumber ?? 1, pageSize));
         }
 
         // GET: Competitors/Details/5

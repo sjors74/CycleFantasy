@@ -1,4 +1,4 @@
-﻿@model IEnumerable<Domain.Models.Country>
+﻿@model IEnumerable<CountryViewModel>
 
 @{
     ViewData["Title"] = "Index";
@@ -13,10 +13,13 @@
     <thead>
         <tr>
             <th>
-                @Html.DisplayNameFor(model => model.CountryNameLong)
+                @Html.DisplayNameFor(model => model.Name)
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.CountryNameShort)
+                @Html.DisplayNameFor(model => model.ShortName)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.CompetitorsCount)
             </th>
             <th></th>
         </tr>
@@ -25,15 +28,18 @@
 @foreach (var item in Model) {
         <tr>
             <td>
-                @Html.DisplayFor(modelItem => item.CountryNameLong)
+                @Html.DisplayFor(modelItem => item.Name)
             </td>
             <td>
-                @Html.DisplayFor(modelItem => item.CountryNameShort)
+                @Html.DisplayFor(modelItem => item.ShortName)
             </td>
             <td>
-                <a asp-action="Edit" asp-route-id="@item.CountryId">Wijzig</a> |
-                <a asp-action="Details" asp-route-id="@item.CountryId">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.CountryId">Verwijder</a>
+                @Html.DisplayFor(modelItem => item.CompetitorsCount)
+            </td>
+            <td>
+                <a asp-action="Edit" asp-route-id="@item.Id">Wijzig</a> |
+                <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
+                <a asp-action="Delete" asp-route-id="@item.Id">Verwijder</a>
             </td>
         </tr>
 }

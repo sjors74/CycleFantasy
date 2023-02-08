@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Domain.Context;
 using Domain.Models;
+using WebCycleManager.Models;
 
 namespace WebCycleManager.Controllers
 {
@@ -22,9 +23,19 @@ namespace WebCycleManager.Controllers
         // GET: Countries
         public async Task<IActionResult> Index()
         {
-              return _context.Country != null ? 
-                          View(await _context.Country.OrderBy(c => c.CountryNameLong).ToListAsync()) :
-                          Problem("Entity set 'DatabaseContext.Country'  is null.");
+            var countryViewModel = new List<CountryViewModel>();
+            foreach(var country in  await _context.Country.OrderBy(c => c.CountryNameLong).ToListAsync())
+            {
+                var competitorsCount = _context.Competitors.Where(c => c.CountryId == country.CountryId).ToList().Count;
+                countryViewModel.Add(new CountryViewModel
+                {
+                    Id = country.CountryId,
+                    Name = country.CountryNameLong,
+                    ShortName = country.CountryNameShort,
+                    CompetitorsCount = competitorsCount
+                });
+            }
+            return View(countryViewModel);
         }
 
         // GET: Countries/Details/5
