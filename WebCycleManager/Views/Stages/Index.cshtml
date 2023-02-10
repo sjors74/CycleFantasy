@@ -1,0 +1,76 @@
+﻿@model StagesViewModel
+@{
+    ViewData["Title"] = "Index";
+}
+<h1>Etappes</h1>
+
+<p>
+    <a asp-action="Create">Maak nieuwe etappe</a>
+</p>
+
+<form asp-action="Index" method="get" name="EventSelectForm">
+    <div class="form-actions no-color">
+        <p>
+            Zoek op evenement:
+            <select asp-for="CurrentSearchEventId"
+                    asp-items="Model.Events" onchange="SelectedIndexChanged(this.value)">
+                <option>Selecteer evenement</option>
+            </select>
+            <a asp-action="Index">Terug naar de volledige lijst</a>
+        </p>
+    </div>
+</form>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.Stages.First().StageName)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Stages.First().StartLocation)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Stages.First().FinishLocation)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Stages.First().Event.EventName)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Stages.First().Event.EventYear)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+    @foreach (var item in Model.Stages) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.StageName)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.StartLocation)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.FinishLocation)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Event.EventName)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Event.EventYear)
+            </td>
+            <td>
+                <a asp-action="Edit" asp-route-id="@item.Id">Wijzig</a> |
+                <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
+                <a asp-action="Delete" asp-route-id="@item.Id">Verwijder</a>
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>
+<script type="text/javascript">
+    function SelectedIndexChanged(searchEventId) {
+        window.location.href = "/Stages/Index?searchEventId=" + searchEventId;
+    }
+</script> 

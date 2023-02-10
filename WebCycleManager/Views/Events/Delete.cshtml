@@ -1,0 +1,45 @@
+﻿@model Domain.Models.Event
+
+@{
+    ViewData["Title"] = "Delete";
+}
+
+<h1>Verwijder</h1>
+
+<h3>Weet je zeker dat je dit evenement wilt verwijderen?</h3>
+<div>
+    <h4>Event</h4>
+    <hr />
+    <dl class="row">
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.EventName)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.EventName)
+        </dd>
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.EventYear)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.EventYear)
+        </dd>
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.StartDate)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.StartDate)
+        </dd>
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.EndDate)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.EndDate)
+        </dd>
+    </dl>
+    
+    <form asp-action="Delete">
+        <input type="hidden" asp-for="EventId" />
+        <input type="submit" value="Verwijder" class="btn btn-danger" /> |
+        <a asp-action="Index">Terug naar de lijst</a>
+    </form>
+</div>

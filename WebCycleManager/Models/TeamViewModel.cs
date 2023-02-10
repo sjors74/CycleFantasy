@@ -1,5 +1,4 @@
-﻿using Domain.Models;
-using System.ComponentModel;
+﻿using System.ComponentModel;
 
 namespace WebCycleManager.Models
 {

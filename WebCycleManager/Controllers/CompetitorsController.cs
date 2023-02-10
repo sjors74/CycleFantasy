@@ -27,7 +27,7 @@ namespace WebCycleManager.Controllers
             {
                 searchString = currentFilter;
             }
-            
+
             ViewData["CurrentFilter"] = searchString;
             var pageSize = 20;
 

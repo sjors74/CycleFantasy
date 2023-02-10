@@ -1,0 +1,80 @@
+﻿@model EventViewModel
+
+@{
+    ViewData["Title"] = "Details";
+}
+
+<h1>Details</h1>
+
+<div>
+    <h4>Evenement</h4>
+    <hr />
+    <dl class="row">
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.Name)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.Name)
+        </dd>
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.Year)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.Year)
+        </dd>
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.StartDate)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.StartDate)
+        </dd>
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.EndDate)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.EndDate)
+        </dd>
+    </dl>
+    <h5>Etappes (@Model.StagesInEvent)</h5>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>
+                    @Html.DisplayNameFor(model => model.Stages.FirstOrDefault().StageName)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.Stages.FirstOrDefault().StartLocation)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.Stages.FirstOrDefault().FinishLocation)
+                </th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.Stages)
+            {
+                <tr>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.StageName)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.StartLocation)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.FinishLocation)
+                    </td>
+                    <td>
+                        <a asp-controller="Stages" asp-action="Edit" asp-route-id="@item.Id">Wijzig</a> |
+                        <a asp-controller="Stages" asp-action="Details" asp-route-id="@item.Id">Details</a> |
+                        <a asp-controller="Stages" asp-action="Delete" asp-route-id="@item.Id">Verwijder</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+<div>
+    <a asp-action="Edit" asp-route-id="@Model?.Id">Bewerk</a> |
+    <a asp-action="Index">Terug naar de lijst</a>
+</div>

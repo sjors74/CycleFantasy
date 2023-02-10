@@ -16,6 +16,7 @@ namespace Domain.Context
         public DbSet<Team> Teams { get; set;}
         public DbSet<CompetitorsInEvent> CompetitorsInEvent { get; set; }
         public DbSet<Country> Country { get; set; }
+        public DbSet<Stage> Stages { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -26,7 +27,9 @@ namespace Domain.Context
             modelBuilder.Entity<Team>()
                 .HasOne(c => c.Country);
             modelBuilder.Entity<Competitor>()
-                .HasOne(c => c.Country);    
+                .HasOne(c => c.Country);
+            modelBuilder.Entity<Stage>()
+                .HasOne(e => e.Event);
         }
     }
 
