@@ -20,6 +20,7 @@ namespace Domain.Models
         [NotMapped]
         public virtual Team? Team { get; set; }
         [NotMapped]
+        [DisplayName("Land")]
         public virtual Country? Country { get; set; }
     }
 }

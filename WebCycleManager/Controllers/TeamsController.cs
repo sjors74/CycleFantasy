@@ -30,10 +30,6 @@ namespace WebCycleManager.Controllers
                 });
             }
             return View(_teamViewModels);
-
-         //return  != null ? 
-         //                 View(await _context.Teams.OrderBy(t => t.TeamName).ToListAsync()) :
-         //                 Problem("Entity set 'DatabaseContext.Teams'  is null.");
         }
 
         // GET: Teams/Details/5
@@ -44,14 +40,13 @@ namespace WebCycleManager.Controllers
                 return NotFound();
             }
 
-            var team = await _context.Teams
-                .FirstOrDefaultAsync(m => m.TeamId == id);
+            var team = await _context.Teams.FirstOrDefaultAsync(m => m.TeamId == id);
             if (team == null)
             {
                 return NotFound();
             }
             var competitorsList = new List<CompetitorViewModel>();
-            foreach (var comp in team.Competitors)
+            foreach (var comp in team.Competitors.OrderBy(c => c.LastName))
             {
                 var compViewModel = new CompetitorViewModel { CompetitorId = comp.CompetitorId, FirstName = comp.FirstName, LastName = comp.LastName, Land = comp.Country.CountryNameShort };
                 competitorsList.Add(compViewModel);

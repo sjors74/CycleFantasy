@@ -4,6 +4,7 @@ using Domain.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DataAccessEF.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    partial class DatabaseContextModelSnapshot : ModelSnapshot
+    [Migration("20230211110635_resultmodel")]
+    partial class resultmodel
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -50,7 +53,7 @@ namespace DataAccessEF.Migrations
 
                     b.HasIndex("TeamId");
 
-                    b.ToTable("Competitors", (string)null);
+                    b.ToTable("Competitors");
                 });
 
             modelBuilder.Entity("Domain.Models.CompetitorsInEvent", b =>
@@ -76,48 +79,7 @@ namespace DataAccessEF.Migrations
 
                     b.HasIndex("EventId");
 
-                    b.ToTable("CompetitorsInEvent", (string)null);
-                });
-
-            modelBuilder.Entity("Domain.Models.Configuration", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("ConfigurationType")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Configurations", (string)null);
-                });
-
-            modelBuilder.Entity("Domain.Models.ConfigurationItem", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("ConfigurationId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Position")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Score")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ConfigurationId");
-
-                    b.ToTable("ConfigurationItems", (string)null);
+                    b.ToTable("CompetitorsInEvent");
                 });
 
             modelBuilder.Entity("Domain.Models.Country", b =>
@@ -138,7 +100,7 @@ namespace DataAccessEF.Migrations
 
                     b.HasKey("CountryId");
 
-                    b.ToTable("Country", (string)null);
+                    b.ToTable("Country");
                 });
 
             modelBuilder.Entity("Domain.Models.Event", b =>
@@ -148,9 +110,6 @@ namespace DataAccessEF.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("EventId"));
-
-                    b.Property<int?>("ConfigurationId")
-                        .HasColumnType("int");
 
                     b.Property<DateTime?>("EndDate")
                         .HasColumnType("datetime2");
@@ -167,37 +126,7 @@ namespace DataAccessEF.Migrations
 
                     b.HasKey("EventId");
 
-                    b.HasIndex("ConfigurationId");
-
-                    b.ToTable("Events", (string)null);
-                });
-
-            modelBuilder.Entity("Domain.Models.Result", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("CompetitorId")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("ConfigurationItemId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("StageId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CompetitorId");
-
-                    b.HasIndex("ConfigurationItemId");
-
-                    b.HasIndex("StageId");
-
-                    b.ToTable("Results", (string)null);
+                    b.ToTable("Events");
                 });
 
             modelBuilder.Entity("Domain.Models.Stage", b =>
@@ -230,7 +159,7 @@ namespace DataAccessEF.Migrations
 
                     b.HasIndex("EventId");
 
-                    b.ToTable("Stages", (string)null);
+                    b.ToTable("Stages");
                 });
 
             modelBuilder.Entity("Domain.Models.Team", b =>
@@ -252,7 +181,7 @@ namespace DataAccessEF.Migrations
 
                     b.HasIndex("CountryId");
 
-                    b.ToTable("Teams", (string)null);
+                    b.ToTable("Teams");
                 });
 
             modelBuilder.Entity("Domain.Models.Competitor", b =>
@@ -291,51 +220,6 @@ namespace DataAccessEF.Migrations
                     b.Navigation("Competitor");
 
                     b.Navigation("Event");
-                });
-
-            modelBuilder.Entity("Domain.Models.ConfigurationItem", b =>
-                {
-                    b.HasOne("Domain.Models.Configuration", "Configuration")
-                        .WithMany()
-                        .HasForeignKey("ConfigurationId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Configuration");
-                });
-
-            modelBuilder.Entity("Domain.Models.Event", b =>
-                {
-                    b.HasOne("Domain.Models.Configuration", "Configuration")
-                        .WithMany()
-                        .HasForeignKey("ConfigurationId");
-
-                    b.Navigation("Configuration");
-                });
-
-            modelBuilder.Entity("Domain.Models.Result", b =>
-                {
-                    b.HasOne("Domain.Models.Competitor", "Competitor")
-                        .WithMany()
-                        .HasForeignKey("CompetitorId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Domain.Models.ConfigurationItem", "ConfigurationItem")
-                        .WithMany()
-                        .HasForeignKey("ConfigurationItemId");
-
-                    b.HasOne("Domain.Models.Stage", "Stage")
-                        .WithMany()
-                        .HasForeignKey("StageId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Competitor");
-
-                    b.Navigation("ConfigurationItem");
-
-                    b.Navigation("Stage");
                 });
 
             modelBuilder.Entity("Domain.Models.Stage", b =>

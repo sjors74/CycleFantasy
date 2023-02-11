@@ -1,4 +1,4 @@
-﻿@model IEnumerable<Domain.Models.Competitor>
+﻿@model PaginatedList<Domain.Models.Competitor>
 
 @{
     ViewData["Title"] = "Index";
@@ -9,20 +9,29 @@
 <p>
     <a asp-action="Create">Maak nieuw</a>
 </p>
+<form asp-action="Index" method="get">
+    <div class="form-actions no-color">
+        <p>
+            Zoek op naam: <input type="text" name="SearchString" value="@ViewData["CurrentFilter"]" />
+            <input type="submit" value="Zoek" class="btn btn-default" /> |
+            <a asp-action="Index">Terug naar de volledige lijst</a>
+        </p>
+    </div>
+</form>
 <table class="table">
     <thead>
         <tr>
             <th>
-                @Html.DisplayNameFor(model => model.FirstName)
+                @Html.DisplayNameFor(model => model.First().FirstName)
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.LastName)
+                @Html.DisplayNameFor(model => model.First().LastName)
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.Team)
+                @Html.DisplayNameFor(model => model.First().Team)
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.Country)
+                @Html.DisplayNameFor(model => model.First().Country)
             </th>
             <th></th>
         </tr>
@@ -51,3 +60,18 @@
 }
     </tbody>
 </table>
+@{
+    var prevDisabled = !Model.HasPreviousPage ? "disabled" : "";
+    var nextDisabled = !Model.HasNextPage ? "disabled" : "";
+}
+
+<a asp-action="Index"
+   asp-route-pageNumber="@(Model.PageIndex - 1)"
+   class="btn btn-default @prevDisabled">
+    Vorige
+</a>
+<a asp-action="Index"
+   asp-route-pageNumber="@(Model.PageIndex + 1)"
+   class="btn btn-default @nextDisabled">
+    Volgende
+</a>
