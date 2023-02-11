@@ -24,25 +24,22 @@ namespace WebCycleManager.Controllers
         public async Task<IActionResult> Index(int searchEventId)
         {
             var vm = new StagesViewModel();
-            vm.CurrentSearchEventId= searchEventId;
-            var events = await _context.Events.ToListAsync();
+            vm.CurrentSearchEventId = searchEventId;
+            var events = await _context.Events.OrderBy(e => e.EventName).ToListAsync();
             var eventSelectList = new List<SelectListItem>();
             foreach(var e in events)
             {
                 eventSelectList.Add(new SelectListItem { Text = string.Concat(e.EventName, " ", e.EventYear), Value = e.EventId.ToString() });
             }
             vm.Events = eventSelectList;
-            ViewData["CurrentFilter"] = searchEventId;
             var databaseContext = _context.Stages;
             if (searchEventId > 0)
             {
                 vm.Stages = await databaseContext.Where(e => e.EventId == searchEventId).ToListAsync();
                 return View(vm);
-              //return View(await databaseContext.Where(e => e.EventId == searchEventId).ToListAsync());
             }
             vm.Stages = await databaseContext.ToListAsync();
             return View(vm);
-
         }
 
         // GET: Stages/Details/5

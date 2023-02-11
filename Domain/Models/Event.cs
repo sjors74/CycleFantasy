@@ -18,5 +18,7 @@ namespace Domain.Models
         [DisplayName("Einddatum")]
         [DataType(DataType.Date)]
         public DateTime? EndDate { get; set; }
+        public int? ConfigurationId { get; set; }
+        public virtual Configuration? Configuration {get;set;}
     }
 }

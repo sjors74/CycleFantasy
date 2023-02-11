@@ -4,6 +4,7 @@ using Domain.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DataAccessEF.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    partial class DatabaseContextModelSnapshot : ModelSnapshot
+    [Migration("20230211131258_addConfigurationToEvent")]
+    partial class addConfigurationToEvent
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -50,7 +53,7 @@ namespace DataAccessEF.Migrations
 
                     b.HasIndex("TeamId");
 
-                    b.ToTable("Competitors", (string)null);
+                    b.ToTable("Competitors");
                 });
 
             modelBuilder.Entity("Domain.Models.CompetitorsInEvent", b =>
@@ -76,7 +79,7 @@ namespace DataAccessEF.Migrations
 
                     b.HasIndex("EventId");
 
-                    b.ToTable("CompetitorsInEvent", (string)null);
+                    b.ToTable("CompetitorsInEvent");
                 });
 
             modelBuilder.Entity("Domain.Models.Configuration", b =>
@@ -93,7 +96,7 @@ namespace DataAccessEF.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Configurations", (string)null);
+                    b.ToTable("Configurations");
                 });
 
             modelBuilder.Entity("Domain.Models.ConfigurationItem", b =>
@@ -117,7 +120,7 @@ namespace DataAccessEF.Migrations
 
                     b.HasIndex("ConfigurationId");
 
-                    b.ToTable("ConfigurationItems", (string)null);
+                    b.ToTable("ConfigurationItems");
                 });
 
             modelBuilder.Entity("Domain.Models.Country", b =>
@@ -138,7 +141,7 @@ namespace DataAccessEF.Migrations
 
                     b.HasKey("CountryId");
 
-                    b.ToTable("Country", (string)null);
+                    b.ToTable("Country");
                 });
 
             modelBuilder.Entity("Domain.Models.Event", b =>
@@ -169,7 +172,7 @@ namespace DataAccessEF.Migrations
 
                     b.HasIndex("ConfigurationId");
 
-                    b.ToTable("Events", (string)null);
+                    b.ToTable("Events");
                 });
 
             modelBuilder.Entity("Domain.Models.Result", b =>
@@ -197,7 +200,7 @@ namespace DataAccessEF.Migrations
 
                     b.HasIndex("StageId");
 
-                    b.ToTable("Results", (string)null);
+                    b.ToTable("Results");
                 });
 
             modelBuilder.Entity("Domain.Models.Stage", b =>
@@ -230,7 +233,7 @@ namespace DataAccessEF.Migrations
 
                     b.HasIndex("EventId");
 
-                    b.ToTable("Stages", (string)null);
+                    b.ToTable("Stages");
                 });
 
             modelBuilder.Entity("Domain.Models.Team", b =>
@@ -252,7 +255,7 @@ namespace DataAccessEF.Migrations
 
                     b.HasIndex("CountryId");
 
-                    b.ToTable("Teams", (string)null);
+                    b.ToTable("Teams");
                 });
 
             modelBuilder.Entity("Domain.Models.Competitor", b =>
