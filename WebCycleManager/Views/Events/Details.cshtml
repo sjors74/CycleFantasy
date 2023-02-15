@@ -41,6 +41,10 @@
                         <a asp-controller="Stages" asp-action="Edit" asp-route-id="@item.Id">Wijzig</a> |
                         <a asp-controller="Stages" asp-action="Details" asp-route-id="@item.Id">Details</a> |
                         <a asp-controller="Stages" asp-action="Delete" asp-route-id="@item.Id">Verwijder</a>
+                        
+                    </td>
+                    <td>
+                        <a class="text-danger"  asp-controller="Results" asp-action="Index" asp-route-stageId="@item.Id">Uitslag</a>
                     </td>
                 </tr>
             }

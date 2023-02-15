@@ -1,0 +1,35 @@
+﻿@model Domain.Models.ConfigurationItem
+
+@{
+    ViewData["Title"] = "Details";
+}
+
+<h1>Details configuratie-item</h1>
+
+<div>
+    <hr />
+    <dl class="row">
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.Position)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.Position)
+        </dd>
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.Score)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.Score)
+        </dd>
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.Configuration)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.Configuration.ConfigurationType)
+        </dd>
+    </dl>
+</div>
+<div>
+    <a asp-action="Edit" asp-route-id="@Model?.Id">Wijzig</a> |
+    <a asp-action="Index">Terug naar de lijst</a>
+</div>

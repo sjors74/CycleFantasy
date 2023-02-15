@@ -3,6 +3,7 @@
 <p>
     <a asp-route-stageId="@Model.StageId" asp-action="Create">Maak nieuw resultaat</a>
 </p>
+ <form method="post">
 <table class="table">
     <thead>
         <tr>
@@ -16,20 +17,34 @@
         </tr>
     </thead>
     <tbody>
-    @foreach (var item in Model.Results) {
+
+    @for(var i = 0; i < Model.ConfigurationItems; i++) {
         <tr>
             <td>
-                @Html.DisplayFor(modelItem => item.Position)
+                <label>@Model.Results[i].Position</label>
             </td>
             <td>
-                @Html.DisplayFor(modelItem => item.CompetitorName)
+                @if(Model.Results[i].CompetitorName == string.Empty)
+                {
+                    <select asp-for="@Model.Results[i].SelectedCompetitorId" asp-items="ViewBag.CompetitorId">
+                        
+                        <option value="0">Selecteer een renner...</option>
+                    </select>
+                }
+                else
+                {
+                    <label>@Model.Results[i].CompetitorName</label>
+                }
             </td>
             <td>
-                <a asp-action="Edit" asp-route-id="@item.Id">Wijzig</a> |
-                <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.Id">Verwijder</a>
+                <a asp-action="Edit" asp-route-id="@Model.Results[i].Id">Wijzig</a> |
+                <a asp-action="Delete" asp-route-id="@Model.Results[i].Id">Verwijder</a>
             </td>
         </tr>
 }
     </tbody>
 </table>
+<input type="hidden" id="stageId" name="stageId" value="@Model.StageId" />
+<input type="hidden" id="configurationId" name="configurationId" value="@Model.ConfigurationId" />
+<input type="submit" asp-route-id="@Model.StageId" value="Opslaan" />
+</form>

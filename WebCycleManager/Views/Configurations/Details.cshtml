@@ -1,0 +1,52 @@
+﻿@model Domain.Models.Configuration
+
+@{
+    ViewData["Title"] = "Details";
+}
+
+<h1>Details Configuratie</h1>
+
+<div>
+    <hr />
+    <dl class="row">
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.ConfigurationType)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.ConfigurationType)
+        </dd>
+    </dl>
+</div>
+<div>
+    <a asp-controller="ConfigurationItems" asp-action="Create" asp-route-configurationId="@Model.Id">Maak nieuw configuratie-item voor @Model.ConfigurationType</a>
+</div>
+<table class="table">
+    <thead>
+        <tr>
+            <th>@Html.DisplayNameFor(model => model.ConfigurationItems.FirstOrDefault().Position)</th>
+            <th>@Html.DisplayNameFor(model => model.ConfigurationItems.FirstOrDefault().Score)</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach(var item in Model.ConfigurationItems)
+        {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.Position)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Score)
+            </td>
+            <td>
+                <a asp-controller="ConfigurationItems" asp-action="Edit" asp-route-id="@item.Id">Wijzig</a> |
+                <a asp-controller="ConfigurationItems" asp-action="Delete" asp-route-id="@item.Id">Verwijder</a>
+            </td>
+        </tr>
+        }
+    </tbody>
+</table>
+
+<div>
+    <a asp-action="Edit" asp-route-id="@Model?.Id">Wijzig</a> |
+    <a asp-action="Index">Terug naar de lijst</a>
+</div>

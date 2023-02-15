@@ -13,6 +13,7 @@ namespace Domain.Models
         public string FirstName { get; set; } = string.Empty;
         [DisplayName("Achternaam")]
         public string LastName { get; set; } = string.Empty;
+
         [DisplayName("Team")]
         public int TeamId { get; set; }
         [DisplayName("Land")]
@@ -22,5 +23,14 @@ namespace Domain.Models
         [NotMapped]
         [DisplayName("Land")]
         public virtual Country? Country { get; set; }
+        [NotMapped]
+        [DisplayName("Naam")]
+        public string CompetitorName
+        {
+            get
+            {
+                return $"{FirstName} {LastName}";
+            }
+        }
     }
 }

@@ -14,6 +14,7 @@ namespace Domain.Models
         [Required]
         public int StageId { get; set; }
         public int CompetitorId { get; set; }
+        public int ConfigurationItemId { get; set; }
         public virtual Stage? Stage { get; set; }
         public virtual Competitor? Competitor { get;set; }
         public virtual ConfigurationItem? ConfigurationItem { get; set; }

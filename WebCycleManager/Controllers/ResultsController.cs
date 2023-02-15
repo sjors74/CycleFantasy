@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using Domain.Context;
 using Domain.Models;
 using WebCycleManager.Models;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace WebCycleManager.Controllers
 {
@@ -30,27 +31,79 @@ namespace WebCycleManager.Controllers
             {
                 rvm.StageId = stage.Id;
                 rvm.StageName = $"Etappe {stage.StageName}: {stage.StartLocation}-{stage.FinishLocation}";
-
+                rvm.EventId = stage.EventId;
                 //then get all available results for the current stage
                 var results = _context.Results.Include(r => r.Competitor).Include(r => r.Stage).Include(r => r.ConfigurationItem)
-                    .Where(r => r.Stage.Id.Equals(stageId));
+                    .Where(r => r.Stage.Id.Equals(stageId)).ToList();
+                var resultDict = new Dictionary<int, int>();
+                resultDict = results.ToDictionary(r => r.ConfigurationItem.Position, r => r.CompetitorId);
+                var currentEvent = _context.Events.FirstOrDefault(e => e.EventId.Equals(stage.EventId));
+                var config= currentEvent.Configuration;
+                var numberOfconfigItems = _context.ConfigurationItems.Where(l => l.ConfigurationId.Equals(config.Id)).Count();
+                rvm.ConfigurationId = config.Id;
+                rvm.ConfigurationItems = numberOfconfigItems;
 
                 var resultItems = new List<ResultItemViewModel>();
-                foreach (var result in results)
+                for(int i=0; i < numberOfconfigItems; i++)
                 {
+                    var position = i + 1;
+                    resultDict.TryGetValue(position, out int compId);
                     var rivm = new ResultItemViewModel
                     {
-                        Id = result.Id,
-                        Position = result.ConfigurationItem.Position,
-                        CompetitorName = $"{result.Competitor.FirstName} {result.Competitor.LastName}"
+                        Position = position,
+                        CompetitorName = GetCompetitorFullName(compId),
+                        SelectedCompetitorId = compId
+                        
                     };
                     resultItems.Add(rivm);
                 }
                 rvm.Results = resultItems;
-
+                ViewData["CompetitorId"] = new SelectList(_context.Competitors.OrderBy(c => c.FirstName), "CompetitorId", "CompetitorName"); //TODO: only get event-competitors!
                 return View(rvm);
             }
             return NotFound();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Index(int stageId, IFormCollection formCollection)
+        {
+            var resultList = new List<Result>();
+            foreach (var key in formCollection.Keys)
+            {
+                if (key.Contains("SelectedCompetitorId"))
+                {
+                    var value = formCollection[key];
+
+                    int.TryParse(value, out var competitorId);
+                    if (competitorId > 0)
+                    {
+                        var position = GetPositionFromKey(key);
+                        var configurationId = int.TryParse(formCollection["configurationId"], out var configId);
+                        var configurationItem = await _context.ConfigurationItems.FirstOrDefaultAsync(c => c.ConfigurationId.Equals(configId) && c.Position.Equals(position));
+                        if (position > 0 && configurationItem != null)
+                        {
+                            resultList.Add(new Result
+                            {
+                                CompetitorId = competitorId,
+                                StageId = stageId,
+                                ConfigurationItemId = configurationItem.Id
+                            });
+                        }
+                    }
+                }
+            }
+            _context.Results.AddRange(resultList);
+            _context.SaveChanges();
+            return RedirectToAction("Index", "Results", new { stageId });
+        }
+
+        private int GetPositionFromKey(string key)
+        {
+            key = key.Substring(key.IndexOf("[") + 1);
+            key = key.Substring(0, key.IndexOf("]"));
+            var positon = int.TryParse(key, out var positonNumber);
+            return positonNumber + 1;
         }
 
         // GET: Results/Details/5
@@ -99,7 +152,7 @@ namespace WebCycleManager.Controllers
                 }
                 rvm.Results = resultItems;
             }
-            ViewData["CompetitorId"] = new SelectList(_context.Competitors, "CompetitorId", "FirstName");
+            ViewData["CompetitorId"] = new SelectList(_context.Competitors.OrderBy(c => c.FirstName), "CompetitorId", "CompetitorName");
             
             return View(rvm);
         }
@@ -117,7 +170,7 @@ namespace WebCycleManager.Controllers
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["CompetitorId"] = new SelectList(_context.Competitors, "CompetitorId", "FirstName", result.CompetitorId);
+            ViewData["CompetitorId"] = new SelectList(_context.Competitors.OrderBy(c => c.FirstName), "CompetitorId", "CompetitorName", result.CompetitorId);
             ViewData["StageId"] = new SelectList(_context.Stages, "Id", "FinishLocation", result.StageId);
             return View(result);
         }
@@ -135,7 +188,7 @@ namespace WebCycleManager.Controllers
             {
                 return NotFound();
             }
-            ViewData["CompetitorId"] = new SelectList(_context.Competitors, "CompetitorId", "FirstName", result.CompetitorId);
+            ViewData["CompetitorId"] = new SelectList(_context.Competitors.OrderBy(c => c.FirstName), "CompetitorId", "CompetitorName", result.CompetitorId);
             ViewData["StageId"] = new SelectList(_context.Stages, "Id", "FinishLocation", result.StageId);
             return View(result);
         }
@@ -172,7 +225,7 @@ namespace WebCycleManager.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["CompetitorId"] = new SelectList(_context.Competitors, "CompetitorId", "FirstName", result.CompetitorId);
+            ViewData["CompetitorId"] = new SelectList(_context.Competitors.OrderBy(c => c.FirstName), "CompetitorId", "CompetitorName", result.CompetitorId);
             ViewData["StageId"] = new SelectList(_context.Stages, "Id", "FinishLocation", result.StageId);
             return View(result);
         }
@@ -219,6 +272,16 @@ namespace WebCycleManager.Controllers
         private bool ResultExists(int id)
         {
           return (_context.Results?.Any(e => e.Id == id)).GetValueOrDefault();
+        }
+
+        private string GetCompetitorFullName(int competitorId)
+        {
+            var competitor = _context.Competitors.FirstOrDefault(c => c.CompetitorId.Equals(competitorId));
+            if (competitor != null)
+            {
+                return $"{competitor.FirstName} {competitor.LastName}";
+            }
+            return string.Empty;
         }
     }
 }
