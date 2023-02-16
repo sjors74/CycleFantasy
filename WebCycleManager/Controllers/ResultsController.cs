@@ -9,6 +9,7 @@ using Domain.Context;
 using Domain.Models;
 using WebCycleManager.Models;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using System.Security.Cryptography.X509Certificates;
 
 namespace WebCycleManager.Controllers
 {
@@ -24,14 +25,13 @@ namespace WebCycleManager.Controllers
         // GET: Results
         public async Task<IActionResult> Index(int stageId)
         {
-            var rvm = new ResultViewModel();
             //first get stage-data
             var stage = _context.Stages.FirstOrDefault(s => s.Id.Equals(stageId));
             if (stage != null)
             {
-                rvm.StageId = stage.Id;
-                rvm.StageName = $"Etappe {stage.StageName}: {stage.StartLocation}-{stage.FinishLocation}";
-                rvm.EventId = stage.EventId;
+                //rvm.StageId = stage.Id;
+                //rvm.StageName = $"Etappe {stage.StageName}: {stage.StartLocation}-{stage.FinishLocation}";
+                //rvm.EventId = stage.EventId;
                 //then get all available results for the current stage
                 var results = _context.Results.Include(r => r.Competitor).Include(r => r.Stage).Include(r => r.ConfigurationItem)
                     .Where(r => r.Stage.Id.Equals(stageId)).ToList();
@@ -40,8 +40,8 @@ namespace WebCycleManager.Controllers
                 var currentEvent = _context.Events.FirstOrDefault(e => e.EventId.Equals(stage.EventId));
                 var config= currentEvent.Configuration;
                 var numberOfconfigItems = _context.ConfigurationItems.Where(l => l.ConfigurationId.Equals(config.Id)).Count();
-                rvm.ConfigurationId = config.Id;
-                rvm.ConfigurationItems = numberOfconfigItems;
+                //rvm.ConfigurationId = config.Id;
+                //rvm.ConfigurationItems = numberOfconfigItems;
 
                 var resultItems = new List<ResultItemViewModel>();
                 for(int i=0; i < numberOfconfigItems; i++)
@@ -57,7 +57,9 @@ namespace WebCycleManager.Controllers
                     };
                     resultItems.Add(rivm);
                 }
-                rvm.Results = resultItems;
+                //rvm.Results = resultItems;
+                var rvm = new ResultViewModel(stage.Id, stage.EventId, config.Id, $"Etappe {stage.StageName}: {stage.StartLocation}-{stage.FinishLocation}", numberOfconfigItems, resultItems);
+
                 ViewData["CompetitorId"] = new SelectList(_context.Competitors.OrderBy(c => c.FirstName), "CompetitorId", "CompetitorName"); //TODO: only get event-competitors!
                 return View(rvm);
             }
@@ -129,12 +131,11 @@ namespace WebCycleManager.Controllers
         // GET: Results/Create
         public IActionResult Create(int stageId)
         {
-            var rvm = new ResultViewModel();
             var stage = _context.Stages.FirstOrDefault(s => s.Id == stageId);
             if (stage != null)
             {
-                rvm.StageId = stage.Id;
-                rvm.StageName = $"Etappe {stage.StageName}: {stage.StartLocation}-{stage.FinishLocation}";
+                //rvm.StageId = stage.Id;
+                //rvm.StageName = $"Etappe {stage.StageName}: {stage.StartLocation}-{stage.FinishLocation}";
 
                 var resultItems = new List<ResultItemViewModel>();
                 //first, get the event from stage, and it's configuration
@@ -150,11 +151,15 @@ namespace WebCycleManager.Controllers
                     };
                     resultItems.Add(rivm);
                 }
-                rvm.Results = resultItems;
+
+                //rvm.Results = resultItems;
+                var rvm = new ResultViewModel(stage.Id, stage.EventId, config.Id, $"Etappe {stage.StageName}: {stage.StartLocation}-{stage.FinishLocation}", config.ConfigurationItems.Count, resultItems);
+                ViewData["CompetitorId"] = new SelectList(_context.Competitors.OrderBy(c => c.FirstName), "CompetitorId", "CompetitorName");
+                return View(rvm);
             }
-            ViewData["CompetitorId"] = new SelectList(_context.Competitors.OrderBy(c => c.FirstName), "CompetitorId", "CompetitorName");
-            
-            return View(rvm);
+
+
+            return NotFound();
         }
 
         // POST: Results/Create

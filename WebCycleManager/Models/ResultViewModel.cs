@@ -10,5 +10,15 @@
         public int ConfigurationItems { get; set; }
 
         public List<ResultItemViewModel> Results { get; set; }
+
+        public ResultViewModel(int stageId, int eventId, int configurationId, string stageName, int configurationItems, List<ResultItemViewModel> results)
+        {
+            StageId = stageId;
+            EventId = eventId;
+            ConfigurationId = configurationId;
+            StageName = stageName;
+            ConfigurationItems = configurationItems;
+            Results = results;
+        }
     }
 }

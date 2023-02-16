@@ -1,0 +1,53 @@
+﻿@model CompetitorsInEventViewModel
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>Deelnemers @Model.EventNameLong</h1>
+
+<p>
+    <a asp-action="Create" asp-route-eventId="@Model.EventId">Voeg deelnemer(s) toe</a>
+</p>
+@using (Html.BeginForm("Index", "CompetitorsInEvents", FormMethod.Get))
+{
+      <label> Filter op team</label>
+        @Html.DropDownListFor(model => model.FilterTeam,Model.Teams,"-- Selecteer --")
+        @Html.HiddenFor(model => model.EventId);
+      <input type="submit" value="Filter" />
+}
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayName("Nummer")
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Competitors)
+            </th>
+            <th>
+                @Html.DisplayName("Team")
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+    @foreach (var item in Model.Competitors) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.EventNumber)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.CompetitorName)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.TeamName)
+            </td>
+            <td>
+                <a asp-action="Edit" asp-route-id="@item.CompetitorInEventId">Wijzig</a> |
+                <a asp-action="Delete" asp-route-id="@item.CompetitorInEventId">Verwijder</a>
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>

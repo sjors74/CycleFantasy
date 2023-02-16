@@ -47,6 +47,10 @@
                 <a asp-action="Details" asp-route-id="@item.EventId">Details</a> |
                 <a asp-action="Delete" asp-route-id="@item.EventId">Verwijder</a>
             </td>
+            <td>
+                <a asp-controller="CompetitorsInEvents" asp-route-eventId="@item.EventId" asp-action="Index">Deelnemers</a>
+
+            </td>
         </tr>
 }
     </tbody>

@@ -1,0 +1,36 @@
+﻿@model  CompetitorInEventViewModel
+
+@{
+    ViewData["Title"] = "Delete";
+}
+
+<h3>Weet je zeker dat je deze deelnemer wilt verwijderen uit de deelnemerslijst?</h3>
+<div>
+    <hr />
+    <dl class="row">
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.EventNumber)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.EventNumber)
+        </dd>
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.CompetitorName)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.CompetitorName)
+        </dd>
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.TeamName)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.TeamName)
+        </dd>
+    </dl>
+    
+    <form asp-action="Delete">
+        <input type="hidden" asp-for="CompetitorInEventId" />
+        <input type="submit" value="Verwijder" class="btn btn-danger" /> |
+        <a asp-action="Index" asp-route-eventId="@Model.EventId">Terug naar de lijst</a>
+    </form>
+</div>

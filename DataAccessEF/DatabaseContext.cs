@@ -38,6 +38,10 @@ namespace Domain.Context
             modelBuilder.Entity<Configuration>()
                 .HasMany(c => c.ConfigurationItems)
                 .WithOne(c => c.Configuration);
+            modelBuilder.Entity<CompetitorsInEvent>()
+                .HasOne(c => c.Event);
+ 
+                
                 
         }
     }
