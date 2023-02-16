@@ -1,15 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using Domain.Context;
+using Domain.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using Domain.Context;
-using Domain.Models;
 using WebCycleManager.Models;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
-using System.Security.Cryptography.X509Certificates;
 
 namespace WebCycleManager.Controllers
 {
@@ -29,21 +23,15 @@ namespace WebCycleManager.Controllers
             var stage = _context.Stages.FirstOrDefault(s => s.Id.Equals(stageId));
             if (stage != null)
             {
-                //rvm.StageId = stage.Id;
-                //rvm.StageName = $"Etappe {stage.StageName}: {stage.StartLocation}-{stage.FinishLocation}";
-                //rvm.EventId = stage.EventId;
-                //then get all available results for the current stage
-                var results = _context.Results.Include(r => r.Competitor).Include(r => r.Stage).Include(r => r.ConfigurationItem)
+                var results = _context.Results.Include(r => r.CompetitorInEvent).Include(r => r.Stage).Include(r => r.ConfigurationItem)
                     .Where(r => r.Stage.Id.Equals(stageId)).ToList();
                 var resultDict = new Dictionary<int, int>();
-                resultDict = results.ToDictionary(r => r.ConfigurationItem.Position, r => r.CompetitorId);
+                resultDict = results.ToDictionary(r => r.ConfigurationItem.Position, r => r.CompetitorInEvent.CompetitorId);
                 var currentEvent = _context.Events.FirstOrDefault(e => e.EventId.Equals(stage.EventId));
+                var competitorsInEvent = _context.CompetitorsInEvent.OrderBy(c => c.Competitor.FirstName).Where(c => c.EventId.Equals(currentEvent.EventId)).ToList();
                 var config= currentEvent.Configuration;
                 var numberOfconfigItems = _context.ConfigurationItems.Where(l => l.ConfigurationId.Equals(config.Id)).Count();
-                //rvm.ConfigurationId = config.Id;
-                //rvm.ConfigurationItems = numberOfconfigItems;
-
-                var resultItems = new List<ResultItemViewModel>();
+                 var resultItems = new List<ResultItemViewModel>();
                 for(int i=0; i < numberOfconfigItems; i++)
                 {
                     var position = i + 1;
@@ -52,15 +40,15 @@ namespace WebCycleManager.Controllers
                     {
                         Position = position,
                         CompetitorName = GetCompetitorFullName(compId),
-                        SelectedCompetitorId = compId
-                        
+                        SelectedCompetitorId = compId,
+                        Id = GetResultId(compId, stageId),
+                        StageId = stageId,
                     };
                     resultItems.Add(rivm);
                 }
-                //rvm.Results = resultItems;
                 var rvm = new ResultViewModel(stage.Id, stage.EventId, config.Id, $"Etappe {stage.StageName}: {stage.StartLocation}-{stage.FinishLocation}", numberOfconfigItems, resultItems);
 
-                ViewData["CompetitorId"] = new SelectList(_context.Competitors.OrderBy(c => c.FirstName), "CompetitorId", "CompetitorName"); //TODO: only get event-competitors!
+                ViewData["CompetitorId"] = new SelectList(competitorsInEvent, "CompetitorInEventId", "Competitor.CompetitorName");
                 return View(rvm);
             }
             return NotFound();
@@ -87,7 +75,7 @@ namespace WebCycleManager.Controllers
                         {
                             resultList.Add(new Result
                             {
-                                CompetitorId = competitorId,
+                                CompetitorInEventId = competitorId,
                                 StageId = stageId,
                                 ConfigurationItemId = configurationItem.Id
                             });
@@ -117,7 +105,7 @@ namespace WebCycleManager.Controllers
             }
 
             var result = await _context.Results
-                .Include(r => r.Competitor)
+                .Include(r => r.CompetitorInEvent)
                 .Include(r => r.Stage)
                 .FirstOrDefaultAsync(m => m.Id == id);
             if (result == null)
@@ -175,65 +163,65 @@ namespace WebCycleManager.Controllers
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["CompetitorId"] = new SelectList(_context.Competitors.OrderBy(c => c.FirstName), "CompetitorId", "CompetitorName", result.CompetitorId);
+            ViewData["CompetitorId"] = new SelectList(_context.Competitors.OrderBy(c => c.FirstName), "CompetitorId", "CompetitorName", result.CompetitorInEventId);
             ViewData["StageId"] = new SelectList(_context.Stages, "Id", "FinishLocation", result.StageId);
             return View(result);
         }
 
         // GET: Results/Edit/5
-        public async Task<IActionResult> Edit(int? id)
-        {
-            if (id == null || _context.Results == null)
-            {
-                return NotFound();
-            }
+        //public async Task<IActionResult> Edit(int? id)
+        //{
+        //    if (id == null || _context.Results == null)
+        //    {
+        //        return NotFound();
+        //    }
 
-            var result = await _context.Results.FindAsync(id);
-            if (result == null)
-            {
-                return NotFound();
-            }
-            ViewData["CompetitorId"] = new SelectList(_context.Competitors.OrderBy(c => c.FirstName), "CompetitorId", "CompetitorName", result.CompetitorId);
-            ViewData["StageId"] = new SelectList(_context.Stages, "Id", "FinishLocation", result.StageId);
-            return View(result);
-        }
+        //    var result = await _context.Results.FindAsync(id);
+        //    if (result == null)
+        //    {
+        //        return NotFound();
+        //    }
+        //    ViewData["CompetitorId"] = new SelectList(_context.Competitors.OrderBy(c => c.FirstName), "CompetitorId", "CompetitorName", result.CompetitorId);
+        //    ViewData["StageId"] = new SelectList(_context.Stages, "Id", "FinishLocation", result.StageId);
+        //    return View(result);
+        //}
 
         // POST: Results/Edit/5
         // To protect from overposting attacks, enable the specific properties you want to bind to.
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,StageId,CompetitorId")] Result result)
-        {
-            if (id != result.Id)
-            {
-                return NotFound();
-            }
+        //[HttpPost]
+        //[ValidateAntiForgeryToken]
+        //public async Task<IActionResult> Edit(int id, [Bind("Id,StageId,CompetitorId")] Result result)
+        //{
+        //    if (id != result.Id)
+        //    {
+        //        return NotFound();
+        //    }
 
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    _context.Update(result);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!ResultExists(result.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
-            }
-            ViewData["CompetitorId"] = new SelectList(_context.Competitors.OrderBy(c => c.FirstName), "CompetitorId", "CompetitorName", result.CompetitorId);
-            ViewData["StageId"] = new SelectList(_context.Stages, "Id", "FinishLocation", result.StageId);
-            return View(result);
-        }
+        //    if (ModelState.IsValid)
+        //    {
+        //        try
+        //        {
+        //            _context.Update(result);
+        //            await _context.SaveChangesAsync();
+        //        }
+        //        catch (DbUpdateConcurrencyException)
+        //        {
+        //            if (!ResultExists(result.Id))
+        //            {
+        //                return NotFound();
+        //            }
+        //            else
+        //            {
+        //                throw;
+        //            }
+        //        }
+        //        return RedirectToAction(nameof(Index));
+        //    }
+        //    ViewData["CompetitorId"] = new SelectList(_context.Competitors.OrderBy(c => c.FirstName), "CompetitorId", "CompetitorName", result.CompetitorId);
+        //    ViewData["StageId"] = new SelectList(_context.Stages, "Id", "FinishLocation", result.StageId);
+        //    return View(result);
+        //}
 
         // GET: Results/Delete/5
         public async Task<IActionResult> Delete(int? id)
@@ -244,15 +232,23 @@ namespace WebCycleManager.Controllers
             }
 
             var result = await _context.Results
-                .Include(r => r.Competitor)
+                .Include(r => r.CompetitorInEvent)
                 .Include(r => r.Stage)
+                .Include(r => r.ConfigurationItem)
                 .FirstOrDefaultAsync(m => m.Id == id);
             if (result == null)
             {
                 return NotFound();
             }
+            var vm = new ResultItemViewModel
+            {
+                Id = result.Id,
+                StageId = result.StageId,
+                Position = result.ConfigurationItem.Position,
+                CompetitorName = result.CompetitorInEvent.Competitor.CompetitorName
+            };
 
-            return View(result);
+            return View(vm);
         }
 
         // POST: Results/Delete/5
@@ -271,7 +267,7 @@ namespace WebCycleManager.Controllers
             }
             
             await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction(nameof(Index), new { stageId = result.StageId });
         }
 
         private bool ResultExists(int id)
@@ -287,6 +283,17 @@ namespace WebCycleManager.Controllers
                 return $"{competitor.FirstName} {competitor.LastName}";
             }
             return string.Empty;
+        }
+
+        private int GetResultId(int competitorId, int stageId)
+        {
+            var r = _context.Results.FirstOrDefault(c => c.StageId == stageId && c.CompetitorInEventId == competitorId);
+            if(r != null) 
+            {
+                return r.Id;
+            }
+
+            return 0;
         }
     }
 }

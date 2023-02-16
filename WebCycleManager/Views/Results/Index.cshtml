@@ -1,6 +1,6 @@
 ﻿@model ResultViewModel
 <h1>@Model.StageName</h1>
- <form method="post">
+ <form method="post" asp-controller="Results" asp-action="Index">
 <table class="table">
     <thead>
         <tr>
@@ -34,14 +34,17 @@
                 }
             </td>
             <td>
-                <a asp-action="Edit" asp-route-id="@Model.Results[i].Id">Wijzig</a> |
-                <a asp-action="Delete" asp-route-id="@Model.Results[i].Id">Verwijder</a>
+                @if (Model.Results[i].Id > 0)
+                {
+                    <a asp-action="Delete" asp-route-id="@Model.Results[i].Id">Verwijder</a>
+                }
             </td>
         </tr>
 }
     </tbody>
 </table>
-<input type="hidden" id="stageId" name="stageId" value="@Model.StageId" />
+
 <input type="hidden" id="configurationId" name="configurationId" value="@Model.ConfigurationId" />
-    <a asp-action="Index" asp-route-id="@Model.StageId">Opslaan</a>
+<input type="hidden" id="stageId" name="stageId" value="@Model.StageId" />
+    <button type="submit" value="Opslaan">Opslaan</button>
 </form>

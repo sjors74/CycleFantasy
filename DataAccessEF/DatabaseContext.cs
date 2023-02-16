@@ -40,7 +40,7 @@ namespace Domain.Context
                 .WithOne(c => c.Configuration);
             modelBuilder.Entity<CompetitorsInEvent>()
                 .HasOne(c => c.Event);
- 
+
                 
                 
         }

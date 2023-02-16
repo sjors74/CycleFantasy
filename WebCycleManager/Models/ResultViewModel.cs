@@ -1,10 +1,16 @@
-﻿namespace WebCycleManager.Models
+﻿using Domain.Models;
+
+namespace WebCycleManager.Models
 {
     public class ResultViewModel
     {
         public int StageId { get; set; }
         public int EventId { get; set; }
         public int ConfigurationId { get; set; }
+        public List<Competitor> Competitors { get; set; }
+        public int CompetitorInEventId { get; set; }
+        public string CompetitorName { get; set; }
+
         public string StageName { get; set; } = string.Empty;
 
         public int ConfigurationItems { get; set; }

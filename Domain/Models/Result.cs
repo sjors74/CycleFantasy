@@ -13,10 +13,11 @@ namespace Domain.Models
         public int Id { get; set; }
         [Required]
         public int StageId { get; set; }
-        public int CompetitorId { get; set; }
+        public int CompetitorInEventId { get; set; }
         public int ConfigurationItemId { get; set; }
         public virtual Stage? Stage { get; set; }
-        public virtual Competitor? Competitor { get;set; }
+        public virtual CompetitorsInEvent? CompetitorInEvent { get;set; }
         public virtual ConfigurationItem? ConfigurationItem { get; set; }
+        
     }
 }
