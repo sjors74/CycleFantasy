@@ -23,12 +23,17 @@ namespace WebCycleManager.Controllers
         // GET: Events
         public async Task<IActionResult> Index()
         {
-              return _context.Events != null ? 
-                          View(await _context.Events
+            var vm = new EventViewModel();
+            var events = await _context.Events
                           .OrderByDescending(e => e.EventYear)
                           .ThenBy(e => e.StartDate)
-                          .ToListAsync()) :
-                          Problem("Entity set 'DatabaseContext.Events'  is null.");
+                          .ToListAsync();
+
+            foreach (var e in events)
+            {
+                vm.Events.Add(CreateViewModel(e));
+            }
+            return View(vm);
         }
 
         // GET: Events/Details/5
@@ -45,22 +50,16 @@ namespace WebCycleManager.Controllers
             {
                 return NotFound();
             }
-            var stagesList = new List<Stage>();
+
+            var stagesList = new List<Stage>(); //TO DO : Create ViewModel for stages?
             foreach (var stage in _context.Stages.Where(e => e.EventId.Equals(@event.EventId)).OrderBy(c => c.StageOrder))
             {
                 stagesList.Add(stage);
             }
-            var eventViewModel = new EventViewModel
-            {
-                Id = @event.EventId,
-                Name = @event.EventName,
-                Year = @event.EventYear,
-                StartDate = (DateTime)@event.StartDate,
-                EndDate = (DateTime)@event.EndDate,
-                Stages = stagesList,
-                StagesInEvent = stagesList.Count
-            };
-            return View(eventViewModel);
+            var vm = CreateViewModel(@event);
+            vm.Stages = stagesList;
+            vm.StagesInEvent = stagesList.Count;
+            return View(vm);
         }
 
         // GET: Events/Create
@@ -82,7 +81,8 @@ namespace WebCycleManager.Controllers
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            return View(@event);
+            var vm = CreateViewModel(@event);
+            return View(vm);
         }
 
         // GET: Events/Edit/5
@@ -98,7 +98,8 @@ namespace WebCycleManager.Controllers
             {
                 return NotFound();
             }
-            return View(@event);
+            var vm = CreateViewModel(@event);
+            return View(vm);
         }
 
         // POST: Events/Edit/5
@@ -106,9 +107,9 @@ namespace WebCycleManager.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("EventId,EventName,EventYear,StartDate,EndDate")] Event @event)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,Name,Year,StartDate,EndDate")] EventItemViewModel @event)
         {
-            if (id != @event.EventId)
+            if (id != @event.Id)
             {
                 return NotFound();
             }
@@ -117,12 +118,13 @@ namespace WebCycleManager.Controllers
             {
                 try
                 {
-                    _context.Update(@event);
+                    var e = CreateFromViewModel(@event);
+                    _context.Update(e);
                     await _context.SaveChangesAsync();
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!EventExists(@event.EventId))
+                    if (!EventExists(@event.Id))
                     {
                         return NotFound();
                     }
@@ -133,6 +135,7 @@ namespace WebCycleManager.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
+
             return View(@event);
         }
 
@@ -151,7 +154,8 @@ namespace WebCycleManager.Controllers
                 return NotFound();
             }
 
-            return View(@event);
+            var vm = CreateViewModel(@event);
+            return View(vm);
         }
 
         // POST: Events/Delete/5
@@ -176,6 +180,37 @@ namespace WebCycleManager.Controllers
         private bool EventExists(int id)
         {
           return (_context.Events?.Any(e => e.EventId == id)).GetValueOrDefault();
+        }
+
+        public EventItemViewModel CreateViewModel(Event @event)
+        {
+            var vm = new EventItemViewModel
+            {
+                Id = @event.EventId,
+                Name = @event.EventName,
+                Year = @event.EventYear,
+                StartDate = (DateTime)@event.StartDate,
+                EndDate = (DateTime)@event.EndDate,
+            };
+            return vm;
+        }
+
+        public Event CreateFromViewModel(EventItemViewModel vm)
+        {
+            var @event = _context.Events.Find(vm.Id);
+            try
+            {
+                    @event.EventName = vm.Name;
+                    @event.EventYear = vm.Year;
+                    @event.StartDate = vm.StartDate;
+                    @event.EndDate = vm.EndDate;
+
+                    return @event;
+            }
+            catch
+            {
+                throw;
+            }
         }
     }
 }

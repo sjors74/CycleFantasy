@@ -1,11 +1,10 @@
-﻿@model IEnumerable<Domain.Models.Event>
+﻿@model EventViewModel
 
 @{
     ViewData["Title"] = "Index";
 }
 
-<h1>Evenement</h1>
-
+<h1>Evenementen</h1>
 <p>
     <a asp-action="Create">Maak nieuw evenement</a>
 </p>
@@ -13,28 +12,29 @@
     <thead>
         <tr>
             <th>
-                @Html.DisplayNameFor(model => model.EventName)
+                @Html.DisplayName("Naam")
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.EventYear)
+                @Html.DisplayName("Jaar")
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.StartDate)
+                @Html.DisplayName("Startdatum")
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.EndDate)
+                @Html.DisplayName("Einddatum")
             </th>
             <th></th>
         </tr>
     </thead>
     <tbody>
-@foreach (var item in Model) {
+    @foreach (var item in Model.Events) 
+    {
         <tr>
             <td>
-                @Html.DisplayFor(modelItem => item.EventName)
+                @Html.DisplayFor(modelItem => item.Name)
             </td>
             <td>
-                @Html.DisplayFor(modelItem => item.EventYear)
+                @Html.DisplayFor(modelItem => item.Year)
             </td>
             <td>
                 @Html.DisplayFor(modelItem => item.StartDate)
@@ -43,15 +43,15 @@
                 @Html.DisplayFor(modelItem => item.EndDate)
             </td>
             <td>
-                <a asp-action="Edit" asp-route-id="@item.EventId">Bewerk</a> |
-                <a asp-action="Details" asp-route-id="@item.EventId">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.EventId">Verwijder</a>
+                <a asp-action="Edit" asp-route-id="@item.Id">Bewerk</a> |
+                <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
+                <a asp-action="Delete" asp-route-id="@item.Id">Verwijder</a>
             </td>
             <td>
-                <a asp-controller="CompetitorsInEvents" asp-route-eventId="@item.EventId" asp-action="Index">Deelnemers</a>
+                <a asp-controller="CompetitorsInEvents" asp-route-eventId="@item.Id" asp-action="Index">Deelnemers</a>
 
             </td>
         </tr>
-}
+    }
     </tbody>
 </table>

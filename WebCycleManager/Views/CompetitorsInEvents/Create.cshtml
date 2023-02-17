@@ -9,7 +9,7 @@
             <div class="form-group">
                 <div class="row">
                     <div class="col-xs-12 col-sm-6 col-md-10 col-lg-14">
-                        <label asp-for="FilterTeam" class="control-label"></label>
+                        <label class="control-label">Filter op team</label>>
                         <select id="SelectTeamId" name="SelectTeamId"
                             class ="form-control" 
                             asp-items="@(new SelectList(@ViewBag.ListOfTeams, "TeamId", "TeamName"))">

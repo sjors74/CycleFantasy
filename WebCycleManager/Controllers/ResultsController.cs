@@ -3,6 +3,7 @@ using Domain.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using System.Text.RegularExpressions;
 using WebCycleManager.Models;
 
 namespace WebCycleManager.Controllers
@@ -32,7 +33,8 @@ namespace WebCycleManager.Controllers
                 var config= currentEvent.Configuration;
                 var numberOfconfigItems = _context.ConfigurationItems.Where(l => l.ConfigurationId.Equals(config.Id)).Count();
                  var resultItems = new List<ResultItemViewModel>();
-                for(int i=0; i < numberOfconfigItems; i++)
+
+                for (int i=0; i < numberOfconfigItems; i++)
                 {
                     var position = i + 1;
                     resultDict.TryGetValue(position, out int compId);
@@ -41,6 +43,7 @@ namespace WebCycleManager.Controllers
                         Position = position,
                         CompetitorName = GetCompetitorFullName(compId),
                         SelectedCompetitorId = compId,
+                        DropdownList = GetDropdownList(currentEvent.EventId),
                         Id = GetResultId(compId, stageId),
                         StageId = stageId,
                     };
@@ -48,7 +51,8 @@ namespace WebCycleManager.Controllers
                 }
                 var rvm = new ResultViewModel(stage.Id, stage.EventId, config.Id, $"Etappe {stage.StageName}: {stage.StartLocation}-{stage.FinishLocation}", numberOfconfigItems, resultItems);
 
-                ViewData["CompetitorId"] = new SelectList(competitorsInEvent, "CompetitorInEventId", "Competitor.CompetitorName");
+                //ViewData["CompetitorId"] = new SelectList(competitorsInEvent, "CompetitorInEventId", "Competitor.CompetitorName", "");
+                                
                 return View(rvm);
             }
             return NotFound();
@@ -168,61 +172,6 @@ namespace WebCycleManager.Controllers
             return View(result);
         }
 
-        // GET: Results/Edit/5
-        //public async Task<IActionResult> Edit(int? id)
-        //{
-        //    if (id == null || _context.Results == null)
-        //    {
-        //        return NotFound();
-        //    }
-
-        //    var result = await _context.Results.FindAsync(id);
-        //    if (result == null)
-        //    {
-        //        return NotFound();
-        //    }
-        //    ViewData["CompetitorId"] = new SelectList(_context.Competitors.OrderBy(c => c.FirstName), "CompetitorId", "CompetitorName", result.CompetitorId);
-        //    ViewData["StageId"] = new SelectList(_context.Stages, "Id", "FinishLocation", result.StageId);
-        //    return View(result);
-        //}
-
-        // POST: Results/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        //[HttpPost]
-        //[ValidateAntiForgeryToken]
-        //public async Task<IActionResult> Edit(int id, [Bind("Id,StageId,CompetitorId")] Result result)
-        //{
-        //    if (id != result.Id)
-        //    {
-        //        return NotFound();
-        //    }
-
-        //    if (ModelState.IsValid)
-        //    {
-        //        try
-        //        {
-        //            _context.Update(result);
-        //            await _context.SaveChangesAsync();
-        //        }
-        //        catch (DbUpdateConcurrencyException)
-        //        {
-        //            if (!ResultExists(result.Id))
-        //            {
-        //                return NotFound();
-        //            }
-        //            else
-        //            {
-        //                throw;
-        //            }
-        //        }
-        //        return RedirectToAction(nameof(Index));
-        //    }
-        //    ViewData["CompetitorId"] = new SelectList(_context.Competitors.OrderBy(c => c.FirstName), "CompetitorId", "CompetitorName", result.CompetitorId);
-        //    ViewData["StageId"] = new SelectList(_context.Stages, "Id", "FinishLocation", result.StageId);
-        //    return View(result);
-        //}
-
         // GET: Results/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
@@ -287,13 +236,35 @@ namespace WebCycleManager.Controllers
 
         private int GetResultId(int competitorId, int stageId)
         {
-            var r = _context.Results.FirstOrDefault(c => c.StageId == stageId && c.CompetitorInEventId == competitorId);
+            var r = _context.Results.FirstOrDefault(c => c.StageId == stageId && c.CompetitorInEvent.CompetitorId == competitorId);
             if(r != null) 
             {
                 return r.Id;
             }
 
             return 0;
+        }
+   
+        public IEnumerable<SelectListItem> GetDropdownList(int eventId)
+        {
+            var competitors = new List<SelectListItem>();
+
+            var competitorsDb = _context.CompetitorsInEvent.OrderBy(c => c.Competitor.FirstName).Where(c => c.EventId.Equals(eventId)).ToList();
+            var groupedCompetitors = competitorsDb.GroupBy(x => x.Competitor.Team.TeamName);
+            foreach(var group in groupedCompetitors)
+            {
+                var optionGroup = new SelectListGroup() { Name = group.Key };
+                foreach(var item in group) 
+                {
+                    competitors.Add(new SelectListItem()
+                    {
+                        Value = item.CompetitorInEventId.ToString(),
+                        Text = item.Competitor.CompetitorName,
+                        Group = optionGroup
+                    });
+                }
+            }    
+            return competitors;
         }
     }
 }

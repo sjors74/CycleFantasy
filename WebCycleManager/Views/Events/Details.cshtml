@@ -1,56 +1,65 @@
-﻿@model EventViewModel
+﻿@model EventItemViewModel
 
 @{
     ViewData["Title"] = "Details";
 }
 
-<h1>@Model.Name (van @Model.StartDate.ToString("dd-MMMM") tot @Model.EndDate.ToString("dd-MMMM") @Model.Year)</h1>
+<h1>@Model.EventNameDescription</h1>
 
 <div>
     <hr />
-    <h5>Etappes (@Model.StagesInEvent)</h5>
-    <table class="table">
-        <thead>
-            <tr>
-                <th>
-                    @Html.DisplayNameFor(model => model.Stages.FirstOrDefault().StageName)
-                </th>
-                <th>
-                    @Html.DisplayNameFor(model => model.Stages.FirstOrDefault().StartLocation)
-                </th>
-                <th>
-                    @Html.DisplayNameFor(model => model.Stages.FirstOrDefault().FinishLocation)
-                </th>
-                <th></th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var item in Model.Stages)
-            {
+    @if (Model.StagesInEvent > 0)
+    {
+        <h5>Etappes (@Model.StagesInEvent)</h5>
+        <table class="table">
+            <thead>
                 <tr>
-                    <td>
-                        @Html.DisplayFor(modelItem => item.StageName)
-                    </td>
-                    <td>
-                        @Html.DisplayFor(modelItem => item.StartLocation)
-                    </td>
-                    <td>
-                        @Html.DisplayFor(modelItem => item.FinishLocation)
-                    </td>
-                    <td>
-                        <a asp-controller="Stages" asp-action="Edit" asp-route-id="@item.Id">Wijzig</a> |
-                        <a asp-controller="Stages" asp-action="Details" asp-route-id="@item.Id">Details</a> |
-                        <a asp-controller="Stages" asp-action="Delete" asp-route-id="@item.Id">Verwijder</a>
-                        
-                    </td>
-                    <td>
-                        <a class="text-danger"  asp-controller="Results" asp-action="Index" asp-route-stageId="@item.Id">Uitslag</a>
-                    </td>
+                    <th>
+                        @Html.DisplayName("Etappe")
+                    </th>
+                    <th>
+                        @Html.DisplayName("Van")
+                    </th>
+                    <th>
+                        @Html.DisplayName("Naar")
+                    </th>
+                    <th></th>
+                    <th></th>
                 </tr>
-            }
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.Stages)
+                {
+                    <tr>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.StageName)
+                        </td>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.StartLocation)
+                        </td>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.FinishLocation)
+                        </td>
+                        <td>
+                            <a asp-controller="Stages" asp-action="Edit" asp-route-id="@item.Id">Wijzig</a> |
+                            <a asp-controller="Stages" asp-action="Details" asp-route-id="@item.Id">Details</a> |
+                            <a asp-controller="Stages" asp-action="Delete" asp-route-id="@item.Id">Verwijder</a>
+
+                        </td>
+                        <td>
+                            <a class="text-danger"  asp-controller="Results" asp-action="Index" asp-route-stageId="@item.Id">Uitslag</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <div class="gap-md-5">
+            <p>Geen etappes gedefinieerd.</p>
+        </div>
+    }
 </div>
 <div>
     <a asp-action="Edit" asp-route-id="@Model?.Id">Bewerk</a> |

@@ -23,10 +23,11 @@
             <td>
                 @if(Model.Results[i].CompetitorName == string.Empty)
                 {
-                    <select asp-for="@Model.Results[i].SelectedCompetitorId" asp-items="ViewBag.CompetitorId">
-                        
+@*                   <select asp-for="@Model.Results[i].SelectedCompetitorId" asp-items="ViewBag.CompetitorId">
                         <option value="0">Selecteer een renner...</option>
-                    </select>
+                   </select>*@
+
+                            @Html.DropDownList($"Model.Results[{i}].SelectedCompetitorId",Model.Results[i].DropdownList, "-- selecteer --", "Value")
                 }
                 else
                 {
@@ -48,3 +49,7 @@
 <input type="hidden" id="stageId" name="stageId" value="@Model.StageId" />
     <button type="submit" value="Opslaan">Opslaan</button>
 </form>
+
+<div>
+    <a asp-controller="Events" asp-action="Details" asp-route-id=@Model.EventId>Terug naar evenement</a>
+</div>
