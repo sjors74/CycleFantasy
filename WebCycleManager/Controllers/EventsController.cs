@@ -1,12 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
-using Domain.Context;
+﻿using Domain.Context;
 using Domain.Models;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using WebCycleManager.Models;
 
 namespace WebCycleManager.Controllers
@@ -73,16 +68,16 @@ namespace WebCycleManager.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("EventId,EventName,EventYear,StartDate,EndDate")] Event @event)
+        public async Task<IActionResult> Create([Bind("Id,Name,Year,StartDate,EndDate")] EventItemViewModel @event)
         {
             if (ModelState.IsValid)
             {
-                _context.Add(@event);
+                var e = CreateFromViewModel(@event);
+                _context.Add(e); 
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            var vm = CreateViewModel(@event);
-            return View(vm);
+            return View(@event);
         }
 
         // GET: Events/Edit/5
@@ -200,12 +195,17 @@ namespace WebCycleManager.Controllers
             var @event = _context.Events.Find(vm.Id);
             try
             {
-                    @event.EventName = vm.Name;
-                    @event.EventYear = vm.Year;
-                    @event.StartDate = vm.StartDate;
-                    @event.EndDate = vm.EndDate;
+                if (@event == null)
+                {
+                    @event = new Event();
+                }
+                @event.EventName = vm.Name;
+                @event.EventYear = vm.Year;
+                @event.StartDate = vm.StartDate;
+                @event.EndDate = vm.EndDate;
 
-                    return @event;
+                return @event;
+                        
             }
             catch
             {
