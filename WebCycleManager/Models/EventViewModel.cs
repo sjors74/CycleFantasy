@@ -27,7 +27,10 @@ namespace WebCycleManager.Models
         [DataType(DataType.Date)]
         public DateTime EndDate { get; set; }
         public int StagesInEvent { get; set; }
-        public IEnumerable<Stage>? Stages { get; set; }
+        public List<StageViewModel>? Stages { get; set; }
+        [DisplayName("Configuratie")]
+        public int? ConfigurationId { get; set; }
+        public int AantalPosities { get; set; }
         public string EventNameDescription
         {
             get

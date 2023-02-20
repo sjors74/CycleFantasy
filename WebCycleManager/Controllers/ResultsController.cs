@@ -51,8 +51,6 @@ namespace WebCycleManager.Controllers
                 }
                 var rvm = new ResultViewModel(stage.Id, stage.EventId, config.Id, $"Etappe {stage.StageName}: {stage.StartLocation}-{stage.FinishLocation}", numberOfconfigItems, resultItems);
 
-                //ViewData["CompetitorId"] = new SelectList(competitorsInEvent, "CompetitorInEventId", "Competitor.CompetitorName", "");
-                                
                 return View(rvm);
             }
             return NotFound();

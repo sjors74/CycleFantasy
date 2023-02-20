@@ -1,6 +1,7 @@
 ﻿using Domain.Context;
 using Domain.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using WebCycleManager.Models;
 
@@ -46,10 +47,24 @@ namespace WebCycleManager.Controllers
                 return NotFound();
             }
 
-            var stagesList = new List<Stage>(); //TO DO : Create ViewModel for stages?
-            foreach (var stage in _context.Stages.Where(e => e.EventId.Equals(@event.EventId)).OrderBy(c => c.StageOrder))
+            var stagesList = new List<StageViewModel>();
+            var stages = _context.Stages.Where(e => e.EventId.Equals(@event.EventId)).OrderBy(c => c.StageOrder).ToList();
+            foreach (var stage in stages)
             {
-                stagesList.Add(stage);
+                var stagesViewModel =
+                    new StageViewModel
+                    {
+                        StageId = stage.Id,
+                        StageName = stage.StageName,
+                        StageOrder = stage.StageOrder,
+                        StartLocation = stage.StartLocation,
+                        FinishLocation = stage.FinishLocation,
+                        EventId = stage.EventId,
+                        EventName = stage.Event.EventName
+                    };
+                stagesViewModel.AantalPosities = _context.Results.Where(r => r.StageId.Equals(stage.Id)).Count();
+                stagesList.Add(stagesViewModel);
+
             }
             var vm = CreateViewModel(@event);
             vm.Stages = stagesList;
@@ -60,6 +75,7 @@ namespace WebCycleManager.Controllers
         // GET: Events/Create
         public IActionResult Create()
         {
+            ViewData["ConfigurationId"] = new SelectList(_context.Configurations, "Id", "ConfigurationType");
             return View();
         }
 
@@ -68,7 +84,7 @@ namespace WebCycleManager.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Name,Year,StartDate,EndDate")] EventItemViewModel @event)
+        public async Task<IActionResult> Create([Bind("Id,Name,Year,StartDate,EndDate,ConfigurationId")] EventItemViewModel @event)
         {
             if (ModelState.IsValid)
             {
@@ -94,6 +110,7 @@ namespace WebCycleManager.Controllers
                 return NotFound();
             }
             var vm = CreateViewModel(@event);
+            ViewData["ConfigurationId"] = new SelectList(_context.Configurations, "Id", "ConfigurationType");
             return View(vm);
         }
 
@@ -102,7 +119,7 @@ namespace WebCycleManager.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Name,Year,StartDate,EndDate")] EventItemViewModel @event)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,Name,Year,StartDate,EndDate,ConfigurationId")] EventItemViewModel @event)
         {
             if (id != @event.Id)
             {
@@ -186,6 +203,7 @@ namespace WebCycleManager.Controllers
                 Year = @event.EventYear,
                 StartDate = (DateTime)@event.StartDate,
                 EndDate = (DateTime)@event.EndDate,
+                ConfigurationId = @event.ConfigurationId
             };
             return vm;
         }
@@ -203,6 +221,7 @@ namespace WebCycleManager.Controllers
                 @event.EventYear = vm.Year;
                 @event.StartDate = vm.StartDate;
                 @event.EndDate = vm.EndDate;
+                @event.ConfigurationId = vm.ConfigurationId;
 
                 return @event;
                         

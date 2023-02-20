@@ -23,11 +23,7 @@
             <td>
                 @if(Model.Results[i].CompetitorName == string.Empty)
                 {
-@*                   <select asp-for="@Model.Results[i].SelectedCompetitorId" asp-items="ViewBag.CompetitorId">
-                        <option value="0">Selecteer een renner...</option>
-                   </select>*@
-
-                            @Html.DropDownList($"Model.Results[{i}].SelectedCompetitorId",Model.Results[i].DropdownList, "-- selecteer --", "Value")
+                    @Html.DropDownList($"Model.Results[{i}].SelectedCompetitorId",Model.Results[i].DropdownList, "-- selecteer --", "Value")
                 }
                 else
                 {

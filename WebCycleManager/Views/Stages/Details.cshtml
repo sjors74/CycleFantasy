@@ -1,13 +1,11 @@
-﻿@model Domain.Models.Stage
+﻿@model StageViewModel
 
 @{
     ViewData["Title"] = "Details";
 }
 
-<h1>Details</h1>
-
 <div>
-    <h4>Etappe</h4>
+    <h4>Etappe @Model.StageNameLong</h4>
     <hr />
     <dl class="row">
         <dt class = "col-sm-2">
@@ -35,14 +33,20 @@
             @Html.DisplayFor(model => model.FinishLocation)
         </dd>
         <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Event)
+            @Html.DisplayNameFor(model => model.EventName)
         </dt>
         <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Event.EventName)
+            @Html.DisplayFor(model => model.EventName)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.EventYear)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.EventYear)
         </dd>
     </dl>
 </div>
 <div>
-    <a asp-action="Edit" asp-route-id="@Model?.Id">Wijzig</a> |
+    <a asp-action="Edit" asp-route-id="@Model?.StageId">Wijzig</a> |
     <a asp-action="Index">Terug naar de lijst</a>
 </div>

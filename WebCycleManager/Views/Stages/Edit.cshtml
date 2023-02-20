@@ -1,18 +1,16 @@
-﻿@model Domain.Models.Stage
+﻿@model StageViewModel
 
 @{
     ViewData["Title"] = "Edit";
 }
 
-<h1>Wijzig</h1>
-
-<h4>Etappe</h4>
+<h4>@Model.StageNameLong</h4>
 <hr />
 <div class="row">
     <div class="col-md-4">
         <form asp-action="Edit">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <input type="hidden" asp-for="Id" />
+            <input type="hidden" asp-for="StageId" />
             <div class="form-group">
                 <label asp-for="StageName" class="control-label"></label>
                 <input asp-for="StageName" class="form-control" />

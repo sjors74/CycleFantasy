@@ -32,13 +32,25 @@ namespace WebCycleManager.Controllers
                 eventSelectList.Add(new SelectListItem { Text = string.Concat(e.EventName, " ", e.EventYear), Value = e.EventId.ToString() });
             }
             vm.Events = eventSelectList;
-            var databaseContext = _context.Stages;
+            var stages = _context.Stages;
+
+            //if search filter has value, return filtered stage list
             if (searchEventId > 0)
             {
-                vm.Stages = await databaseContext.Where(e => e.EventId == searchEventId).ToListAsync();
+                var stagesDb = await stages.Where(e => e.EventId == searchEventId).ToListAsync();
+                foreach(var s in stagesDb)
+                {
+                    vm.Stages.Add(CreateViewModel(s));
+                }    
                 return View(vm);
             }
-            vm.Stages = await databaseContext.ToListAsync();
+
+
+            foreach (var s in stages)
+            {
+                vm.Stages.Add(CreateViewModel(s));
+            }
+
             return View(vm);
         }
 
@@ -57,7 +69,9 @@ namespace WebCycleManager.Controllers
                 return NotFound();
             }
 
-            return View(stage);
+            var vm = CreateViewModel(stage);
+
+            return View(vm);
         }
 
         // GET: Stages/Create
@@ -72,11 +86,13 @@ namespace WebCycleManager.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,StageName,StageOrder,StartLocation,FinishLocation,EventId")] Stage stage)
+        public async Task<IActionResult> Create([Bind("StageId,StageName,StageOrder,StartLocation,FinishLocation,EventId")] StageViewModel stage)
         {
             if (ModelState.IsValid)
             {
-                _context.Add(stage);
+                var s = CreateFromViewModel(stage);
+
+                _context.Add(s);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
@@ -97,8 +113,9 @@ namespace WebCycleManager.Controllers
             {
                 return NotFound();
             }
+            var vm = CreateViewModel(stage);
             ViewData["EventId"] = new SelectList(_context.Events, "EventId", "EventName", stage.EventId);
-            return View(stage);
+            return View(vm);
         }
 
         // POST: Stages/Edit/5
@@ -106,9 +123,9 @@ namespace WebCycleManager.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,StageName,StageOrder,StartLocation,FinishLocation,EventId")] Stage stage)
+        public async Task<IActionResult> Edit(int id, [Bind("StageId,StageName,StageOrder,StartLocation,FinishLocation,EventId")] StageViewModel stage)
         {
-            if (id != stage.Id)
+            if (id != stage.StageId)
             {
                 return NotFound();
             }
@@ -117,12 +134,14 @@ namespace WebCycleManager.Controllers
             {
                 try
                 {
-                    _context.Update(stage);
+                    var s = CreateFromViewModel(stage);
+
+                    _context.Update(s);
                     await _context.SaveChangesAsync();
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!StageExists(stage.Id))
+                    if (!StageExists(stage.StageId))
                     {
                         return NotFound();
                     }
@@ -152,8 +171,8 @@ namespace WebCycleManager.Controllers
             {
                 return NotFound();
             }
-
-            return View(stage);
+            var vm = CreateViewModel(stage);
+            return View(vm);
         }
 
         // POST: Stages/Delete/5
@@ -178,6 +197,45 @@ namespace WebCycleManager.Controllers
         private bool StageExists(int id)
         {
           return (_context.Stages?.Any(e => e.Id == id)).GetValueOrDefault();
+        }
+
+        public StageViewModel CreateViewModel(Stage stage)
+        {
+            var vm = new StageViewModel
+            {
+                StageId = stage.Id,
+                StageName = stage.StageName,
+                StageOrder = stage.StageOrder,
+                StartLocation = stage.StartLocation,
+                FinishLocation = stage.FinishLocation,
+                EventId = stage.EventId,
+                EventName = stage.Event.EventName,                
+                EventYear = stage.Event.EventYear,
+            };
+            return vm;
+        }
+
+        public Stage CreateFromViewModel(StageViewModel vm)
+        {
+            var stage = _context.Stages.Find(vm.StageId);
+            try
+            {
+                if (stage == null)
+                {
+                    stage = new Stage();
+                }
+                stage.StageName = vm.StageName;
+                stage.StageOrder = vm.StageOrder;
+                stage.StartLocation = vm.StartLocation;
+                stage.FinishLocation = vm.FinishLocation;
+                stage.EventId = vm.EventId;
+
+                return stage;
+            }
+            catch
+            {
+                throw;
+            }
         }
     }
 }

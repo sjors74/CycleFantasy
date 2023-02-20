@@ -24,21 +24,11 @@
 <table class="table">
     <thead>
         <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.Stages.First().StageName)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Stages.First().StartLocation)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Stages.First().FinishLocation)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Stages.First().Event.EventName)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Stages.First().Event.EventYear)
-            </th>
+            <th>@Html.DisplayName("Etappe")</th>
+            <th>@Html.DisplayName("Van") </th>
+            <th>@Html.DisplayName("Naar")</th>
+            <th>@Html.DisplayName("Evenement")</th>
+            <th>@Html.DisplayName("Jaar")</th>
             <th></th>
         </tr>
     </thead>
@@ -55,15 +45,15 @@
                 @Html.DisplayFor(modelItem => item.FinishLocation)
             </td>
             <td>
-                @Html.DisplayFor(modelItem => item.Event.EventName)
+                @Html.DisplayFor(modelItem => item.EventName)
             </td>
             <td>
-                @Html.DisplayFor(modelItem => item.Event.EventYear)
+                @Html.DisplayFor(modelItem => item.EventYear)
             </td>
             <td>
-                <a asp-action="Edit" asp-route-id="@item.Id">Wijzig</a> |
-                <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.Id">Verwijder</a>
+                <a asp-action="Edit" asp-route-id="@item.StageId">Wijzig</a> |
+                <a asp-action="Details" asp-route-id="@item.StageId">Details</a> |
+                <a asp-action="Delete" asp-route-id="@item.StageId">Verwijder</a>
             </td>
         </tr>
     }

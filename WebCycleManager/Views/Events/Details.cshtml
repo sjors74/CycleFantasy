@@ -41,13 +41,14 @@
                             @Html.DisplayFor(modelItem => item.FinishLocation)
                         </td>
                         <td>
-                            <a asp-controller="Stages" asp-action="Edit" asp-route-id="@item.Id">Wijzig</a> |
-                            <a asp-controller="Stages" asp-action="Details" asp-route-id="@item.Id">Details</a> |
-                            <a asp-controller="Stages" asp-action="Delete" asp-route-id="@item.Id">Verwijder</a>
+                            <a asp-controller="Stages" asp-action="Edit" asp-route-id="@item.StageId">Wijzig</a> |
+                            <a asp-controller="Stages" asp-action="Details" asp-route-id="@item.StageId">Details</a> |
+                            <a asp-controller="Stages" asp-action="Delete" asp-route-id="@item.StageId">Verwijder</a>
 
                         </td>
                         <td>
-                            <a class="text-danger"  asp-controller="Results" asp-action="Index" asp-route-stageId="@item.Id">Uitslag</a>
+                            <a class="text-danger"  asp-controller="Results" asp-action="Index" asp-route-stageId="@item.StageId">Uitslag</a> |
+                            @item.AantalPosities
                         </td>
                     </tr>
                 }
