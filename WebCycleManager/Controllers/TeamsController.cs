@@ -100,7 +100,7 @@ namespace WebCycleManager.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("TeamId,TeamName")] Team team)
+        public async Task<IActionResult> Edit(int id, [Bind("TeamId,TeamName,CountryId")] Team team)
         {
             if (id != team.TeamId)
             {
