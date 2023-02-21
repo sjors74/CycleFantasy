@@ -9,17 +9,30 @@ namespace WebCycle.Controllers
     [ApiController]
     public class CompetitorController : ControllerBase
     {
-        private readonly IUnitOfWork unitOfWork;
+        private readonly ICompetitorRepository competitorRepository;
 
-        public CompetitorController(IUnitOfWork unitOfWork)
+        public CompetitorController(ICompetitorRepository competitorRepository)
         {
-            this.unitOfWork = unitOfWork;
+            this.competitorRepository = competitorRepository;
         }
         [HttpGet]
-        public IEnumerable<Competitor> GetAllCompetitors()
+        public async Task<IEnumerable<Competitor>> GetCompetitors()
         {
-            var competitors = unitOfWork.Competitor.GetAll();
+            var competitors = await competitorRepository.GetAll();
             return competitors;
         }
+
+        [HttpGet("{id}", Name = "GetCompetitorById")]
+        public Competitor GetById(int id) 
+        {
+            return competitorRepository.GetById(id);
+        }
+
+        [HttpGet("{id}/team", Name = "GetCompetitorsByTeamId")]
+        public async Task<IEnumerable<Competitor>> GetByTeamId(int id)
+        {
+            return await competitorRepository.GetByTeamId(id);
+        }
+
     }
 }

@@ -8,22 +8,22 @@ namespace WebCycle.Controllers
     [ApiController]
     public class TeamController : ControllerBase
     {
-        private readonly IUnitOfWork unitOfWork;
-        public TeamController(IUnitOfWork unitOfWork)
+        private readonly ITeamRepository teamRepository;
+        public TeamController(ITeamRepository teamRepository)
         {
-            this.unitOfWork = unitOfWork;
+            this.teamRepository = teamRepository;
         }
 
         [HttpGet]
-        public IEnumerable<Team> GetAllTeams()
+        public async Task<IEnumerable<Team>> GetAllTeams()
         {
-            return unitOfWork.Team.GetAll();
+            return await teamRepository.GetAll();
         }
 
         [HttpGet("{id}", Name = "Get")]
         public Team GetTeam(int id) 
         {
-            return unitOfWork.Team.GetById(id);
+            return teamRepository.GetById(id);
         }
     }
 }

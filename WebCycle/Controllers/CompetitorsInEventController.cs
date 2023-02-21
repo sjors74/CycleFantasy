@@ -9,16 +9,24 @@ namespace WebCycle.Controllers
     [ApiController]
     public class CompetitorsInEventController : ControllerBase
     {
-        private readonly IUnitOfWork unitOfWork;
-        public CompetitorsInEventController(IUnitOfWork unitOfWork)
+        private readonly ICompetitorsInEventRepository competitorsInEventRepository;
+        public CompetitorsInEventController(ICompetitorsInEventRepository competitorsInEventRepository)
         {
-            this.unitOfWork = unitOfWork;
+            this.competitorsInEventRepository = competitorsInEventRepository;
         }
 
         [HttpGet("{id}", Name = "GetCompetitorsByEventId")]
-        public IEnumerable<CompetitorsInEvent> GetAll() //to do: make a custom method for eventId in repository
+        public async Task<IEnumerable<Competitor>> GetById(int id)
+        { 
+            var c = await competitorsInEventRepository.GetCompetitors(id);
+            return c;
+        }
+
+        [HttpGet("{id}/{number}", Name = "GetRandomCompetitorsByEventId")]
+        public async Task<IEnumerable<Competitor>> GetRandomById(int id, int number)
         {
-            return unitOfWork.CompetitorsInEvent.GetAll();
+            var c = await competitorsInEventRepository.GetRandomNumberofCompetitors(id, number);
+            return c;
         }
     }
 }

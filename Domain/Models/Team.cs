@@ -14,6 +14,7 @@ namespace Domain.Models
         public int? CountryId { get; set; }
         [NotMapped]
         public virtual Country? Country { get; set; }
+        
         public virtual ICollection<Competitor>? Competitors { get; set;}
     }
 }
