@@ -11,9 +11,9 @@ namespace DataAccessEF.TypeRepository
         { 
         }
 
-        public async Task<IEnumerable<Event>> GetActiveEvents(bool isActive)
+        public async Task<IEnumerable<Event>> GetActiveEvents()
         {
-            var eventList = await context.Events.Where(e => e.IsActive == isActive).ToListAsync();
+            var eventList = await context.Events.Where(e => e.IsActive == true).ToListAsync();
             return eventList;
 
         }
