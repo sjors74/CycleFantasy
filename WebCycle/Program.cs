@@ -15,9 +15,8 @@ builder.Services.AddTransient<ITeamRepository, TeamRepository>();
 builder.Services.AddTransient<ICompetitorRepository, CompetitorRepository>();
 builder.Services.AddTransient<ICompetitorsInEventRepository, CompetitorsInEventRepository>();
 builder.Services.AddTransient<IEventRepository, EventRepository>();
+builder.Services.AddTransient<IResultsRepository, ResultsRepository>();
 builder.Services.AddControllers();
-//.AddJsonOptions(x =>
-  //              x.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles);
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

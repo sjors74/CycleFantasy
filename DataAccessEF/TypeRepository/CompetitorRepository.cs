@@ -2,13 +2,14 @@
 using Domain.Interfaces;
 using Domain.Models;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 
 namespace DataAccessEF.TypeRepository
 {
     public class CompetitorRepository : GenericRepository<Competitor>, ICompetitorRepository
     {
-        public CompetitorRepository(DatabaseContext context) : base(context) { }
+        public CompetitorRepository(DatabaseContext context) : base(context) 
+        { 
+        }
 
         public async Task<IEnumerable<Competitor>> GetByTeamId(int teamId)
         {
