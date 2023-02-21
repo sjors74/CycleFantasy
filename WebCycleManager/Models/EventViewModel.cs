@@ -26,6 +26,8 @@ namespace WebCycleManager.Models
         [DisplayName("Einddatum")]
         [DataType(DataType.Date)]
         public DateTime EndDate { get; set; }
+        [DisplayName("Actief")]
+        public bool IsActive { get; set; }
         public int StagesInEvent { get; set; }
         public List<StageViewModel>? Stages { get; set; }
         [DisplayName("Configuratie")]

@@ -23,6 +23,9 @@
             <th>
                 @Html.DisplayName("Einddatum")
             </th>
+            <th>
+                @Html.DisplayName("Actief")
+            </th>
             <th colspan="2"></th>
         </tr>
     </thead>
@@ -41,6 +44,9 @@
             </td>
             <td>
                 @Html.DisplayFor(modelItem => item.EndDate)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.IsActive)
             </td>
             <td>
                 <a asp-action="Edit" asp-route-id="@item.Id">Bewerk</a> |

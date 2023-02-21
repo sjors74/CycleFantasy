@@ -84,7 +84,7 @@ namespace WebCycleManager.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Name,Year,StartDate,EndDate,ConfigurationId")] EventItemViewModel @event)
+        public async Task<IActionResult> Create([Bind("Id,Name,Year,StartDate,EndDate,ConfigurationId,IsActive")] EventItemViewModel @event)
         {
             if (ModelState.IsValid)
             {
@@ -119,7 +119,7 @@ namespace WebCycleManager.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Name,Year,StartDate,EndDate,ConfigurationId")] EventItemViewModel @event)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,Name,Year,StartDate,EndDate,ConfigurationId,IsActive")] EventItemViewModel @event)
         {
             if (id != @event.Id)
             {
@@ -203,6 +203,7 @@ namespace WebCycleManager.Controllers
                 Year = @event.EventYear,
                 StartDate = (DateTime)@event.StartDate,
                 EndDate = (DateTime)@event.EndDate,
+                IsActive = @event.IsActive,
                 ConfigurationId = @event.ConfigurationId
             };
             return vm;
@@ -221,6 +222,7 @@ namespace WebCycleManager.Controllers
                 @event.EventYear = vm.Year;
                 @event.StartDate = vm.StartDate;
                 @event.EndDate = vm.EndDate;
+                @event.IsActive = vm.IsActive;
                 @event.ConfigurationId = vm.ConfigurationId;
 
                 return @event;
