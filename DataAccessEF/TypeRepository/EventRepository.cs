@@ -11,10 +11,10 @@ namespace DataAccessEF.TypeRepository
         { 
         }
 
-        public async Task<IEnumerable<Event>> GetActiveEvents()
+        public async Task<IEnumerable<Event>> GetActiveEvents(int id)
         {
-            var eventList = await context.Events.Where(e => e.IsActive == true).ToListAsync();
-            return eventList;
+            var eventList = await context.Events.Where(e => e.EventId.Equals(id)).ToListAsync();
+            return eventList;   
 
         }
     }

@@ -15,5 +15,14 @@ namespace WebCycleApp.Models
         public int EventYear { get; set; }
         public DateTime? StartDate { get; set; }
         public DateTime? EndDate { get; set; }
+
+        public Event(int eventId, string eventName, int eventYear, DateTime? startDate, DateTime? endDate)
+        {
+            EventId = eventId;
+            EventName = eventName;
+            EventYear = eventYear;
+            StartDate = startDate;
+            EndDate = endDate;
+        }
     }
 }

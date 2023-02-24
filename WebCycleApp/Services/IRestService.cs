@@ -1,14 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using WebCycleApp.Models;
+﻿using WebCycleApp.Models;
 
 namespace WebCycleApp.Services
 {
     public interface IRestService
     {
-        Task<List<Event>> GetActiveEvents();
+        Task<Event> GetEventByEventId(int id);
+        Task<List<Competitor>> GetRandomCompetitorListByEventId(int id, int number);
     }
 }

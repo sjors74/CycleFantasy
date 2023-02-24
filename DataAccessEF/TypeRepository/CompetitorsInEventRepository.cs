@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DataAccessEF.TypeRepository
 {
-    public class CompetitorsInEventRepository: GenericRepository<CompetitorsInEvent>, ICompetitorsInEventRepository
+    public class CompetitorsInEventRepository: GenericRepository<Competitor>, ICompetitorsInEventRepository
     {
         public CompetitorsInEventRepository(DatabaseContext context) : base(context)
         {

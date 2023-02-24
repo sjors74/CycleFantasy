@@ -21,5 +21,6 @@ namespace WebCycleApp
         public static string BaseAddress =
     DeviceInfo.Platform == DevicePlatform.Android ? "http://10.0.2.2:5000" : "http://localhost:5000";
         public static string EventUrl = $"{BaseAddress}/api/event";
+        public static string CompetitorUrl = $"{BaseAddress}/api/competitorsinevent";
     }
 }

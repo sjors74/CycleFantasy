@@ -15,10 +15,10 @@ namespace WebCycle.Controllers
             this.eventRepository = eventRepository;
         }
 
-        [HttpGet(Name = "GetActiveEvent")]
-        public async Task<IEnumerable<Event>> GetEvent()
+        [HttpGet("{id}", Name = "GetActiveEvent")]
+        public async Task<IEnumerable<Event>> GetEvent(int id)
         {
-            return await eventRepository.GetActiveEvents();
+            return await eventRepository.GetActiveEvents(id);
         }
 
     }

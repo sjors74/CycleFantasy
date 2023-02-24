@@ -2,7 +2,7 @@
 
 namespace Domain.Interfaces
 {
-    public interface ICompetitorsInEventRepository : IGenericRepository<CompetitorsInEvent>
+    public interface ICompetitorsInEventRepository : IGenericRepository<Competitor>
     {
         Task<IEnumerable<Competitor>> GetCompetitors(int eventId);
 
