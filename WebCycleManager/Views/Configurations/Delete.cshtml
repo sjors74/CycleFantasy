@@ -1,5 +1,4 @@
-﻿@model Domain.Models.Configuration
-
+﻿@model ConfigurationViewModel
 @{
     ViewData["Title"] = "Delete";
 }
@@ -9,10 +8,10 @@
     <hr />
     <dl class="row">
         <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.ConfigurationType)
+            @Html.DisplayNameFor(model => model.ConfigurationName)
         </dt>
         <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.ConfigurationType)
+            @Html.DisplayFor(model => model.ConfigurationName)
         </dd>
     </dl>
     

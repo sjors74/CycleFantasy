@@ -2,42 +2,48 @@
 @{
     ViewData["Title"] = "Index";
 }
+    <h1>Ranglijst deelnemers</h1>
+    @if (Model.Any())
+    {
 
-<h1>Ranglijst deelnemers</h1>
-
-<table class="table">
+    <table class="table">
         <thead>
-        <tr>
-            <th>
-                @Html.DisplayName("Nr")
-            </th>
-            <th>
-                @Html.DisplayName("Naam")
-            </th>
-            <th>
-                @Html.DisplayName("Punten")
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var item in Model)
-        {
             <tr>
-                <td>
-                    @Html.DisplayFor(modelItem => item.Ranking)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.CompetitorName)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.Points)
-                </td>
-                <td>
-                    
-                </td>
+                <th>
+                    @Html.DisplayName("Nr")
+                </th>
+                <th>
+                    @Html.DisplayName("Naam")
+                </th>
+                <th>
+                    @Html.DisplayName("Punten")
+                </th>
+                <th></th>
             </tr>
-        }
-    </tbody>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.Ranking)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.CompetitorName)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.Points)
+                    </td>
+                    <td>
+
+                    </td>
+                </tr>
+            }
+        </tbody>
 </table>
-<a asp-controller="Events" asp-route-eventId="@Model.FirstOrDefault().EventId" asp-action="Index">Terug naar de lijst</a>
+}
+else
+{
+    <p>Geen resultaten om weer te geven.</p>
+}
+<a asp-controller="Events"  asp-action="Index">Terug naar de lijst</a>

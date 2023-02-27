@@ -40,5 +40,11 @@ namespace WebCycleManager.Models
                 return $"{Name} (van {StartDate.ToString("dd-MMMM")} tot {EndDate.ToString("dd-MMMM")} {Year})";
             }
         }
+        public bool HasStages
+        {
+            get 
+            { 
+                return Stages != null; }
+        }
     }
 }

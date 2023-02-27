@@ -1,4 +1,4 @@
-﻿@model Domain.Models.Configuration
+﻿@model ConfigurationViewModel
 
 @{
     ViewData["Title"] = "Details";
@@ -10,21 +10,22 @@
     <hr />
     <dl class="row">
         <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.ConfigurationType)
+            @Html.DisplayNameFor(model => model.ConfigurationName)
         </dt>
         <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.ConfigurationType)
+            @Html.DisplayFor(model => model.ConfigurationName)
         </dd>
     </dl>
 </div>
 <div>
-    <a asp-controller="ConfigurationItems" asp-action="Create" asp-route-configurationId="@Model.Id">Maak nieuw configuratie-item voor @Model.ConfigurationType</a>
+    <a asp-controller="ConfigurationItems" asp-action="Create" asp-route-configurationId="@Model.Id">Maak nieuw configuratie-item voor @Model.ConfigurationName</a>
 </div>
 <table class="table">
     <thead>
         <tr>
-            <th>@Html.DisplayNameFor(model => model.ConfigurationItems.FirstOrDefault().Position)</th>
-            <th>@Html.DisplayNameFor(model => model.ConfigurationItems.FirstOrDefault().Score)</th>
+            <th>@Html.DisplayName("Positie")</th>
+            <th>@Html.DisplayName("Score")</th>
+            <th></th>
         </tr>
     </thead>
     <tbody>

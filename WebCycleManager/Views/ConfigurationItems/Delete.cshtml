@@ -1,4 +1,4 @@
-﻿@model Domain.Models.ConfigurationItem
+﻿@model ConfigurationItemViewModel
 
 @{
     ViewData["Title"] = "Delete";
@@ -21,10 +21,10 @@
             @Html.DisplayFor(model => model.Score)
         </dd>
         <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Configuration)
+            @Html.DisplayNameFor(model => model.ConfigurationId)
         </dt>
         <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Configuration.ConfigurationType)
+            @Html.DisplayFor(model => model.ConfigurationId)
         </dd>
     </dl>
     

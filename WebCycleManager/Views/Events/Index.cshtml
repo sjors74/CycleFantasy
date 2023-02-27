@@ -54,8 +54,9 @@
                 <a asp-action="Delete" asp-route-id="@item.Id">Verwijder</a>
             </td>
             <td>
-                    <a asp-controller="CompetitorsInEvents" asp-route-eventId="@item.Id" asp-action="Index">Deelnemers</a> |
-                    <a asp-controller="Points" asp-route-eventId="@item.Id" asp-action="Index">Punten</a>
+                    <a asp-controller="CompetitorsInEvents" asp-route-eventId="@item.Id" asp-action="Index">Deelnemers</a>
+                  | <a asp-controller = "Points" asp-route-eventId = "@item.Id" asp-action = "Index">Punten</a>
+
             </td>
         </tr>
     }

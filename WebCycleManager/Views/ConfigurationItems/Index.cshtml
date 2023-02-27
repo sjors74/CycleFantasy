@@ -1,10 +1,10 @@
-﻿@model IEnumerable<Domain.Models.ConfigurationItem>
+﻿@model IEnumerable<ConfigurationItemViewModel>
 
 @{
     ViewData["Title"] = "Index";
 }
 
-<h1>Index</h1>
+<h1>Configuration items</h1>
 
 <p>
     <a asp-action="Create">Create New</a>
@@ -19,7 +19,7 @@
                 @Html.DisplayNameFor(model => model.Score)
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.Configuration)
+                @Html.DisplayNameFor(model => model.ConfigurationId)
             </th>
             <th></th>
         </tr>
@@ -34,7 +34,7 @@
                 @Html.DisplayFor(modelItem => item.Score)
             </td>
             <td>
-                @Html.DisplayFor(modelItem => item.Configuration.ConfigurationType)
+                @Html.DisplayFor(modelItem => item.ConfigurationId)
             </td>
             <td>
                 <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |

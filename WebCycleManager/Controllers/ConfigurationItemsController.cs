@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Domain.Context;
 using Domain.Models;
+using WebCycleManager.Models;
 
 namespace WebCycleManager.Controllers
 {
@@ -46,8 +47,9 @@ namespace WebCycleManager.Controllers
         }
 
         // GET: ConfigurationItems/Create
-        public IActionResult Create()
+        public IActionResult Create(int configurationId)
         {
+
             ViewData["ConfigurationId"] = new SelectList(_context.Configurations, "Id", "ConfigurationType");
             return View();
         }
@@ -57,33 +59,36 @@ namespace WebCycleManager.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Position,Score,ConfigurationId")] ConfigurationItem configurationItem)
+        public async Task<IActionResult> Create([Bind("Id,Position,Score,ConfigurationId")] ConfigurationItemViewModel vm)
         {
             if (ModelState.IsValid)
             {
+                var configurationItem = new ConfigurationItem { ConfigurationId = vm.ConfigurationId, Position = vm.Position, Score = vm.Score };
                 _context.Add(configurationItem);
                 await _context.SaveChangesAsync();
-                return RedirectToAction("Details", "Configurations", new { id = configurationItem.ConfigurationId });
+                return RedirectToAction("Details", "Configurations", new { id = vm.ConfigurationId });
             }
-            ViewData["ConfigurationId"] = new SelectList(_context.Configurations, "Id", "ConfigurationType", configurationItem.ConfigurationId);
-            return View(configurationItem);
+            ViewData["ConfigurationId"] = new SelectList(_context.Configurations, "Id", "ConfigurationType", vm.ConfigurationId);
+            return View(vm);
         }
 
         // GET: ConfigurationItems/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
-            if (id == null || _context.ConfigurationItems == null)
+            if (id == null)
             {
                 return NotFound();
             }
+
 
             var configurationItem = await _context.ConfigurationItems.FindAsync(id);
             if (configurationItem == null)
             {
                 return NotFound();
             }
-            ViewData["ConfigurationId"] = new SelectList(_context.Configurations, "Id", "ConfigurationType", configurationItem.ConfigurationId);
-            return View(configurationItem);
+            var vm = new ConfigurationItemViewModel { Id = configurationItem.Id, Score = configurationItem.Score, Position = configurationItem.Position, ConfigurationId = configurationItem.ConfigurationId };
+            ViewData["ConfigurationId"] = new SelectList(_context.Configurations, "Id", "ConfigurationType", vm.ConfigurationId);
+            return View(vm);
         }
 
         // POST: ConfigurationItems/Edit/5
@@ -91,9 +96,9 @@ namespace WebCycleManager.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Position,Score,ConfigurationId")] ConfigurationItem configurationItem)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,Position,Score,ConfigurationId")] ConfigurationItemViewModel vm)
         {
-            if (id != configurationItem.Id)
+            if (id != vm.Id)
             {
                 return NotFound();
             }
@@ -102,12 +107,19 @@ namespace WebCycleManager.Controllers
             {
                 try
                 {
-                    _context.Update(configurationItem);
-                    await _context.SaveChangesAsync();
+                    var configurationItem = await _context.ConfigurationItems.FindAsync(vm.Id);
+                    if(configurationItem != null)
+                    { 
+                        configurationItem.Position = vm.Position;
+                        configurationItem.Score = vm.Score;
+                        configurationItem.ConfigurationId = vm.ConfigurationId;
+                        _context.Update(configurationItem);
+                        await _context.SaveChangesAsync();
+                    }
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!ConfigurationItemExists(configurationItem.Id))
+                    if (!ConfigurationItemExists(vm.Id))
                     {
                         return NotFound();
                     }
@@ -116,10 +128,10 @@ namespace WebCycleManager.Controllers
                         throw;
                     }
                 }
-                return RedirectToAction("Details", "Configurations", new { id = configurationItem.ConfigurationId });
+                return RedirectToAction("Details", "Configurations", new { id = vm.ConfigurationId });
             }
-            ViewData["ConfigurationId"] = new SelectList(_context.Configurations, "Id", "ConfigurationType", configurationItem.ConfigurationId);
-            return View(configurationItem);
+            ViewData["ConfigurationId"] = new SelectList(_context.Configurations, "Id", "ConfigurationType", vm.ConfigurationId);
+            return View(vm);
         }
 
         // GET: ConfigurationItems/Delete/5
@@ -137,8 +149,8 @@ namespace WebCycleManager.Controllers
             {
                 return NotFound();
             }
-
-            return View(configurationItem);
+            var vm = new ConfigurationItemViewModel {  ConfigurationId= configurationItem.ConfigurationId, Score = configurationItem.Score, Position = configurationItem.Position, Id = configurationItem.Id };
+            return View(vm);
         }
 
         // POST: ConfigurationItems/Delete/5
