@@ -8,7 +8,7 @@ namespace DataAccessEF
     public class GenericRepository<T> : IGenericRepository<T> where T : class
     {
         protected readonly DatabaseContext context;
-        public GenericRepository(DatabaseContext context) 
+        public GenericRepository(DatabaseContext context)
         {
             this.context = context;
         }
@@ -46,6 +46,16 @@ namespace DataAccessEF
         public void RemoveRange(IEnumerable<T> entities)
         {
             context.Set<T>().RemoveRange(entities);
+        }
+
+        public void Update(T entity)
+        {
+            context.Set<T>().Update(entity);
+        }
+
+        public async Task SaveChangesAsync()
+        {
+            await context.SaveChangesAsync();
         }
     }
 }

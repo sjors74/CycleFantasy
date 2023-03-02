@@ -17,7 +17,7 @@ namespace WebCycleManager.Controllers
         }
 
         // GET: CompetitorsInEvents
-        public async Task<IActionResult> Index(int eventId, string FilterTeam = null)
+        public IActionResult Index(int eventId, string FilterTeam = "")
         {
             var deelnemers = _context.CompetitorsInEvent
                 .Include(c => c.Competitor)
@@ -38,13 +38,13 @@ namespace WebCycleManager.Controllers
                 var cvm = new CompetitorInEventViewModel { 
                         CompetitorId = d.CompetitorId, 
                         EventNumber = d.EventNumber, 
-                        FirstName = d.Competitor.FirstName, 
-                        LastName = d.Competitor.LastName, 
-                        TeamName = d.Competitor.Team.TeamName,
+                        FirstName = d.Competitor != null ?  d.Competitor.FirstName : string.Empty, 
+                        LastName = d.Competitor != null ? d.Competitor.LastName : string.Empty, 
+                        TeamName = d.Competitor != null && d.Competitor.Team != null ? d.Competitor.Team.TeamName : string.Empty,
                         CompetitorInEventId = d.CompetitorInEventId,
                         EventId = d.EventId,
-                        EventName = d.Event.EventName,
-                        TeamId = d.Competitor.TeamId
+                        EventName = d.Event != null ? d.Event.EventName : string.Empty,
+                        TeamId = d.Competitor != null ? d.Competitor.TeamId : 0
                 };
                 deelnemersViewModel.Add(cvm);
             }
@@ -58,7 +58,7 @@ namespace WebCycleManager.Controllers
                                       Value = x.TeamId.ToString(),
                                       Text = x.TeamName.ToString()
                                   });
-                vm.FilterTeam = FilterTeam;
+                vm.FilterTeam = FilterTeam == null ? string.Empty : FilterTeam;
 
                 return View(vm);
             }
@@ -112,17 +112,7 @@ namespace WebCycleManager.Controllers
             {
                 return NotFound();
             }
-            var vm = new CompetitorInEventViewModel
-            {
-                CompetitorId = competitorsInEvent.CompetitorId,
-                CompetitorInEventId = competitorsInEvent.CompetitorInEventId,
-                EventId = competitorsInEvent.EventId,
-                TeamName = competitorsInEvent.Competitor.Team.TeamName,
-                EventNumber = competitorsInEvent.EventNumber,
-                FirstName = competitorsInEvent.Competitor.FirstName,
-                LastName = competitorsInEvent.Competitor.LastName,
-                TeamId = competitorsInEvent.Competitor.TeamId
-            };
+            var vm = GetViewModel(competitorsInEvent);
             ViewData["CompetitorId"] = new SelectList(_context.Competitors, "CompetitorId", "FirstName", competitorsInEvent.CompetitorId);
             ViewData["EventId"] = new SelectList(_context.Events, "EventId", "EventName", competitorsInEvent.EventId);
             return View(vm);
@@ -166,8 +156,6 @@ namespace WebCycleManager.Controllers
                 }
                 return RedirectToAction(nameof(Index), new { eventId = vm.EventId, FilterTeam = vm.TeamId.ToString() });
             }
-            //ViewData["CompetitorId"] = new SelectList(_context.Competitors, "CompetitorId", "FirstName", competitorsInEvent.CompetitorId);
-            //ViewData["EventId"] = new SelectList(_context.Events, "EventId", "EventName", competitorInEvent.EventId);
             return View(vm);
         }
 
@@ -188,16 +176,7 @@ namespace WebCycleManager.Controllers
                 return NotFound();
             }
 
-            var vm = new CompetitorInEventViewModel { 
-                CompetitorId = competitorsInEvent.CompetitorId, 
-                CompetitorInEventId = competitorsInEvent.CompetitorInEventId, 
-                EventId = competitorsInEvent.EventId,
-                TeamName = competitorsInEvent.Competitor.Team.TeamName,
-                EventNumber = competitorsInEvent.EventNumber,
-                FirstName = competitorsInEvent.Competitor.FirstName,
-                LastName = competitorsInEvent.Competitor.LastName,
-                TeamId = competitorsInEvent.Competitor.TeamId
-            };
+            var vm = GetViewModel(competitorsInEvent);
             return View(vm);
         }
 
@@ -234,6 +213,22 @@ namespace WebCycleManager.Controllers
                                   select competitor).ToList();
 
             return Json(new SelectList(competitorsInEvent, "CompetitorId", "CompetitorName"));
+        }
+
+        private CompetitorInEventViewModel GetViewModel(CompetitorsInEvent competitorsInEvent)
+        {
+            var vm = new CompetitorInEventViewModel
+            {
+                CompetitorId = competitorsInEvent.CompetitorId,
+                CompetitorInEventId = competitorsInEvent.CompetitorInEventId,
+                EventId = competitorsInEvent.EventId,
+                TeamName = competitorsInEvent.Competitor.Team != null ? competitorsInEvent.Competitor.Team.TeamName : string.Empty,
+                EventNumber = competitorsInEvent.EventNumber,
+                FirstName = competitorsInEvent.Competitor.FirstName,
+                LastName = competitorsInEvent.Competitor.LastName,
+                TeamId = competitorsInEvent.Competitor.TeamId
+            };
+            return vm;
         }
     }
 }

@@ -32,5 +32,7 @@ namespace Domain.Models
                 return $"{FirstName} {LastName}";
             }
         }
+
+        public Competitor() { }
     }
 }

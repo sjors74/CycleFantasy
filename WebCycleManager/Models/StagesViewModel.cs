@@ -7,7 +7,7 @@ namespace WebCycleManager.Models
     {
         public List<StageViewModel> Stages { get; set; }
         public int CurrentSearchEventId { get; set; }
-        public List<SelectListItem> Events { get; set; }
+        public List<SelectListItem>? Events { get; set; }
         public StagesViewModel()
         {
             Stages = new List<StageViewModel>();

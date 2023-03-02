@@ -13,6 +13,6 @@ namespace Domain.Models
         public int EventNumber { get; set; }
         public virtual Event? Event { get; set; }
         public int CompetitorId { get; set; }
-        public virtual Competitor? Competitor { get; set; }
+        public virtual Competitor Competitor { get; set; } = new Competitor();
     }
 }

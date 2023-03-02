@@ -23,9 +23,9 @@ namespace WebCycle.Controllers
         }
 
         [HttpGet("{id}/{number}", Name = "GetRandomCompetitorsByEventId")]
-        public async Task<IEnumerable<Competitor>> GetRandomById(int id, int number)
+        public IEnumerable<Competitor> GetRandomById(int id, int number)
         {
-            var c = await competitorsInEventRepository.GetRandomNumberofCompetitors(id, number);
+            var c = competitorsInEventRepository.GetRandomNumberofCompetitors(id, number);
             return c;
         }
     }

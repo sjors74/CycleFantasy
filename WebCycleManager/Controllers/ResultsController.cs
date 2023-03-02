@@ -18,7 +18,7 @@ namespace WebCycleManager.Controllers
         }
 
         // GET: Results
-        public async Task<IActionResult> Index(int stageId)
+        public IActionResult Index(int stageId)
         {
             //first get stage-data
             var stage = _context.Stages.FirstOrDefault(s => s.Id.Equals(stageId));

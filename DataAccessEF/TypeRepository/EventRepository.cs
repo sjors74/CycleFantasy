@@ -15,7 +15,12 @@ namespace DataAccessEF.TypeRepository
         {
             var eventList = await context.Events.Where(e => e.EventId.Equals(id)).ToListAsync();
             return eventList;   
+        }
 
+        public async Task<IEnumerable<Event>> GetAllEvents()
+        {
+            var eventList = await context.Events.OrderByDescending(e => e.EventYear).ThenBy(e => e.StartDate).ToListAsync();
+            return eventList;
         }
     }
 }

@@ -163,13 +163,14 @@ namespace WebCycleManager.Controllers
                 return Problem("Entity set 'DatabaseContext.ConfigurationItems'  is null.");
             }
             var configurationItem = await _context.ConfigurationItems.FindAsync(id);
-            if (configurationItem != null)
+            if (configurationItem == null)
             {
-                _context.ConfigurationItems.Remove(configurationItem);
+                return NotFound();
             }
-            
+            var configurationId = configurationItem.ConfigurationId;
+            _context.ConfigurationItems.Remove(configurationItem);
             await _context.SaveChangesAsync();
-            return RedirectToAction("Details", "Configurations", new { id = configurationItem.ConfigurationId });
+            return RedirectToAction("Details", "Configurations", new { id = configurationId });
         }
 
         private bool ConfigurationItemExists(int id)

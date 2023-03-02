@@ -11,8 +11,8 @@ namespace WebCycleManager.Models
         public int EventYear { get; set; }
         [DisplayName("Deelnemers")]
         public List<CompetitorInEventViewModel> Competitors { get; set; }
-        public IEnumerable<SelectListItem> Teams { get; set; }
-        public string FilterTeam { get; set; }
+        public IEnumerable<SelectListItem> Teams { get; set; } = new List<SelectListItem>();
+        public string FilterTeam { get; set; } = string.Empty;
         public string EventNameLong
         {
             get

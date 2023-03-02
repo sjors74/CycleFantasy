@@ -209,8 +209,8 @@ namespace WebCycleManager.Controllers
                 StartLocation = stage.StartLocation,
                 FinishLocation = stage.FinishLocation,
                 EventId = stage.EventId,
-                EventName = stage.Event.EventName,                
-                EventYear = stage.Event.EventYear,
+                EventName = stage.Event == null ? string.Empty : stage.Event.EventName,                
+                EventYear = stage.Event == null ? int.MinValue : stage.Event.EventYear,
             };
             return vm;
         }
