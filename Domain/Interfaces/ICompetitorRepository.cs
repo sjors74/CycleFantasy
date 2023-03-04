@@ -6,5 +6,6 @@ namespace Domain.Interfaces
     {
         IQueryable<Competitor> GetAllCompetitors();
         Task<IEnumerable<Competitor>> GetByTeamId(int teamId);
+        Task<int> GetCompetitorsByCountry(int countryId);
     }
 }

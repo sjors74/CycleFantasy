@@ -21,5 +21,11 @@ namespace DataAccessEF.TypeRepository
             var competitors = await context.Competitors.Where(c => c.TeamId.Equals(teamId)).ToListAsync();
             return  competitors;
         }
+
+        public async Task<int> GetCompetitorsByCountry(int countryId)
+        {
+            var numberOfCompetitors = await context.Competitors.Where(c => c.CountryId.Equals(countryId)).CountAsync();
+            return numberOfCompetitors;
+        }
     }
 }
