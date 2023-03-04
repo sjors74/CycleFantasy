@@ -8,23 +8,24 @@ using Microsoft.EntityFrameworkCore;
 using Domain.Context;
 using Domain.Models;
 using WebCycleManager.Models;
+using Domain.Interfaces;
 
 namespace WebCycleManager.Controllers
 {
     public class ConfigurationsController : Controller
     {
-        private readonly DatabaseContext _context;
+        private readonly IConfigurationRepository _configurationRepository;
 
-        public ConfigurationsController(DatabaseContext context)
+        public ConfigurationsController(IConfigurationRepository configurationRepository)
         {
-            _context = context;
+           _configurationRepository = configurationRepository;
         }
 
         // GET: Configurations
         public async Task<IActionResult> Index()
         {
             var vm = new List<ConfigurationViewModel>();
-            var configurationsDb = await _context.Configurations.ToListAsync();
+            var configurationsDb = await _configurationRepository.GetAll();
             foreach(var configuration in configurationsDb)
             {
                 vm.Add(new ConfigurationViewModel { ConfigurationName = configuration.ConfigurationType, Id = configuration.Id });
@@ -42,8 +43,7 @@ namespace WebCycleManager.Controllers
                 return NotFound();
             }
 
-            var configuration = await _context.Configurations
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var configuration = _configurationRepository.GetById((int)id);
             if (configuration == null)
             {
                 return NotFound();
@@ -77,8 +77,8 @@ namespace WebCycleManager.Controllers
             if (ModelState.IsValid)
             {
                 var configuration = new Configuration { ConfigurationType = vm.ConfigurationName };
-                _context.Add(configuration);
-                await _context.SaveChangesAsync();
+                _configurationRepository.Add(configuration);
+                await _configurationRepository.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
             return View(vm);
@@ -92,7 +92,7 @@ namespace WebCycleManager.Controllers
                 return NotFound();
             }
             var vm = new ConfigurationViewModel();
-            var configuration = await _context.Configurations.FindAsync(id);
+            var configuration = _configurationRepository.GetById((int)id);
             if (configuration == null)
             {
                 return NotFound();
@@ -125,12 +125,12 @@ namespace WebCycleManager.Controllers
             {
                 try
                 {
-                    var configuration = await _context.Configurations.FindAsync(id);
+                    var configuration = _configurationRepository.GetById((int)id);
                     if (configuration != null)
                     {
                         configuration.ConfigurationType = vm.ConfigurationName;
-                        _context.Update(configuration);
-                        await _context.SaveChangesAsync();
+                        _configurationRepository.Update(configuration);
+                        await _configurationRepository.SaveChangesAsync();
                     }
                 }
                 catch (DbUpdateConcurrencyException)
@@ -157,8 +157,7 @@ namespace WebCycleManager.Controllers
                 return NotFound();
             }
 
-            var configuration = await _context.Configurations
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var configuration = _configurationRepository.GetById((int)id);
             if (configuration == null)
             {
                 return NotFound();
@@ -173,23 +172,19 @@ namespace WebCycleManager.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            if (_context.Configurations == null)
-            {
-                return Problem("Entity set 'DatabaseContext.Configurations'  is null.");
-            }
-            var configuration = await _context.Configurations.FindAsync(id);
+            var configuration = _configurationRepository.GetById(id);
             if (configuration != null)
             {
-                _context.Configurations.Remove(configuration);
+                _configurationRepository.Remove(configuration);
             }
-            
-            await _context.SaveChangesAsync();
+
+            await _configurationRepository.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
         private bool ConfigurationExists(int id)
         {
-          return (_context.Configurations?.Any(e => e.Id == id)).GetValueOrDefault();
+          return (_configurationRepository.GetById(id) != null);
         }
     }
 }
