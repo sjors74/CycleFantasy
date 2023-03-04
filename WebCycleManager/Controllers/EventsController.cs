@@ -65,7 +65,7 @@ namespace WebCycleManager.Controllers
                         EventName = stage.Event == null ? string.Empty : stage.Event.EventName
                     };
                 var results = await _resultsRepository.GetResultsByStageId(stage.Id);
-                stagesViewModel.AantalPosities = results.ToList().Count;
+                stagesViewModel.AantalPosities = results;
                 stagesList.Add(stagesViewModel);
 
             }

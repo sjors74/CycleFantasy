@@ -1,23 +1,22 @@
-﻿using Domain.Context;
+﻿using Domain.Interfaces;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using WebCycleManager.Models;
 
 namespace WebCycleManager.Controllers
 {
     public class PointsController : Controller
     {
-        private readonly DatabaseContext _context;
+        private readonly IResultsRepository _resultRepository;
         
-        public PointsController(DatabaseContext context)
+        public PointsController(IResultsRepository resultRepository)
         {
-            _context = context;
+            _resultRepository = resultRepository;
         }
-        public IActionResult Index(int eventId)
+        public async Task<IActionResult> Index(int eventId)
         {
             var vm = new List<PointsCompetitorInEventViewModel>();
-            var competitors = _context.Results.Where(r => r.Stage.EventId.Equals(eventId)).ToList();
-            var groupedList = competitors.GroupBy(g => g.CompetitorInEventId).Select(c => new PointsCompetitorInEventViewModel
+            var results = await _resultRepository.GetResultsByEventId(eventId);
+            var groupedList = results.GroupBy(g => g.CompetitorInEventId).Select(c => new PointsCompetitorInEventViewModel
             {
                 FirstName = c.First().CompetitorInEvent.Competitor.FirstName,
                 LastName = c.First().CompetitorInEvent.Competitor.LastName,
