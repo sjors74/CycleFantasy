@@ -11,6 +11,7 @@ builder.Services.AddDbContext<DatabaseContext>(x => x.UseLazyLoadingProxies().Us
 builder.Services.AddTransient<ICompetitorRepository, CompetitorRepository>();
 builder.Services.AddTransient<ICompetitorsInEventRepository, CompetitorsInEventRepository>();
 builder.Services.AddTransient<IConfigurationRepository, ConfigurationRepository>(); 
+builder.Services.AddTransient<IConfigurationItemRepository, ConfigurationItemRepository>();
 builder.Services.AddTransient<ICountryRepository, CountryRepository>();
 builder.Services.AddTransient<IEventRepository, EventRepository>();
 builder.Services.AddTransient<IResultsRepository, ResultsRepository>();

@@ -1,5 +1,4 @@
-﻿using Domain.Context;
-using Domain.Interfaces;
+﻿using Domain.Interfaces;
 using Domain.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
