@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace Domain.Models
 {
@@ -13,6 +14,7 @@ namespace Domain.Models
         public int EventNumber { get; set; }
         public virtual Event? Event { get; set; }
         public int CompetitorId { get; set; }
-        public virtual Competitor Competitor { get; set; } = new Competitor();
+        
+        public virtual Competitor? Competitor { get; set; }
     }
 }

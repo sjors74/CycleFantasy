@@ -17,7 +17,7 @@ namespace DataAccessEF.TypeRepository
         {
             var results = new List<ResultDto>();
             var resultsDb = await context.Results
-                .Include(c => c.CompetitorInEvent.Competitor)
+                .Include(c => c.CompetitorInEvent)
                 .Where(r => r.StageId == stageId)
                 .OrderBy(r => r.ConfigurationItem.Position).ToListAsync();
 

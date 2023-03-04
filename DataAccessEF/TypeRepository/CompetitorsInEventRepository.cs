@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DataAccessEF.TypeRepository
 {
-    public class CompetitorsInEventRepository: GenericRepository<Competitor>, ICompetitorsInEventRepository
+    public class CompetitorsInEventRepository: GenericRepository<CompetitorsInEvent>, ICompetitorsInEventRepository
     {
         public CompetitorsInEventRepository(DatabaseContext context) : base(context)
         {
@@ -13,8 +13,9 @@ namespace DataAccessEF.TypeRepository
 
         public async Task<IEnumerable<Competitor>> GetCompetitors(int eventId)
         {
-            var competitorsInEvent = context.CompetitorsInEvent.Include(c => c.Competitor).Where(c => c.EventId.Equals(eventId)).Select(c => c.Competitor);
-            return await competitorsInEvent.ToListAsync();
+            var competitorsInEvent = context.CompetitorsInEvent.Where(c => c.EventId.Equals(eventId)).Select(c => c.CompetitorId);
+            var competitors = context.Competitors.Where(c => competitorsInEvent.Contains(c.CompetitorId));
+            return await competitors.ToListAsync();
         }
 
         public IEnumerable<Competitor> GetRandomNumberofCompetitors(int eventId, int number)
@@ -29,6 +30,12 @@ namespace DataAccessEF.TypeRepository
         public static List<t> GetRandomElements<t>(IEnumerable<t> list, int elementsCount)
         {
             return list.OrderBy(x => Guid.NewGuid()).Take(elementsCount).ToList();
+        }
+
+        public async Task<CompetitorsInEvent> GetCompetitorsInEventByIds(int eventId, int competitorId)
+        {
+            return await context.CompetitorsInEvent.Where(e => e.EventId.Equals(eventId) && e.CompetitorId.Equals(competitorId)).FirstOrDefaultAsync();
+
         }
     }
 }

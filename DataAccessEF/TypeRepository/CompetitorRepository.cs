@@ -11,6 +11,11 @@ namespace DataAccessEF.TypeRepository
         { 
         }
 
+        public IQueryable<Competitor> GetAllCompetitors()
+        {
+            return context.Set<Competitor>();
+        }
+
         public async Task<IEnumerable<Competitor>> GetByTeamId(int teamId)
         {
             var competitors = await context.Competitors.Where(c => c.TeamId.Equals(teamId)).ToListAsync();

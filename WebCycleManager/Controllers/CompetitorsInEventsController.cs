@@ -1,4 +1,5 @@
 ﻿using Domain.Context;
+using Domain.Interfaces;
 using Domain.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -9,27 +10,28 @@ namespace WebCycleManager.Controllers
 {
     public class CompetitorsInEventsController : Controller
     {
-        private readonly DatabaseContext _context;
+        private ICompetitorsInEventRepository _competitorsInEventRepository;
+        private ICompetitorRepository _competitorRepository;
+        private IEventRepository _eventRepository;
+        private ITeamRepository _teamRepository;
 
-        public CompetitorsInEventsController(DatabaseContext context)
+        public CompetitorsInEventsController(ICompetitorsInEventRepository competitorsInEventRepository, ICompetitorRepository competitorRepository, IEventRepository eventRepository,
+            ITeamRepository teamRepository)
         {
-            _context = context;
+            _competitorsInEventRepository = competitorsInEventRepository;
+            _competitorRepository = competitorRepository;   
+            _eventRepository = eventRepository;
+            _teamRepository = teamRepository;
         }
 
         // GET: CompetitorsInEvents
-        public IActionResult Index(int eventId, string FilterTeam = "")
+        public async Task<IActionResult> Index(int eventId, string FilterTeam = "")
         {
-            var deelnemers = _context.CompetitorsInEvent
-                .Include(c => c.Competitor)
-                .Include(c => c.Event)
-                .Where(c => c.EventId.Equals(eventId))
-                .OrderBy(c => c.EventNumber)
-                .ToList();
-
+            var deelnemers = await _competitorsInEventRepository.GetCompetitors(eventId);
             var filteredDeelnemers = deelnemers;
-            if (FilterTeam != null)
+            if (!string.IsNullOrEmpty(FilterTeam))
             {
-                filteredDeelnemers = deelnemers.Where(t => t.Competitor.Team.TeamId.ToString() == FilterTeam).ToList();
+                filteredDeelnemers = deelnemers.Where(t => t.TeamId.ToString() == FilterTeam).ToList();
             }
 
             var deelnemersViewModel = new List<CompetitorInEventViewModel>();
@@ -37,22 +39,23 @@ namespace WebCycleManager.Controllers
             { 
                 var cvm = new CompetitorInEventViewModel { 
                         CompetitorId = d.CompetitorId, 
-                        EventNumber = d.EventNumber, 
-                        FirstName = d.Competitor != null ?  d.Competitor.FirstName : string.Empty, 
-                        LastName = d.Competitor != null ? d.Competitor.LastName : string.Empty, 
-                        TeamName = d.Competitor != null && d.Competitor.Team != null ? d.Competitor.Team.TeamName : string.Empty,
-                        CompetitorInEventId = d.CompetitorInEventId,
-                        EventId = d.EventId,
-                        EventName = d.Event != null ? d.Event.EventName : string.Empty,
-                        TeamId = d.Competitor != null ? d.Competitor.TeamId : 0
+                        EventNumber = GetCompetitorInEvent(eventId, d.CompetitorId).Result.EventNumber,
+                        FirstName = d.FirstName, 
+                        LastName = d.LastName, 
+                        TeamName = GetTeam(d.TeamId).TeamName,
+                        CompetitorInEventId = GetCompetitorInEvent(eventId, d.CompetitorId).Result.CompetitorInEventId,
+                        EventId =eventId,
+                        EventName = GetEvent(eventId).EventName,
+                        TeamId = d.TeamId
                 };
                 deelnemersViewModel.Add(cvm);
             }
-            var currentEvent = _context.Events.FirstOrDefault(e => e.EventId.Equals(eventId));
+            var currentEvent = _eventRepository.GetById(eventId);
             if (currentEvent != null)
             {
                 var vm = new CompetitorsInEventViewModel(deelnemersViewModel, currentEvent.EventName, currentEvent.EventYear, currentEvent.EventId);
-                vm.Teams =_context.Teams.Select(x =>
+                var teams = await _teamRepository.GetAll();
+                vm.Teams = teams.Select(x =>
                                   new SelectListItem()
                                   {
                                       Value = x.TeamId.ToString(),
@@ -66,12 +69,14 @@ namespace WebCycleManager.Controllers
         }
 
         // GET: CompetitorsInEvents/Create
-        public IActionResult Create(int eventId)
+        public async Task<IActionResult> Create(int eventId)
         {
-            var competitors = _context.Competitors.OrderBy(c => c.FirstName);
-            var teams = _context.Teams.OrderBy(c => c.TeamName);
-            ViewBag.ListOfTeams = teams;
-            ViewBag.ListOfCompetitors = competitors;
+            var competitors = await _competitorRepository.GetAll();
+            var competitorsList = competitors.OrderBy(c => c.FirstName).ToList();
+            var teams = await _teamRepository.GetAll();
+            var teamList = teams.OrderBy(c => c.TeamName).ToList();
+            ViewBag.ListOfTeams = teamList;
+            ViewBag.ListOfCompetitors = competitorsList;
             ViewBag.EventId = eventId;
             return View();
         }
@@ -89,32 +94,33 @@ namespace WebCycleManager.Controllers
                     int.TryParse(selectedCompetitorId, out int competitorId);
                     listOfCompetitorsInEvent.Add(new CompetitorsInEvent { CompetitorId = competitorId, EventId = eventId });
                 }
-
-                _context.AddRange(listOfCompetitorsInEvent);
-                await _context.SaveChangesAsync();
+                _competitorsInEventRepository.AddRange(listOfCompetitorsInEvent);
+                await _competitorsInEventRepository.SaveChangesAsync();
                 return RedirectToAction("Index", new { eventId } );
             }
-            ViewData["CompetitorId"] = new SelectList(_context.Competitors.OrderBy(c => c.FirstName), "CompetitorId", "CompetitorName");
-            ViewData["TeamId"] = new SelectList(_context.Teams, "TeamId", "TeamName");
+            ViewData["CompetitorId"] = new SelectList(_competitorRepository.GetAllCompetitors().OrderBy(c => c.FirstName), "CompetitorId", "CompetitorName");
+            ViewData["TeamId"] = new SelectList(await _teamRepository.GetAll(), "TeamId", "TeamName");
             return View();
         }
 
         // GET: CompetitorsInEvents/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
-            if (id == null || _context.CompetitorsInEvent == null)
+            if (id == null)
             {
                 return NotFound();
             }
 
-            var competitorsInEvent = await _context.CompetitorsInEvent.FindAsync(id);
+            var competitorsInEvent = _competitorsInEventRepository.GetById((int)id);
             if (competitorsInEvent == null)
             {
                 return NotFound();
             }
+            var competitor = _competitorRepository.GetById(competitorsInEvent.CompetitorId);
             var vm = GetViewModel(competitorsInEvent);
-            ViewData["CompetitorId"] = new SelectList(_context.Competitors, "CompetitorId", "FirstName", competitorsInEvent.CompetitorId);
-            ViewData["EventId"] = new SelectList(_context.Events, "EventId", "EventName", competitorsInEvent.EventId);
+            vm.TeamId = competitor.TeamId;
+            ViewData["CompetitorId"] = new SelectList(_competitorRepository.GetAllCompetitors().OrderBy(c => c.FirstName), "CompetitorId", "FirstName", competitorsInEvent.CompetitorId);
+            ViewData["EventId"] = new SelectList(await _eventRepository.GetAll(), "EventId", "EventName", competitorsInEvent.EventId);
             return View(vm);
         }
 
@@ -134,14 +140,14 @@ namespace WebCycleManager.Controllers
             {
                 try
                 {
-                    var competitorInEvent = await _context.CompetitorsInEvent.FindAsync(id);
+                    var competitorInEvent = _competitorsInEventRepository.GetById(id);
                     if (competitorInEvent == null) 
                     { 
                         return NotFound(); 
                     }
                     competitorInEvent.EventNumber = vm.EventNumber;
-                    _context.Update(competitorInEvent);
-                    await _context.SaveChangesAsync();
+                    _competitorsInEventRepository.Update(competitorInEvent);
+                    await _competitorsInEventRepository.SaveChangesAsync();
                 }
                 catch (DbUpdateConcurrencyException)
                 {
@@ -162,15 +168,12 @@ namespace WebCycleManager.Controllers
         // GET: CompetitorsInEvents/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
-            if (id == null || _context.CompetitorsInEvent == null)
+            if (id == null)
             {
                 return NotFound();
             }
 
-            var competitorsInEvent = await _context.CompetitorsInEvent
-                .Include(c => c.Competitor)
-                .Include(c => c.Event)
-                .FirstOrDefaultAsync(m => m.CompetitorInEventId == id);
+            var competitorsInEvent = _competitorsInEventRepository.GetById((int)id);
             if (competitorsInEvent == null)
             {
                 return NotFound();
@@ -185,15 +188,11 @@ namespace WebCycleManager.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            if (_context.CompetitorsInEvent == null)
-            {
-                return Problem("Entity set 'DatabaseContext.CompetitorsInEvent'  is null.");
-            }
-            var competitorsInEvent = await _context.CompetitorsInEvent.FindAsync(id);
+            var competitorsInEvent = _competitorsInEventRepository.GetById((int)id);
             if (competitorsInEvent != null)
             {
-                _context.CompetitorsInEvent.Remove(competitorsInEvent);
-                await _context.SaveChangesAsync();
+                _competitorsInEventRepository.Remove(competitorsInEvent);
+                await _competitorsInEventRepository.SaveChangesAsync();
                 return RedirectToAction(nameof(Index), new { eventId = competitorsInEvent.EventId });
             }
             
@@ -202,17 +201,13 @@ namespace WebCycleManager.Controllers
 
         private bool CompetitorsInEventExists(int id)
         {
-          return (_context.CompetitorsInEvent?.Any(e => e.CompetitorInEventId == id)).GetValueOrDefault();
+          return (_competitorsInEventRepository.GetById(id) != null);
         }
 
-        public JsonResult GetCompetitorForEvent(int teamId)
+        public async Task<JsonResult> GetCompetitorForEvent(int teamId)
         {
-            List<Competitor> competitorsInEvent = new List<Competitor>();
-            competitorsInEvent = (from competitor in _context.Competitors
-                                  where competitor.TeamId == teamId
-                                  select competitor).ToList();
-
-            return Json(new SelectList(competitorsInEvent, "CompetitorId", "CompetitorName"));
+            var competitors = await _competitorRepository.GetByTeamId(teamId);
+            return Json(new SelectList(competitors, "CompetitorId", "CompetitorName"));
         }
 
         private CompetitorInEventViewModel GetViewModel(CompetitorsInEvent competitorsInEvent)
@@ -229,6 +224,29 @@ namespace WebCycleManager.Controllers
                 TeamId = competitorsInEvent.Competitor.TeamId
             };
             return vm;
+        }
+
+        private Competitor GetCompetitor(int id)
+        {
+            return  _competitorRepository.GetById(id);
+        }
+
+        public async Task<CompetitorsInEvent> GetCompetitorInEvent(int eventId, int competitorId)
+        {
+            var c = await _competitorsInEventRepository.GetCompetitorsInEventByIds(eventId, competitorId);
+            return c;
+        }
+
+        private Team GetTeam(int id)
+        {
+            var t = _teamRepository.GetById(id);
+            return t;
+        }
+
+        public Event GetEvent(int id)
+        {
+            var e = _eventRepository.GetById(id);
+            return e;
         }
     }
 }

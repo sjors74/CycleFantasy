@@ -8,11 +8,11 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 var connectionString = builder.Configuration.GetConnectionString("CycleDb");
 builder.Services.AddDbContext<DatabaseContext>(x => x.UseLazyLoadingProxies().UseSqlServer(connectionString));
-builder.Services.AddTransient<IEventRepository, EventRepository>();
 builder.Services.AddTransient<ICompetitorRepository, CompetitorRepository>();
 builder.Services.AddTransient<ICompetitorsInEventRepository, CompetitorsInEventRepository>();
 builder.Services.AddTransient<IConfigurationRepository, ConfigurationRepository>(); 
 builder.Services.AddTransient<ICountryRepository, CountryRepository>();
+builder.Services.AddTransient<IEventRepository, EventRepository>();
 builder.Services.AddTransient<IResultsRepository, ResultsRepository>();
 builder.Services.AddTransient<IStageRepository, StageRepository>();
 builder.Services.AddTransient<ITeamRepository, TeamRepository>();
