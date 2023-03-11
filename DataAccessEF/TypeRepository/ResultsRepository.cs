@@ -40,7 +40,11 @@ namespace DataAccessEF.TypeRepository
 
         public async Task<int> GetResultsByStageId(int stageId)
         {
-            return 0;
+            var results = await context.Results
+                                .Include(s => s.Stage)
+                                .Where(s => s.StageId == stageId)
+                                .ToListAsync();
+            return results.Count;
         }
     }
 }
