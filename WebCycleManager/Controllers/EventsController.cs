@@ -43,7 +43,7 @@ namespace WebCycleManager.Controllers
                 return NotFound();
             }
 
-            var @event = _eventRepository.GetById((int)id);
+            var @event = await _eventRepository.GetById((int)id);
             if (@event == null)
             {
                 return NotFound();
@@ -92,7 +92,7 @@ namespace WebCycleManager.Controllers
         {
             if (ModelState.IsValid)
             {
-                var e = CreateFromViewModel(@event);
+                var e = await CreateFromViewModel(@event);
                 _eventRepository.Add(e);
                 await _eventRepository.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
@@ -108,7 +108,7 @@ namespace WebCycleManager.Controllers
                 return NotFound();
             }
 
-            var @event = _eventRepository.GetById((int)id);
+            var @event = await _eventRepository.GetById((int)id);
             if (@event == null)
             {
                 return NotFound();
@@ -135,7 +135,7 @@ namespace WebCycleManager.Controllers
             {
                 try
                 {
-                    var e = CreateFromViewModel(@event);
+                    var e = await CreateFromViewModel(@event);
 
                     _eventRepository.Update(e);
                     await _eventRepository.SaveChangesAsync();
@@ -158,14 +158,14 @@ namespace WebCycleManager.Controllers
         }
 
         // GET: Events/Delete/5
-        public IActionResult Delete(int? id)
+        public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
             {
                 return NotFound();
             }
 
-            var @event = _eventRepository.GetById((int)id);
+            var @event = await _eventRepository.GetById((int)id);
             if (@event == null)
             {
                 return NotFound();
@@ -180,7 +180,7 @@ namespace WebCycleManager.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var @event = _eventRepository.GetById(id);
+            var @event = await _eventRepository.GetById(id);
             if (@event != null)
             {
                 _eventRepository.Remove(@event);
@@ -205,9 +205,9 @@ namespace WebCycleManager.Controllers
             return vm;
         }
 
-        public Event CreateFromViewModel(EventItemViewModel vm)
+        public async Task<Event> CreateFromViewModel(EventItemViewModel vm)
         {
-            var @event = _eventRepository.GetById(vm.Id);
+            var @event = await _eventRepository.GetById(vm.Id);
             try
             {
                 if (@event == null)

@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
-using System.Runtime.CompilerServices;
+using System.Text.Json.Serialization;
 
 namespace Domain.Models
 {
@@ -21,6 +21,7 @@ namespace Domain.Models
 
         public bool IsActive { get; set; } = false;
         public int? ConfigurationId { get; set; }
+        [JsonIgnore]
         public virtual Configuration? Configuration {get;set;}
     }
 }

@@ -23,9 +23,9 @@ namespace WebCycle.Controllers
         }
 
         [HttpGet("{id}", Name = "GetCompetitorById")]
-        public Competitor GetById(int id) 
+        public async Task<Competitor> GetById(int id) 
         {
-            return competitorRepository.GetById(id);
+            return await competitorRepository.GetById(id);
         }
 
         [HttpGet("{id}/team", Name = "GetCompetitorsByTeamId")]

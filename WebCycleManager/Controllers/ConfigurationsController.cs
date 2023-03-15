@@ -37,7 +37,7 @@ namespace WebCycleManager.Controllers
                 return NotFound();
             }
 
-            var configuration = _configurationRepository.GetById((int)id);
+            var configuration = await _configurationRepository.GetById((int)id);
             if (configuration == null)
             {
                 return NotFound();
@@ -86,7 +86,7 @@ namespace WebCycleManager.Controllers
                 return NotFound();
             }
             var vm = new ConfigurationViewModel();
-            var configuration = _configurationRepository.GetById((int)id);
+            var configuration = await _configurationRepository.GetById((int)id);
             if (configuration == null)
             {
                 return NotFound();
@@ -119,7 +119,7 @@ namespace WebCycleManager.Controllers
             {
                 try
                 {
-                    var configuration = _configurationRepository.GetById((int)id);
+                    var configuration = await _configurationRepository.GetById((int)id);
                     if (configuration != null)
                     {
                         configuration.ConfigurationType = vm.ConfigurationName;
@@ -151,7 +151,7 @@ namespace WebCycleManager.Controllers
                 return NotFound();
             }
 
-            var configuration = _configurationRepository.GetById((int)id);
+            var configuration = await _configurationRepository.GetById((int)id);
             if (configuration == null)
             {
                 return NotFound();
@@ -166,7 +166,7 @@ namespace WebCycleManager.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var configuration = _configurationRepository.GetById(id);
+            var configuration = await _configurationRepository.GetById(id);
             if (configuration != null)
             {
                 _configurationRepository.Remove(configuration);

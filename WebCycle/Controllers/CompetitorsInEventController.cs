@@ -1,4 +1,6 @@
-﻿using Domain.Interfaces;
+﻿using AutoMapper;
+using Domain.Dto;
+using Domain.Interfaces;
 using Domain.Models;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,23 +12,28 @@ namespace WebCycle.Controllers
     public class CompetitorsInEventController : ControllerBase
     {
         private readonly ICompetitorsInEventRepository competitorsInEventRepository;
-        public CompetitorsInEventController(ICompetitorsInEventRepository competitorsInEventRepository)
+        private readonly IMapper _mapper;
+
+        public CompetitorsInEventController(ICompetitorsInEventRepository competitorsInEventRepository, IMapper mapper)
         {
             this.competitorsInEventRepository = competitorsInEventRepository;
+            this._mapper = mapper;
         }
 
         [HttpGet("{id}", Name = "GetCompetitorsByEventId")]
-        public async Task<IEnumerable<Competitor>> GetById(int id)
+        public async Task<IActionResult> GetById(int id)
         { 
             var c = await competitorsInEventRepository.GetCompetitors(id);
-            return c;
+            var competitorsResponse = _mapper.Map<List<CompetitorDto>>(c);
+            return Ok(competitorsResponse);
         }
 
         [HttpGet("{id}/{number}", Name = "GetRandomCompetitorsByEventId")]
-        public IEnumerable<Competitor> GetRandomById(int id, int number)
+        public async Task<IActionResult> GetRandomById(int id, int number)
         {
-            var c = competitorsInEventRepository.GetRandomNumberofCompetitors(id, number);
-            return c;
+            var c = await competitorsInEventRepository.GetRandomNumberofCompetitors(id, number);
+            var competitorsResponse = _mapper.Map<List<CompetitorDto>>(c);
+            return Ok(competitorsResponse);
         }
     }
 }

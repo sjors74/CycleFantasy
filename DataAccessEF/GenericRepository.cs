@@ -2,6 +2,7 @@
 using Domain.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
+using System.Runtime.CompilerServices;
 
 namespace DataAccessEF
 {
@@ -33,9 +34,9 @@ namespace DataAccessEF
             return await context.Set<T>().ToListAsync();
         }
 
-        public T GetById(int id)
+        public async Task<T> GetById(int id)
         {
-            return context.Set<T>().Find(id);
+            return await context.Set<T>().FindAsync(id);
         }
 
         public void Remove(T entity)

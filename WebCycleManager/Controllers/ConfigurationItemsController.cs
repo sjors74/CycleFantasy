@@ -75,7 +75,7 @@ namespace WebCycleManager.Controllers
                 return NotFound();
             }
 
-            var configurationItem = _configurationItemRepository.GetById((int)id);
+            var configurationItem = await _configurationItemRepository.GetById((int)id);
             if (configurationItem == null)
             {
                 return NotFound();
@@ -101,7 +101,7 @@ namespace WebCycleManager.Controllers
             {
                 try
                 {
-                    var configurationItem = _configurationItemRepository.GetById(vm.Id);
+                    var configurationItem = await _configurationItemRepository.GetById(vm.Id);
                     if(configurationItem != null)
                     { 
                         configurationItem.Position = vm.Position;
@@ -136,7 +136,7 @@ namespace WebCycleManager.Controllers
                 return NotFound();
             }
 
-            var configurationItem = _configurationItemRepository.GetById((int)id);
+            var configurationItem = await _configurationItemRepository.GetById((int)id);
             if (configurationItem == null)
             {
                 return NotFound();
@@ -150,7 +150,7 @@ namespace WebCycleManager.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var configurationItem = _configurationItemRepository.GetById(id);
+            var configurationItem = await _configurationItemRepository.GetById(id);
             if (configurationItem == null)
             {
                 return NotFound();

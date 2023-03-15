@@ -21,9 +21,9 @@ namespace WebCycle.Controllers
         }
 
         [HttpGet("{id}", Name = "Get")]
-        public Team GetTeam(int id) 
+        public async Task<Team> GetTeam(int id) 
         {
-            return teamRepository.GetById(id);
+            return await teamRepository.GetById(id);
         }
     }
 }

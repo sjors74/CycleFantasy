@@ -38,13 +38,13 @@ namespace WebCycleManager.Controllers
         }
 
         // GET: Teams/Details/5
-        public IActionResult Details(int? id)
+        public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
             {
                 return NotFound();
             }
-            var team = _teamRepository.GetById((int)id);
+            var team = await _teamRepository.GetById((int)id);
             if (team == null)
             {
                 return NotFound();
@@ -166,7 +166,7 @@ namespace WebCycleManager.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var team = _teamRepository.GetById((int)id);
+            var team = await _teamRepository.GetById((int)id);
             if (team != null)
             {
                 _teamRepository.Remove(team);

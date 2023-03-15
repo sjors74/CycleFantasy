@@ -6,7 +6,7 @@ namespace Domain.Interfaces
     {
         Task<IEnumerable<Competitor>> GetCompetitors(int eventId);
 
-        IEnumerable<Competitor> GetRandomNumberofCompetitors(int eventId, int number);
+        Task<IEnumerable<Competitor>> GetRandomNumberofCompetitors(int eventId, int number);
 
         Task<CompetitorsInEvent> GetCompetitorsInEventByIds(int eventId, int competitorId);
     }

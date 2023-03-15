@@ -148,7 +148,7 @@ namespace WebCycleManager.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var country = _countryRepository.GetById((int)id);
+            var country =  await  _countryRepository.GetById((int)id);
             if (country != null)
             {
                 _countryRepository.Remove(country);

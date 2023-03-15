@@ -98,7 +98,7 @@ namespace WebCycleManager.Controllers
                 return NotFound();
             }
 
-            var competitor = _competitorRepository.GetById((int)id);
+            var competitor = await _competitorRepository.GetById((int)id);
             if (competitor == null)
             {
                 return NotFound();
@@ -166,7 +166,7 @@ namespace WebCycleManager.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var competitor = _competitorRepository.GetById((int)id);
+            var competitor = await _competitorRepository.GetById((int)id);
             if (competitor != null)
             {
                 _competitorRepository.Remove(competitor);

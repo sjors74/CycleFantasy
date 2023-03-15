@@ -1,38 +1,63 @@
 ﻿using DataAccessEF.TypeRepository;
 using Domain.Context;
 using Domain.Interfaces;
+using Domain.Models;
 
 namespace DataAccessEF.UnitOfWork
 {
-    public class UnitOfWork : IUnitOfWork
+    public class UnitOfWork : IDisposable
     {
         private DatabaseContext context;
-        public UnitOfWork(DatabaseContext context)
+        private GenericRepository<Competitor> competitorRepository;
+        private GenericRepository<CompetitorsInEvent> competitorsInEventRepository;
+        private GenericRepository<Event> eventRepository;
+        private GenericRepository<Team> teamRepository;
+
+        public GenericRepository<Competitor> CompetitorRepository
         {
-            this.context = context;
-            Competitor = new CompetitorRepository(this.context);
-            CompetitorsInEvent = new CompetitorsInEventRepository(this.context);
-            Event = new EventRepository(this.context);
-            Team = new TeamRepository(this.context);
+            get
+            {
+                if(this.competitorRepository == null)
+                {
+                    this.competitorRepository = new GenericRepository<Competitor>(context);
+                }
+                return this.competitorRepository;
+            }
         }
 
-        public ICompetitorRepository Competitor
+        public GenericRepository<CompetitorsInEvent> CompetitorsInEventRepository
         {
-            get; private set;
+            get
+            {
+                if(this.competitorsInEventRepository == null)
+                {
+                    this.competitorsInEventRepository = new GenericRepository<CompetitorsInEvent>(context);
+                }
+                return this.competitorsInEventRepository;
+            }
+        }
+        public GenericRepository<Event> EventRepository
+        {
+            get
+            {
+                if(eventRepository == null)
+                {
+                    eventRepository = new GenericRepository<Event>(context);
+                }
+                return eventRepository;
+            }
         }
 
-        public ICompetitorsInEventRepository CompetitorsInEvent
+        public GenericRepository<Team> Team
         {
-            get; private set;
-        }
-        public IEventRepository Event
-        {
-            get; private set;
-        }
-
-        public ITeamRepository Team
-        {
-            get; private set;
+            get
+            {
+                if(this.teamRepository == null)
+                {
+                    this.teamRepository = new GenericRepository<Team>(context);
+                }
+                return this.teamRepository;
+            }
         }
 
         public void Dispose()

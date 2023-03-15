@@ -18,7 +18,7 @@ namespace DataAccessEF.TypeRepository
             return await competitors.ToListAsync();
         }
 
-        public IEnumerable<Competitor> GetRandomNumberofCompetitors(int eventId, int number)
+        public async Task<IEnumerable<Competitor>> GetRandomNumberofCompetitors(int eventId, int number)
         {
             var competitorsInEvent = context.CompetitorsInEvent.Include(c => c.Competitor).Where(c => c.EventId.Equals(eventId)).Select(c => c.Competitor);
             var randomCompetitorsList = new List<Competitor>();

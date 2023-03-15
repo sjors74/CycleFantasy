@@ -11,9 +11,9 @@ namespace DataAccessEF.TypeRepository
         { 
         }
 
-        public async Task<IEnumerable<Event>> GetActiveEvents(int id)
+        public async Task<IEnumerable<Event>> GetActiveEvents()
         {
-            var eventList = await context.Events.Where(e => e.EventId.Equals(id)).ToListAsync();
+            var eventList = await context.Events.Where(e => e.IsActive.Equals(true)).ToListAsync();
             return eventList;   
         }
 
@@ -22,5 +22,12 @@ namespace DataAccessEF.TypeRepository
             var eventList = await context.Events.OrderByDescending(e => e.EventYear).ThenBy(e => e.StartDate).ToListAsync();
             return eventList;
         }
+
+        public async Task<Event> GetEventById(int id)
+        {
+            var e = await context.Events.Where(e => e.EventId.Equals(id)).FirstOrDefaultAsync();
+            return e;
+        }
+
     }
 }
