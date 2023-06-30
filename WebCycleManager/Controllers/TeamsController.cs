@@ -100,12 +100,13 @@ namespace WebCycleManager.Controllers
                 return NotFound();
             }
 
-            var team = _teamRepository.GetById((int)id);
+            var team = await _teamRepository.GetById((int)id);
             if (team == null)
             {
                 return NotFound();
             }
             ViewData["CountryId"] = new SelectList(await CountrySelectListHelper.GetOrderedCountries(_countryRepository), "CountryId", "CountryNameLong");
+
             return View(team);
         }
 
@@ -128,7 +129,7 @@ namespace WebCycleManager.Controllers
                     _teamRepository.Update(team);
                     await _teamRepository.SaveChangesAsync();
                 }
-                catch (DbUpdateConcurrencyException)
+                catch
                 {
                     if (!TeamExists(team.TeamId))
                     {

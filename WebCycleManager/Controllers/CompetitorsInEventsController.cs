@@ -148,7 +148,7 @@ namespace WebCycleManager.Controllers
                     _competitorsInEventRepository.Update(competitorInEvent);
                     await _competitorsInEventRepository.SaveChangesAsync();
                 }
-                catch (DbUpdateConcurrencyException)
+                catch
                 {
                     if (!CompetitorsInEventExists(vm.CompetitorInEventId))
                     {
