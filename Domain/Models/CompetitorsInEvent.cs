@@ -16,6 +16,6 @@ namespace Domain.Models
         public int CompetitorId { get; set; }
         
         public virtual Competitor? Competitor { get; set; }
-        public List<GameCompetitorEventPick> GameCompetitorEventPicks { get; set; } = new();
+        public virtual List<GameCompetitorEventPick> GameCompetitorEventPicks { get; set; } = new();
     }
 }
