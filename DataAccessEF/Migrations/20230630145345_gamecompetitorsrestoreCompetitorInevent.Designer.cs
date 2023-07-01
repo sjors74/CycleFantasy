@@ -4,6 +4,7 @@ using Domain.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DataAccessEF.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    partial class DatabaseContextModelSnapshot : ModelSnapshot
+    [Migration("20230630145345_gamecompetitorsrestoreCompetitorInevent")]
+    partial class gamecompetitorsrestoreCompetitorInevent
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -21,21 +24,6 @@ namespace DataAccessEF.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
-
-            modelBuilder.Entity("CompetitorsInEventGameCompetitorEventPick", b =>
-                {
-                    b.Property<int>("CompetitorsInEventCompetitorInEventId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("GameCompetitorEventPicksId")
-                        .HasColumnType("int");
-
-                    b.HasKey("CompetitorsInEventCompetitorInEventId", "GameCompetitorEventPicksId");
-
-                    b.HasIndex("GameCompetitorEventPicksId");
-
-                    b.ToTable("CompetitorsInEventGameCompetitorEventPick");
-                });
 
             modelBuilder.Entity("Domain.Models.Competitor", b =>
                 {
@@ -206,6 +194,10 @@ namespace DataAccessEF.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("TeamName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.HasKey("Id");
 
                     b.ToTable("GameCompetitors");
@@ -224,10 +216,6 @@ namespace DataAccessEF.Migrations
 
                     b.Property<int>("GameCompetitorId")
                         .HasColumnType("int");
-
-                    b.Property<string>("TeamName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
@@ -251,7 +239,9 @@ namespace DataAccessEF.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("GameCompetitorEventPicks");
+                    b.HasIndex("GameCompetitorEventId");
+
+                    b.ToTable("GameCompetitorPicks");
                 });
 
             modelBuilder.Entity("Domain.Models.Result", b =>
@@ -337,21 +327,6 @@ namespace DataAccessEF.Migrations
                     b.ToTable("Teams");
                 });
 
-            modelBuilder.Entity("CompetitorsInEventGameCompetitorEventPick", b =>
-                {
-                    b.HasOne("Domain.Models.CompetitorsInEvent", null)
-                        .WithMany()
-                        .HasForeignKey("CompetitorsInEventCompetitorInEventId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Domain.Models.GameCompetitorEventPick", null)
-                        .WithMany()
-                        .HasForeignKey("GameCompetitorEventPicksId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
             modelBuilder.Entity("Domain.Models.Competitor", b =>
                 {
                     b.HasOne("Domain.Models.Country", "Country")
@@ -427,6 +402,17 @@ namespace DataAccessEF.Migrations
                     b.Navigation("Event");
 
                     b.Navigation("GameCompetitor");
+                });
+
+            modelBuilder.Entity("Domain.Models.GameCompetitorEventPick", b =>
+                {
+                    b.HasOne("Domain.Models.GameCompetitorEvent", "GameCompetitorEvent")
+                        .WithMany()
+                        .HasForeignKey("GameCompetitorEventId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("GameCompetitorEvent");
                 });
 
             modelBuilder.Entity("Domain.Models.Result", b =>

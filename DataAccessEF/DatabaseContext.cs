@@ -1,6 +1,8 @@
 ﻿using Domain.Models;
 using Microsoft.EntityFrameworkCore;
+
 using Microsoft.Extensions.Configuration;
+//using System.Data.Entity;
 using System.Drawing;
 
 namespace Domain.Context
@@ -20,6 +22,9 @@ namespace Domain.Context
         public DbSet<Configuration> Configurations { get; set; }
         public DbSet<ConfigurationItem> ConfigurationItems { get; set; }
         public DbSet<Result> Results { get; set; }
+        public DbSet<GameCompetitor> GameCompetitors { get; set; }
+        public DbSet<GameCompetitorEvent> GameCompetitorsEvent { get; set; }
+        public DbSet<GameCompetitorEventPick> GameCompetitorEventPicks { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

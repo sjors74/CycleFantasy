@@ -4,6 +4,7 @@ using Domain.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DataAccessEF.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    partial class DatabaseContextModelSnapshot : ModelSnapshot
+    [Migration("20230701091309_removepicks")]
+    partial class removepicks
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -85,11 +88,16 @@ namespace DataAccessEF.Migrations
                     b.Property<int>("EventNumber")
                         .HasColumnType("int");
 
+                    b.Property<int?>("GameCompetitorEventId")
+                        .HasColumnType("int");
+
                     b.HasKey("CompetitorInEventId");
 
                     b.HasIndex("CompetitorId");
 
                     b.HasIndex("EventId");
+
+                    b.HasIndex("GameCompetitorEventId");
 
                     b.ToTable("CompetitorsInEvent");
                 });
@@ -385,6 +393,10 @@ namespace DataAccessEF.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Domain.Models.GameCompetitorEvent", null)
+                        .WithMany("CompetitorsInEvent")
+                        .HasForeignKey("GameCompetitorEventId");
+
                     b.Navigation("Competitor");
 
                     b.Navigation("Event");
@@ -479,6 +491,11 @@ namespace DataAccessEF.Migrations
             modelBuilder.Entity("Domain.Models.Configuration", b =>
                 {
                     b.Navigation("ConfigurationItems");
+                });
+
+            modelBuilder.Entity("Domain.Models.GameCompetitorEvent", b =>
+                {
+                    b.Navigation("CompetitorsInEvent");
                 });
 
             modelBuilder.Entity("Domain.Models.Team", b =>
