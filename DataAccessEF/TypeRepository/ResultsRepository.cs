@@ -1,5 +1,4 @@
 ﻿using Domain.Context;
-using Domain.Dto;
 using Domain.Interfaces;
 using Domain.Models;
 using Microsoft.EntityFrameworkCore;
@@ -46,5 +45,21 @@ namespace DataAccessEF.TypeRepository
                                 .ToListAsync();
             return results.Count;
         }
+
+
+        //public List<GameCompetitorEventPick> GetGameCompetitorsPicks(int eventId)
+        //{
+        //    var results = context.GameCompetitorEventPicks.Where(c => c.GameCompetitorEventId == eventId).ToList();
+        //    return results; 
+        //}
+
+        //public List<GameCompetitorEventPick> GetCompetitors(int eventId, int gameCompetitorId)
+        //{
+        //    var results = context.GameCompetitorEventPicks.Include(c => c.CompetitorsInEvent)
+        //        .Where(c => c.GameCompetitorEventId == eventId).ToList();
+        //    //&& c gameCompetitorId).ToList();
+        //    return results;
+        //}
+
     }
 }

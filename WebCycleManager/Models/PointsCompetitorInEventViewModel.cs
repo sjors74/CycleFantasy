@@ -7,6 +7,7 @@
         public string FirstName { get; set; } = string.Empty;
         public string LastName { get; set; } = string.Empty;
         public int Points { get; set; }
+        public int CompetitorEventId { get; set; }
         public string CompetitorName
         {
             get

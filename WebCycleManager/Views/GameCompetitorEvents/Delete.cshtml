@@ -1,0 +1,39 @@
+﻿@model Domain.Models.GameCompetitorEvent
+
+@{
+    ViewData["Title"] = "Delete";
+}
+
+<h1>Verwijder/h1>
+
+<h3>Weet je zeker dat je deze deelnemer wilt verwijderen?</h3>
+<div>
+    <h4>Deelnemer</h4>
+    <hr />
+    <dl class="row">
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.TeamName)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.TeamName)
+        </dd>
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.GameCompetitor)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.GameCompetitor.FirstName)
+        </dd>
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.Event)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.Event.EventName)
+        </dd>
+    </dl>
+    
+    <form asp-action="Delete">
+        <input type="hidden" asp-for="Id" />
+        <input type="submit" value="Verwijder" class="btn btn-danger" /> |
+        <a asp-action="Index">Terug naar de lijst</a>
+    </form>
+</div>

@@ -4,6 +4,7 @@ using Domain.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DataAccessEF.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    partial class DatabaseContextModelSnapshot : ModelSnapshot
+    [Migration("20230707073817_newGamePicks")]
+    partial class newGamePicks
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -231,17 +234,13 @@ namespace DataAccessEF.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("CompetitorsInEventId")
+                    b.Property<int>("CompetitorInEventId")
                         .HasColumnType("int");
 
                     b.Property<int>("GameCompetitorEventId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("CompetitorsInEventId");
-
-                    b.HasIndex("GameCompetitorEventId");
 
                     b.ToTable("GameCompetitorEventPicks");
                 });
@@ -404,25 +403,6 @@ namespace DataAccessEF.Migrations
                     b.Navigation("Event");
 
                     b.Navigation("GameCompetitor");
-                });
-
-            modelBuilder.Entity("Domain.Models.GameCompetitorEventPick", b =>
-                {
-                    b.HasOne("Domain.Models.CompetitorsInEvent", "CompetitorsInEvent")
-                        .WithMany()
-                        .HasForeignKey("CompetitorsInEventId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Domain.Models.GameCompetitorEvent", "GameCompetitorEvent")
-                        .WithMany()
-                        .HasForeignKey("GameCompetitorEventId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("CompetitorsInEvent");
-
-                    b.Navigation("GameCompetitorEvent");
                 });
 
             modelBuilder.Entity("Domain.Models.Result", b =>

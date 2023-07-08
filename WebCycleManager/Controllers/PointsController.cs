@@ -21,6 +21,7 @@ namespace WebCycleManager.Controllers
                 FirstName = c.First().CompetitorInEvent.Competitor.FirstName,
                 LastName = c.First().CompetitorInEvent.Competitor.LastName,
                 EventId = c.First().Stage.EventId,
+                CompetitorEventId = c.First().CompetitorInEventId,
                 Points = c.Sum(a => a.ConfigurationItem.Score)
             }).OrderByDescending(c => c.Points).ThenBy(c => c.CompetitorName);
             
@@ -37,6 +38,28 @@ namespace WebCycleManager.Controllers
             }
             vm = orderedCompetitors.SelectMany(c => c).ToList();
             return View(vm);
+        }
+
+        public async Task<ActionResult> Ranking(int eventId)
+        {
+                var vm = new List<PointsCompetitorInEventViewModel>();
+                var results = await _resultRepository.GetResultsByEventId(eventId);
+                var groupedList = results.GroupBy(g => g.CompetitorInEventId).Select(c => new PointsCompetitorInEventViewModel
+                {
+                    FirstName = c.First().CompetitorInEvent.Competitor.FirstName,
+                    LastName = c.First().CompetitorInEvent.Competitor.LastName,
+                    EventId = c.First().Stage.EventId,
+                    CompetitorEventId = c.First().CompetitorInEventId,
+                    Points = c.Sum(a => a.ConfigurationItem.Score)
+                }).OrderByDescending(c => c.Points).ThenBy(c => c.CompetitorName);
+
+            //var gameCompetitors = _resultRepository.GetGameCompetitorsPicks(eventId);
+            //foreach(var gameCompetitor in gameCompetitors)
+            //{
+            //    var gcId = gameCompetitor.GameCompetitorEventId;
+            //    var competitors = _resultRepository.GetCompetitors(eventId, gcId);
+            //}
+            return View("test");
         }
     }
 }

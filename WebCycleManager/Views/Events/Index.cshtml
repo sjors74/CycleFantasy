@@ -54,9 +54,14 @@
                 <a asp-action="Delete" asp-route-id="@item.Id">Verwijder</a>
             </td>
             <td>
-                    <a asp-controller="CompetitorsInEvents" asp-route-eventId="@item.Id" asp-action="Index">Deelnemers</a>
+                    <a asp-controller="CompetitorsInEvents" asp-route-eventId="@item.Id" asp-action="Index">Renners</a>
                   | <a asp-controller = "Points" asp-route-eventId = "@item.Id" asp-action = "Index">Punten</a>
-
+                    @if (item.IsActive)
+                    {
+                     <a asp-controller = "GameCompetitorEvents" asp-route-eventId = "@item.Id" asp-action = "Index"> | Deelnemers </a >
+                         
+                    <a asp-controller = "Points" asp-route-eventId = "@item.Id" asp-action = "Ranking">|  Stand </a>
+                    }
             </td>
         </tr>
     }

@@ -32,7 +32,7 @@ namespace WebCycleManager.Controllers
                 var competitorsInEvent = _context.CompetitorsInEvent.Where(c => c.EventId.Equals(currentEvent.EventId)).ToList();
                 var config= currentEvent.Configuration;
                 var numberOfconfigItems = _context.ConfigurationItems.Where(l => l.ConfigurationId.Equals(config.Id)).Count();
-                 var resultItems = new List<ResultItemViewModel>();
+                var resultItems = new List<ResultItemViewModel>();
 
                 for (int i=0; i < numberOfconfigItems; i++)
                 {
@@ -256,7 +256,7 @@ namespace WebCycleManager.Controllers
                 {
                     competitors.Add(new SelectListItem()
                     {
-                        Value = item.CompetitorInEventId.ToString(),
+                        Value = item.Id.ToString(),
                         Text = item.Competitor.CompetitorName,
                         Group = optionGroup
                     });

@@ -4,11 +4,14 @@ namespace Domain.Models
 {
     public class GameCompetitorEventPick
     {
-        [Key]
-        public int Id { get; set; } 
-        public int GameCompetitorEventId { get; set; }
-        //TODO: Should be a reference to GameCompetitorEvent-object, to establish a FK-relation.
-        //public GameCompetitorEvent GameCompetitorEvent { get; set; }
-        public virtual IEnumerable<CompetitorsInEvent> CompetitorsInEvent { get; set; } = new List<CompetitorsInEvent>();
+        [Required]
+        public int Id { get; set; }
+//        [Required]
+//        public int GameCompetitorEventId { get; set; }
+//        [Required]
+//        public int CompetitorInEventId { get; set; }
+
+        public virtual GameCompetitorEvent GameCompetitorEvent { get; set; } = new GameCompetitorEvent();
+        public virtual CompetitorsInEvent CompetitorsInEvent { get; set;} = new CompetitorsInEvent();
     }
 }

@@ -8,5 +8,9 @@ namespace Domain.Interfaces
         Task<IEnumerable<Result>> GetResultsByEventId(int eventId);
 
         Task<int> GetResultsByStageId(int stageId);
+
+        //List<GameCompetitorEventPick> GetGameCompetitorsPicks(int eventId);
+
+        //List<GameCompetitorEventPick> GetCompetitors(int eventId, int gameCompetitorId);
     }
 }

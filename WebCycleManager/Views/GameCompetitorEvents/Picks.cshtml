@@ -1,0 +1,49 @@
+﻿@model GameCompetitorInEventViewModel
+<h1>@Model.Event.EventName - @Model.Event.EventYear</h1>
+ <form method="post" asp-controller="GameCompetitorEvents" asp-action="Index">
+<table class="table">
+    <thead>
+        <tr>
+            <th> Nr </th>
+            <th>
+                Renner
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+
+    @for(var i = 0; i < Model.ConfigurationItems; i++) {
+        <tr>
+            <td>
+                <label>@(i+1)</label>
+            </td>
+            <td>
+                @if(Model.Picks[i].CompetitorName == string.Empty)
+                {
+                    @*@Html.DropDownList($"Model.Picks[{i}].SelectedCompetitorId",Model.Picks[i].DropdownList, "-- selecteer --", "Value")*@
+                }
+                else
+                {
+                    <label>@Model.Picks[i].CompetitorName</label>
+                }
+            </td>
+            <td>
+                @if (Model.Picks[i].GameCompetitorEventPickId > 0)
+                {
+                    <a asp-action="Delete" asp-route-id="@Model.Picks[i].SelectedCompetitorId">Verwijder</a>
+                }
+            </td>
+        </tr>
+}
+    </tbody>
+</table>
+
+    <input type="hidden" id="eventId" name="eventId" value="@Model.EventId" />
+    <input type="hidden" id="gameCompetitorInEventPickId" name="gameCompetitorInEventPickId" value="@Model.GameCompetitorInEventPickId" />
+    <button type="submit" value="Opslaan">Opslaan</button>
+</form>
+
+<div>
+    <a asp-controller="Events" asp-action="Details" asp-route-id=@Model.EventId>Terug naar evenement</a>
+</div>

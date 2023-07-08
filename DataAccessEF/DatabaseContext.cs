@@ -1,6 +1,6 @@
 ﻿using Domain.Models;
 using Microsoft.EntityFrameworkCore;
-
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.Extensions.Configuration;
 //using System.Data.Entity;
 using System.Drawing;
@@ -10,8 +10,6 @@ namespace Domain.Context
     public class DatabaseContext : DbContext
     {
         public DatabaseContext(DbContextOptions<DatabaseContext> options) : base(options) { }
-
-
 
         public DbSet<Event> Events { get; set; }
         public DbSet<Competitor> Competitors { get; set;}
@@ -45,9 +43,6 @@ namespace Domain.Context
                 //.WithOne(c => c.Configuration);
             modelBuilder.Entity<CompetitorsInEvent>()
                 .HasOne(c => c.Event);
-
-                
-                
         }
     }
 

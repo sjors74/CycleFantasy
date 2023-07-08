@@ -42,7 +42,7 @@ namespace WebCycleManager.Controllers
                         FirstName = d.FirstName, 
                         LastName = d.LastName, 
                         TeamName = GetTeam(d.TeamId).Result.TeamName,
-                        CompetitorInEventId = GetCompetitorInEvent(eventId, d.CompetitorId).Result.CompetitorInEventId,
+                        CompetitorInEventId = GetCompetitorInEvent(eventId, d.CompetitorId).Result.Id,
                         EventId =eventId,
                         EventName = GetEvent(eventId).Result.EventName,
                         TeamId = d.TeamId
@@ -214,7 +214,7 @@ namespace WebCycleManager.Controllers
             var vm = new CompetitorInEventViewModel
             {
                 CompetitorId = competitorsInEvent.CompetitorId,
-                CompetitorInEventId = competitorsInEvent.CompetitorInEventId,
+                CompetitorInEventId = competitorsInEvent.Id,
                 EventId = competitorsInEvent.EventId,
                 TeamName = competitorsInEvent.Competitor.Team != null ? competitorsInEvent.Competitor.Team.TeamName : string.Empty,
                 EventNumber = competitorsInEvent.EventNumber,
