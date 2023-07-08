@@ -1,5 +1,5 @@
 ﻿@model GameCompetitorInEventViewModel
-<h1>@Model.Event.EventName - @Model.Event.EventYear</h1>
+<h1>@Model.EventId</h1>
  <form method="post" asp-controller="GameCompetitorEvents" asp-action="Index">
 <table class="table">
     <thead>
@@ -13,7 +13,7 @@
     </thead>
     <tbody>
 
-    @for(var i = 0; i < Model.ConfigurationItems; i++) {
+@*    @for(var i = 0; i < Model.ConfigurationItems; i++) {
         <tr>
             <td>
                 <label>@(i+1)</label>
@@ -21,7 +21,7 @@
             <td>
                 @if(Model.Picks[i].CompetitorName == string.Empty)
                 {
-                    @*@Html.DropDownList($"Model.Picks[{i}].SelectedCompetitorId",Model.Picks[i].DropdownList, "-- selecteer --", "Value")*@
+                    @Html.DropDownList($"Model.Picks[{i}].SelectedCompetitorId",Model.Picks[i].DropdownList, "-- selecteer --", "Value")
                 }
                 else
                 {
@@ -36,11 +36,11 @@
             </td>
         </tr>
 }
-    </tbody>
+*@    </tbody>
 </table>
 
     <input type="hidden" id="eventId" name="eventId" value="@Model.EventId" />
-    <input type="hidden" id="gameCompetitorInEventPickId" name="gameCompetitorInEventPickId" value="@Model.GameCompetitorInEventPickId" />
+    @*@*<input type="hidden" id="gameCompetitorInEventPickId" name="gameCompetitorInEventPickId" value="@Model.GameCompetitorInEventPickId" />*@
     <button type="submit" value="Opslaan">Opslaan</button>
 </form>
 
