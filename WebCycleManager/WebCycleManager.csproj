@@ -20,8 +20,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\CycleManager.Services\CycleManager.Services.csproj" />
     <ProjectReference Include="..\DataAccessEF\DataAccessEF.csproj" />
-    <ProjectReference Include="..\Domain\Domain.csproj" />
+    <ProjectReference Include="..\Domain\CycleManager.Domain.csproj" />
   </ItemGroup>
 
   <ItemGroup>

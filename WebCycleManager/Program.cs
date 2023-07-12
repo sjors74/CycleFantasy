@@ -1,3 +1,5 @@
+using CycleManager.Services;
+using CycleManager.Services.Interfaces;
 using DataAccessEF.TypeRepository;
 using Domain.Context;
 using Domain.Interfaces;
@@ -17,6 +19,13 @@ builder.Services.AddTransient<IEventRepository, EventRepository>();
 builder.Services.AddTransient<IResultsRepository, ResultsRepository>();
 builder.Services.AddTransient<IStageRepository, StageRepository>();
 builder.Services.AddTransient<ITeamRepository, TeamRepository>();
+//Service
+builder.Services.AddTransient<IEventService, EventService>();
+builder.Services.AddTransient<IStageService, StageService>();
+builder.Services.AddTransient<IConfigurationService, ConfigurationService>();
+builder.Services.AddTransient<IResultService, ResultService>();
+builder.Services.AddTransient<ICountryService, CountryService>();
+builder.Services.AddTransient<ICompetitorService, CompetitorService>();
 builder.Services.AddControllersWithViews();
 
 var app = builder.Build();

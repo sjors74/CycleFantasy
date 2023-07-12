@@ -1,4 +1,4 @@
-﻿using Domain.Interfaces;
+﻿using CycleManager.Services.Interfaces;
 using Domain.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -8,23 +8,23 @@ namespace WebCycleManager.Controllers
 {
     public class CountriesController : Controller
     {
-        private readonly ICountryRepository _countryRepository;
-        private readonly ICompetitorRepository _competitorRepository;
+        private readonly ICountryService _countryService;
+        private readonly ICompetitorService _competitorService;
 
-        public CountriesController(ICountryRepository countryRepository, ICompetitorRepository competitorRepository)
+        public CountriesController(ICompetitorService competitorService, ICountryService countryService)
         {
-            _countryRepository = countryRepository;
-            _competitorRepository = competitorRepository;
+            _countryService = countryService;
+            _competitorService = competitorService;
         }
 
         // GET: Countries
         public async Task<IActionResult> Index()
         {
             var countryViewModel = new List<CountryViewModel>();
-            var countries = await _countryRepository.GetAll();
+            var countries = await _countryService.GetAll();
             foreach(var country in  countries.OrderBy(c => c.CountryNameLong))
             {
-                var competitorsCount = await _competitorRepository.GetCompetitorsByCountry(country.CountryId);
+                var competitorsCount = await _competitorService.GetCompetitorsByCountry(country.CountryId);
                 countryViewModel.Add(new CountryViewModel
                 {
                     Id = country.CountryId,
@@ -44,7 +44,7 @@ namespace WebCycleManager.Controllers
                 return NotFound();
             }
 
-            var country = _countryRepository.GetById((int)id);
+            var country = await _countryService.GetById((int)id);
             if (country == null)
             {
                 return NotFound();
@@ -68,8 +68,7 @@ namespace WebCycleManager.Controllers
         {
             if (ModelState.IsValid)
             {
-                _countryRepository.Add(country);
-                await _countryRepository.SaveChangesAsync();
+                await _countryService.Create(country);
                 return RedirectToAction(nameof(Index));
             }
             return View(country);
@@ -83,7 +82,7 @@ namespace WebCycleManager.Controllers
                 return NotFound();
             }
 
-            var country = _countryRepository.GetById((int)id);
+            var country = await _countryService.GetById((int)id);
             if (country == null)
             {
                 return NotFound();
@@ -107,8 +106,7 @@ namespace WebCycleManager.Controllers
             {
                 try
                 {
-                    _countryRepository.Update(country);
-                    await _countryRepository.SaveChangesAsync();
+                    await _countryService.Update(country);
                 }
                 catch (DbUpdateConcurrencyException)
                 {
@@ -134,7 +132,7 @@ namespace WebCycleManager.Controllers
                 return NotFound();
             }
 
-            var country = _countryRepository.GetById((int)id);
+            var country = await _countryService.GetById((int)id);
             if (country == null)
             {
                 return NotFound();
@@ -148,19 +146,18 @@ namespace WebCycleManager.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var country =  await  _countryRepository.GetById((int)id);
+            var country =  await  _countryService.GetById((int)id);
             if (country != null)
             {
-                _countryRepository.Remove(country);
+                await _countryService.Delete(country);
             }
             
-            await _countryRepository.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
         private bool CountryExists(int id)
         {
-          return (_countryRepository.GetById(id) != null);
+          return (_countryService.GetById(id) != null);
         }
     }
 }

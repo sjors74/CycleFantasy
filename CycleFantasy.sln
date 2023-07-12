@@ -5,13 +5,15 @@ VisualStudioVersion = 17.4.33205.214
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebCycleApi", "WebCycle\WebCycleApi.csproj", "{C71D4BAB-C8DE-4AAD-98E7-CEB1CFCB4B6F}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Domain", "Domain\Domain.csproj", "{ED9E050F-BC7B-4352-8EAF-022F94A57E4B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CycleManager.Domain", "Domain\CycleManager.Domain.csproj", "{ED9E050F-BC7B-4352-8EAF-022F94A57E4B}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DataAccessEF", "DataAccessEF\DataAccessEF.csproj", "{5C0BB5AB-810C-47C1-9AEF-AD7CE349A901}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebCycleManager", "WebCycleManager\WebCycleManager.csproj", "{C10CF99F-9F79-45EF-A7B9-4E7FBC38E9B5}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebCycleApp", "WebCycleApp\WebCycleApp.csproj", "{D8008A7F-4348-46E1-AED7-46618FD58205}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CycleManager.Services", "CycleManager.Services\CycleManager.Services.csproj", "{0590D339-A38B-47CF-9FE2-4EA0193033E9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -41,6 +43,10 @@ Global
 		{D8008A7F-4348-46E1-AED7-46618FD58205}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D8008A7F-4348-46E1-AED7-46618FD58205}.Release|Any CPU.Build.0 = Release|Any CPU
 		{D8008A7F-4348-46E1-AED7-46618FD58205}.Release|Any CPU.Deploy.0 = Release|Any CPU
+		{0590D339-A38B-47CF-9FE2-4EA0193033E9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0590D339-A38B-47CF-9FE2-4EA0193033E9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0590D339-A38B-47CF-9FE2-4EA0193033E9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0590D339-A38B-47CF-9FE2-4EA0193033E9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

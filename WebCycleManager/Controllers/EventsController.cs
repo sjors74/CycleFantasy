@@ -1,4 +1,6 @@
-﻿using Domain.Interfaces;
+﻿using CycleManager.Services;
+using CycleManager.Services.Interfaces;
+using Domain.Interfaces;
 using Domain.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -9,24 +11,25 @@ namespace WebCycleManager.Controllers
 {
     public class EventsController : Controller
     {
-        private IEventRepository _eventRepository;
-        private IStageRepository _stageRepository;
-        private IConfigurationRepository _configurationRepository;
-        private IResultsRepository _resultsRepository;
+        private IEventService _eventService;
+        private IStageService _stageService;
+        private IResultService _resultService;
+        private IConfigurationService _configurationService;
 
-        public EventsController(IEventRepository eventRepository, IStageRepository stageRepository, IConfigurationRepository configurationRepository, IResultsRepository resultsRepository)
+        public EventsController(IEventService eventService, IStageService stageService, IResultService resultService, 
+            IConfigurationService configurationService)
         {
-            _eventRepository = eventRepository;
-            _stageRepository = stageRepository;
-            _configurationRepository = configurationRepository;
-            _resultsRepository = resultsRepository;
+            _eventService = eventService;
+            _stageService = stageService;
+            _resultService = resultService;
+            _configurationService = configurationService;
         }
 
         // GET: Events
         public async Task<IActionResult> Index()
         {
             var vm = new EventViewModel();
-            var events = await _eventRepository.GetAllEvents();
+            var events = await _eventService.GetAllEvents();
 
             foreach (var e in events)
             {
@@ -43,14 +46,14 @@ namespace WebCycleManager.Controllers
                 return NotFound();
             }
 
-            var @event = await _eventRepository.GetById((int)id);
+            var @event = await _eventService.GetEventById((int)id);
             if (@event == null)
             {
                 return NotFound();
             }
 
             var stagesList = new List<StageViewModel>();
-            var stages = await _stageRepository.GetByEventId(@event.EventId);
+            var stages = await _stageService.GetStagesByEventId(@event.EventId);
             foreach (var stage in stages)
             {
                 var stagesViewModel =
@@ -64,7 +67,7 @@ namespace WebCycleManager.Controllers
                         EventId = stage.EventId,
                         EventName = stage.Event == null ? string.Empty : stage.Event.EventName
                     };
-                var results = await _resultsRepository.GetResultsByStageId(stage.Id);
+                var results = await _resultService.GetResultsByStageId(stage.Id);
                 stagesViewModel.AantalPosities = results;
                 stagesList.Add(stagesViewModel);
 
@@ -78,7 +81,7 @@ namespace WebCycleManager.Controllers
         // GET: Events/Create
         public async Task<ActionResult> Create()
         {
-            var configurations = await _configurationRepository.GetAll();
+            var configurations = await _configurationService.GetAllConfigurations();
             ViewData["ConfigurationId"] = new SelectList(configurations, "Id", "ConfigurationType");
             return View();
         }
@@ -93,8 +96,7 @@ namespace WebCycleManager.Controllers
             if (ModelState.IsValid)
             {
                 var e = await CreateFromViewModel(@event);
-                _eventRepository.Add(e);
-                await _eventRepository.SaveChangesAsync();
+                await  _eventService.Create(e);
                 return RedirectToAction(nameof(Index));
             }
             return View(@event);
@@ -108,13 +110,13 @@ namespace WebCycleManager.Controllers
                 return NotFound();
             }
 
-            var @event = await _eventRepository.GetById((int)id);
+            var @event = await _eventService.GetEventById((int)id);
             if (@event == null)
             {
                 return NotFound();
             }
             var vm = CreateViewModel(@event);
-            var configurations = await _configurationRepository.GetAll();
+            var configurations = await _configurationService.GetAllConfigurations();
             ViewData["ConfigurationId"] = new SelectList(configurations, "Id", "ConfigurationType");
             return View(vm);
         }
@@ -137,12 +139,11 @@ namespace WebCycleManager.Controllers
                 {
                     var e = await CreateFromViewModel(@event);
 
-                    _eventRepository.Update(e);
-                    await _eventRepository.SaveChangesAsync();
+                    await _eventService.Update(e);
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (_eventRepository.GetById(@event.Id) == null)
+                    if (_eventService.GetEventById(@event.Id) == null)
                     {
                         return NotFound();
                     }
@@ -165,7 +166,7 @@ namespace WebCycleManager.Controllers
                 return NotFound();
             }
 
-            var @event = await _eventRepository.GetById((int)id);
+            var @event = await _eventService.GetEventById((int)id);
             if (@event == null)
             {
                 return NotFound();
@@ -180,13 +181,12 @@ namespace WebCycleManager.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var @event = await _eventRepository.GetById(id);
+            var @event = await _eventService.GetEventById(id);
             if (@event != null)
             {
-                _eventRepository.Remove(@event);
+                _eventService.Delete(@event);
             }
             
-            await _eventRepository.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
@@ -207,7 +207,7 @@ namespace WebCycleManager.Controllers
 
         public async Task<Event> CreateFromViewModel(EventItemViewModel vm)
         {
-            var @event = await _eventRepository.GetById(vm.Id);
+            var @event = await _eventService.GetEventById(vm.Id);
             try
             {
                 if (@event == null)
