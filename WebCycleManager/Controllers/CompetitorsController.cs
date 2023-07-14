@@ -1,6 +1,5 @@
 ﻿using CycleManager.Services.Interfaces;
 using DataAccessEF.Extensions;
-using Domain.Interfaces;
 using Domain.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -49,14 +48,14 @@ namespace WebCycleManager.Controllers
         }
 
         // GET: Competitors/Details/5
-        public IActionResult Details(int? id)
+        public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
             {
                 return NotFound();
             }
 
-            var competitor =  _competitorService.GetCompetitorById((int)id);
+            var competitor =  await _competitorService.GetCompetitorById((int)id);
             if (competitor == null)
             {
                 return NotFound();
@@ -145,13 +144,13 @@ namespace WebCycleManager.Controllers
         }
 
         // GET: Competitors/Delete/5
-        public IActionResult Delete(int? id)
+        public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
             {
                 return NotFound();
             }
-            var competitor = _competitorService.GetCompetitorById((int)id);
+            var competitor = await _competitorService.GetCompetitorById((int)id);
             if (competitor == null)
             {
                 return NotFound();

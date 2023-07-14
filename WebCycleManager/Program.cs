@@ -26,6 +26,7 @@ builder.Services.AddTransient<IConfigurationService, ConfigurationService>();
 builder.Services.AddTransient<IResultService, ResultService>();
 builder.Services.AddTransient<ICountryService, CountryService>();
 builder.Services.AddTransient<ICompetitorService, CompetitorService>();
+builder.Services.AddTransient<ITeamService, TeamService>();
 builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
