@@ -1,4 +1,5 @@
-﻿using Domain.Context;
+﻿using CycleManager.Services.Interfaces;
+using Domain.Context;
 using Domain.Interfaces;
 using Domain.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -12,11 +13,11 @@ namespace WebCycleManager.Controllers
     public class TeamsController : Controller
     {
         private readonly ITeamRepository _teamRepository;
-        private readonly ICountryRepository _countryRepository;
-        public TeamsController(ITeamRepository teamRepository, ICountryRepository countryRepository)
+        private readonly ICountryService _countryService;
+        public TeamsController(ITeamRepository teamRepository, ICountryRepository countryRepository, ICountryService countryService)
         {
             _teamRepository = teamRepository;
-            _countryRepository = countryRepository;
+            _countryService = countryService;
         }
 
         // GET: Teams
@@ -72,7 +73,7 @@ namespace WebCycleManager.Controllers
         public async Task<IActionResult> Create()
         {
            
-            ViewData["CountryId"] = new SelectList(await CountrySelectListHelper.GetOrderedCountries(_countryRepository), "CountryId", "CountryNameLong");
+            ViewData["CountryId"] = new SelectList(await CountrySelectListHelper.GetOrderedCountries(_countryService), "CountryId", "CountryNameLong");
             return View();
         }
 
@@ -105,7 +106,7 @@ namespace WebCycleManager.Controllers
             {
                 return NotFound();
             }
-            ViewData["CountryId"] = new SelectList(await CountrySelectListHelper.GetOrderedCountries(_countryRepository), "CountryId", "CountryNameLong");
+            ViewData["CountryId"] = new SelectList(await CountrySelectListHelper.GetOrderedCountries(_countryService), "CountryId", "CountryNameLong");
 
             return View(team);
         }

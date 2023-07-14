@@ -1,4 +1,4 @@
-﻿using Domain.Interfaces;
+﻿using CycleManager.Services.Interfaces;
 using Domain.Models;
 
 namespace WebCycleManager.Helpers
@@ -9,9 +9,9 @@ namespace WebCycleManager.Helpers
         /// Get ordered list of all countries to fill selectlist
         /// </summary>
         /// <returns></returns>
-        public static async Task<IEnumerable<Country>> GetOrderedCountries(ICountryRepository countryRepo)
+        public static async Task<IEnumerable<Country>> GetOrderedCountries(ICountryService countryService)
         {
-            var countries = await countryRepo.GetAll();
+            var countries = await countryService.GetAll();
             return countries.OrderBy(c => c.CountryNameLong);
         }
     }

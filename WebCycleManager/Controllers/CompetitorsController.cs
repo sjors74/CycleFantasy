@@ -1,4 +1,5 @@
-﻿using DataAccessEF.Extensions;
+﻿using CycleManager.Services.Interfaces;
+using DataAccessEF.Extensions;
 using Domain.Interfaces;
 using Domain.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -10,15 +11,15 @@ namespace WebCycleManager.Controllers
 {
     public class CompetitorsController : Controller
     {
-        private readonly ICompetitorRepository _competitorRepository;
-        private readonly ICountryRepository _countryRepository;
-        private readonly ITeamRepository _teamRepository;
+        private readonly ICompetitorService _competitorService;
+        private readonly ITeamService _teamService;
+        private readonly ICountryService _countryService;
 
-        public CompetitorsController(ICompetitorRepository competitorRepository, ICountryRepository countryRepository, ITeamRepository teamRepository)
+        public CompetitorsController(ICompetitorService competitorService, ITeamService teamService, ICountryService countryService)
         {
-            _competitorRepository = competitorRepository;
-            _countryRepository = countryRepository;
-            _teamRepository = teamRepository;
+            _competitorService = competitorService;
+            _teamService = teamService;
+            _countryService = countryService;
         }
 
         // GET: Competitors
@@ -35,7 +36,7 @@ namespace WebCycleManager.Controllers
 
             ViewData["CurrentFilter"] = searchString;
             var pageSize = ConfigurationConstants.PageSize;
-            var competitors = _competitorRepository.GetAllCompetitors();
+            var competitors = _competitorService.GetAllCompetitors();
             if (!string.IsNullOrEmpty(searchString))
             {
                 competitors = competitors.Where(s => s.LastName == searchString || s.FirstName.Contains(searchString));
@@ -55,7 +56,7 @@ namespace WebCycleManager.Controllers
                 return NotFound();
             }
 
-            var competitor =  _competitorRepository.GetById((int)id);
+            var competitor =  _competitorService.GetCompetitorById((int)id);
             if (competitor == null)
             {
                 return NotFound();
@@ -67,8 +68,8 @@ namespace WebCycleManager.Controllers
         // GET: Competitors/Create
         public async Task<IActionResult> Create()
         {
-            ViewData["TeamId"] = new SelectList(await _teamRepository.GetAll(), "TeamId", "TeamName");
-            ViewData["CountryId"] = new SelectList(await CountrySelectListHelper.GetOrderedCountries(_countryRepository), "CountryId", "CountryNameLong");
+            ViewData["TeamId"] = new SelectList(await _teamService.GetAll(), "TeamId", "TeamName");
+            ViewData["CountryId"] = new SelectList(await CountrySelectListHelper.GetOrderedCountries(_countryService), "CountryId", "CountryNameLong");
             return View();
         }
 
@@ -81,12 +82,11 @@ namespace WebCycleManager.Controllers
         {
             if (ModelState.IsValid)
             {
-                _competitorRepository.Add(competitor);
-                await _competitorRepository.SaveChangesAsync();
+                await _competitorService.Create(competitor);
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["TeamId"] = new SelectList(await _teamRepository.GetAll(), "TeamId", "TeamName", competitor.TeamId);
-            ViewData["CountryId"] = new SelectList(await CountrySelectListHelper.GetOrderedCountries(_countryRepository), "CountryId", "CountryNameLong", competitor.CountryId);
+            ViewData["TeamId"] = new SelectList(await _teamService.GetAll(), "TeamId", "TeamName", competitor.TeamId);
+            ViewData["CountryId"] = new SelectList(await CountrySelectListHelper.GetOrderedCountries(_countryService), "CountryId", "CountryNameLong", competitor.CountryId);
             return View(competitor);
         }
 
@@ -98,13 +98,13 @@ namespace WebCycleManager.Controllers
                 return NotFound();
             }
 
-            var competitor = await _competitorRepository.GetById((int)id);
+            var competitor = await _competitorService.GetCompetitorById((int)id);
             if (competitor == null)
             {
                 return NotFound();
             }
-            ViewData["TeamId"] = new SelectList(await _teamRepository.GetAll(), "TeamId", "TeamName", competitor.TeamId);
-            ViewData["CountryId"] = new SelectList(await CountrySelectListHelper.GetOrderedCountries(_countryRepository), "CountryId", "CountryNameLong", competitor.CountryId);
+            ViewData["TeamId"] = new SelectList(await _teamService.GetAll(), "TeamId", "TeamName", competitor.TeamId);
+            ViewData["CountryId"] = new SelectList(await CountrySelectListHelper.GetOrderedCountries(_countryService), "CountryId", "CountryNameLong", competitor.CountryId);
             return View(competitor);
         }
 
@@ -124,8 +124,7 @@ namespace WebCycleManager.Controllers
             {
                 try
                 {
-                    _competitorRepository.Update(competitor);
-                    await _competitorRepository.SaveChangesAsync();
+                    await _competitorService.Update(competitor);
                 }
                 catch (DbUpdateConcurrencyException)
                 {
@@ -140,8 +139,8 @@ namespace WebCycleManager.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["TeamId"] = new SelectList(await _teamRepository.GetAll(), "TeamId", "TeamName", competitor.TeamId);
-            ViewData["CountryId"] = new SelectList(await CountrySelectListHelper.GetOrderedCountries(_countryRepository), "CountryId", "CountryNameLong", competitor.CountryId);
+            ViewData["TeamId"] = new SelectList(await _teamService.GetAll(), "TeamId", "TeamName", competitor.TeamId);
+            ViewData["CountryId"] = new SelectList(await CountrySelectListHelper.GetOrderedCountries(_countryService), "CountryId", "CountryNameLong", competitor.CountryId);
             return View(competitor);
         }
 
@@ -152,7 +151,7 @@ namespace WebCycleManager.Controllers
             {
                 return NotFound();
             }
-            var competitor = _competitorRepository.GetById((int)id);
+            var competitor = _competitorService.GetCompetitorById((int)id);
             if (competitor == null)
             {
                 return NotFound();
@@ -166,19 +165,17 @@ namespace WebCycleManager.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var competitor = await _competitorRepository.GetById((int)id);
+            var competitor = await _competitorService.GetCompetitorById((int)id);
             if (competitor != null)
             {
-                _competitorRepository.Remove(competitor);
+                await _competitorService.Delete(competitor);
             }
-            
-            await _competitorRepository.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
         private bool CompetitorExists(int id)
         {
-          return _competitorRepository.GetById(id) != null;
+          return _competitorService.GetCompetitorById(id) != null;
         }
     }
 }
