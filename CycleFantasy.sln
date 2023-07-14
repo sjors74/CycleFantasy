@@ -13,7 +13,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebCycleManager", "WebCycle
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebCycleApp", "WebCycleApp\WebCycleApp.csproj", "{D8008A7F-4348-46E1-AED7-46618FD58205}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CycleManager.Services", "CycleManager.Services\CycleManager.Services.csproj", "{0590D339-A38B-47CF-9FE2-4EA0193033E9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CycleManager.Services", "CycleManager.Services\CycleManager.Services.csproj", "{0590D339-A38B-47CF-9FE2-4EA0193033E9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CycleManager.Test", "CycleManager.Test\CycleManager.Test.csproj", "{AC051B7E-1D48-4B3F-B498-48E2C6FE799F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -47,6 +49,10 @@ Global
 		{0590D339-A38B-47CF-9FE2-4EA0193033E9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0590D339-A38B-47CF-9FE2-4EA0193033E9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0590D339-A38B-47CF-9FE2-4EA0193033E9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AC051B7E-1D48-4B3F-B498-48E2C6FE799F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AC051B7E-1D48-4B3F-B498-48E2C6FE799F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AC051B7E-1D48-4B3F-B498-48E2C6FE799F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AC051B7E-1D48-4B3F-B498-48E2C6FE799F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

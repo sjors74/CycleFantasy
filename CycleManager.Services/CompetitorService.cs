@@ -41,7 +41,17 @@ namespace CycleManager.Services
         public IQueryable<Competitor> GetAllCompetitors()
         {
             return _competitorRepository.GetAllCompetitors();
-        } 
+        }
+
+        /// <summary>
+        /// Get a list of competttors for a team
+        /// </summary>
+        /// <param name="teamId"></param>
+        /// <returns></returns>
+        public async Task<IEnumerable<Competitor>> GetByTeamId(int teamId)
+        {
+            return await _competitorRepository.GetByTeamId(teamId);
+        }
 
         /// <summary>
         /// Get a competitor by its id

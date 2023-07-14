@@ -1,32 +1,31 @@
-﻿using Domain.Interfaces;
+﻿using CycleManager.Services;
+using CycleManager.Services.Interfaces;
 using Domain.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
 using WebCycleManager.Models;
 
 namespace WebCycleManager.Controllers
 {
     public class CompetitorsInEventsController : Controller
     {
-        private ICompetitorsInEventRepository _competitorsInEventRepository;
-        private ICompetitorRepository _competitorRepository;
-        private IEventRepository _eventRepository;
-        private ITeamRepository _teamRepository;
+        private ICompetitorInEventService _competitorInEventService;
+        private IEventService _eventService;
+        private ITeamService _teamService;
+        private ICompetitorService _competitorService;
 
-        public CompetitorsInEventsController(ICompetitorsInEventRepository competitorsInEventRepository, ICompetitorRepository competitorRepository, IEventRepository eventRepository,
-            ITeamRepository teamRepository)
+        public CompetitorsInEventsController(ICompetitorInEventService competitorInEventService, IEventService eventService, ITeamService teamService, ICompetitorService competitorService)
         {
-            _competitorsInEventRepository = competitorsInEventRepository;
-            _competitorRepository = competitorRepository;   
-            _eventRepository = eventRepository;
-            _teamRepository = teamRepository;
+            _competitorInEventService = competitorInEventService;
+            _eventService = eventService;
+            _teamService = teamService;
+            _competitorService = competitorService;
         }
 
         // GET: CompetitorsInEvents
         public async Task<IActionResult> Index(int eventId, string FilterTeam = "")
         {
-            var deelnemers = await _competitorsInEventRepository.GetCompetitors(eventId);
+            var deelnemers = await _competitorInEventService.GetCompetitors(eventId);
             var filteredDeelnemers = deelnemers;
             if (!string.IsNullOrEmpty(FilterTeam))
             {
@@ -49,11 +48,11 @@ namespace WebCycleManager.Controllers
                 };
                 deelnemersViewModel.Add(cvm);
             }
-            var currentEvent = await _eventRepository.GetById(eventId);
+            var currentEvent = await _eventService.GetEventById(eventId);
             if (currentEvent != null)
             {
                 var vm = new CompetitorsInEventViewModel(deelnemersViewModel, currentEvent.EventName, currentEvent.EventYear, currentEvent.EventId);
-                var teams = await _teamRepository.GetAll();
+                var teams = await _teamService.GetAll();
                 vm.Teams = teams.Select(x =>
                                   new SelectListItem()
                                   {
@@ -70,9 +69,9 @@ namespace WebCycleManager.Controllers
         // GET: CompetitorsInEvents/Create
         public async Task<IActionResult> Create(int eventId)
         {
-            var competitors = await _competitorRepository.GetAll();
+            var competitors = _competitorService.GetAllCompetitors();
             var competitorsList = competitors.OrderBy(c => c.FirstName).ToList();
-            var teams = await _teamRepository.GetAll();
+            var teams = await _teamService.GetAll();
             var teamList = teams.OrderBy(c => c.TeamName).ToList();
             ViewBag.ListOfTeams = teamList;
             ViewBag.ListOfCompetitors = competitorsList;
@@ -93,12 +92,11 @@ namespace WebCycleManager.Controllers
                     int.TryParse(selectedCompetitorId, out int competitorId);
                     listOfCompetitorsInEvent.Add(new CompetitorsInEvent { CompetitorId = competitorId, EventId = eventId });
                 }
-                _competitorsInEventRepository.AddRange(listOfCompetitorsInEvent);
-                await _competitorsInEventRepository.SaveChangesAsync();
+                await _competitorInEventService.Create(listOfCompetitorsInEvent);
                 return RedirectToAction("Index", new { eventId } );
             }
-            ViewData["CompetitorId"] = new SelectList(_competitorRepository.GetAllCompetitors().OrderBy(c => c.FirstName), "CompetitorId", "CompetitorName");
-            ViewData["TeamId"] = new SelectList(await _teamRepository.GetAll(), "TeamId", "TeamName");
+            ViewData["CompetitorId"] = new SelectList(_competitorService.GetAllCompetitors().OrderBy(c => c.FirstName), "CompetitorId", "CompetitorName");
+            ViewData["TeamId"] = new SelectList(await _teamService.GetAll(), "TeamId", "TeamName");
             return View();
         }
 
@@ -110,16 +108,16 @@ namespace WebCycleManager.Controllers
                 return NotFound();
             }
 
-            var competitorsInEvent = await _competitorsInEventRepository.GetById((int)id);
+            var competitorsInEvent = await _competitorInEventService.GetCompetitorById((int)id);
             if (competitorsInEvent == null)
             {
                 return NotFound();
             }
-            var competitor = await  _competitorRepository.GetById(competitorsInEvent.CompetitorId);
+            var competitor = await  _competitorService.GetCompetitorById(competitorsInEvent.CompetitorId);
             var vm = GetViewModel(competitorsInEvent);
             vm.TeamId = competitor.TeamId;
-            ViewData["CompetitorId"] = new SelectList(_competitorRepository.GetAllCompetitors().OrderBy(c => c.FirstName), "CompetitorId", "FirstName", competitorsInEvent.CompetitorId);
-            ViewData["EventId"] = new SelectList(await _eventRepository.GetAll(), "EventId", "EventName", competitorsInEvent.EventId);
+            ViewData["CompetitorId"] = new SelectList(_competitorService.GetAllCompetitors().OrderBy(c => c.FirstName), "CompetitorId", "FirstName", competitorsInEvent.CompetitorId);
+            ViewData["EventId"] = new SelectList(await _eventService.GetAllEvents(), "EventId", "EventName", competitorsInEvent.EventId);
             return View(vm);
         }
 
@@ -139,14 +137,13 @@ namespace WebCycleManager.Controllers
             {
                 try
                 {
-                    var competitorInEvent = await _competitorsInEventRepository.GetById(id);
+                    var competitorInEvent = await _competitorInEventService.GetCompetitorById(id);
                     if (competitorInEvent == null) 
                     { 
                         return NotFound(); 
                     }
                     competitorInEvent.EventNumber = vm.EventNumber;
-                    _competitorsInEventRepository.Update(competitorInEvent);
-                    await _competitorsInEventRepository.SaveChangesAsync();
+                    await _competitorInEventService.Update(competitorInEvent);
                 }
                 catch
                 {
@@ -172,7 +169,7 @@ namespace WebCycleManager.Controllers
                 return NotFound();
             }
 
-            var competitorsInEvent = await _competitorsInEventRepository.GetById((int)id);
+            var competitorsInEvent = await _competitorInEventService.GetCompetitorById((int)id);
             if (competitorsInEvent == null)
             {
                 return NotFound();
@@ -187,11 +184,10 @@ namespace WebCycleManager.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var competitorsInEvent = await _competitorsInEventRepository.GetById((int)id);
+            var competitorsInEvent = await _competitorInEventService.GetCompetitorById((int)id);
             if (competitorsInEvent != null)
             {
-                _competitorsInEventRepository.Remove(competitorsInEvent);
-                await _competitorsInEventRepository.SaveChangesAsync();
+                await _competitorInEventService.Delete(competitorsInEvent);
                 return RedirectToAction(nameof(Index), new { eventId = competitorsInEvent.EventId });
             }
             
@@ -200,12 +196,12 @@ namespace WebCycleManager.Controllers
 
         private bool CompetitorsInEventExists(int id)
         {
-          return (_competitorsInEventRepository.GetById(id) != null);
+          return (_competitorInEventService.GetCompetitorById(id) != null);
         }
 
         public async Task<JsonResult> GetCompetitorForEvent(int teamId)
         {
-            var competitors = await _competitorRepository.GetByTeamId(teamId);
+            var competitors = await _competitorService.GetByTeamId(teamId);
             return Json(new SelectList(competitors, "CompetitorId", "CompetitorName"));
         }
 
@@ -227,24 +223,24 @@ namespace WebCycleManager.Controllers
 
         private async Task<Competitor> GetCompetitor(int id)
         {
-            return await _competitorRepository.GetById(id);
+            return await _competitorService.GetCompetitorById(id);
         }
 
         public async Task<CompetitorsInEvent> GetCompetitorInEvent(int eventId, int competitorId)
         {
-            var c = await _competitorsInEventRepository.GetCompetitorsInEventByIds(eventId, competitorId);
+            var c = await _competitorInEventService.GetCompetitorsInEventByIds(eventId, competitorId);
             return c;
         }
 
         private async Task<Team> GetTeam(int id)
         {
-            var t = await _teamRepository.GetById(id);
+            var t = await _teamService.GetTeamById(id);
             return t;
         }
 
         public async Task<Event> GetEvent(int id)
         {
-            var e = await _eventRepository.GetById(id);
+            var e = await _eventService.GetEventById(id);
             return e;
         }
     }

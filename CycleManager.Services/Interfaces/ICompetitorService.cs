@@ -10,7 +10,7 @@ namespace CycleManager.Services.Interfaces
         /// <param name="id"></param>
         /// <returns></returns>
         Task<int> GetCompetitorsByCountry(int id);
-        
+
         /// <summary>
         /// Get a competitor by its id
         /// </summary>
@@ -44,5 +44,12 @@ namespace CycleManager.Services.Interfaces
         /// <param name="entity"></param>
         /// <returns></returns>
         Task Delete(Competitor entity);
+
+        /// <summary>
+        /// Get all competitors for a team
+        /// </summary>
+        /// <param name="teamId"></param>
+        /// <returns></returns>
+        Task<IEnumerable<Competitor>> GetByTeamId(int teamId);
     }
 }
