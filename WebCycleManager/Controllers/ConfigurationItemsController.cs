@@ -1,4 +1,5 @@
-﻿using Domain.Interfaces;
+﻿using CycleManager.Services.Interfaces;
+using Domain.Interfaces;
 using Domain.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -9,19 +10,17 @@ namespace WebCycleManager.Controllers
 {
     public class ConfigurationItemsController : Controller
     {
-        private readonly IConfigurationItemRepository _configurationItemRepository;
-        private readonly IConfigurationRepository _configurationRepository;
+        private readonly IConfigurationService _configurationService;
 
-        public ConfigurationItemsController(IConfigurationItemRepository configurationItemRepository, IConfigurationRepository configurationRepository)
+        public ConfigurationItemsController(IConfigurationService configurationService)
         {
-            _configurationItemRepository = configurationItemRepository;
-            _configurationRepository = configurationRepository;
+            _configurationService = configurationService;
         }
 
         // GET: ConfigurationItems
         public async Task<IActionResult> Index()
         {
-            var configItems = await _configurationItemRepository.GetAll();
+            var configItems = await _configurationService.GetAllConfigurationItems();
             return View(configItems);
         }
 
@@ -33,7 +32,7 @@ namespace WebCycleManager.Controllers
                 return NotFound();
             }
 
-            var configurationItem = _configurationItemRepository.GetById((int)id);
+            var configurationItem = _configurationService.GetConfigurationItemById((int)id);
             if (configurationItem == null)
             {
                 return NotFound();
@@ -59,8 +58,7 @@ namespace WebCycleManager.Controllers
             if (ModelState.IsValid)
             {
                 var configurationItem = new ConfigurationItem { ConfigurationId = vm.ConfigurationId, Position = vm.Position, Score = vm.Score };
-                _configurationItemRepository.Add(configurationItem);
-                await _configurationItemRepository.SaveChangesAsync();
+                await _configurationService.CreateItem(configurationItem);
                 return RedirectToAction("Details", "Configurations", new { id = vm.ConfigurationId });
             }
             ViewData["ConfigurationId"] = new SelectList(await GetConfigurationList(), "Id", "ConfigurationType", vm.ConfigurationId);
@@ -75,7 +73,7 @@ namespace WebCycleManager.Controllers
                 return NotFound();
             }
 
-            var configurationItem = await _configurationItemRepository.GetById((int)id);
+            var configurationItem = await _configurationService.GetConfigurationItemById((int)id);
             if (configurationItem == null)
             {
                 return NotFound();
@@ -101,14 +99,13 @@ namespace WebCycleManager.Controllers
             {
                 try
                 {
-                    var configurationItem = await _configurationItemRepository.GetById(vm.Id);
+                    var configurationItem = await _configurationService.GetConfigurationItemById(vm.Id);
                     if(configurationItem != null)
                     { 
                         configurationItem.Position = vm.Position;
                         configurationItem.Score = vm.Score;
                         configurationItem.ConfigurationId = vm.ConfigurationId;
-                        _configurationItemRepository.Update(configurationItem);
-                        await _configurationItemRepository.SaveChangesAsync();
+                        await _configurationService.UpdateItem(configurationItem);
                     }
                 }
                 catch (DbUpdateConcurrencyException)
@@ -136,7 +133,7 @@ namespace WebCycleManager.Controllers
                 return NotFound();
             }
 
-            var configurationItem = await _configurationItemRepository.GetById((int)id);
+            var configurationItem = await _configurationService.GetConfigurationItemById((int)id);
             if (configurationItem == null)
             {
                 return NotFound();
@@ -150,25 +147,24 @@ namespace WebCycleManager.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var configurationItem = await _configurationItemRepository.GetById(id);
+            var configurationItem = await _configurationService.GetConfigurationItemById(id);
             if (configurationItem == null)
             {
                 return NotFound();
             }
             var configurationId = configurationItem.ConfigurationId;
-            _configurationItemRepository.Remove(configurationItem);
-            await _configurationItemRepository.SaveChangesAsync();
+            await _configurationService.DeleteItem(configurationItem);
             return RedirectToAction("Details", "Configurations", new { id = configurationId });
         }
 
         private bool ConfigurationItemExists(int id)
         {
-          return (_configurationItemRepository.GetById(id) != null);
+          return (_configurationService.GetConfigurationItemById(id) != null);
         }
 
         private async Task<IEnumerable<Configuration>> GetConfigurationList()
         {
-            return await _configurationRepository.GetAll();
+            return await _configurationService.GetAllConfigurations();
         }
     }
 }
