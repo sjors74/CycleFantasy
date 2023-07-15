@@ -21,18 +21,14 @@ namespace DataAccessEF.TypeRepository
                 .Where(r => r.Stage.EventId == eventId)
                 .OrderBy(r => r.ConfigurationItem.Position).ToListAsync();
 
-            //foreach(var resultItem in resultsDb)
-            //{
-            //    results.Add(
-            //        new ResultDto
-            //        {
-            //            CompetitorName = resultItem.CompetitorInEvent.Competitor.CompetitorName,
-            //            Points = resultItem.ConfigurationItem.Score,
-            //            Position = resultItem.ConfigurationItem.Position,
-            //            StageNumber = resultItem.Stage.StageName,
-            //            CompetitorInEventId = resultItem.CompetitorInEventId
-            //        });
-            //}
+
+            //_context.Results
+            //               .Include(c => c.ConfigurationItem).ThenInclude(i => i.Configuration)
+            //               .Include(r => r.Stage)
+            //               .Where(a => a.Stage.EventId.Equals(eventId));
+
+
+
 
             return results;
         }

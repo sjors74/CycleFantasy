@@ -1,4 +1,5 @@
-﻿using Domain.Interfaces;
+﻿using CycleManager.Services.Interfaces;
+using Domain.Interfaces;
 using Domain.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -8,18 +9,18 @@ namespace WebCycleManager.Controllers
 {
     public class ConfigurationsController : Controller
     {
-        private readonly IConfigurationRepository _configurationRepository;
+        private readonly IConfigurationService _configurationService;
 
-        public ConfigurationsController(IConfigurationRepository configurationRepository)
+        public ConfigurationsController(IConfigurationService configurationService)
         {
-           _configurationRepository = configurationRepository;
+            _configurationService = configurationService;
         }
 
         // GET: Configurations
         public async Task<IActionResult> Index()
         {
             var vm = new List<ConfigurationViewModel>();
-            var configurationsDb = await _configurationRepository.GetAll();
+            var configurationsDb = await _configurationService.GetAllConfigurations();
             foreach(var configuration in configurationsDb)
             {
                 vm.Add(new ConfigurationViewModel { ConfigurationName = configuration.ConfigurationType, Id = configuration.Id });
@@ -37,7 +38,7 @@ namespace WebCycleManager.Controllers
                 return NotFound();
             }
 
-            var configuration = await _configurationRepository.GetById((int)id);
+            var configuration = await _configurationService.GetConfigurationById((int)id);
             if (configuration == null)
             {
                 return NotFound();
@@ -71,8 +72,7 @@ namespace WebCycleManager.Controllers
             if (ModelState.IsValid)
             {
                 var configuration = new Configuration { ConfigurationType = vm.ConfigurationName };
-                _configurationRepository.Add(configuration);
-                await _configurationRepository.SaveChangesAsync();
+                await _configurationService.Create(configuration);
                 return RedirectToAction(nameof(Index));
             }
             return View(vm);
@@ -86,7 +86,7 @@ namespace WebCycleManager.Controllers
                 return NotFound();
             }
             var vm = new ConfigurationViewModel();
-            var configuration = await _configurationRepository.GetById((int)id);
+            var configuration = await _configurationService.GetConfigurationById((int)id);
             if (configuration == null)
             {
                 return NotFound();
@@ -119,12 +119,11 @@ namespace WebCycleManager.Controllers
             {
                 try
                 {
-                    var configuration = await _configurationRepository.GetById((int)id);
+                    var configuration = await _configurationService.GetConfigurationById((int)id);
                     if (configuration != null)
                     {
                         configuration.ConfigurationType = vm.ConfigurationName;
-                        _configurationRepository.Update(configuration);
-                        await _configurationRepository.SaveChangesAsync();
+                        await _configurationService.Update(configuration);
                     }
                 }
                 catch (DbUpdateConcurrencyException)
@@ -151,7 +150,7 @@ namespace WebCycleManager.Controllers
                 return NotFound();
             }
 
-            var configuration = await _configurationRepository.GetById((int)id);
+            var configuration = await _configurationService.GetConfigurationById((int)id);
             if (configuration == null)
             {
                 return NotFound();
@@ -166,19 +165,17 @@ namespace WebCycleManager.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var configuration = await _configurationRepository.GetById(id);
+            var configuration = await _configurationService.GetConfigurationById(id);
             if (configuration != null)
             {
-                _configurationRepository.Remove(configuration);
+                await _configurationService.Delete(configuration);
             }
-
-            await _configurationRepository.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
         private bool ConfigurationExists(int id)
         {
-          return (_configurationRepository.GetById(id) != null);
+          return (_configurationService.GetConfigurationById(id) != null);
         }
     }
 }

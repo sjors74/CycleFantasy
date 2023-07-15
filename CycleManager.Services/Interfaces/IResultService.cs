@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Domain.Models;
 
 namespace CycleManager.Services.Interfaces
 {
@@ -14,5 +10,12 @@ namespace CycleManager.Services.Interfaces
         /// <param name="stageId"></param>
         /// <returns></returns>
         Task<int> GetResultsByStageId(int stageId);
+
+        /// <summary>
+        /// Get a list of all results for an event
+        /// </summary>
+        /// <param name="eventId"></param>
+        /// <returns></returns>
+        Task<IEnumerable<Result>> GetResultsByEventId(int eventId);
     }
 }

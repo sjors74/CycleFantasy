@@ -1,4 +1,5 @@
-﻿using Domain.Context;
+﻿using CycleManager.Services;
+using CycleManager.Services.Interfaces;
 using Domain.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -9,26 +10,36 @@ namespace WebCycleManager.Controllers
 {
     public class GameCompetitorEventsController : Controller
     {
-        private readonly DatabaseContext _context;
+        private readonly IGameCompetitorInEventService _gameCompetitorEventService;
+        private readonly IResultService _resultService;
+        private readonly IEventService _eventService;
+        private readonly IGameCompetitorService _gameCompetitorService;
         private List<ResultLineViewModel> _resultLines;
-        public GameCompetitorEventsController(DatabaseContext context)
+        
+        public GameCompetitorEventsController(IGameCompetitorInEventService gameCompetitorInEventService, 
+            IResultService resultService, IEventService eventService, IGameCompetitorService gameCompetitorService)
         {
-            _context = context;
+            _gameCompetitorEventService = gameCompetitorInEventService;
+            _resultService = resultService;
+            _eventService = eventService;
+            _gameCompetitorService = gameCompetitorService;
         }
 
         // GET: GameCompetitorEvents
         public async Task<IActionResult> Index(int eventId)
         {
             var model = new List<GameCompetitorInEventViewModel>();
-            var competitorsInEventPicks = _context.GameCompetitorEventPicks
-                .Include(c => c.CompetitorsInEvent).ThenInclude(a => a.Competitor)
-                .Include(g => g.GameCompetitorEvent).ThenInclude(b => b.GameCompetitor)
-                .Where(c => c.CompetitorsInEvent.EventId.Equals(eventId));
+            var competitorsInEventPicks = _gameCompetitorEventService.GetPicks(eventId);
+                //_context.GameCompetitorEventPicks
+                //.Include(c => c.CompetitorsInEvent).ThenInclude(a => a.Competitor)
+                //.Include(g => g.GameCompetitorEvent).ThenInclude(b => b.GameCompetitor)
+                //.Where(c => c.CompetitorsInEvent.EventId.Equals(eventId));
 
-            var competitorsInEventResults = _context.Results
-                            .Include(c => c.ConfigurationItem).ThenInclude(i => i.Configuration)
-                            .Include(r => r.Stage)
-                            .Where(a => a.Stage.EventId.Equals(eventId));
+            var competitorsInEventResults = await _resultService.GetResultsByEventId(eventId);
+                //_context.Results
+                //            .Include(c => c.ConfigurationItem).ThenInclude(i => i.Configuration)
+                //            .Include(r => r.Stage)
+                //            .Where(a => a.Stage.EventId.Equals(eventId));
 
             var groupedGameCompetitors = competitorsInEventPicks.GroupBy(c => c.GameCompetitorEvent.Id).Select(g => new GameCompetitorInEventViewModel
             {
@@ -77,34 +88,34 @@ namespace WebCycleManager.Controllers
         public async Task<IActionResult> Index(int eventId, int gameCompetitorInEventPickId, IFormCollection formCollection)
         {
             var resultList = new List<CompetitorsInEvent>();
-            foreach (var key in formCollection.Keys)
-            {
-                if (key.Contains("SelectedCompetitorId"))
-                {
-                    var value = formCollection[key];
+            //foreach (var key in formCollection.Keys)
+            //{
+            //    if (key.Contains("SelectedCompetitorId"))
+            //    {
+            //        var value = formCollection[key];
 
-                    int.TryParse(value, out var competitorId);
-                    if (competitorId > 0)
-                    {
+            //        int.TryParse(value, out var competitorId);
+            //        if (competitorId > 0)
+            //        {
 
-                        var gameCompetitor = _context.GameCompetitorEventPicks.FirstOrDefault();// c => c.GameCompetitorEventId == gameCompetitorInEventPickId);
-                        resultList.Add(new CompetitorsInEvent{ Id = competitorId });
+            //            var gameCompetitor = _context.GameCompetitorEventPicks.FirstOrDefault();// c => c.GameCompetitorEventId == gameCompetitorInEventPickId);
+            //            resultList.Add(new CompetitorsInEvent{ Id = competitorId });
 
-                            foreach (var competitor in resultList)
-                            {
+            //                foreach (var competitor in resultList)
+            //                {
                                 //gameCompetitor.CompetitorsInEvent.Add(competitor);
-                            }
+                            //}
 
-                            _context.GameCompetitorEventPicks.Update(gameCompetitor);
+                            //_context.GameCompetitorEventPicks.Update(gameCompetitor);
                         //}
                         
 
-                    }
-                }
-            }
+            //        }
+            //    }
+            //}
 
             //_context.GameCompetitorEventPicks.AddRange(resultList);
-            _context.SaveChanges();
+            //_context.SaveChanges();
             return RedirectToAction("Index", "GameCompetitorEvents", new { Id = eventId });
         }
 
@@ -112,25 +123,27 @@ namespace WebCycleManager.Controllers
         // GET: GameCompetitorEvents/Details/5
         public async Task<IActionResult> Details(int? id, int? eventId)
         {
-            if (id == null || _context.GameCompetitorsEvent == null)
-            {
-                return NotFound();
-            }
+            //if (id == null || _context.GameCompetitorsEvent == null)
+            //{
+            //    return NotFound();
+            //}
             _resultLines = null;
             var model = new GameCompetitorInEventViewModel();
             model.EventId = (int)eventId;
             model.GameCompetitorInEventId = (int)id;
 
-            var competitorsInEventPicks = _context.GameCompetitorEventPicks
-                .Include(c => c.CompetitorsInEvent).ThenInclude(a => a.Competitor)
-                .Include(g => g.GameCompetitorEvent).ThenInclude(b => b.GameCompetitor)
-                .Where(c => c.CompetitorsInEvent.EventId.Equals(eventId) && c.GameCompetitorEvent.Id.Equals(id));
+            var competitorsInEventPicks = _gameCompetitorEventService.GetPicks((int)eventId, (int)id);
+                //_context.GameCompetitorEventPicks
+                //.Include(c => c.CompetitorsInEvent).ThenInclude(a => a.Competitor)
+                //.Include(g => g.GameCompetitorEvent).ThenInclude(b => b.GameCompetitor)
+                //.Where(c => c.CompetitorsInEvent.EventId.Equals(eventId) && c.GameCompetitorEvent.Id.Equals(id));
 
             model.TeamName = competitorsInEventPicks.First().GameCompetitorEvent.TeamName;
-            var competitorsInEventResults = _context.Results
-                .Include(c => c.ConfigurationItem).ThenInclude(i => i.Configuration)
-                .Include(r => r.Stage)
-                .Where(a => a.Stage.EventId.Equals(eventId));
+            var competitorsInEventResults = await _resultService.GetResultsByEventId((int)eventId);
+                //_context.Results
+                //.Include(c => c.ConfigurationItem).ThenInclude(i => i.Configuration)
+                //.Include(r => r.Stage)
+                //.Where(a => a.Stage.EventId.Equals(eventId));
 
             _resultLines = competitorsInEventResults.GroupBy(g => g.CompetitorInEventId)
                 .Select(cl => new ResultLineViewModel
@@ -160,10 +173,10 @@ namespace WebCycleManager.Controllers
 
         }
         // GET: GameCompetitorEvents/Create
-        public IActionResult Create()
+        public async Task<IActionResult> Create()
         {
-            ViewData["EventId"] = new SelectList(_context.Events, "EventId", "EventName");
-            ViewData["GameCompetitorId"] = new SelectList(_context.GameCompetitors, "Id", "FirstName");
+            ViewData["EventId"] = new SelectList(await _eventService.GetAllEvents(), "EventId", "EventName");
+            ViewData["GameCompetitorId"] = new SelectList(await _gameCompetitorService.GetAllGameCompetitors(), "Id", "FirstName");
             return View();
         }
 
@@ -176,30 +189,29 @@ namespace WebCycleManager.Controllers
         {
             if (ModelState.IsValid)
             {
-                _context.Add(gameCompetitorEvent);
-                await _context.SaveChangesAsync();
+                await _gameCompetitorEventService.Create(gameCompetitorEvent);
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["EventId"] = new SelectList(_context.Events, "EventId", "EventName", gameCompetitorEvent.EventId);
-            ViewData["GameCompetitorId"] = new SelectList(_context.GameCompetitors, "Id", "FirstName", gameCompetitorEvent.GameCompetitorId);
+            ViewData["EventId"] = new SelectList(await _eventService.GetAllEvents(), "EventId", "EventName", gameCompetitorEvent.EventId);
+            ViewData["GameCompetitorId"] = new SelectList(await _gameCompetitorService.GetAllGameCompetitors(), "Id", "FirstName", gameCompetitorEvent.GameCompetitorId);
             return View(gameCompetitorEvent);
         }
 
         // GET: GameCompetitorEvents/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
-            if (id == null || _context.GameCompetitorsEvent == null)
+            if (id == null)
             {
                 return NotFound();
             }
 
-            var gameCompetitorEvent = await _context.GameCompetitorsEvent.FindAsync(id);
+            var gameCompetitorEvent = await _gameCompetitorEventService.GetCompetitorEventById((int)id);
             if (gameCompetitorEvent == null)
             {
                 return NotFound();
             }
-            ViewData["EventId"] = new SelectList(_context.Events, "EventId", "EventName", gameCompetitorEvent.EventId);
-            ViewData["GameCompetitorId"] = new SelectList(_context.GameCompetitors, "Id", "FirstName", gameCompetitorEvent.GameCompetitorId);
+            ViewData["EventId"] = new SelectList(await _eventService.GetAllEvents(), "EventId", "EventName", gameCompetitorEvent.EventId);
+            ViewData["GameCompetitorId"] = new SelectList(await _gameCompetitorService.GetAllGameCompetitors(), "Id", "FirstName", gameCompetitorEvent.GameCompetitorId);
             ViewBag.GameEventId = gameCompetitorEvent.EventId;
             return View(gameCompetitorEvent);
         }
@@ -220,8 +232,7 @@ namespace WebCycleManager.Controllers
             {
                 try
                 {
-                    _context.Update(gameCompetitorEvent);
-                    await _context.SaveChangesAsync();
+                    await _gameCompetitorEventService.Update(gameCompetitorEvent);
                 }
                 catch (DbUpdateConcurrencyException)
                 {
@@ -236,28 +247,28 @@ namespace WebCycleManager.Controllers
                 }
                 return RedirectToAction(nameof(Index), new { eventId = gameCompetitorEvent.EventId});
             }
-            ViewData["EventId"] = new SelectList(_context.Events, "EventId", "EventName", gameCompetitorEvent.EventId);
-            ViewData["GameCompetitorId"] = new SelectList(_context.GameCompetitors, "Id", "FirstName", gameCompetitorEvent.GameCompetitorId);
+            ViewData["EventId"] = new SelectList(await _eventService.GetAllEvents(), "EventId", "EventName", gameCompetitorEvent.EventId);
+            ViewData["GameCompetitorId"] = new SelectList(await _gameCompetitorService.GetAllGameCompetitors(), "Id", "FirstName", gameCompetitorEvent.GameCompetitorId);
             return View(gameCompetitorEvent);
         }
 
         // GET: GameCompetitorEvents/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
-            if (id == null || _context.GameCompetitorsEvent == null)
+            if (id == null)
             {
                 return NotFound();
             }
-            var gamePicks = _context.GameCompetitorEventPicks.FirstOrDefault();
-                //Include(c => c.CompetitorsInEvent).Where(c => c.CompetitorsInEvent.Select(c => c.CompetitorInEventId == id).FirstOrDefault());
+            //var gamePicks = _context.GameCompetitorEventPicks.FirstOrDefault();
+            //Include(c => c.CompetitorsInEvent).Where(c => c.CompetitorsInEvent.Select(c => c.CompetitorInEventId == id).FirstOrDefault());
             //var gameCompetitorEvent = await _context.GameCompetitorsEvent
             //    .Include(g => g.Event)
             //    .Include(g => g.GameCompetitor)
             //    .FirstOrDefaultAsync(m => m.Id == id);
-            if (gamePicks == null)
-            {
-                return NotFound();
-            }
+            //if (gamePicks == null)
+            //{
+            //    return NotFound();
+            //}
 
             //var vm = new GameCompetitorInEventViewModel
             //{
@@ -268,8 +279,8 @@ namespace WebCycleManager.Controllers
             //};
 
             //return View(vm);
-
-            return View(gamePicks);
+            return View();
+            //return View(gamePicks);
         }
 
         // POST: GameCompetitorEvents/Delete/5
@@ -277,44 +288,46 @@ namespace WebCycleManager.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            if (_context.GameCompetitorsEvent == null)
-            {
-                return Problem("Entity set 'DatabaseContext.GameCompetitorsEvent'  is null.");
-            }
-            var gameCompetitorEvent = await _context.GameCompetitorsEvent.FindAsync(id);
-            if (gameCompetitorEvent != null)
-            {
-                _context.GameCompetitorsEvent.Remove(gameCompetitorEvent);
-            }
+            //if (_context.GameCompetitorsEvent == null)
+            //{
+            //    return Problem("Entity set 'DatabaseContext.GameCompetitorsEvent'  is null.");
+            //}
+            //var gameCompetitorEvent = await _context.GameCompetitorsEvent.FindAsync(id);
+            //if (gameCompetitorEvent != null)
+            //{
+            //    _context.GameCompetitorsEvent.Remove(gameCompetitorEvent);
+            //}
             
-            await _context.SaveChangesAsync();
+            //await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
         private bool GameCompetitorEventExists(int id)
         {
-          return (_context.GameCompetitorsEvent?.Any(e => e.Id == id)).GetValueOrDefault();
+            return true;
+
+          //return (_context.GameCompetitorsEvent?.Any(e => e.Id == id)).GetValueOrDefault();
         }
 
         public IEnumerable<SelectListItem> GetDropdownList(int eventId)
         {
             var competitors = new List<SelectListItem>();
 
-            var competitorsDb = _context.CompetitorsInEvent.OrderBy(c => c.Competitor.FirstName).Where(c => c.EventId.Equals(eventId)).ToList();
-            var groupedCompetitors = competitorsDb.GroupBy(x => x.Competitor.Team.TeamName);
-            foreach (var group in groupedCompetitors)
-            {
-                var optionGroup = new SelectListGroup() { Name = group.Key };
-                foreach (var item in group)
-                {
-                    competitors.Add(new SelectListItem()
-                    {
-                        Value = item.Id.ToString(),
-                        Text = item.Competitor.CompetitorName,
-                        Group = optionGroup
-                    });
-                }
-            }
+            //var competitorsDb = _context.CompetitorsInEvent.OrderBy(c => c.Competitor.FirstName).Where(c => c.EventId.Equals(eventId)).ToList();
+            //var groupedCompetitors = competitorsDb.GroupBy(x => x.Competitor.Team.TeamName);
+            //foreach (var group in groupedCompetitors)
+            //{
+            //    var optionGroup = new SelectListGroup() { Name = group.Key };
+            //    foreach (var item in group)
+            //    {
+            //        competitors.Add(new SelectListItem()
+            //        {
+            //            Value = item.Id.ToString(),
+            //            Text = item.Competitor.CompetitorName,
+            //            Group = optionGroup
+            //        });
+            //    }
+            //}
             return competitors;
         }
 
@@ -327,11 +340,11 @@ namespace WebCycleManager.Controllers
 
         private string GetCompetitorFullName(int competitorId)
         {
-            var competitor = _context.Competitors.FirstOrDefault(c => c.CompetitorId.Equals(competitorId));
-            if (competitor != null)
-            {
-                return $"{competitor.FirstName} {competitor.LastName}";
-            }
+            //var competitor = _context.Competitors.FirstOrDefault(c => c.CompetitorId.Equals(competitorId));
+            //if (competitor != null)
+            //{
+            //    return $"{competitor.FirstName} {competitor.LastName}";
+            //}
             return string.Empty;
         }
 
@@ -349,9 +362,10 @@ namespace WebCycleManager.Controllers
 
         private string GetGameCompetitorName(int competitorId)
         {
-            var gameCompetitor = _context.GameCompetitorsEvent.Include(c => c.GameCompetitor)
-                .FirstOrDefault(c => c.Id == competitorId);
-            return $"{gameCompetitor.GameCompetitor.FirstName} {gameCompetitor.GameCompetitor.LastName}";
+            //var gameCompetitor = _context.GameCompetitorsEvent.Include(c => c.GameCompetitor)
+            //    .FirstOrDefault(c => c.Id == competitorId);
+            //return $"{gameCompetitor.GameCompetitor.FirstName} {gameCompetitor.GameCompetitor.LastName}";
+            return string.Empty;
         }
     }
 }
