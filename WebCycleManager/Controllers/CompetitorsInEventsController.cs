@@ -44,6 +44,7 @@ namespace WebCycleManager.Controllers
                         CompetitorInEventId = GetCompetitorInEvent(eventId, d.CompetitorId).Result.Id,
                         EventId =eventId,
                         EventName = GetEvent(eventId).Result.EventName,
+                        OutOfCompetition = GetCompetitorInEvent(eventId,d.CompetitorId).Result.OutOfCompetition,
                         TeamId = d.TeamId
                 };
                 deelnemersViewModel.Add(cvm);
@@ -126,7 +127,7 @@ namespace WebCycleManager.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("EventNumber", "CompetitorInEventId", "EventId", "TeamId")] CompetitorInEventViewModel vm)
+        public async Task<IActionResult> Edit(int id, [Bind("EventNumber", "CompetitorInEventId", "OutOfCompetition","EventId", "TeamId")] CompetitorInEventViewModel vm)
         {
             if (id != vm.CompetitorInEventId)
             {
@@ -143,6 +144,7 @@ namespace WebCycleManager.Controllers
                         return NotFound(); 
                     }
                     competitorInEvent.EventNumber = vm.EventNumber;
+                    competitorInEvent.OutOfCompetition = vm.OutOfCompetition;
                     await _competitorInEventService.Update(competitorInEvent);
                 }
                 catch
@@ -216,7 +218,8 @@ namespace WebCycleManager.Controllers
                 EventNumber = competitorsInEvent.EventNumber,
                 FirstName = competitorsInEvent.Competitor.FirstName,
                 LastName = competitorsInEvent.Competitor.LastName,
-                TeamId = competitorsInEvent.Competitor.TeamId
+                TeamId = competitorsInEvent.Competitor.TeamId,
+                OutOfCompetition = competitorsInEvent.OutOfCompetition
             };
             return vm;
         }

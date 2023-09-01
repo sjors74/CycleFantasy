@@ -26,6 +26,8 @@ namespace WebCycleManager.Models
         public int EventNumber { get; set; }
         public int EventId { get; set; }
         public string EventName { get; set; } = string.Empty;
+        [DisplayName("Uitgevallen")]
+        public bool OutOfCompetition { get; set; } = false;
         public int TeamId { get; set; }
     }
 

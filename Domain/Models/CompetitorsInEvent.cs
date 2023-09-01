@@ -13,8 +13,8 @@ namespace Domain.Models
         public int EventNumber { get; set; }
         public virtual Event? Event { get; set; }
         public int CompetitorId { get; set; }
-        
+        public bool OutOfCompetition { get; set;} = false;
         public virtual Competitor? Competitor { get; set; }
-        //public virtual ICollection<GameCompetitorEventPick> GameCompetitorEventPicks { get; set; } = new List<GameCompetitorEventPick>();
+
     }
 }

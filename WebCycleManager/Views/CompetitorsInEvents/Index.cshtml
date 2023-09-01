@@ -28,6 +28,9 @@
             <th>
                 @Html.DisplayName("Team")
             </th>
+            <th>
+                @Html.DisplayName("Uitgevallen")
+            </th>
             <th></th>
         </tr>
     </thead>
@@ -42,6 +45,9 @@
             </td>
             <td>
                 @Html.DisplayFor(modelItem => item.TeamName)
+            </td>
+            <td>
+                @(item.OutOfCompetition ? "ja" : "")
             </td>
             <td>
                 <a asp-action="Edit" asp-route-id="@item.CompetitorInEventId">Wijzig</a> |

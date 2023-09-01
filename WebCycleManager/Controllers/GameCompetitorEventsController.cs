@@ -68,6 +68,7 @@ namespace WebCycleManager.Controllers
                         FirstName = competitorInEventPick.CompetitorsInEvent.Competitor.FirstName,
                         LastName = competitorInEventPick.CompetitorsInEvent.Competitor.LastName,
                         Score = GetScoreFromResultList(competitorInEventPick.CompetitorsInEvent.Id),
+                        OutOfCompetition = competitorInEventPick.CompetitorsInEvent.OutOfCompetition,
                         EventId = (int)eventId,
 
                     });
@@ -162,6 +163,7 @@ namespace WebCycleManager.Controllers
                     FirstName = competitorInEventPick.CompetitorsInEvent.Competitor.FirstName,
                     LastName = competitorInEventPick.CompetitorsInEvent.Competitor.LastName,
                     Score = GetScoreFromResultList(competitorInEventPick.CompetitorsInEvent.Id),
+                    OutOfCompetition = competitorInEventPick.CompetitorsInEvent.OutOfCompetition,
                     EventId = (int)eventId,
 
                 });
