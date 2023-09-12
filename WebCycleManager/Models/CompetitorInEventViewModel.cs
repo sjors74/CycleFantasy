@@ -12,7 +12,7 @@ namespace WebCycleManager.Models
         [DisplayName("Deelnemers")]
         public List<CompetitorInEventViewModel> Competitors { get; set; }
         public IEnumerable<SelectListItem> Teams { get; set; } = new List<SelectListItem>();
-        public string FilterTeam { get; set; } = string.Empty;
+        public int? FilterTeam { get; set; } = 0;
         public string EventNameLong
         {
             get

@@ -23,13 +23,13 @@ namespace WebCycleManager.Controllers
         }
 
         // GET: CompetitorsInEvents
-        public async Task<IActionResult> Index(int eventId, string FilterTeam = "")
+        public async Task<IActionResult> Index(int eventId, int? FilterTeam = 0)
         {
             var deelnemers = await _competitorInEventService.GetCompetitors(eventId);
             var filteredDeelnemers = deelnemers;
-            if (!string.IsNullOrEmpty(FilterTeam))
+            if (FilterTeam > 0)
             {
-                filteredDeelnemers = deelnemers.Where(t => t.TeamId.ToString() == FilterTeam).ToList();
+                filteredDeelnemers = deelnemers.Where(t => t.TeamId == FilterTeam).ToList();
             }
 
             var deelnemersViewModel = new List<CompetitorInEventViewModel>();
@@ -60,7 +60,7 @@ namespace WebCycleManager.Controllers
                                       Value = x.TeamId.ToString(),
                                       Text = x.TeamName.ToString()
                                   });
-                vm.FilterTeam = FilterTeam == null ? string.Empty : FilterTeam;
+                vm.FilterTeam = FilterTeam == null ? 0 : FilterTeam;
 
                 return View(vm);
             }

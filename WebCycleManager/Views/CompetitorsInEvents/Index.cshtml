@@ -9,13 +9,13 @@
 <p>
     <a asp-action="Create" asp-route-eventId="@Model.EventId">Voeg deelnemer(s) toe</a>
 </p>
-@using (Html.BeginForm("Index", "CompetitorsInEvents", FormMethod.Get))
-{
-      <label> Filter op team</label>
-        @Html.DropDownListFor(model => model.FilterTeam,Model.Teams,"-- Selecteer --")
-        @Html.HiddenFor(model => model.EventId);
-      <input type="submit" value="Filter" />
-}
+
+<form asp-action="Index" method="get" name="CompetitorsInEvents">
+    <select asp-for="FilterTeam"
+        asp-items="Model.Teams" onchange="SelectedIndexChanged(this.value)">
+        <option>Selecteer team</option>
+    </select>
+</form>
 <table class="table">
     <thead>
         <tr>
@@ -57,3 +57,9 @@
     }
     </tbody>
 </table>
+<script type="text/javascript">
+    function SelectedIndexChanged(searchTeam) {
+        var eventId = @Model.EventId;
+        window.location.href = "/CompetitorsInEvents/Index?eventId=" + eventId + "&FilterTeam=" + searchTeam;
+    }
+</script> 
