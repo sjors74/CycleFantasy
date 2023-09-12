@@ -1,6 +1,7 @@
 ﻿using CycleManager.Domain.Interfaces;
 using Domain.Context;
 using Domain.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace DataAccessEF.TypeRepository
 {
@@ -10,9 +11,10 @@ namespace DataAccessEF.TypeRepository
         {
         }
 
-        public Task<IEnumerable<GameCompetitorEvent>> GetAllGameCompetitorsInEventByEventId(int eventId)
+        public async Task<IEnumerable<GameCompetitorEvent>> GetAllGameCompetitorsInEventByEventId(int eventId)
         {
-            throw new NotImplementedException();
+            var gameCompetitorsInEvent = context.GameCompetitorsEvent.Where(c => c.EventId.Equals(eventId));
+            return await gameCompetitorsInEvent.ToListAsync();
         }
     }
 }

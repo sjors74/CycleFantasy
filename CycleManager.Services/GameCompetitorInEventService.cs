@@ -81,6 +81,18 @@ namespace CycleManager.Services
         }
 
         /// <summary>
+        /// Get the number of picks for a gamecompetitor
+        /// </summary>
+        /// <param name="eventId"></param>
+        /// <param name="gameCompetitorId"></param>
+        /// <returns></returns>
+        public int GetNumberOfPicks(int eventId, int gameCompetitorId)
+        {
+            var picks = GetPicks(eventId, gameCompetitorId);
+            return picks.Count();
+        }
+
+        /// <summary>
         /// Update a game competitor for an event and save it
         /// </summary>
         /// <param name="entity"></param>

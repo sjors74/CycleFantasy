@@ -1,4 +1,5 @@
 ﻿using Domain.Models;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace WebCycleManager.Models
 {
@@ -11,5 +12,7 @@ namespace WebCycleManager.Models
         public List<ResultLineViewModel> CompetitorsInEvent { get; set; } = new List<ResultLineViewModel>();
         public int GameCompetitorInEventId { get; set; }
         public int Score { get; set; } = 0;
+        public IEnumerable<SelectListItem> DropdownList { get; set; }
+        public int NumberOfPicks { get; set; } = 0;
     }
 }

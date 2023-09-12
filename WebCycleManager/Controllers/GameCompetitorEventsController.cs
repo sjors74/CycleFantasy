@@ -1,5 +1,6 @@
 ﻿using CycleManager.Services;
 using CycleManager.Services.Interfaces;
+using Domain.Context;
 using Domain.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -15,20 +16,23 @@ namespace WebCycleManager.Controllers
         private readonly IEventService _eventService;
         private readonly IGameCompetitorService _gameCompetitorService;
         private List<ResultLineViewModel> _resultLines;
-        
+        private readonly DatabaseContext _context;
+
         public GameCompetitorEventsController(IGameCompetitorInEventService gameCompetitorInEventService, 
-            IResultService resultService, IEventService eventService, IGameCompetitorService gameCompetitorService)
+            IResultService resultService, IEventService eventService, IGameCompetitorService gameCompetitorService, DatabaseContext context)
         {
             _gameCompetitorEventService = gameCompetitorInEventService;
             _resultService = resultService;
             _eventService = eventService;
             _gameCompetitorService = gameCompetitorService;
+            _context = context;
         }
 
         // GET: GameCompetitorEvents
         public async Task<IActionResult> Index(int eventId)
         {
             var model = new List<GameCompetitorInEventViewModel>();
+            var teamsForEvent = await _gameCompetitorEventService.GetAllCompetitorsInEvent(eventId);
             var competitorsInEventPicks = _gameCompetitorEventService.GetPicks(eventId);
                 //_context.GameCompetitorEventPicks
                 //.Include(c => c.CompetitorsInEvent).ThenInclude(a => a.Competitor)
@@ -55,30 +59,45 @@ namespace WebCycleManager.Controllers
                     Score = cl.Sum(c => c.ConfigurationItem.Score),
                 }).ToList();
 
-            foreach (var gamecompetitor in groupedGameCompetitors.ToList())
+            foreach(var team in teamsForEvent)
             {
-                var resultList = new List<ResultLineViewModel>();
-                var filteredPicks = competitorsInEventPicks.Where(c => c.GameCompetitorEvent.Id.Equals(gamecompetitor.GameCompetitorInEventId));
-                foreach (var competitorInEventPick in filteredPicks)
+                var teamId = team.Id;
+                var teamName = team.TeamName;
+                var gamecompetitor = groupedGameCompetitors.Where(c => c.GameCompetitorInEventId.Equals(teamId)).FirstOrDefault();
+                if (gamecompetitor != null)
                 {
-                    resultList.Add(
-                    new ResultLineViewModel
+                    var resultList = new List<ResultLineViewModel>();
+                    var filteredPicks = competitorsInEventPicks.Where(c => c.GameCompetitorEvent.Id.Equals(gamecompetitor.GameCompetitorInEventId));
+                    foreach (var competitorInEventPick in filteredPicks)
                     {
-                        CompetitorInEventId = competitorInEventPick.CompetitorsInEvent.Id,
-                        FirstName = competitorInEventPick.CompetitorsInEvent.Competitor.FirstName,
-                        LastName = competitorInEventPick.CompetitorsInEvent.Competitor.LastName,
-                        Score = GetScoreFromResultList(competitorInEventPick.CompetitorsInEvent.Id),
-                        OutOfCompetition = competitorInEventPick.CompetitorsInEvent.OutOfCompetition,
-                        EventId = (int)eventId,
+                        resultList.Add(
+                        new ResultLineViewModel
+                        {
+                            CompetitorInEventId = competitorInEventPick.CompetitorsInEvent.Id,
+                            FirstName = competitorInEventPick.CompetitorsInEvent.Competitor.FirstName,
+                            LastName = competitorInEventPick.CompetitorsInEvent.Competitor.LastName,
+                            Score = GetScoreFromResultList(competitorInEventPick.CompetitorsInEvent.Id),
+                            OutOfCompetition = competitorInEventPick.CompetitorsInEvent.OutOfCompetition,
+                            EventId = (int)eventId,
 
-                    });
+                        });
+                    }
+                    gamecompetitor.CompetitorsInEvent = resultList;
+                    gamecompetitor.Id = gamecompetitor.GameCompetitorInEventId;
+                    gamecompetitor.EventId = eventId;
+                    //gamecompetitor.GameCompetitorName = GetGameCompetitorName(gamecompetitor.GameCompetitorInEventId);
+                    gamecompetitor.Score = resultList.Sum(c => c.Score);
+                    model.Add(gamecompetitor);
                 }
-                gamecompetitor.CompetitorsInEvent = resultList;
-                gamecompetitor.Id = gamecompetitor.GameCompetitorInEventId;
-                gamecompetitor.EventId = eventId;
-                gamecompetitor.GameCompetitorName = GetGameCompetitorName(gamecompetitor.GameCompetitorInEventId);
-                gamecompetitor.Score = resultList.Sum(c => c.Score);
-                model.Add(gamecompetitor);
+                else
+                {
+                    gamecompetitor = new GameCompetitorInEventViewModel();
+                    gamecompetitor.Id = teamId;
+                    gamecompetitor.EventId = eventId;
+                    gamecompetitor.TeamName = teamName;
+                    gamecompetitor.Score = 0;
+                    model.Add(gamecompetitor);
+                }
             }
 
              return View(model);
@@ -124,53 +143,55 @@ namespace WebCycleManager.Controllers
         // GET: GameCompetitorEvents/Details/5
         public async Task<IActionResult> Details(int? id, int? eventId)
         {
-            //if (id == null || _context.GameCompetitorsEvent == null)
-            //{
-            //    return NotFound();
-            //}
             _resultLines = null;
             var model = new GameCompetitorInEventViewModel();
             model.EventId = (int)eventId;
             model.GameCompetitorInEventId = (int)id;
+            model.NumberOfPicks = _gameCompetitorEventService.GetNumberOfPicks((int)eventId, (int)id);
+            //todo get data from servie (teamname)
 
-            var competitorsInEventPicks = _gameCompetitorEventService.GetPicks((int)eventId, (int)id);
-                //_context.GameCompetitorEventPicks
-                //.Include(c => c.CompetitorsInEvent).ThenInclude(a => a.Competitor)
-                //.Include(g => g.GameCompetitorEvent).ThenInclude(b => b.GameCompetitor)
-                //.Where(c => c.CompetitorsInEvent.EventId.Equals(eventId) && c.GameCompetitorEvent.Id.Equals(id));
-
-            model.TeamName = competitorsInEventPicks.First().GameCompetitorEvent.TeamName;
+            var competitorsInEventPicks = _gameCompetitorEventService.GetPicks((int)eventId, (int)id).ToList();
+            if (competitorsInEventPicks != null && competitorsInEventPicks.Count > 0)
+            {
+                model.TeamName = competitorsInEventPicks.First().GameCompetitorEvent.TeamName;
+            }
             var competitorsInEventResults = await _resultService.GetResultsByEventId((int)eventId);
-                //_context.Results
-                //.Include(c => c.ConfigurationItem).ThenInclude(i => i.Configuration)
-                //.Include(r => r.Stage)
-                //.Where(a => a.Stage.EventId.Equals(eventId));
 
-            _resultLines = competitorsInEventResults.GroupBy(g => g.CompetitorInEventId)
-                .Select(cl => new ResultLineViewModel
-                {
-                    CompetitorInEventId = cl.First().CompetitorInEventId,
-                    Score = cl.Sum(c => c.ConfigurationItem.Score),
-                }).ToList();
+            if (competitorsInEventResults != null)
+            {
+                _resultLines = competitorsInEventResults.GroupBy(g => g.CompetitorInEventId)
+                    .Select(cl => new ResultLineViewModel
+                    {
+                        CompetitorInEventId = cl.First().CompetitorInEventId,
+                        Score = cl.Sum(c => c.ConfigurationItem.Score),
+                    }).ToList();
+            }
 
             var resultList = new List<ResultLineViewModel>();
-            foreach (var competitorInEventPick in competitorsInEventPicks)
+            if (competitorsInEventPicks != null)
             {
-                resultList.Add(
-                new ResultLineViewModel
-                {
-                    CompetitorInEventId = competitorInEventPick.CompetitorsInEvent.Id,
-                    FirstName = competitorInEventPick.CompetitorsInEvent.Competitor.FirstName,
-                    LastName = competitorInEventPick.CompetitorsInEvent.Competitor.LastName,
-                    Score = GetScoreFromResultList(competitorInEventPick.CompetitorsInEvent.Id),
-                    OutOfCompetition = competitorInEventPick.CompetitorsInEvent.OutOfCompetition,
-                    EventId = (int)eventId,
 
-                });
+
+                foreach (var competitorInEventPick in competitorsInEventPicks)
+                {
+                    resultList.Add(
+                    new ResultLineViewModel
+                    {
+                        CompetitorInEventId = competitorInEventPick.CompetitorsInEvent.Id,
+                        FirstName = competitorInEventPick.CompetitorsInEvent.Competitor.FirstName,
+                        LastName = competitorInEventPick.CompetitorsInEvent.Competitor.LastName,
+                        Score = GetScoreFromResultList(competitorInEventPick.CompetitorsInEvent.Id),
+                        OutOfCompetition = competitorInEventPick.CompetitorsInEvent.OutOfCompetition,
+                        DropdownList = GetDropdownList((int)eventId),
+                        SelectedCompetitorId = competitorInEventPick.CompetitorsInEvent.Id,
+                        EventId = (int)eventId,
+                    });;
+                }
+                model.Score = resultList.Sum(c => c.Score);
+                var orderedList = resultList.OrderByDescending(c => c.Score).ThenBy(c => c.LastName).ToList();
+                model.CompetitorsInEvent = orderedList;
             }
-            model.Score = resultList.Sum(c => c.Score);
-            var orderedList = resultList.OrderByDescending(c => c.Score).ThenBy(c => c.LastName).ToList();
-            model.CompetitorsInEvent = orderedList;
+                
             return View(model);
 
         }
@@ -315,21 +336,21 @@ namespace WebCycleManager.Controllers
         {
             var competitors = new List<SelectListItem>();
 
-            //var competitorsDb = _context.CompetitorsInEvent.OrderBy(c => c.Competitor.FirstName).Where(c => c.EventId.Equals(eventId)).ToList();
-            //var groupedCompetitors = competitorsDb.GroupBy(x => x.Competitor.Team.TeamName);
-            //foreach (var group in groupedCompetitors)
-            //{
-            //    var optionGroup = new SelectListGroup() { Name = group.Key };
-            //    foreach (var item in group)
-            //    {
-            //        competitors.Add(new SelectListItem()
-            //        {
-            //            Value = item.Id.ToString(),
-            //            Text = item.Competitor.CompetitorName,
-            //            Group = optionGroup
-            //        });
-            //    }
-            //}
+            var competitorsDb = _context.CompetitorsInEvent.OrderBy(c => c.Competitor.FirstName).Where(c => c.EventId.Equals(eventId)).ToList();
+            var groupedCompetitors = competitorsDb.GroupBy(x => x.Competitor.Team.TeamName);
+            foreach (var group in groupedCompetitors)
+            {
+                var optionGroup = new SelectListGroup() { Name = group.Key };
+                foreach (var item in group)
+                {
+                    competitors.Add(new SelectListItem()
+                    {
+                        Value = item.Id.ToString(),
+                        Text = item.Competitor.CompetitorName,
+                        Group = optionGroup
+                    });
+                }
+            }
             return competitors;
         }
 
@@ -362,12 +383,12 @@ namespace WebCycleManager.Controllers
             return 0;
         }
 
-        private string GetGameCompetitorName(int competitorId)
-        {
-            //var gameCompetitor = _context.GameCompetitorsEvent.Include(c => c.GameCompetitor)
-            //    .FirstOrDefault(c => c.Id == competitorId);
-            //return $"{gameCompetitor.GameCompetitor.FirstName} {gameCompetitor.GameCompetitor.LastName}";
-            return string.Empty;
-        }
+        //private string GetGameCompetitorName(int competitorId)
+        //{
+        //    //var gameCompetitor = _context.GameCompetitorsEvent.Include(c => c.GameCompetitor)
+        //    //    .FirstOrDefault(c => c.Id == competitorId);
+        //    //return $"{gameCompetitor.GameCompetitor.FirstName} {gameCompetitor.GameCompetitor.LastName}";
+        //    return string.Empty;
+        //}
     }
 }

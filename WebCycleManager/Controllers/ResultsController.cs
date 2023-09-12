@@ -29,7 +29,7 @@ namespace WebCycleManager.Controllers
                 var resultDict = new Dictionary<int, int>();
                 resultDict = results.ToDictionary(r => r.ConfigurationItem.Position, r => r.CompetitorInEvent.CompetitorId);
                 var currentEvent = _context.Events.FirstOrDefault(e => e.EventId.Equals(stage.EventId));
-                var competitorsInEvent = _context.CompetitorsInEvent.Where(c => c.EventId.Equals(currentEvent.EventId)).ToList();
+                var competitorsInEvent = _context.CompetitorsInEvent.Where(c => c.EventId.Equals(currentEvent.EventId) && c.OutOfCompetition == false).ToList();
                 var config= currentEvent.Configuration;
                 var numberOfconfigItems = _context.ConfigurationItems.Where(l => l.ConfigurationId.Equals(config.Id)).Count();
                 var resultItems = new List<ResultItemViewModel>();
@@ -247,7 +247,7 @@ namespace WebCycleManager.Controllers
         {
             var competitors = new List<SelectListItem>();
 
-            var competitorsDb = _context.CompetitorsInEvent.OrderBy(c => c.Competitor.FirstName).Where(c => c.EventId.Equals(eventId)).ToList();
+            var competitorsDb = _context.CompetitorsInEvent.OrderBy(c => c.Competitor.FirstName).Where(c => c.EventId.Equals(eventId) && c.OutOfCompetition == false).ToList();
             var groupedCompetitors = competitorsDb.GroupBy(x => x.Competitor.Team.TeamName);
             foreach(var group in groupedCompetitors)
             {

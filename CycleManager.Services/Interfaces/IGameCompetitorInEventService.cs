@@ -58,5 +58,7 @@ namespace CycleManager.Services.Interfaces
         /// <param name="id"></param>
         /// <returns></returns>
         IQueryable<GameCompetitorEventPick> GetPicks(int eventId, int id);
+
+        int GetNumberOfPicks(int eventId, int gameCompetitorId);
     }
 }
