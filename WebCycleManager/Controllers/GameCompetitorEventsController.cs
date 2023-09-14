@@ -105,38 +105,30 @@ namespace WebCycleManager.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Index(int eventId, int gameCompetitorInEventPickId, IFormCollection formCollection)
+        public async Task<IActionResult> Details(int eventId, int gameCompetitorInEventId, IFormCollection formCollection)
         {
-            var resultList = new List<CompetitorsInEvent>();
-            //foreach (var key in formCollection.Keys)
-            //{
-            //    if (key.Contains("SelectedCompetitorId"))
-            //    {
-            //        var value = formCollection[key];
+            var resultList = new List<GameCompetitorEventPick>();
+            foreach (var key in formCollection.Keys)
+            {
+                if (key.Contains("SelectedCompetitorId"))
+                {
+                    var value = formCollection[key];
+                    int.TryParse(value, out var competitorId);
+                    if (competitorId > 0)
+                    {
+                        var gameCompetitor = _context.GameCompetitorsEvent.FirstOrDefault(g => g.Id.Equals(gameCompetitorInEventId));
+                        var competitor = _context.CompetitorsInEvent.FirstOrDefault(c => c.Id == competitorId);
+                        if (gameCompetitor != null && competitor != null)
+                        {
+                            resultList.Add(new GameCompetitorEventPick { CompetitorsInEvent = competitor, GameCompetitorEvent = gameCompetitor});
+                        }
+                    }
+                }
+            }
 
-            //        int.TryParse(value, out var competitorId);
-            //        if (competitorId > 0)
-            //        {
-
-            //            var gameCompetitor = _context.GameCompetitorEventPicks.FirstOrDefault();// c => c.GameCompetitorEventId == gameCompetitorInEventPickId);
-            //            resultList.Add(new CompetitorsInEvent{ Id = competitorId });
-
-            //                foreach (var competitor in resultList)
-            //                {
-                                //gameCompetitor.CompetitorsInEvent.Add(competitor);
-                            //}
-
-                            //_context.GameCompetitorEventPicks.Update(gameCompetitor);
-                        //}
-                        
-
-            //        }
-            //    }
-            //}
-
-            //_context.GameCompetitorEventPicks.AddRange(resultList);
-            //_context.SaveChanges();
-            return RedirectToAction("Index", "GameCompetitorEvents", new { Id = eventId });
+            _context.GameCompetitorEventPicks.AddRange(resultList);
+            _context.SaveChanges();
+            return RedirectToAction("Details", "GameCompetitorEvents", new { eventId });
         }
 
 
@@ -148,6 +140,7 @@ namespace WebCycleManager.Controllers
             model.EventId = (int)eventId;
             model.GameCompetitorInEventId = (int)id;
             model.NumberOfPicks = _gameCompetitorEventService.GetNumberOfPicks((int)eventId, (int)id);
+            model.DropdownList = GetDropdownList((int)eventId);
             //todo get data from servie (teamname)
 
             var competitorsInEventPicks = _gameCompetitorEventService.GetPicks((int)eventId, (int)id).ToList();
@@ -311,17 +304,17 @@ namespace WebCycleManager.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            //if (_context.GameCompetitorsEvent == null)
-            //{
-            //    return Problem("Entity set 'DatabaseContext.GameCompetitorsEvent'  is null.");
-            //}
-            //var gameCompetitorEvent = await _context.GameCompetitorsEvent.FindAsync(id);
-            //if (gameCompetitorEvent != null)
-            //{
-            //    _context.GameCompetitorsEvent.Remove(gameCompetitorEvent);
-            //}
+            if (_context.GameCompetitorsEvent == null)
+            {
+                return Problem("Entity set 'DatabaseContext.GameCompetitorsEvent'  is null.");
+            }
+            var gameCompetitorEvent = await _context.GameCompetitorsEvent.FindAsync(id);
+            if (gameCompetitorEvent != null)
+            {
+                _context.GameCompetitorsEvent.Remove(gameCompetitorEvent);
+            }
             
-            //await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
@@ -336,7 +329,7 @@ namespace WebCycleManager.Controllers
         {
             var competitors = new List<SelectListItem>();
 
-            var competitorsDb = _context.CompetitorsInEvent.OrderBy(c => c.Competitor.FirstName).Where(c => c.EventId.Equals(eventId)).ToList();
+            var competitorsDb = _context.CompetitorsInEvent.OrderBy(c => c.Competitor.FirstName).Where(c => c.EventId.Equals(eventId) && c.OutOfCompetition.Equals(false)).ToList();
             var groupedCompetitors = competitorsDb.GroupBy(x => x.Competitor.Team.TeamName);
             foreach (var group in groupedCompetitors)
             {

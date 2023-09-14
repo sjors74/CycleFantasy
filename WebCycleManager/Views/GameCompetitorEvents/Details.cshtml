@@ -1,6 +1,6 @@
 ﻿@*@using Domain.Models;*@
 @model GameCompetitorInEventViewModel
-
+<form method="post" asp-controller="GameCompetitorEvents" asp-action="Details">
 @* <form method="post" asp-controller="GameCompetitorEvents" asp-action="Detail">
     <h4>Deelnemer @Model.TeamName (@Model.Score punten)</h4>
     <hr />
@@ -98,24 +98,23 @@
                 {
                     <tr>
                         <td>
+                            @(j + 1)
+                        </td>
+                        <td>
                             @Html.DropDownList($"Model.CompetitorsInEvent[{j}].SelectedCompetitorId",Model.DropdownList, "-- selecteer --", "Value")
                         </td>
+                        <td></td>
+                        <td></td>
                     </tr>
                 }
             }
-@*            else
-            {
-                <tr>
-                @for(int i=0; i < 15; i++)
-                {
-                   @Html.DropDownList($"Model.CompetitorsInEvent[{i}].SelectedCompetitorId",Model.DropdownList, "-- selecteer --", "Value")
-                    <td>@i</td>
-                }
-                </tr>
-            }
-*@        </tbody>
+        </tbody>
     </table>
 </div>
 <div>
+    <input type="hidden" name="gameCompetitorInEventId" value="@Model.GameCompetitorInEventId" />
+    <input type="hidden" name="eventId" value="@Model.EventId" />
+    <button type="submit" value="Opslaan">Opslaan</button> |
     <a asp-action="Index" asp-route-eventId="@Model.EventId">Terug naar de lijst</a>
 </div>
+</form>
