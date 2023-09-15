@@ -15,7 +15,7 @@ namespace WebCycleManager.Controllers
         private readonly IResultService _resultService;
         private readonly IEventService _eventService;
         private readonly IGameCompetitorService _gameCompetitorService;
-        private List<ResultLineViewModel> _resultLines;
+        private List<ResultLineViewModel> _resultLines = new List<ResultLineViewModel>();
         private readonly DatabaseContext _context;
 
         public GameCompetitorEventsController(IGameCompetitorInEventService gameCompetitorInEventService, 
@@ -94,7 +94,7 @@ namespace WebCycleManager.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Details(int eventId, int gameCompetitorInEventId, IFormCollection formCollection)
+        public IActionResult Details(int eventId, int gameCompetitorInEventId, IFormCollection formCollection)
         {
             var resultList = new List<GameCompetitorEventPick>();
             foreach (var key in formCollection.Keys)
