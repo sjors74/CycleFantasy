@@ -34,17 +34,7 @@ namespace WebCycleManager.Controllers
             var model = new List<GameCompetitorInEventViewModel>();
             var teamsForEvent = await _gameCompetitorEventService.GetAllCompetitorsInEvent(eventId);
             var competitorsInEventPicks = _gameCompetitorEventService.GetPicks(eventId);
-                //_context.GameCompetitorEventPicks
-                //.Include(c => c.CompetitorsInEvent).ThenInclude(a => a.Competitor)
-                //.Include(g => g.GameCompetitorEvent).ThenInclude(b => b.GameCompetitor)
-                //.Where(c => c.CompetitorsInEvent.EventId.Equals(eventId));
-
             var competitorsInEventResults = await _resultService.GetResultsByEventId(eventId);
-                //_context.Results
-                //            .Include(c => c.ConfigurationItem).ThenInclude(i => i.Configuration)
-                //            .Include(r => r.Stage)
-                //            .Where(a => a.Stage.EventId.Equals(eventId));
-
             var groupedGameCompetitors = competitorsInEventPicks.GroupBy(c => c.GameCompetitorEvent.Id).Select(g => new GameCompetitorInEventViewModel
             {
                 GameCompetitorInEventId = g.Key,
@@ -85,7 +75,6 @@ namespace WebCycleManager.Controllers
                     gamecompetitor.CompetitorsInEvent = resultList;
                     gamecompetitor.Id = gamecompetitor.GameCompetitorInEventId;
                     gamecompetitor.EventId = eventId;
-                    //gamecompetitor.GameCompetitorName = GetGameCompetitorName(gamecompetitor.GameCompetitorInEventId);
                     gamecompetitor.Score = resultList.Sum(c => c.Score);
                     model.Add(gamecompetitor);
                 }
@@ -206,7 +195,7 @@ namespace WebCycleManager.Controllers
             if (ModelState.IsValid)
             {
                 await _gameCompetitorEventService.Create(gameCompetitorEvent);
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction(nameof(Index), new { eventId = gameCompetitorEvent.EventId });
             }
             ViewData["EventId"] = new SelectList(await _eventService.GetAllEvents(), "EventId", "EventName", gameCompetitorEvent.EventId);
             ViewData["GameCompetitorId"] = new SelectList(await _gameCompetitorService.GetAllGameCompetitors(), "Id", "FirstName", gameCompetitorEvent.GameCompetitorId);
@@ -261,11 +250,11 @@ namespace WebCycleManager.Controllers
                         throw;
                     }
                 }
-                return RedirectToAction(nameof(Index), new { eventId = gameCompetitorEvent.EventId});
+                return RedirectToAction(nameof(Details), new { eventId = gameCompetitorEvent.EventId});
             }
             ViewData["EventId"] = new SelectList(await _eventService.GetAllEvents(), "EventId", "EventName", gameCompetitorEvent.EventId);
             ViewData["GameCompetitorId"] = new SelectList(await _gameCompetitorService.GetAllGameCompetitors(), "Id", "FirstName", gameCompetitorEvent.GameCompetitorId);
-            return View(gameCompetitorEvent);
+            return RedirectToAction(nameof(Details), new { eventId = gameCompetitorEvent.EventId });
         }
 
         // GET: GameCompetitorEvents/Delete/5
@@ -275,28 +264,8 @@ namespace WebCycleManager.Controllers
             {
                 return NotFound();
             }
-            //var gamePicks = _context.GameCompetitorEventPicks.FirstOrDefault();
-            //Include(c => c.CompetitorsInEvent).Where(c => c.CompetitorsInEvent.Select(c => c.CompetitorInEventId == id).FirstOrDefault());
-            //var gameCompetitorEvent = await _context.GameCompetitorsEvent
-            //    .Include(g => g.Event)
-            //    .Include(g => g.GameCompetitor)
-            //    .FirstOrDefaultAsync(m => m.Id == id);
-            //if (gamePicks == null)
-            //{
-            //    return NotFound();
-            //}
-
-            //var vm = new GameCompetitorInEventViewModel
-            //{
-            //    Id = result.Id,
-            //    StageId = result.StageId,
-            //    //Position = result.ConfigurationItem.Position,
-            //    CompetitorName = gamePicks..CompetitorInEvent.Competitor.CompetitorName
-            //};
-
-            //return View(vm);
             return View();
-            //return View(gamePicks);
+
         }
 
         // POST: GameCompetitorEvents/Delete/5
@@ -309,13 +278,17 @@ namespace WebCycleManager.Controllers
                 return Problem("Entity set 'DatabaseContext.GameCompetitorsEvent'  is null.");
             }
             var gameCompetitorEvent = await _context.GameCompetitorsEvent.FindAsync(id);
+            int eventId = 0;
             if (gameCompetitorEvent != null)
             {
+                eventId = gameCompetitorEvent.EventId;
+                var picks = _context.GameCompetitorEventPicks.Where(g => g.GameCompetitorEvent.Equals(gameCompetitorEvent));
+                _context.GameCompetitorEventPicks.RemoveRange(picks);
                 _context.GameCompetitorsEvent.Remove(gameCompetitorEvent);
             }
             
             await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction(nameof(Index), new { eventId });
         }
 
         private bool GameCompetitorEventExists(int id)
