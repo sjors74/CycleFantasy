@@ -1,4 +1,5 @@
-﻿using Domain.Models;
+﻿using DataAccessEF.Migrations;
+using Domain.Models;
 using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace WebCycleManager.Models
@@ -14,5 +15,7 @@ namespace WebCycleManager.Models
         public int Score { get; set; } = 0;
         public IEnumerable<SelectListItem> DropdownList { get; set; }
         public int NumberOfPicks { get; set; } = 0;
+
+        public List<CompetitorsInEvent> SuggestedCompetitors { get; set; } = new List<CompetitorsInEvent>();
     }
 }

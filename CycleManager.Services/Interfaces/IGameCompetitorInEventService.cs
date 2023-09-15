@@ -60,5 +60,9 @@ namespace CycleManager.Services.Interfaces
         IQueryable<GameCompetitorEventPick> GetPicks(int eventId, int id);
 
         int GetNumberOfPicks(int eventId, int gameCompetitorId);
+
+        Task<IEnumerable<CompetitorsInEvent>> GetCompetitors(int id, int number);
+
+        Task<CompetitorsInEvent> GetCompetitorInEventById(int id);
     }
 }

@@ -1,55 +1,5 @@
-﻿@*@using Domain.Models;*@
-@model GameCompetitorInEventViewModel
+﻿@model GameCompetitorInEventViewModel
 <form method="post" asp-controller="GameCompetitorEvents" asp-action="Details">
-@* <form method="post" asp-controller="GameCompetitorEvents" asp-action="Detail">
-    <h4>Deelnemer @Model.TeamName (@Model.Score punten)</h4>
-    <hr />
-
-
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                nr
-            </th>
-            <th>
-                competitor
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-
-    @for(var i = 0; i < 15; i++) {
-        <tr>
-            <td>
-                <label>@(i+1)</label>
-            </td>
-            <td>
-                @if(Model.CompetitorsInEvent != null && Model.CompetitorsInEvent.Count > i)
-                {
-                            <p>hier komt een ddl</p>
-                          @*  @Html.DropDownList($"Model.CompetitorsInEvent[{i}].SelectedCompetitorId",Model.CompetitorsInEvent[i].DropdownList, "-- selecteer --", "Value")
-                }
-                else
-                {
-                            <label>@Model.CompetitorsInEvent[i].FirstName @Model.CompetitorsInEvent[i].LastName</label>
-                }
-            </td>
-            <td>
-                @if (Model.Results[i].Id > 0)
-                {
-                    <a asp-action="Delete" asp-route-id="@Model.Results[i].Id">Verwijder</a>
-                }*
-            </td>
-        </tr>
-}
-    </tbody>
-</table>
-
-</form>
-*@
-
 <div>
     <h4>Deelnemer @Model.TeamName (@Model.Score punten)</h4>
     <hr />
@@ -76,37 +26,73 @@
             {
                 for(int i=0; i < Model.NumberOfPicks; i++)
                 {
-@*                foreach (var item in Model.CompetitorsInEvent)
-                {
-*@                    <tr>
-                        <td>
-                        @Html.DisplayFor(modelItem => Model.CompetitorsInEvent[i].FirstName)
-                    </td>
-                    <td>
-                            @Html.DisplayFor(modelItem => Model.CompetitorsInEvent[i].LastName)
-                    </td>
-                    <td>
-                            @Html.DisplayFor(modelItem => Model.CompetitorsInEvent[i].Score)
-                    </td>
-                    <td>
-                        @(Model.CompetitorsInEvent[i].OutOfCompetition ? "ja" : "")
-                    </td>
-                    </tr>
-                }
-                var toPick = 15 - Model.NumberOfPicks;
-                for(int j = 0; j < toPick; j++)
-                {
                     <tr>
                         <td>
-                            @(j + 1)
+                            @Html.DisplayFor(modelItem => Model.CompetitorsInEvent[i].FirstName)
                         </td>
                         <td>
-                            @Html.DropDownList($"Model.CompetitorsInEvent[{j}].SelectedCompetitorId",Model.DropdownList, "-- selecteer --", "Value")
+                            @Html.DisplayFor(modelItem => Model.CompetitorsInEvent[i].LastName)
                         </td>
-                        <td></td>
-                        <td></td>
-                    </tr>
-                }
+                        <td>
+                            @Html.DisplayFor(modelItem => Model.CompetitorsInEvent[i].Score)
+                        </td>
+                        <td>
+                            @(Model.CompetitorsInEvent[i].OutOfCompetition ? "ja" : "")
+                        </td>
+                        </tr>
+                    }
+                    var toPick = 15 - Model.NumberOfPicks;
+                    if (Model.SuggestedCompetitors == null && Model.SuggestedCompetitors.Count == 0)
+                    {
+                        for (int j = 0; j < toPick; j++)
+                        {
+                            <tr>
+                                <td>
+                                    @(j + 1)
+                                </td>
+                                <td>
+                                    @Html.DropDownList($"Model.CompetitorsInEvent[{j}].SelectedCompetitorId",Model.DropdownList, "-- selecteer --", "Value")
+                                </td>
+                                <td></td>
+                                <td></td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        for (int i = 0; i < Model.SuggestedCompetitors.Count; i++)
+                        {
+                            <tr>
+                                <td>
+                                    @Html.DisplayFor(modelItem => Model.SuggestedCompetitors[i].Competitor.FirstName)
+                                </td>
+                                <td>
+                                    @Html.DisplayFor(modelItem => Model.SuggestedCompetitors[i].Competitor.LastName)
+                                </td>
+                                <td>
+                                    <button type="button">voeg toe</button>
+                                </td>
+                                <td>
+                                    <button type="button">verwijder</button>
+                                </td>
+                            </tr>
+                        }
+                        var aantal = 15 - Model.NumberOfPicks - Model.SuggestedCompetitors.Count;
+                        for(int j = 0; j < aantal; j++)
+                        {
+                            <tr>
+                                <td>
+                                    @(j + 1)
+                                </td>
+                                <td>
+                                    @Html.DropDownList($"Model.CompetitorsInEvent[{j}].SelectedCompetitorId",Model.DropdownList, "-- selecteer --", "Value")
+                                </td>
+                                <td></td>
+                                <td></td>
+                            </tr>
+
+                        }
+                    }
             }
         </tbody>
     </table>
@@ -114,7 +100,9 @@
 <div>
     <input type="hidden" name="gameCompetitorInEventId" value="@Model.GameCompetitorInEventId" />
     <input type="hidden" name="eventId" value="@Model.EventId" />
-    <button type="submit" value="Opslaan">Opslaan</button> |
+        <button type="submit" value="Opslaan">Opslaan</button> | <input type="button"
+                                                                        value="Vul lijst"
+                                                                        onclick="location.href='@Url.Action("FillList", "GameCompetitorEvents", new { id = Model.GameCompetitorInEventId, picks = Model.NumberOfPicks, eventId = Model.EventId } )'" /> |
     <a asp-action="Index" asp-route-eventId="@Model.EventId">Terug naar de lijst</a>
 </div>
 </form>

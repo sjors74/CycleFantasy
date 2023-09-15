@@ -13,18 +13,21 @@ namespace WebCycleManager.Controllers
     {
         private readonly IGameCompetitorInEventService _gameCompetitorEventService;
         private readonly IResultService _resultService;
+        private readonly ICompetitorInEventService _competitorInEventService;
         private readonly IEventService _eventService;
         private readonly IGameCompetitorService _gameCompetitorService;
         private List<ResultLineViewModel> _resultLines = new List<ResultLineViewModel>();
         private readonly DatabaseContext _context;
 
         public GameCompetitorEventsController(IGameCompetitorInEventService gameCompetitorInEventService, 
-            IResultService resultService, IEventService eventService, IGameCompetitorService gameCompetitorService, DatabaseContext context)
+            IResultService resultService, IEventService eventService, IGameCompetitorService gameCompetitorService, 
+            ICompetitorInEventService competitorInEventService, DatabaseContext context)
         {
             _gameCompetitorEventService = gameCompetitorInEventService;
             _resultService = resultService;
             _eventService = eventService;
             _gameCompetitorService = gameCompetitorService;
+            _competitorInEventService = competitorInEventService;
             _context = context;
         }
 
@@ -124,6 +127,7 @@ namespace WebCycleManager.Controllers
         // GET: GameCompetitorEvents/Details/5
         public async Task<IActionResult> Details(int? id, int? eventId)
         {
+
             _resultLines = null;
             var model = new GameCompetitorInEventViewModel();
             model.EventId = (int)eventId;
@@ -131,6 +135,19 @@ namespace WebCycleManager.Controllers
             model.NumberOfPicks = _gameCompetitorEventService.GetNumberOfPicks((int)eventId, (int)id);
             model.DropdownList = GetDropdownList((int)eventId);
             //todo get data from servie (teamname)
+            if (TempData["suggestedCompetitors"] != null)
+            {
+                var competitorIds = TempData["suggestedCompetitors"] as IEnumerable<int>;
+                model.SuggestedCompetitors = new List<CompetitorsInEvent>();
+                foreach(var competitorId in competitorIds)
+                {
+                    var competitorInEvent = await _competitorInEventService.GetCompetitorsInEventByIds(model.EventId, competitorId);
+                    if (competitorInEvent != null)
+                    {
+                        model.SuggestedCompetitors.Add(competitorInEvent);
+                    }
+                }
+            }
 
             var competitorsInEventPicks = _gameCompetitorEventService.GetPicks((int)eventId, (int)id).ToList();
             if (competitorsInEventPicks != null && competitorsInEventPicks.Count > 0)
@@ -349,12 +366,22 @@ namespace WebCycleManager.Controllers
             return 0;
         }
 
-        //private string GetGameCompetitorName(int competitorId)
-        //{
-        //    //var gameCompetitor = _context.GameCompetitorsEvent.Include(c => c.GameCompetitor)
-        //    //    .FirstOrDefault(c => c.Id == competitorId);
-        //    //return $"{gameCompetitor.GameCompetitor.FirstName} {gameCompetitor.GameCompetitor.LastName}";
-        //    return string.Empty;
-        //}
-    }
+        public async Task<IActionResult> FillList(int id, int picks, int eventId)
+        {
+            //id = the gamecompetitor
+            var a = picks; // get pciks for id
+            var b = 15; //should be configuration item
+            // a check current gamecompetitorevent for number of picks
+            // b determine how many picks you should add
+            // c pick random competitorsinevent: c = (b - a)
+            var c = b - a;
+            var suggestedCompetitiorsList =  await _gameCompetitorEventService.GetCompetitors(eventId, c);
+            var suggestedCompetitorsId = new List<int>();
+            suggestedCompetitorsId = suggestedCompetitiorsList.Select(c => c.CompetitorId).ToList();
+            TempData["suggestedCompetitors"] = suggestedCompetitorsId;
+            // and make sure there are no duplicates in a + c
+            // return to detailview for the gamecompetitorevent with picks (a) and suggested picks (c)
+            return RedirectToAction("Details", new { id, eventId });
+        }
+    }   
 }

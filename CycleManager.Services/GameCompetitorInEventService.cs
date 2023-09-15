@@ -1,5 +1,6 @@
 ﻿using CycleManager.Domain.Interfaces;
 using CycleManager.Services.Interfaces;
+using Domain.Interfaces;
 using Domain.Models;
 
 namespace CycleManager.Services
@@ -8,11 +9,14 @@ namespace CycleManager.Services
     {
         private readonly IGameCompetitorInEventRepository _repo;
         private readonly IGameCompetitorEventPickRepository _pickRepository;
+        private readonly ICompetitorsInEventRepository _competitorRepo;
 
-        public GameCompetitorInEventService(IGameCompetitorInEventRepository repo, IGameCompetitorEventPickRepository pickRepository)
+        public GameCompetitorInEventService(IGameCompetitorInEventRepository repo, IGameCompetitorEventPickRepository pickRepository, 
+            ICompetitorsInEventRepository competitorRepo)
         {
             _repo = repo;
             _pickRepository = pickRepository;
+            _competitorRepo = competitorRepo;
         }
 
         /// <summary>
@@ -101,6 +105,16 @@ namespace CycleManager.Services
         {
             _repo.Update(entity);
             await _repo.SaveChangesAsync();
+        }
+
+        public async Task<IEnumerable<CompetitorsInEvent>> GetCompetitors(int id, int number)
+        {
+            return await _competitorRepo.GetRandomNumberofCompetitors(id, number);
+        }
+
+        public async Task<CompetitorsInEvent> GetCompetitorInEventById(int id)
+        {
+            return await _competitorRepo.GetById(id);
         }
     }
 }
