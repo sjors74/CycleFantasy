@@ -38,7 +38,7 @@ namespace WebCycleManager.Controllers
             var competitors = _competitorService.GetAllCompetitors();
             if (!string.IsNullOrEmpty(searchString))
             {
-                competitors = competitors.Where(s => s.LastName == searchString || s.FirstName.Contains(searchString));
+                competitors = competitors.Where(s => s.LastName.Contains(searchString) || s.FirstName.Contains(searchString));
                 if (competitors == null)
                 {
                     return NotFound();
@@ -67,7 +67,7 @@ namespace WebCycleManager.Controllers
         // GET: Competitors/Create
         public async Task<IActionResult> Create()
         {
-            ViewData["TeamId"] = new SelectList(await _teamService.GetAll(), "TeamId", "TeamName");
+            ViewData["TeamId"] = new SelectList((await _teamService.GetAll()).OrderBy(t => t.TeamName), "TeamId", "TeamName");
             ViewData["CountryId"] = new SelectList(await CountrySelectListHelper.GetOrderedCountries(_countryService), "CountryId", "CountryNameLong");
             return View();
         }
@@ -84,7 +84,7 @@ namespace WebCycleManager.Controllers
                 await _competitorService.Create(competitor);
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["TeamId"] = new SelectList(await _teamService.GetAll(), "TeamId", "TeamName", competitor.TeamId);
+            ViewData["TeamId"] = new SelectList((await _teamService.GetAll()).OrderBy(t => t.TeamName), "TeamId", "TeamName", competitor.TeamId);
             ViewData["CountryId"] = new SelectList(await CountrySelectListHelper.GetOrderedCountries(_countryService), "CountryId", "CountryNameLong", competitor.CountryId);
             return View(competitor);
         }
@@ -102,7 +102,7 @@ namespace WebCycleManager.Controllers
             {
                 return NotFound();
             }
-            ViewData["TeamId"] = new SelectList(await _teamService.GetAll(), "TeamId", "TeamName", competitor.TeamId);
+            ViewData["TeamId"] = new SelectList((await _teamService.GetAll()).OrderBy(t=> t.TeamName), "TeamId", "TeamName", competitor.TeamId);
             ViewData["CountryId"] = new SelectList(await CountrySelectListHelper.GetOrderedCountries(_countryService), "CountryId", "CountryNameLong", competitor.CountryId);
             return View(competitor);
         }

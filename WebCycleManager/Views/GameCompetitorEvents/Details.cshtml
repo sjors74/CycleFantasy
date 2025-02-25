@@ -70,10 +70,11 @@
                                     @Html.DisplayFor(modelItem => Model.SuggestedCompetitors[i].Competitor.LastName)
                                 </td>
                                 <td>
-                                    <button type="button">voeg toe</button>
+                                    <button type="button" onclick="AddCompetitor(@Model.SuggestedCompetitors[i].CompetitorId)">voeg toe</button> |
+                                    <button type="button" onclick="RemoveCompetitor(@Model.SuggestedCompetitors[i].CompetitorId)">verwijder</button>
                                 </td>
                                 <td>
-                                    <button type="button">verwijder</button>
+                                    
                                 </td>
                             </tr>
                         }
@@ -106,3 +107,14 @@
     <a asp-action="Index" asp-route-eventId="@Model.EventId">Terug naar de lijst</a>
 </div>
 </form>
+<script>
+    function AddCompetitor(competitorId){
+        console.log('voeg competitor met Id toe:' + competitorId);
+        
+        //add suggestion (competitorId) to picks.
+    }
+    function RemoveCompetitor(competitorId) {
+        console.log('verwijder competitor met Id:' + competitorId);
+        //remove suggestion (competitorId) from SuggestedCompetitors and show ddl
+    }
+</script>

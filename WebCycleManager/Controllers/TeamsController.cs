@@ -147,14 +147,14 @@ namespace WebCycleManager.Controllers
         }
 
         // GET: Teams/Delete/5
-        public IActionResult Delete(int? id)
+        public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
             {
                 return NotFound();
             }
 
-            var team = _teamRepository.GetById((int)id);
+            var team = await _teamRepository.GetById((int)id);
             if (team == null)
             {
                 return NotFound();

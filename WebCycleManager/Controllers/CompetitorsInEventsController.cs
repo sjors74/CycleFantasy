@@ -52,9 +52,9 @@ namespace WebCycleManager.Controllers
             var currentEvent = await _eventService.GetEventById(eventId);
             if (currentEvent != null)
             {
-                var vm = new CompetitorsInEventViewModel(deelnemersViewModel, currentEvent.EventName, currentEvent.EventYear, currentEvent.EventId);
+                var vm = new CompetitorsInEventViewModel(deelnemersViewModel.OrderBy(x => x.EventNumber).ThenBy(x => x.LastName).ThenBy(x => x.FirstName).ToList(), currentEvent.EventName, currentEvent.EventYear, currentEvent.EventId);
                 var teams = await _teamService.GetAll();
-                vm.Teams = teams.Select(x =>
+                vm.Teams = teams.OrderBy(x => x.TeamName).Select(x =>
                                   new SelectListItem()
                                   {
                                       Value = x.TeamId.ToString(),
@@ -71,7 +71,7 @@ namespace WebCycleManager.Controllers
         public async Task<IActionResult> Create(int eventId)
         {
             var competitors = _competitorService.GetAllCompetitors();
-            var competitorsList = competitors.OrderBy(c => c.FirstName).ToList();
+            var competitorsList = competitors.OrderBy(c => c.LastName).ThenBy(x => x.FirstName).ToList();
             var teams = await _teamService.GetAll();
             var teamList = teams.OrderBy(c => c.TeamName).ToList();
             ViewBag.ListOfTeams = teamList;
@@ -96,7 +96,7 @@ namespace WebCycleManager.Controllers
                 await _competitorInEventService.Create(listOfCompetitorsInEvent);
                 return RedirectToAction("Index", new { eventId } );
             }
-            ViewData["CompetitorId"] = new SelectList(_competitorService.GetAllCompetitors().OrderBy(c => c.FirstName), "CompetitorId", "CompetitorName");
+            ViewData["CompetitorId"] = new SelectList(_competitorService.GetAllCompetitors().OrderBy(c => c.LastName).ThenBy(c => c.FirstName), "CompetitorId", "CompetitorName");
             ViewData["TeamId"] = new SelectList(await _teamService.GetAll(), "TeamId", "TeamName");
             return View();
         }
@@ -204,7 +204,7 @@ namespace WebCycleManager.Controllers
         public async Task<JsonResult> GetCompetitorForEvent(int teamId)
         {
             var competitors = await _competitorService.GetByTeamId(teamId);
-            return Json(new SelectList(competitors, "CompetitorId", "CompetitorName"));
+            return Json(new SelectList(competitors.OrderBy(c => c.LastName).ThenBy(c => c.FirstName), "CompetitorId", "CompetitorName"));
         }
 
         private CompetitorInEventViewModel GetViewModel(CompetitorsInEvent competitorsInEvent)
