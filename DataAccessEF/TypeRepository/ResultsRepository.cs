@@ -1,7 +1,9 @@
-﻿using Domain.Context;
+﻿using CycleManager.Domain.Dto;
+using Domain.Context;
 using Domain.Interfaces;
 using Domain.Models;
 using Microsoft.EntityFrameworkCore;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace DataAccessEF.TypeRepository
 {
@@ -32,6 +34,21 @@ namespace DataAccessEF.TypeRepository
 
             return results;
         }
+
+        public async Task<CompetitorScoreDto?> GetCompetitorResultsByEventId(int eventId, int competitorId)
+        {
+            var results = await context.Results
+                .Where(r => r.Stage != null && r.CompetitorInEvent != null && r.Stage.EventId == eventId && r.CompetitorInEvent.Id == competitorId)
+                .GroupBy(r => r.CompetitorInEventId)
+                .Select(g => new CompetitorScoreDto
+                {
+                    CompetitorInEventId = g.Key,
+                    TotalScore = g.Sum(r => r.ConfigurationItem.Score)
+                }).FirstOrDefaultAsync();
+
+            return results;
+        }
+
 
         public async Task<int> GetResultsByStageId(int stageId)
         {

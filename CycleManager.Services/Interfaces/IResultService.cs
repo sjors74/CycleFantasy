@@ -1,4 +1,5 @@
-﻿using Domain.Models;
+﻿using CycleManager.Domain.Dto;
+using Domain.Models;
 
 namespace CycleManager.Services.Interfaces
 {
@@ -10,6 +11,14 @@ namespace CycleManager.Services.Interfaces
         /// <param name="stageId"></param>
         /// <returns></returns>
         Task<int> GetResultsByStageId(int stageId);
+
+        /// <summary>
+        /// Get a list of all results for a competitor in an event
+        /// </summary>
+        /// <param name="eventId"></param>
+        /// <param name="competitorId"></param>
+        /// <returns></returns>
+        Task<CompetitorScoreDto?> GetCompetitorResultsByEventId(int eventId, int competitorId);
 
         /// <summary>
         /// Get a list of all results for an event

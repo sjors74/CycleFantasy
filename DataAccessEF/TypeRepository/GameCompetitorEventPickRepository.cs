@@ -30,12 +30,12 @@ namespace DataAccessEF.TypeRepository
         /// <param name="eventId"></param>
         /// <param name="id"></param>
         /// <returns></returns>
-        public IQueryable<GameCompetitorEventPick> GetCompetitorEventPicksById(int eventId, int id)
+        public async Task<IEnumerable<GameCompetitorEventPick>> GetCompetitorEventPicksById(int eventId, int id)
         {
-            return context.GameCompetitorEventPicks
+            return await context.GameCompetitorEventPicks
                  .Include(c => c.CompetitorsInEvent).ThenInclude(a => a.Competitor)
                  .Include(g => g.GameCompetitorEvent).ThenInclude(b => b.GameCompetitor)
-                 .Where(c => c.CompetitorsInEvent.EventId.Equals(eventId) && c.GameCompetitorEvent.Id.Equals(id));
+                 .Where(c => c.CompetitorsInEvent.EventId.Equals(eventId) && c.GameCompetitorEvent.Id.Equals(id)).ToListAsync();
         }
     }
 }

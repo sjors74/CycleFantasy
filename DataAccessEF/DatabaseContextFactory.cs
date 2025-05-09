@@ -13,7 +13,7 @@ namespace DataAccessEF
     {
         public DatabaseContext CreateDbContext(string[] args)
         {
-            var connectionString = "Data Source=DESKTOP-4CM7L3E; Initial Catalog=CycleDb; Integrated Security=True;TrustServerCertificate=True";
+            var connectionString = "Data Source=REBELSJORS\\SQLEXPRESS; Initial Catalog=CycleDb; Integrated Security=True;TrustServerCertificate=True";
             var optionsBuilder = new DbContextOptionsBuilder<DatabaseContext>();
             optionsBuilder.UseSqlServer(connectionString);
 

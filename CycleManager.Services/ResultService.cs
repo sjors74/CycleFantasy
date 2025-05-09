@@ -1,4 +1,5 @@
-﻿using CycleManager.Services.Interfaces;
+﻿using CycleManager.Domain.Dto;
+using CycleManager.Services.Interfaces;
 using Domain.Interfaces;
 using Domain.Models;
 
@@ -21,6 +22,17 @@ namespace CycleManager.Services
         {
             return _resultsRepository.GetResultsByEventId(eventId);
         }
+
+        /// <summary>
+        /// Get a list of all results for an event and competitorId
+        /// </summary>
+        /// <param name="eventId"></param>
+        /// <returns></returns>
+        public async Task<CompetitorScoreDto?> GetCompetitorResultsByEventId(int eventId, int competitorId)
+        {
+            return await _resultsRepository.GetCompetitorResultsByEventId(eventId, competitorId);
+        }
+
 
         /// <summary>
         ///  Get number of results for a given stage

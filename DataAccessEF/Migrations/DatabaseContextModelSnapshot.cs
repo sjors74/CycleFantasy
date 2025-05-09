@@ -152,8 +152,14 @@ namespace DataAccessEF.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("EventId"));
 
+                    b.Property<string>("ColorName")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int?>("ConfigurationId")
                         .HasColumnType("int");
+
+                    b.Property<string>("CountryCode")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("EndDate")
                         .HasColumnType("datetime2");

@@ -18,7 +18,10 @@ namespace Domain.Models
         [DisplayName("Einddatum")]
         [DataType(DataType.Date)]
         public DateTime? EndDate { get; set; }
-
+        [DisplayName("Landcode")]
+        public string? CountryCode { get; set; }
+        [DisplayName("Kleur")]
+        public string? ColorName { get; set; }
         public bool IsActive { get; set; } = false;
         public int? ConfigurationId { get; set; }
         [JsonIgnore]

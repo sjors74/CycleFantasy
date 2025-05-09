@@ -132,7 +132,7 @@ namespace WebCycleManager.Controllers
             var model = new GameCompetitorInEventViewModel();
             model.EventId = (int)eventId;
             model.GameCompetitorInEventId = (int)id;
-            model.NumberOfPicks = _gameCompetitorEventService.GetNumberOfPicks((int)eventId, (int)id);
+            model.NumberOfPicks = await _gameCompetitorEventService.GetNumberOfPicks((int)eventId, (int)id);
             model.DropdownList = GetDropdownList((int)eventId);
             //todo get data from servie (teamname)
             if (TempData["suggestedCompetitors"] != null)
@@ -149,8 +149,8 @@ namespace WebCycleManager.Controllers
                 }
             }
 
-            var competitorsInEventPicks = _gameCompetitorEventService.GetPicks((int)eventId, (int)id).ToList();
-            if (competitorsInEventPicks != null && competitorsInEventPicks.Count > 0)
+            var competitorsInEventPicks = await _gameCompetitorEventService.GetPicks((int)eventId, (int)id);
+            if (competitorsInEventPicks != null && competitorsInEventPicks.Count() > 0)
             {
                 model.TeamName = competitorsInEventPicks.First().GameCompetitorEvent.TeamName;
             }
