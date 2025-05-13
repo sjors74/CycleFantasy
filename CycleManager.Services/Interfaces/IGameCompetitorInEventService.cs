@@ -57,7 +57,7 @@ namespace CycleManager.Services.Interfaces
         /// <param name="eventId"></param>
         /// <param name="id"></param>
         /// <returns></returns>
-        Task<IEnumerable<GameCompetitorEventPick>> GetPicks(int eventId, int id);
+        Task<IEnumerable<GameCompetitorEventPick>> GetAllPicks(int id);
 
         Task<int> GetNumberOfPicks(int eventId, int gameCompetitorId);
 

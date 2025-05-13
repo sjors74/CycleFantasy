@@ -6,6 +6,19 @@
 <div class="event-header">
     <h1>@Model.EventName</h1>
     <p class="event-dates">Van @Model.StartDate tot @Model.EndDate</p>
+    <div class="progress-container">
+        <div class="progress-bar" id="progress-bar"></div>
+    </div>
+
+    <div class="steps" id="steps-container"></div>
+    @*
+    <nav id="eventMenu" class="event-menu">
+        <a href="https://www.procyclingstats.com/race/giro-d-italia/2025" target="_blank">Procylingstats</a>
+         
+        <a href="#uitslagen">Uitslagen</a>
+        <a href="#parcours">Parcours</a>
+     </nav>
+     *@
 </div>
 <style>
     .event-header {
@@ -13,18 +26,37 @@
         background-color: #f0f0f0;
         border-left: 5px solid #ff4081;
         margin-bottom: 30px;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
     }
 
-        .event-header h1 {
-            margin: 0;
-            font-size: 2rem;
-            color: #333;
-        }
+    .event-header h1 {
+        margin: 0;
+        font-size: 2rem;
+        color: #333;
+    }
 
     .event-dates {
         margin: 5px 0 0;
         color: #666;
         font-style: italic;
+    }
+
+    .event-menu {
+        margin-top: 15px;
+        align-self: flex-end;
+    }
+
+    .event-menu a {
+        margin-left: 15px;
+        text-decoration: none;
+        color: #007acc;
+        font-weight: bold;
+    }
+
+    .hidden {
+        display: none;
     }
 </style>
 <style>
@@ -67,7 +99,83 @@
         font-style: italic;
         padding: 20px;
     }
+
+    .details-table {
+        font-size: 0.8rem;
+        border-collapse: collapse;
+        width: auto;
+        min-width: 150px;
+    }
+
+    .details-table th,
+    .details-table td {
+        border: 1px solid #ccc;
+        padding: 4px 6px;
+        text-align: left;
+        white-space: nowrap;
+    }
+
+    .details-table thead {
+        background-color: #000;
+        color: #fff;
+    }
+
+    .details-column-wrapper {
+        display: flex;
+        justify-content: center; /* Zorgt voor horizontale centrering */
+        gap: 20px; /* Ruimte tussen de tabellen */
+        flex-wrap: wrap; /* Laat tabellen doorlopen naar volgende regel op kleine schermen */
+        margin-top: 10px; /* Optioneel: ruimte boven de tabellen */
+    }
+
+    .progress-label {
+        font-size: 16px;
+        margin-bottom: 10px;
+    }
+
+    .progress-container {
+        width: 100%;
+        background-color: #e0e0e0;
+        border-radius: 4px;
+        height: 6px;
+        margin-bottom: 30px;
+    }
+
+    .progress-bar {
+        height: 100%;
+        border-radius: 4px;
+        background-color: #ff4081;
+        width: 0%;
+        transition: width 0.5s ease;
+    }
+
+    .steps {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .step {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background-color: #ccc;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 12px;
+        font-weight: bold;
+        cursor: help;
+        transition: background-color 0.3s;
+    }
+
+    .step.completed {
+        background-color: #4caf50;
+    }
 </style>
+
+
 <h2>Deelnemers</h2>
 
 <table id="deelnemerTable" border="1">
@@ -102,6 +210,7 @@
 
             deelnemers.forEach(d => {
                 const row = document.createElement("tr");
+                row.dataset.id = d.id;
 
                 const poolCell = document.createElement("td");
                 poolCell.textContent = d.poolNaam || "Onbekende pool";
@@ -124,4 +233,140 @@
             console.error("Fout bij ophalen deelnemers:", err);
         }
     });
+</script>
+<script>
+    const eventId = @Model.EventId;
+    const table = document.querySelector('#deelnemerTable tbody');
+    let expandedRow;
+    let lastClickedRow;
+    let isLoading = false;
+
+    table.addEventListener('click', async function (e) {
+      const clickedRow = e.target.closest('tr');
+       if (!clickedRow || isLoading) return;
+
+      const itemId = clickedRow.dataset.id;
+      if(!itemId) return;
+
+      // Als details al getoond worden, verwijder ze
+      if (expandedRow && lastClickedRow === clickedRow) {
+        expandedRow.remove();
+        expandedRow = null;
+        lastClickedRow = null;
+        return;
+      }
+
+        // Als je op dezelfde rij klikt, dan stop hier (toggle effect)
+        if (expandedRow) {
+            expandedRow.remove();
+            expandedRow = null;
+            lastClickedRow = null;
+        }
+
+        isLoading = true;
+        // Haal data op van de API
+        try {
+        const response = await fetch(`${API_BASE_URL}/Deelnemer/Picks/${itemId}/event/${eventId}`);
+        if(!response.ok) throw new Error(`Server error: ${response.status}`);
+        const detailsList = await response.json(); // Verwacht array van max 15 items
+
+        const detailsRow = document.createElement('tr');
+        detailsRow.classList.add('details-row');
+
+         const detailsCell = document.createElement('td');
+        detailsCell.colSpan = clickedRow.children.length;
+
+        const columns = 3; // Aantal kolommen (aantal subtabelletjes naast elkaar)
+        const perColumn = Math.ceil(detailsList.length / columns);
+
+        // Container voor de kolommen
+        const columnWrapper = document.createElement('div');
+        columnWrapper.classList.add('details-column-wrapper');
+
+
+        for (let i = 0; i < columns; i++) {
+            const chunk = detailsList.slice(i * perColumn, (i + 1) * perColumn);
+
+            const subTable = document.createElement('table');
+            subTable.classList.add('details-table');
+
+            // const thead = document.createElement('thead');
+            // thead.innerHTML = `
+            //     <tr>
+            //         <th>Naam</th>
+            //         <th>Punten</th>
+            //     </tr>`;
+            // table.appendChild(thead);
+
+            const tbody = document.createElement('tbody');
+            chunk.forEach(item => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${item.competitorName}</td>
+                    <td>${item.points}</td>
+                `;
+                tbody.appendChild(row);
+            });
+
+            subTable.appendChild(tbody);
+            columnWrapper.appendChild(subTable);
+        }
+
+        detailsCell.appendChild(columnWrapper);
+             detailsRow.appendChild(detailsCell);
+             clickedRow.parentNode.insertBefore(detailsRow, clickedRow.nextSibling);
+
+             expandedRow = detailsRow;
+             lastClickedRow = clickedRow;
+        } catch (err) {
+             console.error('Fout bij ophalen details:', err);
+        } finally {
+            isLoading = false;
+        }
+ });
+</script>
+<script>
+    let etappes = [];
+
+    async function loadEtappes(){
+        try {
+            console.log(`${API_BASE_URL}/api/Event/${eventId}/stages`);
+            const response = await fetch(`${API_BASE_URL}/api/Event/${eventId}/stages`);
+            
+            if(!response.ok) throw new Error("Network response was not ok");
+
+            etappes = await response.json();
+            console.log("Etappes from API:", etappes);
+
+            renderEtappes();
+        } catch(error) {
+            console.error("Error fetching etappes:", error);
+        }
+    }
+
+    function renderEtappes(){
+        
+        const stepsContainer = document.getElementById("steps-container");
+        stepsContainer.innerHTML = "";
+
+        const completedStages = etappes.filter(etappe => etappe.hasResult).length;
+
+        const progress = (completedStages / etappes.length) * 100;
+
+        const progressBar = document.getElementById("progress-bar");
+        progressBar.style.width = `${progress}%`;
+
+        etappes.forEach((etappe) => {
+          const step = document.createElement("div");
+          step.classList.add("step");
+
+          if (etappe.hasResult) step.classList.add("completed");
+          step.title = `Etappe ${etappe.stageNumber}`;
+          step.textContent = etappe.stageNumber;
+
+          stepsContainer.appendChild(step);
+        });
+    }
+
+    loadEtappes();
 </script>

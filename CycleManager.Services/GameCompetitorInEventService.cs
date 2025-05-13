@@ -79,9 +79,9 @@ namespace CycleManager.Services
         /// <param name="eventId"></param>
         /// <param name="id"></param>
         /// <returns></returns>
-        public async Task<IEnumerable<GameCompetitorEventPick>> GetPicks(int eventId, int id)
+        public async Task<IEnumerable<GameCompetitorEventPick>> GetAllPicks(int id)
         {
-            return await _pickRepository.GetCompetitorEventPicksById(eventId, id);
+            return await _pickRepository.GetCompetitorEventPicksById(id);
         }
 
         /// <summary>
@@ -92,7 +92,7 @@ namespace CycleManager.Services
         /// <returns></returns>
         public async Task<int> GetNumberOfPicks(int eventId, int gameCompetitorId)
         {
-            var picks = await GetPicks(eventId, gameCompetitorId);
+            var picks = await GetAllPicks(gameCompetitorId);
             return picks.Count();
         }
 

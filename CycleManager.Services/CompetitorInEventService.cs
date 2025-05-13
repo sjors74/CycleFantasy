@@ -49,7 +49,7 @@ namespace CycleManager.Services
         /// </summary>
         /// <param name="eventId"></param>
         /// <returns></returns>
-        public async Task<IEnumerable<Competitor>> GetCompetitors(int eventId)
+        public async Task<IEnumerable<CompetitorsInEvent>> GetCompetitors(int eventId)
         {
             return await _competitorsInEventRepository.GetCompetitors(eventId);
         }

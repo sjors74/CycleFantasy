@@ -18,6 +18,6 @@ namespace CycleManager.Domain.Interfaces
         /// </summary>
         /// <param name="eventId"></param>
         /// <returns></returns>
-        Task<IEnumerable<GameCompetitorEventPick>> GetCompetitorEventPicksById(int eventId, int id);
+        Task<IEnumerable<GameCompetitorEventPick>> GetCompetitorEventPicksById(int id);
     }
 }

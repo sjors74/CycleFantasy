@@ -2,6 +2,7 @@
 using CycleManager.Services.Interfaces;
 using Domain.Dto;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 
 namespace WebCycle.Controllers
 {
@@ -11,12 +12,15 @@ namespace WebCycle.Controllers
     {
         private readonly IGameCompetitorInEventService deelnemerService;
         private readonly IResultService resultService;
+        private readonly IGameCompetitorInEventService gameCompetitorInEventService;
         private readonly IMapper _mapper;
 
-        public DeelnemerController(IGameCompetitorInEventService deelnemerService, IResultService resultService, IMapper mapper)
+        public DeelnemerController(IGameCompetitorInEventService deelnemerService, IResultService resultService, IGameCompetitorInEventService gameCompetitorInEventService, IMapper mapper)
         {
             this.deelnemerService = deelnemerService;
             this.resultService = resultService;
+            this.gameCompetitorInEventService = gameCompetitorInEventService;
+            this.gameCompetitorInEventService = gameCompetitorInEventService;
             this._mapper = mapper;
         }
 
@@ -30,7 +34,7 @@ namespace WebCycle.Controllers
             foreach (var deelnemer in deelnemerResponse)
             {
                 var score = 0;
-                var picks = await deelnemerService.GetPicks(eventId, deelnemer.Id);
+                var picks = await deelnemerService.GetAllPicks(deelnemer.Id);
                 foreach (var pick in picks)
                 {
                     var results = await resultService.GetCompetitorResultsByEventId(eventId, pick.CompetitorsInEvent.Id);
@@ -50,6 +54,27 @@ namespace WebCycle.Controllers
         {
             var results = await resultService.GetCompetitorResultsByEventId(eventId, competitorInEventId);
             return Ok(results);
+        }
+
+        [HttpGet("Picks/{id}/event/{eventId}")]
+        public async Task<IActionResult> GetListOfCompetitorsPicksForDeelnemer(int id, int eventId)
+        {
+            var picks = await deelnemerService.GetAllPicks(id);
+            var competitorResponse = _mapper.Map<List<ResultDto>>(picks);
+
+            foreach (var pick in competitorResponse)
+            {
+                var score = 0;
+                var results = await resultService.GetCompetitorResultsByEventId(eventId, pick.CompetitorInEventId);
+                if (results != null)
+                {
+                    score = score + results.TotalScore;
+                }
+                pick.Points = score;
+                
+            }
+
+            return Ok(competitorResponse);
         }
     }
 }

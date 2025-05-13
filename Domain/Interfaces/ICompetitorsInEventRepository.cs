@@ -4,7 +4,7 @@ namespace Domain.Interfaces
 {
     public interface ICompetitorsInEventRepository : IGenericRepository<CompetitorsInEvent>
     {
-        Task<IEnumerable<Competitor>> GetCompetitors(int eventId);
+        Task<IEnumerable<CompetitorsInEvent>> GetCompetitors(int eventId);
 
         Task<IEnumerable<CompetitorsInEvent>> GetRandomNumberofCompetitors(int eventId, int number);
 
