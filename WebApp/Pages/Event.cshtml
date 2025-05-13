@@ -141,10 +141,23 @@
                 const tbody = document.createElement('tbody');
                 chunk.forEach(item => {
                     const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${item.competitorName}</td>
-                        <td>${item.points}</td>
-                    `;
+                    const nameCell = document.createElement('td');
+                    nameCell.textContent = item.competitorName;
+
+                    if(item.outOfCompetition){
+                        nameCell.style.textDecoration = 'line-through';
+                    }
+
+                    const pointsCell = document.createElement('td');
+                    pointsCell.textContent = item.points;
+
+                    if (item.outOfCompetition) {
+                        pointsCell.style.backgroundColor = 'lightgray';  // Grijze achtergrond
+                    }
+
+                    row.appendChild(nameCell);
+                    row.appendChild(pointsCell);
+
                     tbody.appendChild(row);
                 });
 

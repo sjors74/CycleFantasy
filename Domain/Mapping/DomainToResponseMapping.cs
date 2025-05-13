@@ -23,7 +23,8 @@ namespace Domain.Mapping
                 .ForMember(c => c.PoolNaam, d => d.MapFrom(s => s.TeamName));
             CreateMap<GameCompetitorEventPick, ResultDto>()
                             .ForMember(c => c.CompetitorName, d => d.MapFrom(s => s.CompetitorsInEvent.Competitor.CompetitorName))
-                            .ForMember(c => c.CompetitorInEventId, d => d.MapFrom(s => s.CompetitorsInEvent.Id));
+                            .ForMember(c => c.CompetitorInEventId, d => d.MapFrom(s => s.CompetitorsInEvent.Id))
+                            .ForMember(c => c.OutOfCompetition, d => d.MapFrom(s => s.CompetitorsInEvent.OutOfCompetition));
         }
     }
 }
