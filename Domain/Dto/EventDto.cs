@@ -6,6 +6,7 @@
         public string EventName { get; set; } = string.Empty;
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set;}
+        public string? Slogan { get; set; }
         public string? CountryCode { get; set; }
         public string? ColorName { get; set; }
 

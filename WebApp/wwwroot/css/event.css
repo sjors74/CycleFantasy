@@ -6,6 +6,7 @@
     display: flex;
     flex-direction: column;
     align-items: flex-start;
+    position: relative;
 }
 
 .event-header h1 {
@@ -20,17 +21,33 @@
     font-style: italic;
 }
 
+.event-motto {
+    font-size: 3rem; /* Vergroot de tekst */
+    font-style: italic; /* Zet de tekst in italics */
+    position: absolute; /* Zorg ervoor dat het motto uit de normale stroom van de pagina wordt gehaald */
+    top: 20px; /* Zet het motto 20px van de bovenkant van de header */
+    right: 20px; /* Zet het motto 20px van de rechterkant van de header */
+    color: #ff4081; /* Kleur van de tekst, pas aan naar wens */
+    display:flex;
+    align-items: center;
+}
+
+.event-motto .quote{
+        font-size: 2.5rem; /* Maak de quote iets groter */
+        margin: 0 10px;
+    }
+
 .event-menu {
     margin-top: 15px;
     align-self: flex-end;
 }
 
-    .event-menu a {
-        margin-left: 15px;
-        text-decoration: none;
-        color: #007acc;
-        font-weight: bold;
-    }
+.event-menu a {
+    margin-left: 15px;
+    text-decoration: none;
+    color: #007acc;
+    font-weight: bold;
+}
 
 .hidden {
     display: none;

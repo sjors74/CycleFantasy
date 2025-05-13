@@ -90,7 +90,7 @@ namespace WebCycleManager.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Name,Year,StartDate,EndDate,ConfigurationId,IsActive")] EventItemViewModel @event)
+        public async Task<IActionResult> Create([Bind("Id,Name,Year,StartDate,EndDate,Slogan,CountryCode,ColorName,ConfigurationId,IsActive")] EventItemViewModel @event)
         {
             if (ModelState.IsValid)
             {
@@ -125,7 +125,7 @@ namespace WebCycleManager.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Name,Year,StartDate,EndDate,ConfigurationId,IsActive")] EventItemViewModel @event)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,Name,Year,StartDate,EndDate,Slogan,CountryCode,ColorName,ConfigurationId,IsActive")] EventItemViewModel @event)
         {
             if (id != @event.Id)
             {
@@ -198,6 +198,9 @@ namespace WebCycleManager.Controllers
                 Year = @event.EventYear,
                 StartDate = @event.StartDate.HasValue ? (DateTime)@event.StartDate : DateTime.MinValue,
                 EndDate = @event.EndDate.HasValue ? (DateTime)@event.EndDate : DateTime.MaxValue,
+                Slogan = @event.Slogan,
+                ColorName = @event.ColorName,
+                CountryCode = @event.CountryCode,
                 IsActive = @event.IsActive,
                 ConfigurationId = @event.ConfigurationId
             };
@@ -217,6 +220,9 @@ namespace WebCycleManager.Controllers
                 @event.EventYear = vm.Year;
                 @event.StartDate = vm.StartDate;
                 @event.EndDate = vm.EndDate;
+                @event.Slogan = vm.Slogan;
+                @event.CountryCode = vm.CountryCode;
+                @event.ColorName = vm.ColorName;
                 @event.IsActive = vm.IsActive;
                 @event.ConfigurationId = vm.ConfigurationId;
 
