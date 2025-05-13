@@ -49,6 +49,7 @@ namespace WebApp.Pages
             StartDate = eventData.StartDate.ToString("d MMMM yyyy", new System.Globalization.CultureInfo("nl-NL"));
             EndDate = eventData.EndDate.ToString("d MMMM yyyy", new System.Globalization.CultureInfo("nl-NL"));
 
+            ViewData["Title"] = EventName;
             return Page();
         }
     }
