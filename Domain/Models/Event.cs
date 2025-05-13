@@ -18,6 +18,7 @@ namespace Domain.Models
         [DisplayName("Einddatum")]
         [DataType(DataType.Date)]
         public DateTime? EndDate { get; set; }
+        public string? Slogan { get; set; }
         [DisplayName("Landcode")]
         public string? CountryCode { get; set; }
         [DisplayName("Kleur")]
