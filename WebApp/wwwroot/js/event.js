@@ -7,9 +7,15 @@
 
     loadConfig().then(async () => {
 
-        eventId = document.getElementById("event-id").dataset.eventId;
+        const eventElement = document.getElementById("event-id");
+        if (!eventElement) {
+            console.warn("event.js: #event-id bestaat niet op deze pagina.");
+            return;
+        }
+
+        eventId = eventElement.dataset.eventId;
         if (!eventId) {
-            console.error("eventId niet gevonden in DOM");
+            console.error("eventId niet gevonden in dataset van #event-id");
             return;
         }
 
