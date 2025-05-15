@@ -23,7 +23,7 @@ function fetchDataAndRenderTiles() {
                     // Inhoud van de tegel
                     tile.innerHTML = `
          <div class="flag">
-             <img src="https://flagcdn.com/w40/${event.countryCode.toLowerCase()}.png" alt="Vlag">
+             <img src="${FLAGS_BASE_URL}/w40/${event.countryCode.toLowerCase()}.png" alt="Vlag">
           </div>
           <h3>${event.eventName}</h3>
           <p><strong>Start:</strong> ${formatDate(event.startDate)}</p>

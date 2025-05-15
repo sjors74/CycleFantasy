@@ -193,6 +193,13 @@
                 const tbody = document.createElement('tbody');
                 chunk.forEach(item => {
                     const row = document.createElement('tr');
+                    const flagCell = document.createElement('td');
+                    const img = document.createElement('img');
+                    img.src = `${FLAGS_BASE_URL}/24x18/${item.countryCode.toLowerCase()}.png`;
+                    img.alt = 'Vlag';
+
+                    flagCell.appendChild(img);
+
                     const nameCell = document.createElement('td');
                     nameCell.textContent = item.competitorName;
 
@@ -205,8 +212,10 @@
 
                     if (item.outOfCompetition) {
                         pointsCell.style.backgroundColor = 'lightgray';  // Grijze achtergrond
+                        flagCell.style.backgroundColor = 'lightgray';
                     }
 
+                    row.appendChild(flagCell);
                     row.appendChild(nameCell);
                     row.appendChild(pointsCell);
 
