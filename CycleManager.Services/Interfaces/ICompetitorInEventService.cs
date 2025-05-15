@@ -17,7 +17,7 @@ namespace CycleManager.Services.Interfaces
         /// </summary>
         /// <param name="eventId"></param>
         /// <returns></returns>
-        Task<IEnumerable<Competitor>> GetCompetitors(int eventId);
+        Task<IEnumerable<CompetitorsInEvent>> GetCompetitors(int eventId);
 
         /// <summary>
         /// Create one or more new competitors for an event and save them

@@ -1,4 +1,12 @@
-﻿// Please see documentation at https://learn.microsoft.com/aspnet/core/client-side/bundling-and-minification
-// for details on configuring this project to bundle and minify static web assets.
+﻿// Datum formatteren (YYYY-MM-DD naar bijv. 9 mei 2025)
+function formatDate(isoDateString) {
+    const options = { day: "numeric", month: "long", year: "numeric" };
+    return new Date(isoDateString).toLocaleDateString("nl-NL", options);
+}
 
-// Write your JavaScript code.
+
+
+
+
+
+

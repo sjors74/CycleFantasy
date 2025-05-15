@@ -1,4 +1,5 @@
-﻿using Domain.Models;
+﻿using CycleManager.Domain.Dto;
+using Domain.Models;
 
 namespace CycleManager.Services
 {
@@ -28,5 +29,13 @@ namespace CycleManager.Services
         /// <param name="entity"></param>
         /// <returns></returns>
         Task Delete(Event entity);
+
+        /// <summary>
+        /// Get a list of all stages for an event, return the stage number and a boolean
+        /// indicating whether or not results have been recorded.
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        Task<IEnumerable<StageResultDto>> GetStagesWithResultsForEvent(int eventId);
     }
 }

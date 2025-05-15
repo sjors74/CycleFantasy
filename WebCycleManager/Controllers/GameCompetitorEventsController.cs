@@ -149,7 +149,7 @@ namespace WebCycleManager.Controllers
                 }
             }
 
-            var competitorsInEventPicks = await _gameCompetitorEventService.GetPicks((int)eventId, (int)id);
+            var competitorsInEventPicks = await _gameCompetitorEventService.GetAllPicks((int)id);
             if (competitorsInEventPicks != null && competitorsInEventPicks.Count() > 0)
             {
                 model.TeamName = competitorsInEventPicks.First().GameCompetitorEvent.TeamName;

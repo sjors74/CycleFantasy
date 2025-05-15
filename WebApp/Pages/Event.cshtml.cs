@@ -20,8 +20,8 @@ namespace WebApp.Pages
         public int EventId { get; set; }
         public string EventName { get; set; }
         public string StartDate { get; set; }
-
         public string EndDate { get; set; }
+        public string? Slogan { get; set; }
 
         public async Task<IActionResult> OnGetAsync()
         {
@@ -48,7 +48,9 @@ namespace WebApp.Pages
             EventName = eventData.EventName;
             StartDate = eventData.StartDate.ToString("d MMMM yyyy", new System.Globalization.CultureInfo("nl-NL"));
             EndDate = eventData.EndDate.ToString("d MMMM yyyy", new System.Globalization.CultureInfo("nl-NL"));
+            Slogan = eventData.Slogan;
 
+            ViewData["Title"] = EventName;
             return Page();
         }
     }

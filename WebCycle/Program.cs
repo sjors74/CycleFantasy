@@ -30,10 +30,12 @@ builder.Services.AddTransient<ICompetitorRepository, CompetitorRepository>();
 builder.Services.AddTransient<ICompetitorsInEventRepository, CompetitorsInEventRepository>();
 builder.Services.AddTransient<IEventRepository, EventRepository>();
 builder.Services.AddTransient<IResultsRepository, ResultsRepository>();
+builder.Services.AddTransient<IStageRepository, StageRepository>();
 builder.Services.AddTransient<IGameCompetitorInEventRepository, GameCompetitorInEventRepository>();
 builder.Services.AddScoped<IGameCompetitorInEventService, GameCompetitorInEventService>();
 builder.Services.AddTransient<IGameCompetitorEventPickRepository, GameCompetitorEventPickRepository>();
 builder.Services.AddTransient<IResultService, ResultService>();
+builder.Services.AddTransient<IEventService, EventService>();
 builder.Services.AddControllers();
 builder.Services.AddHttpClient();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle

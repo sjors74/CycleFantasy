@@ -11,6 +11,8 @@ namespace Domain.Dto
         public List<ConfigurationItem> ConfigurationItems { get; set; }
         public int EventId { get; set; }
         public int CompetitorInEventId { get; set; }
+        public bool OutOfCompetition { get; set; }
+        public string? CountryCode { get; set; }
         public ResultDto()
         {
 

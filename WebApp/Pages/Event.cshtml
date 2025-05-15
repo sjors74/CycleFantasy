@@ -1,73 +1,24 @@
 ﻿@page
 @model WebApp.Pages.EventModel
-@{
-    ViewData["Title"] = "event page";
-}
+
 <div class="event-header">
+    <div id="event-id" data-event-id="@Model.EventId"></div>
     <h1>@Model.EventName</h1>
     <p class="event-dates">Van @Model.StartDate tot @Model.EndDate</p>
+    <div class="progress-container">
+        <div class="progress-bar" id="progress-bar"></div>
+    </div>
+
+    <div class="steps" id="steps-container"></div>
+    <div class="event-motto">
+        <span class="quote">"</span>
+        @Model.Slogan
+        <span class="quote">"</span>
+    </div>
 </div>
-<style>
-    .event-header {
-        padding: 20px;
-        background-color: #f0f0f0;
-        border-left: 5px solid #ff4081;
-        margin-bottom: 30px;
-    }
 
-        .event-header h1 {
-            margin: 0;
-            font-size: 2rem;
-            color: #333;
-        }
+<div id="loader" class="spinner" style="display: none;"></div>
 
-    .event-dates {
-        margin: 5px 0 0;
-        color: #666;
-        font-style: italic;
-    }
-</style>
-<style>
-    /* Algemeen stijlen voor de tabel */
-    table {
-        width: 100%;
-        border-collapse: collapse; /* Verwijdert dubbele randen */
-        font-family: Arial, sans-serif;
-    }
-
-    /* Stijl voor de kopteksten */
-    th {
-        background-color: #4CAF50; /* Groene achtergrond */
-        color: white; /* Witte tekst */
-        padding: 12px 15px;
-        text-align: left;
-    }
-
-    /* Stijl voor de tabelcellen */
-    td {
-        padding: 10px 15px;
-        text-align: left;
-        border: 1px solid #ddd; /* Lichte rand */
-    }
-
-    /* Hover effect voor de rijen */
-    tr:hover {
-        background-color: #f5f5f5; /* Grijze achtergrond bij hover */
-    }
-
-    /* Voeg een schaduw toe aan de tabel */
-    table {
-        box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
-    }
-
-    /* Stijl voor de leegte in de tabel wanneer er geladen wordt */
-    .loading {
-        text-align: center;
-        color: #999;
-        font-style: italic;
-        padding: 20px;
-    }
-</style>
 <h2>Deelnemers</h2>
 
 <table id="deelnemerTable" border="1">
@@ -78,50 +29,9 @@
             <th>Punten</th>
         </tr>
     </thead>
-    <tbody>
-        <tr><td colspan="2">Bezig met laden...</td></tr>
-    </tbody>
+    <tbody></tbody>
 </table>
-<script>
-
-    loadConfig().then(async() => {
-
-        const eventId = @Model.EventId;
-        try {
-            const response = await fetch(`${API_BASE_URL}/Deelnemer?eventId=${eventId}`);
-
-            if (!response.ok) {
-                throw new Error("API fout");
-            }
-
-            let deelnemers = await response.json();
-            deelnemers.sort((a, b) => (b.punten || 0) - (a.punten || 0));
-
-            const tbody = document.querySelector("#deelnemerTable tbody");
-            tbody.innerHTML = ""; // leegmaken
-
-            deelnemers.forEach(d => {
-                const row = document.createElement("tr");
-
-                const poolCell = document.createElement("td");
-                poolCell.textContent = d.poolNaam || "Onbekende pool";
-
-                const naamCell = document.createElement("td");
-                naamCell.textContent = d.deelnemerNaam || d.name || "Onbekende deelnemer";
-
-                const puntenCell = document.createElement("td");
-                puntenCell.textContent = d.punten ?? "0";
-
-                row.appendChild(poolCell);
-                row.appendChild(naamCell);
-                row.appendChild(puntenCell);
-
-                tbody.appendChild(row);
-            });
-        } catch (err) {
-            const tbody = document.querySelector("#deelnemerTable tbody");
-            tbody.innerHTML = "<tr><td colspan='3'>Kan deelnemers niet ophalen.</td></tr>";
-            console.error("Fout bij ophalen deelnemers:", err);
-        }
-    });
-</script>
+@section Scripts {
+    <script src="~/js/event.js" asp-append-version="true"></script>
+}
+    

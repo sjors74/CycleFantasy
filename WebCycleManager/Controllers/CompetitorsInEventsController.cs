@@ -29,7 +29,7 @@ namespace WebCycleManager.Controllers
             var filteredDeelnemers = deelnemers;
             if (FilterTeam > 0)
             {
-                filteredDeelnemers = deelnemers.Where(t => t.TeamId == FilterTeam).ToList();
+                filteredDeelnemers = deelnemers.Where(t => t.Competitor.TeamId == FilterTeam).ToList();
             }
 
             var deelnemersViewModel = new List<CompetitorInEventViewModel>();
@@ -38,14 +38,14 @@ namespace WebCycleManager.Controllers
                 var cvm = new CompetitorInEventViewModel { 
                         CompetitorId = d.CompetitorId, 
                         EventNumber = GetCompetitorInEvent(eventId, d.CompetitorId).Result.EventNumber,
-                        FirstName = d.FirstName, 
-                        LastName = d.LastName, 
-                        TeamName = GetTeam(d.TeamId).Result.TeamName,
+                        FirstName = d.Competitor.FirstName, 
+                        LastName = d.Competitor.LastName, 
+                        TeamName = GetTeam(d.Competitor.TeamId).Result.TeamName,
                         CompetitorInEventId = GetCompetitorInEvent(eventId, d.CompetitorId).Result.Id,
                         EventId =eventId,
                         EventName = GetEvent(eventId).Result.EventName,
                         OutOfCompetition = GetCompetitorInEvent(eventId,d.CompetitorId).Result.OutOfCompetition,
-                        TeamId = d.TeamId
+                        TeamId = d.Competitor.TeamId
                 };
                 deelnemersViewModel.Add(cvm);
             }

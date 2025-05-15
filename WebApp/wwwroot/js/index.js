@@ -8,6 +8,12 @@ function fetchDataAndRenderTiles() {
             .then(response => response.json())
             .then(events => {
                 const container = document.getElementById("container");
+
+                if (!container) {
+                    console.warn("Container niet gevonden - pagina gebruikt dit script waarschijnlijk niet.");
+                    return;
+                }
+
                 events.forEach(event => {
                     const tile = document.createElement("div");
                     tile.className = "tile";
@@ -17,7 +23,7 @@ function fetchDataAndRenderTiles() {
                     // Inhoud van de tegel
                     tile.innerHTML = `
          <div class="flag">
-             <img src="https://flagcdn.com/w40/${event.countryCode.toLowerCase()}.png" alt="Vlag">
+             <img src="${FLAGS_BASE_URL}/w40/${event.countryCode.toLowerCase()}.png" alt="Vlag">
           </div>
           <h3>${event.eventName}</h3>
           <p><strong>Start:</strong> ${formatDate(event.startDate)}</p>
@@ -34,12 +40,6 @@ function fetchDataAndRenderTiles() {
                 console.error("Fout bij ophalen events:", error);
             });
     });
-}
-
-// Datum formatteren (YYYY-MM-DD naar bijv. 9 mei 2025)
-function formatDate(isoDateString) {
-    const options = { day: "numeric", month: "long", year: "numeric" };
-    return new Date(isoDateString).toLocaleDateString("nl-NL", options);
 }
 
 function handleTileClick(event) {

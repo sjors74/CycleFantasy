@@ -11,11 +11,12 @@ namespace DataAccessEF.TypeRepository
         {
         }
 
-        public async Task<IEnumerable<Competitor>> GetCompetitors(int eventId)
+        public async Task<IEnumerable<CompetitorsInEvent>> GetCompetitors(int eventId)
         {
-            var competitorsInEvent = context.CompetitorsInEvent.Where(c => c.EventId.Equals(eventId)).Select(c => c.CompetitorId);
-            var competitors = context.Competitors.Where(c => competitorsInEvent.Contains(c.CompetitorId));
-            return await competitors.ToListAsync();
+            return await context.CompetitorsInEvent
+                            .Where(c => c.EventId == eventId)
+                            .Include(c => c.Competitor)
+                            .ToListAsync();
         }
 
         public async Task<IEnumerable<CompetitorsInEvent>> GetRandomNumberofCompetitors(int eventId, int number)
