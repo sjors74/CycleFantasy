@@ -17,11 +17,11 @@ namespace WebCycleManager.Controllers
         private readonly IEventService _eventService;
         private readonly IGameCompetitorService _gameCompetitorService;
         private List<ResultLineViewModel> _resultLines = new List<ResultLineViewModel>();
-        private readonly DatabaseContext _context;
+        private readonly ApplicationDbContext _context;
 
         public GameCompetitorEventsController(IGameCompetitorInEventService gameCompetitorInEventService, 
             IResultService resultService, IEventService eventService, IGameCompetitorService gameCompetitorService, 
-            ICompetitorInEventService competitorInEventService, DatabaseContext context)
+            ICompetitorInEventService competitorInEventService, ApplicationDbContext context)
         {
             _gameCompetitorEventService = gameCompetitorInEventService;
             _resultService = resultService;
@@ -292,7 +292,7 @@ namespace WebCycleManager.Controllers
         {
             if (_context.GameCompetitorsEvent == null)
             {
-                return Problem("Entity set 'DatabaseContext.GameCompetitorsEvent'  is null.");
+                return Problem("Entity set 'ApplicationDbContext.GameCompetitorsEvent'  is null.");
             }
             var gameCompetitorEvent = await _context.GameCompetitorsEvent.FindAsync(id);
             int eventId = 0;

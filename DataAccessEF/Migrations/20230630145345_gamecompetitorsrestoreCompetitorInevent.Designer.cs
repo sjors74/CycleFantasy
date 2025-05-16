@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace DataAccessEF.Migrations
 {
-    [DbContext(typeof(DatabaseContext))]
+    [DbContext(typeof(ApplicationDbContext))]
     [Migration("20230630145345_gamecompetitorsrestoreCompetitorInevent")]
     partial class gamecompetitorsrestoreCompetitorInevent
     {

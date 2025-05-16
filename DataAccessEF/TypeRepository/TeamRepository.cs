@@ -6,6 +6,6 @@ namespace DataAccessEF.TypeRepository
 {
     public class TeamRepository : GenericRepository<Team>, ITeamRepository
     {
-        public TeamRepository(DatabaseContext context) : base(context) { }
+        public TeamRepository(ApplicationDbContext context) : base(context) { }
     }
 }

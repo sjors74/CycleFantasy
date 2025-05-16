@@ -7,7 +7,7 @@ namespace DataAccessEF.TypeRepository
 {
     public class CompetitorRepository : GenericRepository<Competitor>, ICompetitorRepository
     {
-        public CompetitorRepository(DatabaseContext context) : base(context) 
+        public CompetitorRepository(ApplicationDbContext context) : base(context) 
         { 
         }
 

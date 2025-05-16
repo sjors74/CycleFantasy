@@ -1,11 +1,19 @@
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+builder.Services.AddSession();
 builder.Services.AddRazorPages();
 builder.Services.AddHttpClient();
 builder.Logging.AddConsole();
 builder.Logging.AddDebug();
-
+builder.Services.AddAuthentication("MyCookieAuth")
+    .AddCookie("MyCookieAuth", options =>
+    {
+        options.LoginPath = "/Account/Login";
+        options.AccessDeniedPath = "/Account/AccessDenied";
+        options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
+        options.SlidingExpiration = true;
+    });
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -21,8 +29,11 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
-app.UseAuthorization();
+app.UseSession();
 
+app.UseAuthentication();
+
+app.UseAuthorization();
 app.MapRazorPages();
 
 app.Run();

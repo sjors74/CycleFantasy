@@ -9,7 +9,7 @@ namespace DataAccessEF.TypeRepository
 {
     public class ResultsRepository : GenericRepository<Result>, IResultsRepository
     {
-        public ResultsRepository(DatabaseContext context) : base(context)
+        public ResultsRepository(ApplicationDbContext context) : base(context)
         {
 
         }

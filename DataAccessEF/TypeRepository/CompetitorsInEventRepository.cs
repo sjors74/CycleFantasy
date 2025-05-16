@@ -7,7 +7,7 @@ namespace DataAccessEF.TypeRepository
 {
     public class CompetitorsInEventRepository: GenericRepository<CompetitorsInEvent>, ICompetitorsInEventRepository
     {
-        public CompetitorsInEventRepository(DatabaseContext context) : base(context)
+        public CompetitorsInEventRepository(ApplicationDbContext context) : base(context)
         {
         }
 

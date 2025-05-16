@@ -7,7 +7,7 @@ namespace DataAccessEF.TypeRepository
 {
     public class GameCompetitorRepository : GenericRepository<GameCompetitor>, IGameCompetitorRepository
     {
-        public GameCompetitorRepository(DatabaseContext context) : base(context) 
+        public GameCompetitorRepository(ApplicationDbContext context) : base(context) 
         {
  
         }

@@ -1,15 +1,15 @@
-﻿using Domain.Models;
+﻿using CycleManager.Domain.Models;
+using Domain.Models;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
-using Microsoft.Extensions.Configuration;
-//using System.Data.Entity;
-using System.Drawing;
 
 namespace Domain.Context
 {
-    public class DatabaseContext : DbContext
+    public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     {
-        public DatabaseContext(DbContextOptions<DatabaseContext> options) : base(options) { }
+        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) 
+            : base(options) 
+        { }
 
         public DbSet<Event> Events { get; set; }
         public DbSet<Competitor> Competitors { get; set;}
@@ -26,23 +26,22 @@ namespace Domain.Context
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            base.OnModelCreating(modelBuilder);
+
             modelBuilder.Entity<Team>()
                 .HasMany(c => c.Competitors)
                 .WithOne(t => t.Team)
                 .IsRequired();
-            modelBuilder.Entity<Team>()
-                .HasOne(c => c.Country);
-            modelBuilder.Entity<Competitor>()
-                .HasOne(c => c.Country);
-            modelBuilder.Entity<Stage>()
-                .HasOne(e => e.Event);
-            modelBuilder.Entity<Event>()
-                .HasOne(e => e.Configuration);
-            modelBuilder.Entity<Configuration>()
-                .HasMany(c => c.ConfigurationItems);
-                //.WithOne(c => c.Configuration);
-            modelBuilder.Entity<CompetitorsInEvent>()
-                .HasOne(c => c.Event);
+            modelBuilder.Entity<Team>().HasOne(c => c.Country);
+            modelBuilder.Entity<Competitor>().HasOne(c => c.Country);
+            modelBuilder.Entity<Stage>().HasOne(e => e.Event);
+            modelBuilder.Entity<Event>().HasOne(e => e.Configuration);
+            modelBuilder.Entity<Configuration>().HasMany(c => c.ConfigurationItems);
+            modelBuilder.Entity<CompetitorsInEvent>().HasOne(c => c.Event);
+            modelBuilder.Entity<GameCompetitorEvent>().HasOne(g => g.User)
+                .WithMany()
+                .HasForeignKey(g => g.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 

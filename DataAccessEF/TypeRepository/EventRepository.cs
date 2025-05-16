@@ -7,7 +7,7 @@ namespace DataAccessEF.TypeRepository
 {
     public class EventRepository : GenericRepository<Event>, IEventRepository
     {
-        public EventRepository(DatabaseContext context) : base(context) 
+        public EventRepository(ApplicationDbContext context) : base(context) 
         { 
         }
 

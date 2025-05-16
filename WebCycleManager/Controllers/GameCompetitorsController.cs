@@ -12,9 +12,9 @@ namespace WebCycleManager.Controllers
 {
     public class GameCompetitorsController : Controller
     {
-        private readonly DatabaseContext _context;
+        private readonly ApplicationDbContext _context;
 
-        public GameCompetitorsController(DatabaseContext context)
+        public GameCompetitorsController(ApplicationDbContext context)
         {
             _context = context;
         }
@@ -24,7 +24,7 @@ namespace WebCycleManager.Controllers
         {
               return _context.GameCompetitors != null ? 
                           View(await _context.GameCompetitors.ToListAsync()) :
-                          Problem("Entity set 'DatabaseContext.GameCompetitors'  is null.");
+                          Problem("Entity set 'ApplicationDbContext.GameCompetitors'  is null.");
         }
 
         // GET: GameCompetitors/Details/5
@@ -143,7 +143,7 @@ namespace WebCycleManager.Controllers
         {
             if (_context.GameCompetitors == null)
             {
-                return Problem("Entity set 'DatabaseContext.GameCompetitors'  is null.");
+                return Problem("Entity set 'ApplicationDbContext.GameCompetitors'  is null.");
             }
             var gameCompetitor = await _context.GameCompetitors.FindAsync(id);
             if (gameCompetitor != null)

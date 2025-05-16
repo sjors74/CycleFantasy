@@ -7,7 +7,7 @@ namespace DataAccessEF.TypeRepository
 {
     public class CountryRepository : GenericRepository<Country>, ICountryRepository
     {
-        public CountryRepository(DatabaseContext context) : base(context)
+        public CountryRepository(ApplicationDbContext context) : base(context)
         {
         }
         public new Country GetById(int id)
