@@ -4,6 +4,7 @@ using CycleManager.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
+using System.Net;
 
 namespace WebCycleApi.Controllers
 {
@@ -32,8 +33,8 @@ namespace WebCycleApi.Controllers
             { 
                 UserName = model.Email, 
                 Email = model.Email, 
-                FirstName = "tbd", 
-                LastName = "tbd" 
+                FirstName = model.FirstName,
+                LastName = model.LastName 
             };
             var result = await _userManager.CreateAsync(user, model.Password);
 
@@ -88,5 +89,37 @@ namespace WebCycleApi.Controllers
 
             return Ok(new LoginResponseDto { Token = token, UserId = user.Id });
         }
+
+        [HttpPost("forgotpassword")]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto dto)
+        {
+            var user = await _userManager.FindByEmailAsync(dto.Email);
+            if (user == null)
+                return Ok(); // Don't reveal user existence
+
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+            var encodedToken = WebUtility.UrlEncode(token);
+            var frontendBaseUrl = _configuration["ClientSettings:FrontendBaseUrl"];
+
+            var callbackUrl = $"{frontendBaseUrl}/account/resetpassword?email={dto.Email}&token={encodedToken}";
+
+            // Send email (use IEmailSender or SMTP)
+            await _emailSender.SendEmailAsync(dto.Email, "Reset je wachtwoord", $"Reset via: <a href='{callbackUrl}'>link</a>");
+
+            return Ok();
+        }
+
+        [HttpPost("resetpassword")]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto dto)
+        {
+            var user = await _userManager.FindByEmailAsync(dto.Email);
+            if (user == null) return BadRequest("Gebruiker niet gevonden");
+
+            var result = await _userManager.ResetPasswordAsync(user, dto.Token, dto.Password);
+            if (result.Succeeded) return Ok();
+
+            return BadRequest(result.Errors);
+        }
+
     }
 }
