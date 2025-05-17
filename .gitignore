@@ -363,3 +363,5 @@ MigrationBackup/
 FodyWeavers.xsd
 /WebCycle/appsettings.json
 /WebCycle/appsettings.Development.json
+/WebApp/appsettings.Development.json
+/WebApp/appsettings.json

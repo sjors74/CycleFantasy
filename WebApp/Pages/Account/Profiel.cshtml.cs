@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace WebApp.Pages.Account
 {
-    [Authorize]
+    [Authorize(AuthenticationSchemes = "MyCookieAuth")]
     public class ProfielModel : PageModel
     {
         public void OnGet()

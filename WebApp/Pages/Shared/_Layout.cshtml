@@ -1,5 +1,5 @@
 ﻿<!DOCTYPE html>
-<html lang="en">
+<html lang="nl">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -14,18 +14,100 @@
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
     <link rel="manifest" href="/site.webmanifest">
      <script src="~/js/config.js"></script>
-</head>
-<body>
-     <div class="container">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
-    </div>
+    <style>
+        :root {
+            --primary-color: #2d6a4f; /* donkergroen */
+            --secondary-color: #f4a261; /* oranje */
+            --light-bg: rgba(245, 245, 245, 0.8);
+            --text-color: #333;
+        }
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2025 - WebApp - <a asp-area="" asp-page="/Privacy">Privacy</a>
-        </div>
+        .navbar-custom {
+            background-color: var(--light-bg);
+            backdrop-filter: blur(6px);
+            border-bottom: 1px solid #ccc;
+        }
+
+        .navbar .btn {
+            font-size: 0.85rem;
+            padding: 0.35rem 0.75rem;
+            margin-left: 0.4rem;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .btn-outline-primary {
+            color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+            .btn-outline-primary:hover {
+                background-color: var(--primary-color);
+                color: white;
+            }
+
+        .btn-outline-danger {
+            color: var(--secondary-color);
+            border-color: var(--secondary-color);
+        }
+
+            .btn-outline-danger:hover {
+                background-color: var(--secondary-color);
+                color: white;
+            }
+
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f4f4f4;
+            color: var(--text-color);
+        }
+    </style>
+@*     <style>
+        .navbar-transparent {
+            background-color: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(8px);
+            box-shadow: none;
+        }
+
+        .navbar .btn {
+            font-size: 0.875rem;
+            padding: 0.4rem 0.75rem;
+            margin-left: 0.3rem;
+        }
+
+        .navbar .navbar-brand {
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+    </style>
+ *@</head>
+<body>
+    <header class="mb-4">
+        <nav class="navbar navbar-expand navbar-transparant fixed-top px-3 py-2">
+            <div class="container-fluid">
+                <div class="d-flex align-items-center ms-auto">
+                   <partial name="_MenuPartial" />
+                </div>
+            </div>
+        </nav>
+        <div style="height: 64px;"></div> <!-- spacer voor fixed navbar -->
+    </header>
+    <main class="container">
+        @RenderBody()
+    </main>
+
+    <footer class="text-center text-muted mt-5 small">
+        &copy; @(DateTime.Now.Year) - Cycle Fantasy
     </footer>
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>

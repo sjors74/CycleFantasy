@@ -52,5 +52,9 @@ namespace WebApp.Pages.Account
             ModelState.AddModelError(string.Empty, "Ongeldige login.");
             return Page();
         }
+
+        public void OnGet()
+        {
+        }
     }
 }
