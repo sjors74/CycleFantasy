@@ -28,6 +28,5 @@ namespace DataAccessEF.TypeRepository
             var e = await context.Events.Where(e => e.EventId.Equals(id)).FirstOrDefaultAsync();
             return e;
         }
-
     }
 }

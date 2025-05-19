@@ -20,7 +20,7 @@ namespace Domain.Context
         public DbSet<Configuration> Configurations { get; set; }
         public DbSet<ConfigurationItem> ConfigurationItems { get; set; }
         public DbSet<Result> Results { get; set; }
-        public DbSet<GameCompetitor> GameCompetitors { get; set; }
+        //public DbSet<GameCompetitor> GameCompetitors { get; set; }
         public DbSet<GameCompetitorEvent> GameCompetitorsEvent { get; set; }
         public DbSet<GameCompetitorEventPick> GameCompetitorEventPicks { get; set; }
 

@@ -15,18 +15,18 @@ namespace WebCycleManager.Controllers
         private readonly IResultService _resultService;
         private readonly ICompetitorInEventService _competitorInEventService;
         private readonly IEventService _eventService;
-        private readonly IGameCompetitorService _gameCompetitorService;
+        private readonly IUserService _userService;
         private List<ResultLineViewModel> _resultLines = new List<ResultLineViewModel>();
         private readonly ApplicationDbContext _context;
 
         public GameCompetitorEventsController(IGameCompetitorInEventService gameCompetitorInEventService, 
-            IResultService resultService, IEventService eventService, IGameCompetitorService gameCompetitorService, 
+            IResultService resultService, IEventService eventService, IUserService userService,
             ICompetitorInEventService competitorInEventService, ApplicationDbContext context)
         {
             _gameCompetitorEventService = gameCompetitorInEventService;
             _resultService = resultService;
             _eventService = eventService;
-            _gameCompetitorService = gameCompetitorService;
+            _userService = userService;
             _competitorInEventService = competitorInEventService;
             _context = context;
         }
@@ -198,7 +198,7 @@ namespace WebCycleManager.Controllers
         public async Task<IActionResult> Create()
         {
             ViewData["EventId"] = new SelectList(await _eventService.GetAllEvents(), "EventId", "EventName");
-            ViewData["GameCompetitorId"] = new SelectList(await _gameCompetitorService.GetAllGameCompetitors(), "Id", "FirstName");
+            ViewData["UserId"] = new SelectList(await _userService.GetAllUsers(), "Id", "FirstName");
             return View();
         }
 
@@ -207,7 +207,7 @@ namespace WebCycleManager.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,TeamName,GameCompetitorId,EventId")] GameCompetitorEvent gameCompetitorEvent)
+        public async Task<IActionResult> Create([Bind("Id,TeamName,UserId,EventId")] GameCompetitorEvent gameCompetitorEvent)
         {
             if (ModelState.IsValid)
             {
@@ -215,7 +215,7 @@ namespace WebCycleManager.Controllers
                 return RedirectToAction(nameof(Index), new { eventId = gameCompetitorEvent.EventId });
             }
             ViewData["EventId"] = new SelectList(await _eventService.GetAllEvents(), "EventId", "EventName", gameCompetitorEvent.EventId);
-            ViewData["GameCompetitorId"] = new SelectList(await _gameCompetitorService.GetAllGameCompetitors(), "Id", "FirstName", gameCompetitorEvent.GameCompetitorId);
+            ViewData["UserId"] = new SelectList(await _userService.GetAllUsers(), "Id", "FirstName", gameCompetitorEvent.UserId);
             return View(gameCompetitorEvent);
         }
 
@@ -233,7 +233,7 @@ namespace WebCycleManager.Controllers
                 return NotFound();
             }
             ViewData["EventId"] = new SelectList(await _eventService.GetAllEvents(), "EventId", "EventName", gameCompetitorEvent.EventId);
-            ViewData["GameCompetitorId"] = new SelectList(await _gameCompetitorService.GetAllGameCompetitors(), "Id", "FirstName", gameCompetitorEvent.GameCompetitorId);
+            ViewData["UserId"] = new SelectList(await _userService.GetAllUsers(), "Id", "FirstName", gameCompetitorEvent.UserId);
             ViewBag.GameEventId = gameCompetitorEvent.EventId;
             return View(gameCompetitorEvent);
         }
@@ -243,7 +243,7 @@ namespace WebCycleManager.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,TeamName,GameCompetitorId,EventId")] GameCompetitorEvent gameCompetitorEvent)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,TeamName,UserId,EventId")] GameCompetitorEvent gameCompetitorEvent)
         {
             if (id != gameCompetitorEvent.Id)
             {
@@ -267,10 +267,10 @@ namespace WebCycleManager.Controllers
                         throw;
                     }
                 }
-                return RedirectToAction(nameof(Details), new { eventId = gameCompetitorEvent.EventId});
+                return RedirectToAction(nameof(Details), new { id, eventId = gameCompetitorEvent.EventId});
             }
             ViewData["EventId"] = new SelectList(await _eventService.GetAllEvents(), "EventId", "EventName", gameCompetitorEvent.EventId);
-            ViewData["GameCompetitorId"] = new SelectList(await _gameCompetitorService.GetAllGameCompetitors(), "Id", "FirstName", gameCompetitorEvent.GameCompetitorId);
+            ViewData["UserId"] = new SelectList(await _userService.GetAllUsers(), "Id", "FirstName", gameCompetitorEvent.UserId);
             return RedirectToAction(nameof(Details), new { eventId = gameCompetitorEvent.EventId });
         }
 

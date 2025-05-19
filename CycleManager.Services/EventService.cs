@@ -1,4 +1,6 @@
 ﻿using CycleManager.Domain.Dto;
+using CycleManager.Domain.Interfaces;
+using Domain.Dto;
 using Domain.Interfaces;
 using Domain.Models;
 
@@ -9,12 +11,14 @@ namespace CycleManager.Services
         private readonly IEventRepository _eventRepository;
         private readonly IStageRepository _stageRepository;
         private readonly IResultsRepository _resultRepository;
+        private readonly IGameCompetitorInEventRepository _deelnemersRepository;
 
-        public EventService(IEventRepository eventRepository, IStageRepository stageRepository, IResultsRepository resultsRepository)
+        public EventService(IEventRepository eventRepository, IStageRepository stageRepository, IResultsRepository resultsRepository, IGameCompetitorInEventRepository deelnemersRepository)
         {
             _eventRepository = eventRepository;
             _stageRepository = stageRepository;
             _resultRepository = resultsRepository;
+            _deelnemersRepository = deelnemersRepository;
         }
 
         public async Task Create(Event entity)
@@ -72,5 +76,38 @@ namespace CycleManager.Services
             return resultList;
         }
 
+        public async Task<IEnumerable<EventForUserDto>> GetEventsByUserId(string userId)
+        {
+            var resultList = new List<Event>();
+            var eventDtos = new List<EventForUserDto>();
+            var events = await _eventRepository.GetAllEvents();
+            foreach(var e in events)
+            {
+                var gameCompetitorsInEvent = await _deelnemersRepository.GetAllGameCompetitorsInEventByEventId(e.EventId);
+                if(gameCompetitorsInEvent.Any())
+                {
+                    var eventsForUser = gameCompetitorsInEvent.Where(u => !string.IsNullOrEmpty(u.UserId) && u.UserId.Equals(userId));
+                    if (eventsForUser.Any())
+                    {
+                        foreach(var gamecompetitorInEvent in eventsForUser)
+                        {
+                            eventDtos.Add(new EventForUserDto
+                            {
+                                ColorName = gamecompetitorInEvent.Event.ColorName,
+                                CompetitorInEventId = gamecompetitorInEvent.Id,
+                                CountryCode = gamecompetitorInEvent.Event.CountryCode,
+                                EndDate = (DateTime)gamecompetitorInEvent.Event.EndDate,
+                                EventId = gamecompetitorInEvent.Event.EventId,
+                                EventName = gamecompetitorInEvent.Event.EventName,
+                                Slogan = gamecompetitorInEvent.Event.Slogan,
+                                StartDate = (DateTime)gamecompetitorInEvent.Event.StartDate,
+                                UserId = gamecompetitorInEvent.UserId
+                            });
+                        }
+                    }
+                }
+            }
+            return eventDtos;
+        }
     }
 }
