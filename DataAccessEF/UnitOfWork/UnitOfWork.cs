@@ -7,7 +7,7 @@ namespace DataAccessEF.UnitOfWork
 {
     public class UnitOfWork : IDisposable
     {
-        private DatabaseContext context;
+        private ApplicationDbContext context;
         private GenericRepository<Competitor> competitorRepository;
         private GenericRepository<CompetitorsInEvent> competitorsInEventRepository;
         private GenericRepository<Event> eventRepository;

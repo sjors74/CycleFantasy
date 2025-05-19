@@ -1,11 +1,8 @@
 ﻿using AutoMapper;
+using CycleManager.Domain.Dto;
 using CycleManager.Services;
-using DataAccessEF.TypeRepository;
-using DataAccessEF.UnitOfWork;
 using Domain.Dto;
 using Domain.Interfaces;
-using Domain.Models;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace WebCycle.Controllers
@@ -49,5 +46,32 @@ namespace WebCycle.Controllers
             return Ok(stages);
         }
 
+        [HttpGet("{userid}/user")]
+        public async Task<IActionResult> GetEventByUserId(string userid)
+        {
+            var allEvents = await eventService.GetEventsByUserId(userid);
+            var nu = DateTime.UtcNow;
+
+            var active = allEvents
+                .Where(e => e.StartDate <= nu && e.EndDate >= nu)
+                .ToList();
+            var future = allEvents
+                .Where(e => e.StartDate > nu)
+                .ToList();
+
+            var activeDtos = _mapper.Map<List<EventForUserDto>>(active);
+            var futureDtos = _mapper.Map<List<EventForUserDto>>(future);
+
+            activeDtos.ForEach(e => e.UserId = userid);
+            futureDtos.ForEach(e => e.UserId = userid);
+
+            var result = new EventViewDto
+            {
+                ActieveEvenementen = activeDtos,
+                ToekomstigeEvenementen = futureDtos
+            };
+          
+            return Ok(result);
+        }
     }
 }

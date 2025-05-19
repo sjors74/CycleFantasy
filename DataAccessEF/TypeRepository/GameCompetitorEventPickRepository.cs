@@ -7,7 +7,7 @@ namespace DataAccessEF.TypeRepository
 {
     public class GameCompetitorEventPickRepository : GenericRepository<GameCompetitorEventPick>, IGameCompetitorEventPickRepository
     {
-        public GameCompetitorEventPickRepository(DatabaseContext context) : base(context)
+        public GameCompetitorEventPickRepository(ApplicationDbContext context) : base(context)
         {
         }
 
@@ -20,7 +20,7 @@ namespace DataAccessEF.TypeRepository
         {
             return context.GameCompetitorEventPicks
                 .Include(c => c.CompetitorsInEvent).ThenInclude(a => a.Competitor)
-                .Include(g => g.GameCompetitorEvent).ThenInclude(b => b.GameCompetitor)
+                .Include(g => g.GameCompetitorEvent).ThenInclude(b => b.User)
                 .Where(c => c.CompetitorsInEvent.EventId.Equals(eventId));
         }
 
@@ -33,7 +33,7 @@ namespace DataAccessEF.TypeRepository
         public async Task<IEnumerable<GameCompetitorEventPick>> GetCompetitorEventPicksById(int id)
         {
             return await context.GameCompetitorEventPicks
-                 .Include(g => g.GameCompetitorEvent).ThenInclude(b => b.GameCompetitor)
+                 .Include(g => g.GameCompetitorEvent).ThenInclude(b => b.User)
                  .Where(c => c.GameCompetitorEvent.Id.Equals(id))
                  .OrderBy(c => c.CompetitorsInEvent.EventNumber)
                  .ToListAsync();

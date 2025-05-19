@@ -1,0 +1,66 @@
+﻿@using Domain.Dto
+@using WebApp.Pages.ViewModels
+@model EventListViewModel
+<div class="card shadow-sm mt-4">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">@Model.Titel</h5>
+    </div>
+    <div class="card-body">
+        @if (!Model.Evenementen.Any())
+        {
+            <p class="text-muted">Er zijn momenteel geen @Model.InlineText evenementen.</p>
+        }
+        else
+        {
+            <ul class="list-group list-group-flush">
+                @foreach (var evt in Model.Evenementen)
+                {
+                    var collapseId = $"collapse-{evt.EventId}";
+                    <li class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>@evt.EventName</strong><br />
+                                @evt.StartDate.ToString("dd MMM yyyy") - @evt.EndDate.ToString("dd MMM yyyy")
+                            </div>
+                            <button class="btn btn-sm btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#@collapseId" aria-expanded="false" aria-controls="@collapseId">
+                                Details
+                            </button>
+                        </div>
+                        <div class="collapse mt-2" id="@collapseId">
+                            <div class="card card-body">
+                                <p><strong>Je renners</strong></p>
+                                @{
+                                    var eersteEvenement = Model?.Evenementen?.FirstOrDefault();
+                                    var renners = eersteEvenement?.Renners;
+                                }
+
+                                @if (renners != null && renners.Any())
+                                {
+                                    <ul class="list-group mt-3">
+                                        @foreach (var renner in renners)
+                                        {
+                                            <li class="list-group-item  @(renner.OutOfCompetition ? "out-of-competition" : "")">
+                                                <div class="row">
+                                                <div class="col-md-1">
+                                                    <img src="https://flagcdn.com/24x18/@(renner.CountryCode?.ToLower() ?? "unknown").png" alt="Vlag" />
+                                                </div>
+                                                    <div class="col-md-3 fw-bold">@renner.CompetitorName</div>
+                                                <div class="col-md-2">@renner.Points punten</div>
+                                                <div class="col-md-4 text-muted">@renner.CompetitorTeam</div>
+                                            </div>
+                                          </li>
+                                        }
+                                    </ul>
+                                }
+                                else
+                                {
+                                    <p class="text-muted">Geen renners geselecteerd voor dit evenement.</p>
+                                }
+                            </div>
+                        </div>
+                    </li>
+                }
+            </ul>
+        }
+    </div>
+</div>

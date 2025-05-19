@@ -7,7 +7,7 @@ namespace DataAccessEF.TypeRepository
 {
     public class StageRepository : GenericRepository<Stage>, IStageRepository
     {
-        public StageRepository(DatabaseContext context) : base(context)
+        public StageRepository(ApplicationDbContext context) : base(context)
         {
 
         }

@@ -10,9 +10,9 @@ namespace WebCycleManager.Controllers
 {
     public class ResultsController : Controller
     {
-        private readonly DatabaseContext _context;
+        private readonly ApplicationDbContext _context;
 
-        public ResultsController(DatabaseContext context)
+        public ResultsController(ApplicationDbContext context)
         {
             _context = context;
         }
@@ -205,7 +205,7 @@ namespace WebCycleManager.Controllers
         {
             if (_context.Results == null)
             {
-                return Problem("Entity set 'DatabaseContext.Results'  is null.");
+                return Problem("Entity set 'ApplicationDbContext.Results'  is null.");
             }
             var result = await _context.Results.FindAsync(id);
             if (result != null)

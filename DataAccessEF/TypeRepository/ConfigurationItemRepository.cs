@@ -6,7 +6,7 @@ namespace DataAccessEF.TypeRepository
 {
     public class ConfigurationItemRepository : GenericRepository<ConfigurationItem>, IConfigurationItemRepository
     {
-        public ConfigurationItemRepository(DatabaseContext context) : base(context)
+        public ConfigurationItemRepository(ApplicationDbContext context) : base(context)
         {
         }
     }

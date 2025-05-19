@@ -1,0 +1,11 @@
+﻿using Domain.Dto;
+
+namespace WebApp.Pages.ViewModels
+{
+    public class EventListViewModel
+    {
+        public string Titel { get; set; } = string.Empty;
+        public string InlineText { get; set; } = string.Empty;
+        public List<EventForUserDto> Evenementen { get; set; } = new();
+    }
+}

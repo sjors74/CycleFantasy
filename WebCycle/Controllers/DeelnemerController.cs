@@ -1,8 +1,8 @@
 ﻿using AutoMapper;
+using CycleManager.Domain.Dto;
 using CycleManager.Services.Interfaces;
 using Domain.Dto;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 
 namespace WebCycle.Controllers
 {

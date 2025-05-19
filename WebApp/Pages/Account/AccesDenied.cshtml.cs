@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
-namespace WebApp.Pages
+namespace WebApp.Pages.Account
 {
-    public class TestModel : PageModel
+    public class AccesDeniedModel : PageModel
     {
         public void OnGet()
         {

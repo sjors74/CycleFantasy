@@ -1,4 +1,5 @@
 ﻿using CycleManager.Domain.Dto;
+using Domain.Dto;
 using Domain.Models;
 
 namespace CycleManager.Services
@@ -37,5 +38,11 @@ namespace CycleManager.Services
         /// <param name="id"></param>
         /// <returns></returns>
         Task<IEnumerable<StageResultDto>> GetStagesWithResultsForEvent(int eventId);
+        /// <summary>
+        /// Get a list of active events for a particular user
+        /// </summary>
+        /// <param name="userId"></param>
+        /// <returns></returns>
+        Task<IEnumerable<EventForUserDto>> GetEventsByUserId(string userId);
     }
 }

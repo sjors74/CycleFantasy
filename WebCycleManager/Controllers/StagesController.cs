@@ -13,9 +13,9 @@ namespace WebCycleManager.Controllers
 {
     public class StagesController : Controller
     {
-        private readonly DatabaseContext _context;
+        private readonly ApplicationDbContext _context;
 
-        public StagesController(DatabaseContext context)
+        public StagesController(ApplicationDbContext context)
         {
             _context = context;
         }
@@ -182,7 +182,7 @@ namespace WebCycleManager.Controllers
         {
             if (_context.Stages == null)
             {
-                return Problem("Entity set 'DatabaseContext.Stages'  is null.");
+                return Problem("Entity set 'ApplicationDbContext.Stages'  is null.");
             }
             var stage = await _context.Stages.FindAsync(id);
             if (stage != null)

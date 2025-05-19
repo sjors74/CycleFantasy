@@ -8,8 +8,8 @@ namespace DataAccessEF
 {
     public class GenericRepository<T> : IGenericRepository<T> where T : class
     {
-        protected readonly DatabaseContext context;
-        public GenericRepository(DatabaseContext context)
+        protected readonly ApplicationDbContext context;
+        public GenericRepository(ApplicationDbContext context)
         {
             this.context = context;
         }
