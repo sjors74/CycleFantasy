@@ -3,7 +3,6 @@ using Domain.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using System.Text.RegularExpressions;
 using WebCycleManager.Models;
 
 namespace WebCycleManager.Controllers
@@ -11,10 +10,12 @@ namespace WebCycleManager.Controllers
     public class ResultsController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly IHttpClientFactory _httpClientFactory;
 
-        public ResultsController(ApplicationDbContext context)
+        public ResultsController(ApplicationDbContext context, IHttpClientFactory httpClientFactory)
         {
             _context = context;
+            _httpClientFactory = httpClientFactory;
         }
 
         // GET: Results
@@ -87,7 +88,25 @@ namespace WebCycleManager.Controllers
             }
             _context.Results.AddRange(resultList);
             _context.SaveChanges();
-            return RedirectToAction("Index", "Results", new { stageId });
+            //TODO Make private method or helper class
+            //get api base url from configuration
+            //get eventId
+            //clear cache!
+            var client = _httpClientFactory.CreateClient();
+
+            var requestUrl = $"https://localhost:44302/api/Deelnemer/invalidate-cache?eventId=22";
+            
+            var response = await client.PostAsync(requestUrl, null); // geen body nodig
+
+            if (response.IsSuccessStatusCode)
+            {
+                return RedirectToAction("Index", "Results", new { stageId });
+            }
+            else
+            {
+                return BadRequest();
+
+            }
         }
 
         private int GetPositionFromKey(string key)

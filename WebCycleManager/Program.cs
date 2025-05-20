@@ -40,6 +40,7 @@ builder.Services.AddTransient<ITeamService, TeamService>();
 builder.Services.AddTransient<IGameCompetitorInEventService, GameCompetitorInEventService>();
 builder.Services.AddTransient<IUserService, UserService>();
 builder.Services.AddControllersWithViews();
+builder.Services.AddHttpClient();
 
 var app = builder.Build();
 
