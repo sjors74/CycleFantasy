@@ -10,7 +10,16 @@ if (window.location.hostname === "localhost") {
 }
 
 async function loadConfig() {
-    const response = await fetch(`${API_BASE_URL}/config`);
-    const data = await response.json();
-    API_BASE_URL = data.apiBaseUrl;
+    try {
+        const response = await fetch(`${API_BASE_URL}/config`);
+        if (!response.ok) {
+            throw new Error(`Kon config niet laden: ${response.status} ${response.statusText}`);
+        }
+        const data = await response.json();
+        API_BASE_URL = data.apiBaseUrl;
+    }
+    catch (error) {
+        console.error('Fout bij laden config:', error);
+        throw error;
+    }
 }
