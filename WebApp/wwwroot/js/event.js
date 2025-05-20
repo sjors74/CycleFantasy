@@ -1,8 +1,6 @@
 ﻿document.addEventListener('DOMContentLoaded', function () {
     let eventId;
     let etappes = [];
-    let expandedRow;
-    let lastClickedRow;
     let isLoading = false;
 
     loadConfig().then(async () => {
@@ -18,73 +16,82 @@
             console.error("eventId niet gevonden in dataset van #event-id");
             return;
         }
-
-        toggleTableLoading(true);
-        
         loadEtappes();
-
-        try {
-            const response = await fetch(`${API_BASE_URL}/Deelnemer?eventId=${eventId}`);
-
-            if (!response.ok) {
-                throw new Error("API fout");
-            }
-
-            let deelnemers = await response.json();
-            deelnemers.sort((a, b) => (b.punten || 0) - (a.punten || 0));
-
-            const tbody = document.querySelector("#deelnemerTable tbody");
-            toggleTableLoading(false);
-
-            deelnemers.forEach(d => {
-                const row = document.createElement("tr");
-                row.dataset.id = d.id;
-
-                const poolCell = document.createElement("td");
-                poolCell.textContent = d.poolNaam || "Onbekende pool";
-
-                const naamCell = document.createElement("td");
-                naamCell.textContent = d.deelnemerNaam || d.name || "Onbekende deelnemer";
-
-                const puntenCell = document.createElement("td");
-                puntenCell.textContent = d.punten ?? "0";
-
-                row.appendChild(poolCell);
-                row.appendChild(naamCell);
-                row.appendChild(puntenCell);
-
-                tbody.appendChild(row);
-            });
-        } catch (err) {
-            const tbody = document.querySelector("#deelnemerTable tbody");
-            tbody.innerHTML = "<tr><td colspan='3'>Kan deelnemers niet ophalen.</td></tr>";
-            console.error("Fout bij ophalen deelnemers:", err);
-        } finally {
-            toggleTableLoading(false);
-        }
-
     });
+
+    const collapseElements = document.querySelectorAll('.collapse');
+    collapseElements.forEach(collapse => {
+        collapse.addEventListener('show.bs.collapse', async function () {
+            
+            const targetId = `#${collapse.id}`;
+            const triggerDiv = document.querySelector(`[data-bs-target="${targetId}"]`);
+
+            if (!triggerDiv) {
+                console.warn("Geen triggerDiv gevonden met data-bs-target");
+                return;
+            }
+            const deelnemerId = triggerDiv.dataset.deelnemerId;
+            const eventId = triggerDiv.dataset.eventId;
+            const detailsDiv = collapse.querySelector('.details-content');
+            if (!detailsDiv || detailsDiv.dataset.loaded === "true") return;
+            toggleLoader(true);
+            try {
+                const response = await fetch(`${API_BASE_URL}/Deelnemer/Picks/${deelnemerId}/event/${eventId}`);
+                if (!response.ok) throw new Error("Fout bij ophalen");
+
+                const data = await response.json();
+
+                detailsDiv.innerHTML = data.map(pick => {
+                    const isOut = pick.outOfCompetition === true;
+                    const rowStyle = isOut ? 'background-color: #eee; text-decoration: line-through;' : '';
+                    return `
+                        <div class="row mb-1" style="${rowStyle}">
+                            <div class="col-md-1">
+                                <img src="${FLAGS_BASE_URL}/24x18/${pick.countryCode.toLowerCase()}.png" class="img-fluid" style="max-height: 40px;" />
+                            </div>
+                            <div class="col-md-4 fw-bold">${pick.competitorName}</div>
+                            <div class="col-md-4 text-muted">${pick.competitorTeam}</div>
+                            <div class="col-md-2 text-end">${pick.points}</div>
+                        </div>
+                `;
+                }).join('');
+
+                detailsDiv.dataset.loaded = "true";
+                toggleLoader(false);
+            } catch (err) {
+                detailsDiv.innerHTML = `<p class="text-danger">Details ophalen mislukt.</p>`;
+                console.error(err);
+            } finally {
+                toggleLoader(false);
+            }
+        });
+    });
+
+    function showPlaceholders() {
+        const stepsContainer = document.getElementById("steps-container");
+        stepsContainer.innerHTML = "";
+        for (let i = 0; i < 5; i++) {
+            const placeholder = document.createElement("div");
+            placeholder.classList.add("step", "placeholder");
+            stepsContainer.appendChild(placeholder);
+        }
+    }
 
     async function loadEtappes() {
         if (isLoading) return;
         isLoading = true;
-        toggleLoader(true);
+        showPlaceholders();
 
         try {
-            console.log("Fetching stages for eventId:", eventId);
             const response = await fetch(`${API_BASE_URL}/Event/${eventId}/stages`);
             if (!response.ok) throw new Error("Network response was not ok");
-
             etappes = await response.json();
-
-            renderEtappes();
         } catch (error) {
             console.error("Error fetching etappes:", error);
         } finally {
             isLoading = false;
-            toggleLoader(false);
+            renderEtappes();
         }
-
     }
 
     function renderEtappes() {
@@ -99,144 +106,21 @@
         const progressBar = document.getElementById("progress-bar");
         progressBar.style.width = `${progress}%`;
 
+        const fragment = document.createDocumentFragment();
+
         etappes.forEach((etappe) => {
             const step = document.createElement("div");
             step.classList.add("step");
-
             if (etappe.hasResult) step.classList.add("completed");
             step.title = `Etappe ${etappe.stageNumber}`;
             step.textContent = etappe.stageNumber;
 
-            stepsContainer.appendChild(step);
+            fragment.appendChild(step);
         });
+        stepsContainer.appendChild(fragment);
     }
 
     function toggleLoader(aan = true) {
         document.getElementById("loader").style.display = aan ? "block" : "none";
     }
-
-    function toggleTableLoading(aan = true) {
-        let spinnerRow = document.getElementById("spinnerRow");
-
-        if (aan) {
-            if (!spinnerRow) {
-                const tbody = document.querySelector("#deelnemerTable tbody");
-                spinnerRow = document.createElement("tr");
-                spinnerRow.id = "spinnerRow";
-                spinnerRow.innerHtml = `
-                        <tr>
-                            <td colspan="3" style="text-align: center;">
-                                <div class="spinner" style="margin: 10px auto;"></div>
-                            </td>
-                        </tr>
-                    `;
-            }
-        } else {
-            if (spinnerRow) {
-                spinnerRow.remove();
-            }
-        }
-    }
-
-    const table = document.querySelector('#deelnemerTable tbody');
-    table.addEventListener('click', async function (e) {
-        const clickedRow = e.target.closest('tr');
-        if (!clickedRow || isLoading) return;
-
-        const itemId = clickedRow.dataset.id;
-        if (!itemId) return;
-
-        // Als details al getoond worden, verwijder ze
-        if (expandedRow && lastClickedRow === clickedRow) {
-            expandedRow.remove();
-            expandedRow = null;
-            lastClickedRow = null;
-            return;
-        }
-
-        // Als je op dezelfde rij klikt, dan stop hier (toggle effect)
-        if (expandedRow) {
-            expandedRow.remove();
-            expandedRow = null;
-            lastClickedRow = null;
-        }
-
-        isLoading = true;
-        // Haal data op van de API
-        toggleLoader(true);
-
-        try {
-            const response = await fetch(`${API_BASE_URL}/Deelnemer/Picks/${itemId}/event/${eventId}`);
-            if (!response.ok) throw new Error(`Server error: ${response.status}`);
-            const detailsList = await response.json(); // Verwacht array van max 15 items
-
-            const detailsRow = document.createElement('tr');
-            detailsRow.classList.add('details-row');
-
-            const detailsCell = document.createElement('td');
-            detailsCell.colSpan = clickedRow.children.length;
-
-            const columns = 3; // Aantal kolommen (aantal subtabelletjes naast elkaar)
-            const perColumn = Math.ceil(detailsList.length / columns);
-
-            // Container voor de kolommen
-            const columnWrapper = document.createElement('div');
-            columnWrapper.classList.add('details-column-wrapper');
-
-
-            for (let i = 0; i < columns; i++) {
-                const chunk = detailsList.slice(i * perColumn, (i + 1) * perColumn);
-
-                const subTable = document.createElement('table');
-                subTable.classList.add('details-table');
-
-                const tbody = document.createElement('tbody');
-                chunk.forEach(item => {
-                    const row = document.createElement('tr');
-                    const flagCell = document.createElement('td');
-                    const img = document.createElement('img');
-                    img.src = `${FLAGS_BASE_URL}/24x18/${item.countryCode.toLowerCase()}.png`;
-                    img.alt = 'Vlag';
-
-                    flagCell.appendChild(img);
-
-                    const nameCell = document.createElement('td');
-                    nameCell.textContent = item.competitorName;
-
-                    if (item.outOfCompetition) {
-                        nameCell.style.textDecoration = 'line-through';
-                    }
-
-                    const pointsCell = document.createElement('td');
-                    pointsCell.textContent = item.points;
-
-                    if (item.outOfCompetition) {
-                        pointsCell.style.backgroundColor = 'lightgray';  // Grijze achtergrond
-                        flagCell.style.backgroundColor = 'lightgray';
-                    }
-
-                    row.appendChild(flagCell);
-                    row.appendChild(nameCell);
-                    row.appendChild(pointsCell);
-
-                    tbody.appendChild(row);
-                });
-
-                subTable.appendChild(tbody);
-                columnWrapper.appendChild(subTable);
-            }
-
-            detailsCell.appendChild(columnWrapper);
-            detailsRow.appendChild(detailsCell);
-            clickedRow.parentNode.insertBefore(detailsRow, clickedRow.nextSibling);
-
-            expandedRow = detailsRow;
-            lastClickedRow = clickedRow;
-        } catch (err) {
-            console.error('Fout bij ophalen details:', err);
-        } finally {
-            toggleLoader(false);
-            isLoading = false;
-        }
-    });
 });
