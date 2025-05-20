@@ -3,7 +3,9 @@
 });
 
 function fetchDataAndRenderTiles() {
+    const loader = document.getElementById('loader');
     loadConfig().then(() => {
+        loader.style.display = 'block';
         fetch(`${API_BASE_URL}/event`)
             .then(response => response.json())
             .then(events => {
@@ -38,8 +40,11 @@ function fetchDataAndRenderTiles() {
             })
             .catch(error => {
                 console.error("Fout bij ophalen events:", error);
+            })
+            .finally(() => {
+                loader.style.display = 'none';
             });
-    });
+        });
 }
 
 function handleTileClick(event) {
