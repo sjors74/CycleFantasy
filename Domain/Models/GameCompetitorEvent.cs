@@ -11,8 +11,6 @@ namespace Domain.Models
 
         [DisplayName("Teamnaam")]
         public string TeamName { get; set; } = string.Empty;
-        //public int GameCompetitorId { get; set; } // vervalt bij implementatie user
-        //public virtual GameCompetitor? GameCompetitor { get; set; } // vervalt bij implementatie user
         public string? UserId { get; set; } = string.Empty;
         public virtual ApplicationUser? User { get; set; }
         public int EventId { get; set; }

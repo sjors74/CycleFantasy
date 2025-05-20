@@ -1,4 +1,4 @@
-﻿namespace Domain.Dto
+﻿namespace CycleManager.Domain.Dto
 {
     public class DeelnemerDto
     {

@@ -29,15 +29,10 @@
                         <div class="collapse mt-2" id="@collapseId">
                             <div class="card card-body">
                                 <p><strong>Je renners</strong></p>
-                                @{
-                                    var eersteEvenement = Model?.Evenementen?.FirstOrDefault();
-                                    var renners = eersteEvenement?.Renners;
-                                }
-
-                                @if (renners != null && renners.Any())
+                                @if (evt.Renners != null && evt.Renners.Any())
                                 {
                                     <ul class="list-group mt-3">
-                                        @foreach (var renner in renners)
+                                        @foreach (var renner in evt.Renners)
                                         {
                                             <li class="list-group-item  @(renner.OutOfCompetition ? "out-of-competition" : "")">
                                                 <div class="row">
@@ -45,9 +40,9 @@
                                                     <img src="https://flagcdn.com/24x18/@(renner.CountryCode?.ToLower() ?? "unknown").png" alt="Vlag" />
                                                 </div>
                                                     <div class="col-md-3 fw-bold">@renner.CompetitorName</div>
-                                                <div class="col-md-2">@renner.Points punten</div>
-                                                <div class="col-md-4 text-muted">@renner.CompetitorTeam</div>
-                                            </div>
+                                                    <div class="col-md-4 text-muted">@renner.CompetitorTeam</div>
+                                                    <div class="col-md-2 text-end">@renner.Points</div>
+                                                </div>
                                           </li>
                                         }
                                     </ul>

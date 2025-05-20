@@ -1,3 +1,4 @@
+using CycleManager.Domain.Dto;
 using Domain.Dto;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -22,6 +23,8 @@ namespace WebApp.Pages
         public string StartDate { get; set; }
         public string EndDate { get; set; }
         public string? Slogan { get; set; }
+        public List<DeelnemerDto> Deelnemers { get; set; } = new();
+        public List<ResultDto> Renners { get; set; } = new();
 
         public async Task<IActionResult> OnGetAsync()
         {
@@ -45,10 +48,21 @@ namespace WebApp.Pages
                 return NotFound();
             }
 
+            var dResponse = await client.GetAsync($"{apiBaseUrl}/Deelnemer?eventId={EventId}");
+            if(!dResponse.IsSuccessStatusCode)
+               throw new Exception("Fout bij het ophalen van deelnemers.");
+
+            var deelnemers = await dResponse.Content.ReadFromJsonAsync<List<DeelnemerDto>>();
+
             EventName = eventData.EventName;
             StartDate = eventData.StartDate.ToString("d MMMM yyyy", new System.Globalization.CultureInfo("nl-NL"));
             EndDate = eventData.EndDate.ToString("d MMMM yyyy", new System.Globalization.CultureInfo("nl-NL"));
             Slogan = eventData.Slogan;
+            Deelnemers = deelnemers?
+                .ToList() ?? new List<DeelnemerDto>();
+
+            //TODO: Vul hier 'ergens'de renners!!!
+
 
             ViewData["Title"] = EventName;
             return Page();

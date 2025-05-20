@@ -1,8 +1,8 @@
-﻿.event-header {
-    padding: 20px;
+﻿
+.event-header {
+    padding: 1rem;
     background-color: #f0f0f0;
     border-left: 5px solid #ff4081;
-    margin-bottom: 30px;
     display: flex;
     flex-direction: column;
     align-items: flex-start;
@@ -10,7 +10,6 @@
 }
 
 .event-header h1 {
-    margin: 0;
     font-size: 2rem;
     color: #333;
 }
@@ -22,18 +21,21 @@
 }
 
 .event-motto {
-    font-size: 3rem; /* Vergroot de tekst */
-    font-style: italic; /* Zet de tekst in italics */
-    position: absolute; /* Zorg ervoor dat het motto uit de normale stroom van de pagina wordt gehaald */
-    top: 20px; /* Zet het motto 20px van de bovenkant van de header */
-    right: 20px; /* Zet het motto 20px van de rechterkant van de header */
-    color: #ff4081; /* Kleur van de tekst, pas aan naar wens */
+    position: absolute;
+    padding: 0.3rem 0.6rem;
+    border-radius: 4px;
+    font-size: 3rem;
+    font-style: italic;
+    top: 0;
+    right: 0;
+    color: #ff4081;
     display:flex;
     align-items: center;
+    text-align: right;
 }
 
 .event-motto .quote{
-        font-size: 2.5rem; /* Maak de quote iets groter */
+        font-size: 2.5rem;
         margin: 0 10px;
     }
 
@@ -53,72 +55,12 @@
     display: none;
 }
 
-/* Algemeen stijlen voor de tabel */
-table {
-    width: 100%;
-    border-collapse: collapse; /* Verwijdert dubbele randen */
-    font-family: Arial, sans-serif;
-}
-
-/* Stijl voor de kopteksten */
-th {
-    background-color: #4CAF50; /* Groene achtergrond */
-    color: white; /* Witte tekst */
-    padding: 12px 15px;
-    text-align: left;
-}
-
-/* Stijl voor de tabelcellen */
-td {
-    padding: 10px 15px;
-    text-align: left;
-    border: 1px solid #ddd; /* Lichte rand */
-}
-
-/* Hover effect voor de rijen */
-tr:hover {
-    background-color: #f5f5f5; /* Grijze achtergrond bij hover */
-}
-
-/* Voeg een schaduw toe aan de tabel */
-table {
-    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
-}
-
 /* Stijl voor de leegte in de tabel wanneer er geladen wordt */
 .loading {
     text-align: center;
     color: #999;
     font-style: italic;
     padding: 20px;
-}
-
-.details-table {
-    font-size: 0.8rem;
-    border-collapse: collapse;
-    width: auto;
-    min-width: 150px;
-}
-
-    .details-table th,
-    .details-table td {
-        border: 1px solid #ccc;
-        padding: 4px 6px;
-        text-align: left;
-        white-space: nowrap;
-    }
-
-    .details-table thead {
-        background-color: #000;
-        color: #fff;
-    }
-
-.details-column-wrapper {
-    display: flex;
-    justify-content: center; /* Zorgt voor horizontale centrering */
-    gap: 20px; /* Ruimte tussen de tabellen */
-    flex-wrap: wrap; /* Laat tabellen doorlopen naar volgende regel op kleine schermen */
-    margin-top: 10px; /* Optioneel: ruimte boven de tabellen */
 }
 
 .progress-label {
@@ -167,6 +109,12 @@ table {
         background-color: #4caf50;
     }
 
+    .step.placeholder {
+        background: #e0e0e0;
+        animation: pulse 1.2s infinite;
+        color: transparent;
+    }
+
 .spinner {
     border: 4px solid #f3f3f3;
     border-top: 4px solid #4caf50;
@@ -185,4 +133,29 @@ table {
     100% {
         transform: rotate(360deg);
     }
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}
+
+@media (max-width: 768px) {
+    .event-motto {
+        display: none;
+    }
+
+    #steps-container {
+        display: none;
+    }
+
 }

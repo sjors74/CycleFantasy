@@ -2,36 +2,67 @@
 @model WebApp.Pages.EventModel
 
 <div class="event-header">
-    <div id="event-id" data-event-id="@Model.EventId"></div>
+    <div class="event-motto">
+        <span class="quote">"</span>@Model.Slogan<span class="quote">"</span>
+    </div>
     <h1>@Model.EventName</h1>
+    <div id="event-id" data-event-id="@Model.EventId"></div>
     <p class="event-dates">Van @Model.StartDate tot @Model.EndDate</p>
     <div class="progress-container">
         <div class="progress-bar" id="progress-bar"></div>
     </div>
-
     <div class="steps" id="steps-container"></div>
-    <div class="event-motto">
-        <span class="quote">"</span>
-        @Model.Slogan
-        <span class="quote">"</span>
-    </div>
 </div>
 
 <div id="loader" class="spinner" style="display: none;"></div>
 
-<h2>Deelnemers</h2>
+<div class="card shadow-sm mt-4">
+    <div class="card-header bg-secondary text-white">
+        <h5 class="mb-0">Deelnemers</h5>
+    </div>
+    <div class="card-body">
+        @if (Model.Deelnemers != null && Model.Deelnemers.Any())
+        {
+            <ul class="list-group list-group-flush" id="deelnemer-list">
+                @foreach(var deelnemer in Model.Deelnemers.OrderByDescending(d => d.Punten))
+                {
+                    var collapseId = $"collapse-{deelnemer.Id}";
+                    <li class="list-group-item p-2">
+                        <div class="row align-items-center" 
+                             data-bs-toggle="collapse" 
+                             data-bs-target="#@collapseId" 
+                             aria-expanded="false" 
+                             aria-controls="@collapseId" 
+                             style="cursor: pointer;"
+                             data-deelnemer-id="@deelnemer.Id"
+                             data-event-id="@Model.EventId" 
+                        >
+                            <div class="col-md-4">
+                                <div class="text-uppercase">@(!string.IsNullOrEmpty(deelnemer.PoolNaam) ? deelnemer.PoolNaam : "onbekende pool")</div>
+                             </div>
+                             <div class="col-md-4">
+                                <div class="text-uppercase">@(!string.IsNullOrEmpty(deelnemer.DeelnemerNaam) ? deelnemer.DeelnemerNaam : "onbekende deelnemer")</div>
+                            </div>
+                            <div class="col-md-2 text-end ms-auto">
+                                <span class="fw-bold fs-4">@(deelnemer.Punten)</span>
+                            </div>
+                        </div>
+                        <div class="collapse mt-2" id="@collapseId" data-bs-parent="#deelnemer-list">
+                            <div class="card card-body details-content" data-loaded="false">
+                                <em>Laden...</em>
+                            </div>
+                        </div>
+                    </li>
+                }
+            </ul>
+        }
+        else
+        {
+            <p class="text-muted p-3">Geen deelnemers gevonden.</p>
+        }
+    </div>
+</div>
 
-<table id="deelnemerTable" border="1">
-    <thead>
-        <tr>
-            <th>Poolnaam</th>
-            <th>Ingezonden door</th>
-            <th>Punten</th>
-        </tr>
-    </thead>
-    <tbody></tbody>
-</table>
-@section Scripts {
+ @section Scripts {
     <script src="~/js/event.js" asp-append-version="true"></script>
 }
-    
