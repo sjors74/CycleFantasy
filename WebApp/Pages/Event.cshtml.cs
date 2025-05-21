@@ -10,7 +10,7 @@ namespace WebApp.Pages
     {
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly IConfiguration _configuration;
-
+        
         public EventModel(IHttpClientFactory httpClientFactory, IConfiguration configuration)
         {
             _httpClientFactory = httpClientFactory;
@@ -19,9 +19,9 @@ namespace WebApp.Pages
 
         [BindProperty(SupportsGet = true)]
         public int EventId { get; set; }
-        public string EventName { get; set; }
-        public string StartDate { get; set; }
-        public string EndDate { get; set; }
+        public string EventName { get; set; } = string.Empty;
+        public string StartDate { get; set; } = string.Empty;
+        public string EndDate { get; set; } = string.Empty;
         public string? Slogan { get; set; }
         public List<DeelnemerDto> Deelnemers { get; set; } = new();
         public List<ResultDto> Renners { get; set; } = new();
@@ -31,28 +31,31 @@ namespace WebApp.Pages
             var client = _httpClientFactory.CreateClient();
             var apiBaseUrl = _configuration["ClientSettings:ApiBaseUrl"];
 
-            var response = await client.GetAsync($"{apiBaseUrl}/event/{EventId}");
-            if (!response.IsSuccessStatusCode)
+            var eventTask = client.GetAsync($"{apiBaseUrl}/event/{EventId}");
+            var deelnemersTask = client.GetAsync($"{apiBaseUrl}/Deelnemer?eventId={EventId}");
+
+            await Task.WhenAll(eventTask, deelnemersTask);
+
+            var eventResponse = eventTask.Result;
+            var deelnemerResponse = deelnemersTask.Result;
+
+            if(!eventResponse.IsSuccessStatusCode || !deelnemerResponse.IsSuccessStatusCode)
             {
                 return NotFound();
             }
 
-            var json = await response.Content.ReadAsStringAsync();
+            var json = await eventResponse.Content.ReadAsStringAsync();
             var eventData = JsonSerializer.Deserialize<EventDto>(json, new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true
             });
 
+            var deelnemers = await deelnemerResponse.Content.ReadFromJsonAsync<List<DeelnemerDto>>();
+
             if (eventData == null)
             {
                 return NotFound();
             }
-
-            var dResponse = await client.GetAsync($"{apiBaseUrl}/Deelnemer?eventId={EventId}");
-            if(!dResponse.IsSuccessStatusCode)
-               throw new Exception("Fout bij het ophalen van deelnemers.");
-
-            var deelnemers = await dResponse.Content.ReadFromJsonAsync<List<DeelnemerDto>>();
 
             EventName = eventData.EventName;
             StartDate = eventData.StartDate.ToString("d MMMM yyyy", new System.Globalization.CultureInfo("nl-NL"));
@@ -60,10 +63,6 @@ namespace WebApp.Pages
             Slogan = eventData.Slogan;
             Deelnemers = deelnemers?
                 .ToList() ?? new List<DeelnemerDto>();
-
-            //TODO: Vul hier 'ergens'de renners!!!
-
-
             ViewData["Title"] = EventName;
             return Page();
         }

@@ -1,8 +1,8 @@
 ﻿using AutoMapper;
 using CycleManager.Domain.Dto;
 using CycleManager.Services.Interfaces;
-using Domain.Dto;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace WebCycle.Controllers
 {
@@ -12,41 +12,54 @@ namespace WebCycle.Controllers
     {
         private readonly IGameCompetitorInEventService deelnemerService;
         private readonly IResultService resultService;
-        private readonly IGameCompetitorInEventService gameCompetitorInEventService;
         private readonly IMapper _mapper;
+        private readonly IMemoryCache _cache;
 
-        public DeelnemerController(IGameCompetitorInEventService deelnemerService, IResultService resultService, IGameCompetitorInEventService gameCompetitorInEventService, IMapper mapper)
+        public DeelnemerController(IGameCompetitorInEventService deelnemerService, IResultService resultService, IMapper mapper, IMemoryCache cache)
         {
             this.deelnemerService = deelnemerService;
             this.resultService = resultService;
-            this.gameCompetitorInEventService = gameCompetitorInEventService;
-            this.gameCompetitorInEventService = gameCompetitorInEventService;
-            this._mapper = mapper;
+            _mapper = mapper;
+            _cache = cache;
         }
 
         [HttpGet(Name = "deelnemers")]
         public async Task<IActionResult> GetDeelnemerListByEventId(int eventId)
         {
-            
-            var deelnemers = await deelnemerService.GetAllCompetitorsInEvent(eventId);
-            var deelnemerResponse = _mapper.Map<List<DeelnemerDto>>(deelnemers);
+            string cacheKey = $"deelnemers_{eventId}";
 
-            foreach (var deelnemer in deelnemerResponse)
+            if (!_cache.TryGetValue(cacheKey, out List<DeelnemerDto> deelnemerResponse))
             {
-                var score = 0;
-                var picks = await deelnemerService.GetAllPicks(deelnemer.Id);
-                foreach (var pick in picks)
+                var deelnemers = await deelnemerService.GetAllCompetitorsInEvent(eventId);
+                deelnemerResponse = _mapper.Map<List<DeelnemerDto>>(deelnemers);
+
+                foreach (var deelnemer in deelnemerResponse)
                 {
-                    var results = await resultService.GetCompetitorResultsByEventId(eventId, pick.CompetitorsInEvent.Id);
-                    if(results != null)
+                    int score = 0;
+                    var picks = await deelnemerService.GetAllPicks(deelnemer.Id);
+
+                    foreach (var pick in picks)
                     {
-                        score = score + results.TotalScore;
+                        var results = await resultService.GetCompetitorResultsByEventId(eventId, pick.CompetitorsInEvent.Id);
+                        if (results != null)
+                        {
+                            score += results.TotalScore;
+                        }
                     }
+
+                    deelnemer.Punten = score;
                 }
-                deelnemer.Punten = score;
+                _cache.Set(cacheKey, deelnemerResponse, TimeSpan.FromHours(24));
             }
-            
             return Ok(deelnemerResponse);
+        }
+
+        [HttpPost("invalidate-cache")]
+        public IActionResult InvalidateDeelnemerCache(int eventId)
+        {
+            string cacheKey = $"deelnemers_{eventId}";
+            _cache.Remove(cacheKey);
+            return Ok();
         }
 
         [HttpGet("results")]

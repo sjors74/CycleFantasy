@@ -3,7 +3,7 @@ using Domain.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using System.Text.RegularExpressions;
+using WebCycleManager.Helpers;
 using WebCycleManager.Models;
 
 namespace WebCycleManager.Controllers
@@ -11,10 +11,12 @@ namespace WebCycleManager.Controllers
     public class ResultsController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly IApiClient _apiClient;
 
-        public ResultsController(ApplicationDbContext context)
+        public ResultsController(ApplicationDbContext context, IApiClient apiClient)
         {
             _context = context;
+            _apiClient = apiClient;
         }
 
         // GET: Results
@@ -30,11 +32,11 @@ namespace WebCycleManager.Controllers
                 resultDict = results.ToDictionary(r => r.ConfigurationItem.Position, r => r.CompetitorInEvent.CompetitorId);
                 var currentEvent = _context.Events.FirstOrDefault(e => e.EventId.Equals(stage.EventId));
                 var competitorsInEvent = _context.CompetitorsInEvent.Where(c => c.EventId.Equals(currentEvent.EventId) && c.OutOfCompetition == false).ToList();
-                var config= currentEvent.Configuration;
+                var config = currentEvent.Configuration;
                 var numberOfconfigItems = _context.ConfigurationItems.Where(l => l.ConfigurationId.Equals(config.Id)).Count();
                 var resultItems = new List<ResultItemViewModel>();
 
-                for (int i=0; i < numberOfconfigItems; i++)
+                for (int i = 0; i < numberOfconfigItems; i++)
                 {
                     var position = i + 1;
                     resultDict.TryGetValue(position, out int compId);
@@ -61,6 +63,8 @@ namespace WebCycleManager.Controllers
         public async Task<IActionResult> Index(int stageId, IFormCollection formCollection)
         {
             var resultList = new List<Result>();
+            var stage = _context.Stages.FirstOrDefault(s => s.Id.Equals(stageId));
+            int eventId = stage?.EventId ?? 0;
             foreach (var key in formCollection.Keys)
             {
                 if (key.Contains("SelectedCompetitorId"))
@@ -87,6 +91,7 @@ namespace WebCycleManager.Controllers
             }
             _context.Results.AddRange(resultList);
             _context.SaveChanges();
+            await InvalidateCacheInApi(eventId);
             return RedirectToAction("Index", "Results", new { stageId });
         }
 
@@ -131,7 +136,7 @@ namespace WebCycleManager.Controllers
                 //first, get the event from stage, and it's configuration
                 var config = stage.Event.Configuration;
                 //then we create a resultListItem for every configurationitem found
-                foreach(var configItem in config.ConfigurationItems)
+                foreach (var configItem in config.ConfigurationItems)
                 {
                     var rivm = new ResultItemViewModel
                     {
@@ -212,14 +217,14 @@ namespace WebCycleManager.Controllers
             {
                 _context.Results.Remove(result);
             }
-            
+
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index), new { stageId = result.StageId });
         }
 
         private bool ResultExists(int id)
         {
-          return (_context.Results?.Any(e => e.Id == id)).GetValueOrDefault();
+            return (_context.Results?.Any(e => e.Id == id)).GetValueOrDefault();
         }
 
         private string GetCompetitorFullName(int competitorId)
@@ -235,24 +240,24 @@ namespace WebCycleManager.Controllers
         private int GetResultId(int competitorId, int stageId)
         {
             var r = _context.Results.FirstOrDefault(c => c.StageId == stageId && c.CompetitorInEvent.CompetitorId == competitorId);
-            if(r != null) 
+            if (r != null)
             {
                 return r.Id;
             }
 
             return 0;
         }
-   
+
         public IEnumerable<SelectListItem> GetDropdownList(int eventId)
         {
             var competitors = new List<SelectListItem>();
 
             var competitorsDb = _context.CompetitorsInEvent.OrderBy(c => c.EventNumber).ThenBy(c => c.Competitor.LastName).ThenBy(c => c.Competitor.FirstName).Where(c => c.EventId.Equals(eventId) && c.OutOfCompetition == false).ToList();
             var groupedCompetitors = competitorsDb.GroupBy(x => x.Competitor.Team.TeamName);
-            foreach(var group in groupedCompetitors)
+            foreach (var group in groupedCompetitors)
             {
                 var optionGroup = new SelectListGroup() { Name = group.Key };
-                foreach(var item in group) 
+                foreach (var item in group)
                 {
                     competitors.Add(new SelectListItem()
                     {
@@ -261,8 +266,27 @@ namespace WebCycleManager.Controllers
                         Group = optionGroup
                     });
                 }
-            }    
+            }
             return competitors;
+        }
+
+        private async Task<bool> InvalidateCacheInApi(int eventId)
+        {
+            try
+            {
+                var response = await _apiClient.PostToApiAsync($"Deelnemer/invalidate-cache?eventId={eventId}");
+                return response.IsSuccessStatusCode;
+            }
+            catch(HttpRequestException ex)
+            {
+                Console.WriteLine($"[ERROR] HTTP fout bij cache invalidatie: {ex.Message}");
+            }
+            catch (Exception ex)
+            {
+                // Onverwachte fouten
+                Console.WriteLine($"[ERROR] Onverwachte fout: {ex}");
+            }
+            return false;
         }
     }
 }
