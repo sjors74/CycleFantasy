@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <None Remove="google694bc38b46afadf7.html" />
+    <Content Remove="appsettings.Development.json" />
   </ItemGroup>
 
   <ItemGroup>
@@ -30,4 +31,9 @@
     </Content>
   </ItemGroup>
 
+  <Target Name="RemoveDevelopmentSettingsFromPublish" AfterTargets="Publish">
+    <ItemGroup>
+      <FilesForPublishing Remove="appsettings.Development.json" />
+    </ItemGroup>
+  </Target>
 </Project>

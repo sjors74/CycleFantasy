@@ -5,7 +5,11 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
-
+  
+  <ItemGroup>
+    <Content Remove="appsettings.Development.json" />
+  </ItemGroup>
+  
   <ItemGroup>
     <PackageReference Include="AutoMapper" Version="12.0.1" />
     <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="12.0.0" />
@@ -25,5 +29,10 @@
     <ProjectReference Include="..\DataAccessEF\DataAccessEF.csproj" />
     <ProjectReference Include="..\Domain\CycleManager.Domain.csproj" />
   </ItemGroup>
-
+  
+  <Target Name="RemoveDevelopmentSettingsFromPublish" AfterTargets="Publish">
+    <ItemGroup>
+      <FilesForPublishing Remove="appsettings.Development.json" />
+    </ItemGroup>
+  </Target>
 </Project>
