@@ -365,3 +365,5 @@ FodyWeavers.xsd
 /WebCycle/appsettings.Development.json
 /WebApp/appsettings.Development.json
 /WebApp/appsettings.json
+/WebCycle/appsettings.Development.json
+/WebCycleManager/appsettings.Development.json
