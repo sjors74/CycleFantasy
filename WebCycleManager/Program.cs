@@ -7,6 +7,9 @@ using Domain.Context;
 using Domain.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
+using WebCycleManager.Config;
+using WebCycleManager.Helpers;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -40,7 +43,16 @@ builder.Services.AddTransient<ITeamService, TeamService>();
 builder.Services.AddTransient<IGameCompetitorInEventService, GameCompetitorInEventService>();
 builder.Services.AddTransient<IUserService, UserService>();
 builder.Services.AddControllersWithViews();
-builder.Services.AddHttpClient();
+//builder.Services.AddHttpClient();
+builder.Services.Configure<ApiSettings>(
+    builder.Configuration.GetSection("ApiSettings"));
+
+// Voeg HttpClient toe en gebruik BaseUrl uit config
+builder.Services.AddHttpClient<IApiClient, ApiClient>((serviceProvider, client) =>
+{
+    var apiSettings = serviceProvider.GetRequiredService<IOptions<ApiSettings>>().Value;
+    client.BaseAddress = new Uri(apiSettings.BaseUrl);
+});
 
 var app = builder.Build();
 
