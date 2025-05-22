@@ -15,6 +15,7 @@ namespace DataAccessEF.TypeRepository
         public async Task<IEnumerable<Stage>> GetByEventId(int eventId)
         {
             var stages = await context.Stages
+                .Include(e => e.Event)
                 .Where(s => s.EventId.Equals(eventId))
                 .OrderBy(s => s.StageOrder)
                 .ToListAsync();

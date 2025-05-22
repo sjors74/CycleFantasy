@@ -20,7 +20,6 @@ namespace Domain.Context
         public DbSet<Configuration> Configurations { get; set; }
         public DbSet<ConfigurationItem> ConfigurationItems { get; set; }
         public DbSet<Result> Results { get; set; }
-        //public DbSet<GameCompetitor> GameCompetitors { get; set; }
         public DbSet<GameCompetitorEvent> GameCompetitorsEvent { get; set; }
         public DbSet<GameCompetitorEventPick> GameCompetitorEventPicks { get; set; }
 
@@ -35,7 +34,13 @@ namespace Domain.Context
             modelBuilder.Entity<Team>().HasOne(c => c.Country);
             modelBuilder.Entity<Competitor>().HasOne(c => c.Country);
             modelBuilder.Entity<Stage>().HasOne(e => e.Event);
-            modelBuilder.Entity<Event>().HasOne(e => e.Configuration);
+            modelBuilder.Entity<Event>()
+                .HasMany(e => e.Stages)
+                .WithOne(s => s.Event)
+                .HasForeignKey(s => s.EventId)
+                .OnDelete(DeleteBehavior.Cascade);
+            modelBuilder.Entity<Event>()
+                .HasOne(e => e.Configuration);
             modelBuilder.Entity<Configuration>().HasMany(c => c.ConfigurationItems);
             modelBuilder.Entity<CompetitorsInEvent>().HasOne(c => c.Event);
             modelBuilder.Entity<GameCompetitorEvent>().HasOne(g => g.User)

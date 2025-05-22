@@ -1,5 +1,6 @@
 ﻿using CycleManager.Domain.Dto;
 using CycleManager.Domain.Interfaces;
+using CycleManager.Domain.ViewModel;
 using Domain.Dto;
 using Domain.Interfaces;
 using Domain.Models;
@@ -81,15 +82,15 @@ namespace CycleManager.Services
             var resultList = new List<Event>();
             var eventDtos = new List<EventForUserDto>();
             var events = await _eventRepository.GetAllEvents();
-            foreach(var e in events)
+            foreach (var e in events)
             {
                 var gameCompetitorsInEvent = await _deelnemersRepository.GetAllGameCompetitorsInEventByEventId(e.EventId);
-                if(gameCompetitorsInEvent.Any())
+                if (gameCompetitorsInEvent.Any())
                 {
                     var eventsForUser = gameCompetitorsInEvent.Where(u => !string.IsNullOrEmpty(u.UserId) && u.UserId.Equals(userId));
                     if (eventsForUser.Any())
                     {
-                        foreach(var gamecompetitorInEvent in eventsForUser)
+                        foreach (var gamecompetitorInEvent in eventsForUser)
                         {
                             eventDtos.Add(new EventForUserDto
                             {
@@ -108,6 +109,11 @@ namespace CycleManager.Services
                 }
             }
             return eventDtos;
+        }
+
+        public async Task<EventDetailsViewModel?> GetEventDetailsViewModelById(int eventId)
+        {
+            return await _eventRepository.GetEventDetailsViewModelById(eventId);
         }
     }
 }

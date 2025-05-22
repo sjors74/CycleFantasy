@@ -27,5 +27,6 @@ namespace Domain.Models
         public int? ConfigurationId { get; set; }
         [JsonIgnore]
         public virtual Configuration? Configuration {get;set;}
+        public virtual ICollection<Stage> Stages { get; set; } = [];
     }
 }

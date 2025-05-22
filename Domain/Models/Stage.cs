@@ -1,6 +1,5 @@
 ﻿using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Domain.Models
 {
@@ -17,8 +16,8 @@ namespace Domain.Models
         public string FinishLocation { get; set; } = string.Empty;
         [DisplayName("Evenement")]
         public int EventId { get; set; }
-        [NotMapped]
-        public virtual Event? Event{ get; set; }
-
+        
+        public virtual Event Event{ get; set; } = new Event();
+        public virtual ICollection<Result> Results { get; set; } = [];
     }
 }

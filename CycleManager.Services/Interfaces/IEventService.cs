@@ -1,4 +1,5 @@
 ﻿using CycleManager.Domain.Dto;
+using CycleManager.Domain.ViewModel;
 using Domain.Dto;
 using Domain.Models;
 
@@ -44,5 +45,7 @@ namespace CycleManager.Services
         /// <param name="userId"></param>
         /// <returns></returns>
         Task<IEnumerable<EventForUserDto>> GetEventsByUserId(string userId);
+
+        Task<EventDetailsViewModel?> GetEventDetailsViewModelById(int eventId);
     }
 }

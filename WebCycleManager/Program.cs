@@ -15,7 +15,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 var connectionString = builder.Configuration.GetConnectionString("CycleDb");
-builder.Services.AddDbContext<ApplicationDbContext>(x => x.UseLazyLoadingProxies().UseSqlServer(connectionString));
+builder.Services.AddDbContext<ApplicationDbContext>(x => x.UseLazyLoadingProxies(false).UseSqlServer(connectionString));
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
@@ -43,9 +43,8 @@ builder.Services.AddTransient<ITeamService, TeamService>();
 builder.Services.AddTransient<IGameCompetitorInEventService, GameCompetitorInEventService>();
 builder.Services.AddTransient<IUserService, UserService>();
 builder.Services.AddControllersWithViews();
-//builder.Services.AddHttpClient();
 builder.Services.Configure<ApiSettings>(
-    builder.Configuration.GetSection("ApiSettings"));
+builder.Configuration.GetSection("ApiSettings"));
 
 // Voeg HttpClient toe en gebruik BaseUrl uit config
 builder.Services.AddHttpClient<IApiClient, ApiClient>((serviceProvider, client) =>
