@@ -8,6 +8,7 @@ namespace Domain.Models
     {
         [Key]
         public int CompetitorId { get; set; }
+        
         [DisplayName("Voornaam")]
         public string FirstName { get; set; } = string.Empty;
         [DisplayName("Achternaam")]
@@ -16,10 +17,12 @@ namespace Domain.Models
         [DisplayName("Team")]
         public int TeamId { get; set; }
         [DisplayName("Land")]
-        public int CountryId { get; set; }
         public virtual Team? Team { get; set; }
+
+        public int CountryId { get; set; }
         [DisplayName("Land")]
         public virtual Country? Country { get; set; }
+
         [NotMapped]
         [DisplayName("Naam")]
         public string CompetitorName

@@ -7,14 +7,20 @@ namespace Domain.Models
     {
         [Key]
         public int Id { get; set; }
+
+        public int CompetitorId { get; set; }
+        public virtual Competitor? Competitor { get; set; }
+
         public int EventId { get; set; }
+        public virtual Event? Event { get; set; }
+
         [NotMapped]
         public string FilterTeam { get; set; } = string.Empty;
         public int EventNumber { get; set; }
-        public virtual Event? Event { get; set; }
-        public int CompetitorId { get; set; }
         public bool OutOfCompetition { get; set;} = false;
-        public virtual Competitor? Competitor { get; set; }
+
+        [NotMapped]
+        public string CompetitorName => Competitor != null ? $"{Competitor.FirstName} {Competitor.LastName}" : string.Empty;
 
     }
 }
