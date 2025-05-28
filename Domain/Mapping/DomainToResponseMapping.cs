@@ -9,7 +9,9 @@ namespace Domain.Mapping
     {
         public DomainToResponseMappingProfile()
         {
-            CreateMap<Event, EventDto>();
+            CreateMap<Event, EventDto>()
+                .ForMember(c => c.Stages, d => d.MapFrom(s => s.Stages))
+                .ForMember(c => c.Deelnemers, d => d.MapFrom(s => s.GameCompetitorEvents));
             CreateMap<Event, EventForUserDto>();
             CreateMap<Competitor, CompetitorDto>()
                 .ForMember(c => c.TeamName, d => d.MapFrom(s => s.Team.TeamName))
@@ -29,6 +31,14 @@ namespace Domain.Mapping
                             .ForMember(c => c.CompetitorInEventId, d => d.MapFrom(s => s.CompetitorsInEvent.Id))
                             .ForMember(c => c.OutOfCompetition, d => d.MapFrom(s => s.CompetitorsInEvent.OutOfCompetition))
                             .ForMember(c => c.CountryCode, d => d.MapFrom(s => s.CompetitorsInEvent.Competitor.Country.CountryNameShort));
+
+            CreateMap<GameCompetitorEventPick, CompetitorDto>()
+                .ForMember(c => c.CompetitorName, d => d.MapFrom(s => s.CompetitorsInEvent.CompetitorName));
+            CreateMap<Stage, StageResultDto>()
+                .ForMember(c => c.StageId, d => d.MapFrom(s => s.Id))
+                .ForMember(c => c.StageNumber, d => d.MapFrom(s => s.StageName))
+                .ForMember(c => c.HasResult, d => d.MapFrom(s => s.Results.Any()))
+                .ForMember(c => c.VanNaar, d => d.MapFrom(s => $"{s.StartLocation}-{s.FinishLocation}"));
         }
     }
 }

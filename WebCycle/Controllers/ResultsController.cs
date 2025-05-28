@@ -1,7 +1,7 @@
-﻿using Domain.Dto;
-using Domain.Interfaces;
+﻿using CycleManager.Services.Interfaces;
 using Domain.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace WebCycle.Controllers
 {
@@ -9,21 +9,24 @@ namespace WebCycle.Controllers
     [ApiController]
     public class ResultsController : ControllerBase
     {
-        private readonly IResultsRepository resultsRepository;
-        public ResultsController(IResultsRepository resultsRepository)
+        private readonly IResultService _resultService;
+        public ResultsController(IResultService resultService)
         {
-            this.resultsRepository = resultsRepository;
+            _resultService = resultService;
         }
 
         [HttpGet("{id}/stage")]
-        public async Task<IEnumerable<Result>> GetById(int id)
+        public async Task<int> GetById(int id)
         {
-            return await resultsRepository.GetResultsByEventId(id);
+            return await _resultService.GetResultsByStageId(id);
+           
         }
-        //Get results by event id => all points
 
-        //Get results by poolDeelnemerId => individual score
-
-        //Get results by eventId  => all points per pooldeelnemer
+        [HttpGet("{stageId}/uitslag")]
+        public async Task<IActionResult> GetEtappeUitslag(int stageId)
+        {
+            var uitslag = await _resultService.GetEtappeUitslag(stageId);
+            return Ok(uitslag);
+        }
     }
 }

@@ -1,4 +1,6 @@
-﻿namespace Domain.Dto
+﻿using CycleManager.Domain.Dto;
+
+namespace Domain.Dto
 {
     public class EventDto
     {
@@ -9,6 +11,8 @@
         public string? Slogan { get; set; }
         public string? CountryCode { get; set; }
         public string? ColorName { get; set; }
+        public List<StageResultDto>? Stages { get; set; }
+        public List<DeelnemerDto>? Deelnemers { get; set; }
 
     }
 }

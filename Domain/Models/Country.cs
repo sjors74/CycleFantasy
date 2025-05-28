@@ -11,6 +11,5 @@ namespace Domain.Models
         public string CountryNameLong { get; set; } = string.Empty;
         [DisplayName("Afkorting")]
         public string CountryNameShort { get; set;} = string.Empty;
-
     }
 }

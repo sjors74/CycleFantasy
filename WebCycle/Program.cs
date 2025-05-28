@@ -33,7 +33,7 @@ builder.Services.Configure<SmtpSettings>(
     builder.Configuration.GetSection("SmtpSettings"));
 
 builder.Services.AddDbContext<ApplicationDbContext>(options => 
-    options.UseLazyLoadingProxies().UseSqlServer(connectionString));
+    options.UseLazyLoadingProxies(false).UseSqlServer(connectionString));
 builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
 {
     options.SignIn.RequireConfirmedAccount = true;
@@ -51,6 +51,9 @@ builder.Services.AddScoped<IGameCompetitorInEventService, GameCompetitorInEventS
 builder.Services.AddTransient<IGameCompetitorEventPickRepository, GameCompetitorEventPickRepository>();
 builder.Services.AddTransient<IResultService, ResultService>();
 builder.Services.AddTransient<IEventService, EventService>();
+builder.Services.AddTransient<ICompetitorService, CompetitorService>();
+builder.Services.AddTransient<ICompetitorInEventService, CompetitorInEventService>();
+builder.Services.AddTransient<ITeamService, TeamService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddControllers();
 builder.Services.AddHttpClient();

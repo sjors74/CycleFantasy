@@ -30,7 +30,7 @@ namespace CycleManager.Services
         /// <exception cref="NotImplementedException"></exception>
         public async Task<Team> GetTeamById(int id)
         {
-            return await _teamRepository.GetById(id);
+            return await _teamRepository.GetTeamById(id);
         }
     }
 }

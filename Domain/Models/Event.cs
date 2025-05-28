@@ -28,5 +28,7 @@ namespace Domain.Models
         [JsonIgnore]
         public virtual Configuration? Configuration {get;set;}
         public virtual ICollection<Stage> Stages { get; set; } = [];
+        public virtual ICollection<GameCompetitorEvent> GameCompetitorEvents { get; set; } = [];
+        public virtual ICollection<CompetitorsInEvent> CompetitorsInEvent { get; set; } = [];
     }
 }

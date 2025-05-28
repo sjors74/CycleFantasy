@@ -230,6 +230,7 @@ namespace WebCycleManager.Controllers
 
             var result = await _context.Results
                 .Include(r => r.CompetitorInEvent)
+                    .ThenInclude(r => r.Competitor)
                 .Include(r => r.Stage)
                 .Include(r => r.ConfigurationItem)
                 .FirstOrDefaultAsync(m => m.Id == id);

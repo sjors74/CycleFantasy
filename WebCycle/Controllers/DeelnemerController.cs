@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using CycleManager.Domain.Dto;
+using CycleManager.Services;
 using CycleManager.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Memory;
@@ -11,14 +12,16 @@ namespace WebCycle.Controllers
     public class DeelnemerController : ControllerBase
     {
         private readonly IGameCompetitorInEventService deelnemerService;
+        private readonly IEventService _eventService;
         private readonly IResultService resultService;
         private readonly IMapper _mapper;
         private readonly IMemoryCache _cache;
 
-        public DeelnemerController(IGameCompetitorInEventService deelnemerService, IResultService resultService, IMapper mapper, IMemoryCache cache)
+        public DeelnemerController(IGameCompetitorInEventService deelnemerService, IEventService eventService, IResultService resultService, IMapper mapper, IMemoryCache cache)
         {
             this.deelnemerService = deelnemerService;
             this.resultService = resultService;
+            _eventService = eventService;
             _mapper = mapper;
             _cache = cache;
         }
@@ -88,6 +91,62 @@ namespace WebCycle.Controllers
             }
 
             return Ok(competitorResponse);
+        }
+
+        [HttpGet("DeelnemerMetPicks")]
+        public async Task<IActionResult> GetDeelnemersMetPicks(int eventId)
+        {
+            var currentEvent = await _eventService.GetEventById(eventId);
+            var result = new List<DeelnemerMetPicksDto>();
+
+            foreach (var deelnemer in currentEvent.GameCompetitorEvents)
+            {
+                var picks = await deelnemerService.GetAllPicks(deelnemer.Id);
+                var picksDto = _mapper.Map<List<ResultDto>>(picks);
+
+                foreach (var pick in picksDto)
+                {
+                    var results = await resultService.GetCompetitorResultsByEventId(eventId, pick.CompetitorInEventId);
+                    pick.Points = results?.TotalScore ?? 0;
+                }
+
+                result.Add(new DeelnemerMetPicksDto
+                {
+                    Id = deelnemer.Id,
+                    DeelnemerNaam = $"{deelnemer?.User?.FirstName} {deelnemer?.User?.LastName}",
+                    PoolNaam = deelnemer.TeamName,
+                    UserId = deelnemer.UserId,
+                    Picks = picksDto
+                });
+            }
+
+            return Ok(result);
+        }
+
+        [HttpGet("Deelnemer/MetPunten/{eventId}")]
+        public async Task<IActionResult> GetDeelnemersMetPuntenVoorEvent(int eventId)
+        {
+            var currentEvent = await _eventService.GetEventById(eventId);
+            var result = new List<DeelnemerDto>();
+
+            foreach (var deelnemer in currentEvent.GameCompetitorEvents)
+            {
+                var picks = await deelnemerService.GetAllPicks(deelnemer.Id);
+                int totaalPunten = 0;
+
+                foreach (var pick in picks)
+                {
+                    var results = await resultService.GetCompetitorResultsByEventId(eventId, pick.CompetitorsInEventId);
+                    if (results != null)
+                        totaalPunten += results.TotalScore;
+                }
+
+                var dto = _mapper.Map<DeelnemerDto>(deelnemer);
+                dto.Punten = totaalPunten;
+                result.Add(dto);
+            }
+
+            return Ok(result);
         }
     }
 }

@@ -41,7 +41,7 @@ namespace CycleManager.Services
 
         public Task<Event> GetEventById(int id)
         {
-            return _eventRepository.GetById(id);
+            return _eventRepository.GetEventById(id);
         }
 
         public async Task Update(Event entity)
@@ -79,36 +79,20 @@ namespace CycleManager.Services
 
         public async Task<IEnumerable<EventForUserDto>> GetEventsByUserId(string userId)
         {
-            var resultList = new List<Event>();
-            var eventDtos = new List<EventForUserDto>();
-            var events = await _eventRepository.GetAllEvents();
-            foreach (var e in events)
+            var events = await _deelnemersRepository.GetEventsByUserId(userId);
+
+            return events.Select(e => new EventForUserDto
             {
-                var gameCompetitorsInEvent = await _deelnemersRepository.GetAllGameCompetitorsInEventByEventId(e.EventId);
-                if (gameCompetitorsInEvent.Any())
-                {
-                    var eventsForUser = gameCompetitorsInEvent.Where(u => !string.IsNullOrEmpty(u.UserId) && u.UserId.Equals(userId));
-                    if (eventsForUser.Any())
-                    {
-                        foreach (var gamecompetitorInEvent in eventsForUser)
-                        {
-                            eventDtos.Add(new EventForUserDto
-                            {
-                                ColorName = gamecompetitorInEvent.Event.ColorName,
-                                CompetitorInEventId = gamecompetitorInEvent.Id,
-                                CountryCode = gamecompetitorInEvent.Event.CountryCode,
-                                EndDate = (DateTime)gamecompetitorInEvent.Event.EndDate,
-                                EventId = gamecompetitorInEvent.Event.EventId,
-                                EventName = gamecompetitorInEvent.Event.EventName,
-                                Slogan = gamecompetitorInEvent.Event.Slogan,
-                                StartDate = (DateTime)gamecompetitorInEvent.Event.StartDate,
-                                UserId = gamecompetitorInEvent.UserId
-                            });
-                        }
-                    }
-                }
-            }
-            return eventDtos;
+                EventId = e.EventId,
+                EventName = e.EventName,
+                StartDate = e.StartDate.GetValueOrDefault(),
+                EndDate = e.EndDate.GetValueOrDefault(),
+                Slogan = e.Slogan,
+                CountryCode = e.CountryCode,
+                ColorName = e.ColorName,
+                UserId = userId,
+
+            }).ToList();
         }
 
         public async Task<EventDetailsViewModel?> GetEventDetailsViewModelById(int eventId)

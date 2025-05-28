@@ -1,6 +1,6 @@
-﻿using Domain.Interfaces;
+﻿using CycleManager.Services.Interfaces;
+using Domain.Interfaces;
 using Domain.Models;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace WebCycle.Controllers
@@ -9,29 +9,29 @@ namespace WebCycle.Controllers
     [ApiController]
     public class CompetitorController : ControllerBase
     {
-        private readonly ICompetitorRepository competitorRepository;
+        private readonly ICompetitorService _competitorService;
 
-        public CompetitorController(ICompetitorRepository competitorRepository)
+        public CompetitorController(ICompetitorRepository competitorRepository, ICompetitorService competitorService)
         {
-            this.competitorRepository = competitorRepository;
+            _competitorService = competitorService;
         }
         [HttpGet]
         public async Task<IEnumerable<Competitor>> GetCompetitors()
         {
-            var competitors = await competitorRepository.GetAll();
+            var competitors = _competitorService.GetAllCompetitors();
             return competitors;
         }
 
         [HttpGet("{id}", Name = "GetCompetitorById")]
         public async Task<Competitor> GetById(int id) 
         {
-            return await competitorRepository.GetById(id);
+            return await _competitorService.GetCompetitorById(id);
         }
 
         [HttpGet("{id}/team", Name = "GetCompetitorsByTeamId")]
         public async Task<IEnumerable<Competitor>> GetByTeamId(int id)
         {
-            return await competitorRepository.GetByTeamId(id);
+            return await _competitorService.GetByTeamId(id);
         }
 
     }

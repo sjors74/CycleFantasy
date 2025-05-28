@@ -4,9 +4,7 @@ function formatDate(isoDateString) {
     return new Date(isoDateString).toLocaleDateString("nl-NL", options);
 }
 
-
-
-
-
-
-
+function toggleGlobalLoader(show = true) {
+    const loader = document.getElementById('global-loader');
+    loader.style.display = show ? 'flex' : 'none';
+}

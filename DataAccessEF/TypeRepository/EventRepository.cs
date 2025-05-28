@@ -15,7 +15,10 @@ namespace DataAccessEF.TypeRepository
         public async Task<IEnumerable<Event>> GetActiveEvents()
         {
             var eventList = await context.Events
+                .Include(e => e.GameCompetitorEvents)
+                    .ThenInclude(e => e.User)
                 .Include(s => s.Stages)
+                    .ThenInclude(r => r.Results)
                 .Include(e => e.Configuration)
                 .Where(e => e.IsActive.Equals(true))
                 .AsNoTracking()
@@ -39,12 +42,22 @@ namespace DataAccessEF.TypeRepository
         public async Task<Event> GetEventById(int id)
         {
             var e = await context.Events
-                .Include(s => s.Stages)
-                .Include(e => e.Configuration)
-                .Where(e => e.EventId.Equals(id))
-                .AsNoTracking()
-                .FirstOrDefaultAsync();
-            return e;
+                    .Include(s => s.Stages)
+                        .ThenInclude(r => r.Results)
+                    .Include(c => c.GameCompetitorEvents)
+                        .ThenInclude(gce => gce.Renners)
+                    .Include(c => c.GameCompetitorEvents)
+                        .ThenInclude(gce => gce.User)
+                    //.Include(c => c.CompetitorsInEvent)
+                        //.ThenInclude(ci => ci.Competitor)
+                        //    .ThenInclude(comp => comp.Team)
+                    //.Include(c => c.CompetitorsInEvent)
+                    //    .ThenInclude(ci => ci.Competitor)
+                    //        .ThenInclude(comp => comp.Country)
+                    //.Include(c => c.CompetitorsInEvent)
+                    //    .ThenInclude(ci => ci.GameCompetitorEventPicks) // BELANGRIJK
+                    //.Include(e => e.Configuration)
+                    .FirstOrDefaultAsync(e => e.EventId == id); return e;
         }
 
         public async Task<EventDetailsViewModel?> GetEventDetailsViewModelById(int eventId)

@@ -43,5 +43,15 @@ namespace CycleManager.Services
         {
             return _resultsRepository.GetResultsByStageId(stageId);
         }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="stageId"></param>
+        /// <returns></returns>
+        public Task<List<EtappeUitslagDto>> GetEtappeUitslag(int stageId)
+        {
+            return _resultsRepository.GetEtappeUitslag(stageId);
+        }
     }
 }

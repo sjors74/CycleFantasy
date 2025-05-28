@@ -9,5 +9,7 @@ namespace Domain.Interfaces
         Task<IEnumerable<CompetitorsInEvent>> GetRandomNumberofCompetitors(int eventId, int number);
 
         Task<CompetitorsInEvent> GetCompetitorsInEventByIds(int eventId, int competitorId);
+
+        Task<CompetitorsInEvent> GetById(int competitorId);
     }
 }

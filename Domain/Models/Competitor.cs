@@ -17,11 +17,11 @@ namespace Domain.Models
         [DisplayName("Team")]
         public int TeamId { get; set; }
         [DisplayName("Land")]
-        public virtual Team? Team { get; set; }
+        public Team? Team { get; set; }
 
         public int CountryId { get; set; }
         [DisplayName("Land")]
-        public virtual Country? Country { get; set; }
+        public Country? Country { get; set; }
 
         [NotMapped]
         [DisplayName("Naam")]

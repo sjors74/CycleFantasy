@@ -1,0 +1,354 @@
+﻿@page "/Etappe"
+@model EtappeModel
+@{
+    ViewData["Title"] = "Etappe resultaten";
+}
+   
+<style>
+    .etappe-header {
+        background-color: #f0f0f0;
+        border-left: 5px solid #ff4081;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+        .etappe-header h1 {
+            font-size: 2rem;
+            color: #333;
+            margin: 0;
+        }
+
+        .etappe-header .event-dates {
+            margin-top: 5px;
+            color: #666;
+            font-style: italic;
+        }
+
+
+    nav a {
+        margin-right: 10px;
+        text-decoration: none;
+        color: #007bff;
+    }
+
+        nav a:hover {
+            text-decoration: underline;
+        }
+
+    .resultaten-tabel {
+        width: 100%;
+        border-collapse: collapse;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+        .resultaten-tabel th, .resultaten-tabel td {
+            border: 1px solid #ddd;
+            padding: 8px 12px;
+            text-align: left;
+        }
+
+        .resultaten-tabel th {
+            background-color: #f4f4f4;
+            font-weight: 600;
+        }
+
+        .resultaten-tabel tr:nth-child(even) {
+            background-color: #fafafa;
+        }
+
+        .resultaten-tabel tr:hover {
+            background-color: #f1f1f1;
+        }
+
+/*     .etappe-nav-buttons {
+        text-align: center;
+        margin-top: 30px;
+    }
+
+        .etappe-nav-buttons a {
+            display: inline-block;
+            background-color: #ff4081;
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+            padding: 12px 28px;
+            margin: 0 15px;
+            border-radius: 8px;
+            font-size: 1.3rem;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+
+            .etappe-nav-buttons a:hover {
+                background-color: #e03570;
+                transform: scale(1.05);
+            }
+
+            .etappe-nav-buttons a:active {
+                background-color: #c62860;
+            }
+
+            .etappe-nav-buttons a.prev::before {
+                content: "← ";
+            }
+
+            .etappe-nav-buttons a.next::after { 
+                content: " →";
+            }
+
+            .terug-naar-event-container {
+                margin-bottom: 1rem;
+                text-align: left;
+            }
+
+            .terug-naar-event-knop {
+                display: inline-block;
+                background-color: #ff4081;
+                color: white;
+                text-decoration: none;
+                font-weight: bold;
+                padding: 10px 20px;
+                border-radius: 6px;
+                font-size: 1rem;
+                box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+                transition: background-color 0.3s ease, color 0.3s ease;
+            }
+
+                .terug-naar-event-knop:hover {
+                    background-color: #e03570;
+                    color: white;
+                    text-decoration: none; 
+                }
+
+    */
+    .etappe-knoppen-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 2rem;
+        margin-top: 2rem;
+        flex-wrap: wrap;
+    }
+
+    .etappe-knop {
+        padding: 0.5rem 1rem;
+        font-size: 1rem;
+        background-color: #ff4081;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        text-decoration: none;
+        transition: background-color 0.3s ease;
+    }
+
+        .etappe-knop:hover {
+            background-color: #e73370;
+            color: white;
+        }
+
+    .etappe-knop-groep {
+        display: flex;
+        gap: 1rem; /* ruimte tussen 'Vorige' en 'Volgende' */
+    }
+
+    .etappe-nav-knop {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.95rem;
+        background-color: #2d6a4f;
+        color: white;
+        border-radius: 5px;
+        text-decoration: none;
+        transition: background-color 0.3s ease;
+    }
+
+        .etappe-nav-knop:hover {
+            background-color: #f4a261;
+            color: white;
+        }
+
+</style>
+    <div class="etappe-knoppen-container">
+        <a id="terug-naar-event" href="#" class="btn etappe-knop">← Terug</a>
+        <div id="navigatie-links" class="etappe-knop-groep"></div>
+    </div>
+    <div class="event-header etappe-header">
+        <h1 id="etappe-title"></h1>
+        <div class="event-dates" id="etappe-datum"></div>
+    </div>
+    <table class="resultaten-tabel">
+        <thead>
+            <tr>
+                <th>Positie</th>
+                <th>Naam</th>
+                <th>Team</th>
+                <th>Punten</th>
+            </tr>
+        </thead>
+        <tbody id="renner-lijst">
+            <!-- rijen worden via JS toegevoegd -->
+        </tbody>
+    </table>
+    <script>
+    async function laadEtappeData() {
+        let etappeNummer, stageId, data;
+
+        try {
+            toggleGlobalLoader(true);
+
+            const params = new URLSearchParams(window.location.search);
+            etappeNummer = parseInt(params.get("nummer"));
+
+            const eventJson = localStorage.getItem("events");
+            let event = null;
+            const eventId = parseInt(localStorage.getItem("eventId"));
+
+            if (eventJson) {
+                const events = JSON.parse(eventJson);
+                event = events.find(e => e.eventId == eventId);
+            }
+
+            if (!event) {
+                throw new Error(`Event met id  ${eventId} niet gevonden in localstorage`);
+            }
+
+            if(!Array.isArray(event.stages)) {
+                throw new Error(`Gevonden event bevat geen geldige stage-array: ${JSON.stringify(event)}`);
+            }
+
+            if (!etappeNummer) {
+              document.body.innerHTML = "<p>Geen etappe-nummer opgegeven.</p>";
+              throw new Error("Geen etappe-nummer.");
+            }
+
+            // 📌 StageId ophalen via etappeNummer
+            const stage = event.stages.find(s => s.stageNumber === etappeNummer);
+            if (!stage) {
+                throw new Error(`Geen stage gevonden voor etappe ${etappeNummer}`);
+            }
+            document.getElementById("etappe-datum").textContent = `
+                ${stage.vanNaar}
+            `
+
+            stageId = stage.stageId;
+            console.log("Huidige etappe:", etappeNummer, "→ stageId:", stageId);
+
+            await loadConfig();
+
+            if (!etappeNummer) {
+                document.body.innerHTML = "<p>Geen etappe-nummer opgegeven.</p>";
+                throw new Error("Geen etappe-nummer.");
+            }
+
+            document.getElementById("etappe-title").textContent = `Etappe ${etappeNummer} – Resultaten`;
+
+            const response = await fetch(`${API_BASE_URL}/api/Results/${stageId}/uitslag`);
+            if (!response.ok) {
+                console.error("API error:", response.status);
+                return;
+            }
+        
+            data = await response.json();
+            if (!Array.isArray(data)) {
+                console.error("API gaf geen lijst terug:", data);
+                return;
+            }
+        
+            const lijst = document.getElementById("renner-lijst");
+            lijst.innerHTML = "";
+
+            data.forEach(item => {
+              const tr = document.createElement("tr");
+
+              const tdPositie = document.createElement("td");
+              tdPositie.textContent = item.positie;
+
+              const tdNaam = document.createElement("td");
+              tdNaam.textContent = item.competitorName;
+
+              const tdTeam = document.createElement("td");
+              tdTeam.textContent = item.teamName ?? "Geen team";
+
+              const tdPunten = document.createElement("td");
+              tdPunten.textContent = `${item.score} pt`;
+              console.log("Resultaat item:", item);
+              tr.append(tdPositie, tdNaam, tdTeam, tdPunten);
+              lijst.appendChild(tr);
+            });
+
+            setupNavigation(etappeNummer, event.stages);
+
+         } catch(error) { 
+            console.error(error);
+         } finally {
+             toggleGlobalLoader(false);
+         }
+     }
+
+     function setupNavigation(etappeNummer, stages) {
+         const nav = document.getElementById("navigatie-links");
+         nav.innerHTML = '';
+        
+         const getStageId = nummer => {
+            const stage = stages.find(s => s.stageNumber === nummer);
+            return stage?.stageId ?? null;
+         };
+
+         const prevNummer = etappeNummer - 1;
+         const nextNummer = etappeNummer + 1;
+         const prevId = getStageId(prevNummer);
+         const nextId = getStageId(nextNummer);
+
+
+         if (prevId) {
+             const prev = document.createElement("a");
+             prev.classList.add("btn");
+             prev.classList.add("etappe-nav-knop")
+             prev.href = `Etappe?nummer=${prevNummer}`;
+             prev.textContent = "← Vorige";
+
+             prev.addEventListener("click", (e) => {
+                e.preventDefault();
+                window.history.pushState({etappeNummer: prevNummer }, "",  prev.href);
+                laadEtappeData();
+             });
+
+            nav.appendChild(prev);
+         }
+
+         if(nextId) {  //(data.heeftVolgende) {
+             const next = document.createElement("a");
+             next.classList.add("btn");
+             next.classList.add("etappe-nav-knop");
+             next.href = `Etappe?nummer=${nextNummer}`;
+             next.textContent = "Volgende →";
+
+             next.addEventListener("click", (e) => {
+                e.preventDefault();
+                window.history.pushState({etappeNummer: nextNummer}, "",  next.href);
+                 laadEtappeData();
+             });
+        
+             nav.appendChild(next);
+         }
+    }
+
+    window.addEventListener("popstate", function(event) {
+        if(event.state?.etappeNummer) {
+            laadEtappeData();
+        }
+    });
+
+    document.addEventListener("DOMContentLoaded", () => {
+        laadEtappeData();
+        const eventId = localStorage.getItem("eventId"); // of haal hem uit events array
+      
+        if (eventId) {
+        const terugLink = document.getElementById("terug-naar-event");
+        terugLink.href = `/Event?eventId=${eventId}`;
+      }
+    });
+
+    </script>

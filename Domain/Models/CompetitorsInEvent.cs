@@ -22,5 +22,7 @@ namespace Domain.Models
         [NotMapped]
         public string CompetitorName => Competitor != null ? $"{Competitor.FirstName} {Competitor.LastName}" : string.Empty;
 
+        public virtual ICollection<GameCompetitorEventPick> GameCompetitorEventPicks { get; set; } = [];
+
     }
 }

@@ -13,7 +13,7 @@
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
     <link rel="manifest" href="/site.webmanifest">
-     <script src="~/js/config.js"></script>
+    <script src="@Url.Content("~/js/config.js")" asp-append-version="true"></script>
     <style>
         :root {
             --primary-color: #2d6a4f; /* donkergroen */
@@ -66,33 +66,9 @@
             color: var(--text-color);
         }
     </style>
-@*     <style>
-        .navbar-transparent {
-            background-color: rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(8px);
-            box-shadow: none;
-        }
-
-        .navbar .btn {
-            font-size: 0.875rem;
-            padding: 0.4rem 0.75rem;
-            margin-left: 0.3rem;
-        }
-
-        .navbar .navbar-brand {
-            font-weight: bold;
-            font-size: 1.1rem;
-        }
-
-        body {
-            font-family: Arial, sans-serif;
-            padding: 20px;
-            background-color: #f4f4f4;
-        }
-    </style>
- *@</head>
+</head>
 <body>
-    <header class="mb-4">
+    <header>
         <nav class="navbar navbar-expand navbar-transparant fixed-top px-3 py-2">
             <div class="container-fluid">
                 <div class="d-flex align-items-center ms-auto">
@@ -100,20 +76,36 @@
                 </div>
             </div>
         </nav>
-        <div style="height: 64px;"></div> <!-- spacer voor fixed navbar -->
+        <div style="height: 14px;"></div> <!-- spacer voor fixed navbar -->
     </header>
     <main class="container">
         @RenderBody()
     </main>
-
-    <footer class="text-center text-muted mt-5 small">
-        &copy; @(DateTime.Now.Year) - Cycle Fantasy
-    </footer>
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
 
     @await RenderSectionAsync("Scripts", required: false)
+
+    <div id="global-loader" class="loader-container">
+        <div class="spinner-wrapper">
+            <!-- Draaiende ring -->
+            <div class="spinner-ring"></div>
+            <div class="loader-icon">
+                <div class="bicycle-wrapper">
+                    <div class="bicycle">🚴‍♂️</div>
+@*                     <div class="bicycle">🚴‍♀️</div>
+                    <div class="bicycle">🚴‍♂️</div>
+ *@                </div>
+            </div>
+        </div>
+        <div class="loader-text">Laden...</div>
+    </div>
 </body>
 </html>
+<script>
+        window.addEventListener("load", () => {
+        toggleGlobalLoader(false);
+    });
+</script>
