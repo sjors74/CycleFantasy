@@ -1,10 +1,11 @@
-﻿@model EventItemViewModel
+﻿@using CycleManager.Domain.ViewModel
+@model EventDetailsViewModel
 
 @{
     ViewData["Title"] = "Details";
 }
 
-<h1>@Model.EventNameDescription</h1>
+<h1>@Model.EventName</h1>
 
 <div>
     <hr />
@@ -63,6 +64,6 @@
     }
 </div>
 <div>
-    <a asp-action="Edit" asp-route-id="@Model?.Id">Bewerk</a> |
+    <a asp-action="Edit" asp-route-id="@Model?.EventId">Bewerk</a> |
     <a asp-action="Index">Terug naar de lijst</a>
 </div>

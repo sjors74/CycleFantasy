@@ -40,40 +40,14 @@ namespace WebCycleManager.Controllers
         // GET: Events/Details/5
         public async Task<IActionResult> Details(int? id)
         {
-            if (id == null)
-            {
+            if (id is not int eventId)
                 return NotFound();
-            }
 
-            var @event = await _eventService.GetEventById((int)id);
-            if (@event == null)
-            {
+            var vm = await _eventService.GetEventDetailsViewModelById(eventId);
+
+            if (vm == null)
                 return NotFound();
-            }
 
-            var stagesList = new List<StageViewModel>();
-            var stages = await _stageService.GetStagesByEventId(@event.EventId);
-            foreach (var stage in stages)
-            {
-                var stagesViewModel =
-                    new StageViewModel
-                    {
-                        StageId = stage.Id,
-                        StageName = stage.StageName,
-                        StageOrder = stage.StageOrder,
-                        StartLocation = stage.StartLocation,
-                        FinishLocation = stage.FinishLocation,
-                        EventId = stage.EventId,
-                        EventName = stage.Event == null ? string.Empty : stage.Event.EventName
-                    };
-                var results = await _resultService.GetResultsByStageId(stage.Id);
-                stagesViewModel.AantalPosities = results;
-                stagesList.Add(stagesViewModel);
-
-            }
-            var vm = CreateViewModel(@event);
-            vm.Stages = stagesList;
-            vm.StagesInEvent = stagesList.Count;
             return View(vm);
         }
 
@@ -86,8 +60,6 @@ namespace WebCycleManager.Controllers
         }
 
         // POST: Events/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Id,Name,Year,StartDate,EndDate,Slogan,CountryCode,ColorName,ConfigurationId,IsActive")] EventItemViewModel @event)
@@ -121,8 +93,6 @@ namespace WebCycleManager.Controllers
         }
 
         // POST: Events/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, [Bind("Id,Name,Year,StartDate,EndDate,Slogan,CountryCode,ColorName,ConfigurationId,IsActive")] EventItemViewModel @event)

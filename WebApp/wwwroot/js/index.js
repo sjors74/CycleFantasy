@@ -11,9 +11,6 @@ async function fetchDataAndRenderTiles(retries = 3, delay = 1000) {
         return;
     }
 
-    loader.style.display = 'block';
-    container.innerHTML = '<p>Loading events...</p>';
-
     try {
         await loadConfig();
     } catch (err) {
@@ -23,11 +20,18 @@ async function fetchDataAndRenderTiles(retries = 3, delay = 1000) {
     }
 
     for (let attempt = 1; attempt <= retries; attempt++) {
+
+        toggleGlobalLoader(true);
+
         try {
-            const response = await fetch(`${API_BASE_URL}/event`);
+            const response = await fetch(`${API_BASE_URL}/api/event`);
             if (!response.ok) throw new Error(`Serverfout: ${response.status}`);
 
             const events = await response.json();
+
+            // Sla alle events op in localStorage
+            localStorage.setItem('events', JSON.stringify(events));
+
             container.innerHTML = '';
 
             events.forEach(event => {
@@ -59,10 +63,10 @@ async function fetchDataAndRenderTiles(retries = 3, delay = 1000) {
             } else {
                 await new Promise(res => setTimeout(res, delay));
             }
+        } finally {
+            toggleGlobalLoader(false);
         }
     }
-
-    loader.style.display = 'none';
 }
 
 function handleTileClick(event) {

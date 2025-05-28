@@ -44,7 +44,9 @@ namespace WebCycleManager.Controllers
                     return NotFound();
                 }
             }
-            return View(await PaginatedList<Competitor>.CreateAsync(competitors.OrderBy(c => c.LastName).ThenBy(c => c.FirstName), pageNumber ?? 1, pageSize));
+            var orderedList = competitors.OrderBy(c => c.LastName).ThenBy(c => c.FirstName);
+
+            return View(await PaginatedList<Competitor>.CreateAsync(orderedList, pageNumber ?? 1, pageSize));
         }
 
         // GET: Competitors/Details/5

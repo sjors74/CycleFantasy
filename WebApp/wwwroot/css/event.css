@@ -115,6 +115,12 @@
         color: transparent;
     }
 
+    .step.completed a {
+        color: inherit; /* Neemt de kleur over van de ouder */
+        text-decoration: none; /* Verwijdert de onderstreping */
+        cursor: pointer;
+    }
+
 .spinner {
     border: 4px solid #f3f3f3;
     border-top: 4px solid #4caf50;

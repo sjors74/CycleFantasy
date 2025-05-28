@@ -23,76 +23,112 @@ namespace WebCycleManager.Controllers
         public IActionResult Index(int stageId)
         {
             //first get stage-data
-            var stage = _context.Stages.FirstOrDefault(s => s.Id.Equals(stageId));
-            if (stage != null)
-            {
-                var results = _context.Results.Include(r => r.CompetitorInEvent).Include(r => r.Stage).Include(r => r.ConfigurationItem)
-                    .Where(r => r.Stage.Id.Equals(stageId)).ToList();
-                var resultDict = new Dictionary<int, int>();
-                resultDict = results.ToDictionary(r => r.ConfigurationItem.Position, r => r.CompetitorInEvent.CompetitorId);
-                var currentEvent = _context.Events.FirstOrDefault(e => e.EventId.Equals(stage.EventId));
-                var competitorsInEvent = _context.CompetitorsInEvent.Where(c => c.EventId.Equals(currentEvent.EventId) && c.OutOfCompetition == false).ToList();
-                var config = currentEvent.Configuration;
-                var numberOfconfigItems = _context.ConfigurationItems.Where(l => l.ConfigurationId.Equals(config.Id)).Count();
-                var resultItems = new List<ResultItemViewModel>();
+            var stage = _context.Stages
+                .AsNoTracking()
+                .Include(s => s.Event)
+                .ThenInclude(e => e.Configuration)
+                .FirstOrDefault(s => s.Id == stageId);
 
-                for (int i = 0; i < numberOfconfigItems; i++)
+            if (stage == null)
+                return NotFound();
+
+            var currentEvent = stage.Event;
+            var config = currentEvent.Configuration;
+
+            var results = _context.Results
+                .AsNoTracking()
+                .Where(r => r.StageId == stageId)
+                .Include(r => r.CompetitorInEvent)
+                    .ThenInclude(cie => cie.Competitor)
+                .Include(r => r.ConfigurationItem)
+                .ToList();
+
+            var competitorsInEvent = _context.CompetitorsInEvent
+                .AsNoTracking()
+                .Where(c => c.EventId.Equals(currentEvent.EventId) && !c.OutOfCompetition)
+                .Include(c => c.Competitor)
+                .ToList();
+
+            var configItems = _context.ConfigurationItems
+                .AsNoTracking()
+                .Where(ci => ci.ConfigurationId == config.Id)
+                .OrderBy(ci => ci.Position)
+                .ToList();
+
+            var resultItems = configItems.Select(ci =>
                 {
-                    var position = i + 1;
-                    resultDict.TryGetValue(position, out int compId);
-                    var rivm = new ResultItemViewModel
+                    var result = results.FirstOrDefault(r => r.ConfigurationItem.Position == ci.Position);
+                    int selectedCompetitorId = result?.CompetitorInEventId ?? 0;
+                    string competitorName = string.Empty;
+                    if(result != null && result.CompetitorInEvent?.Competitor != null)
                     {
-                        Position = position,
-                        CompetitorName = GetCompetitorFullName(compId),
-                        SelectedCompetitorId = compId,
-                        DropdownList = GetDropdownList(currentEvent.EventId),
-                        Id = GetResultId(compId, stageId),
+                        competitorName = GetCompetitorFullName(result.CompetitorInEvent.Competitor.CompetitorId);
+                    }
+                    else if(selectedCompetitorId > 0)
+                    {
+                        competitorName = GetCompetitorFullName(selectedCompetitorId);
+                    }
+
+                    return new ResultItemViewModel
+                    {
+                        Position = ci.Position,
+                        CompetitorName = competitorName,
+                        SelectedCompetitorId = selectedCompetitorId,
+                        Id = result?.Id ?? 0,
                         StageId = stageId,
                     };
-                    resultItems.Add(rivm);
-                }
-                var rvm = new ResultViewModel(stage.Id, stage.EventId, config.Id, $"Etappe {stage.StageName}: {stage.StartLocation}-{stage.FinishLocation}", numberOfconfigItems, resultItems);
+                }).ToList();
 
-                return View(rvm);
-            }
-            return NotFound();
+            var rvm = new ResultViewModel(
+                stage.Id,
+                stage.EventId,
+                config.Id,
+                $"Etappe {stage.StageName}: {stage.StartLocation}-{stage.FinishLocation}",
+                configItems.Count,
+                resultItems,
+                competitorsInEvent
+                );
+
+            return View(rvm);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Index(int stageId, IFormCollection formCollection)
+        public async Task<IActionResult> Index(ResultViewModel model)
         {
             var resultList = new List<Result>();
-            var stage = _context.Stages.FirstOrDefault(s => s.Id.Equals(stageId));
-            int eventId = stage?.EventId ?? 0;
-            foreach (var key in formCollection.Keys)
-            {
-                if (key.Contains("SelectedCompetitorId"))
-                {
-                    var value = formCollection[key];
 
-                    int.TryParse(value, out var competitorId);
-                    if (competitorId > 0)
+            foreach (var item in model.Results)
+            {
+                var cie = await _context.CompetitorsInEvent
+                    .FirstOrDefaultAsync(c => c.CompetitorId == item.SelectedCompetitorId && c.EventId == model.EventId);
+    
+                if(cie != null)
+                {
+                    var configurationItem = await _context.ConfigurationItems
+                        .FirstOrDefaultAsync(c => c.ConfigurationId == model.ConfigurationId && c.Position == item.Position);
+
+                    if (configurationItem != null)
                     {
-                        var position = GetPositionFromKey(key);
-                        var configurationId = int.TryParse(formCollection["configurationId"], out var configId);
-                        var configurationItem = await _context.ConfigurationItems.FirstOrDefaultAsync(c => c.ConfigurationId.Equals(configId) && c.Position.Equals(position));
-                        if (position > 0 && configurationItem != null)
+                        resultList.Add(new Result
                         {
-                            resultList.Add(new Result
-                            {
-                                CompetitorInEventId = competitorId,
-                                StageId = stageId,
-                                ConfigurationItemId = configurationItem.Id
-                            });
-                        }
+                            CompetitorInEventId = cie.Id,
+                            StageId = model.StageId,
+                            ConfigurationItemId = configurationItem.Id
+                        });
+
                     }
                 }
             }
+
             _context.Results.AddRange(resultList);
-            _context.SaveChanges();
-            await InvalidateCacheInApi(eventId);
-            return RedirectToAction("Index", "Results", new { stageId });
+            await _context.SaveChangesAsync();
+
+            await InvalidateCacheInApi(model.EventId);
+
+            //var competitors = _context.Competitors.OrderBy(c => c.LastName).ToList();
+            //model.DropdownList = new SelectList(competitors, "CompetitorId", "CompetitorName");
+            return RedirectToAction("Index", new { stageId = model.StageId});
         }
 
         private int GetPositionFromKey(string key)
@@ -126,30 +162,39 @@ namespace WebCycleManager.Controllers
         // GET: Results/Create
         public IActionResult Create(int stageId)
         {
-            var stage = _context.Stages.FirstOrDefault(s => s.Id == stageId);
+            var stage = _context.Stages
+                .Include(s => s.Event)
+                    .ThenInclude(e => e.Configuration)
+                        .ThenInclude(c => c.ConfigurationItems)
+                .FirstOrDefault(s => s.Id == stageId);
+
             if (stage != null)
             {
-                //rvm.StageId = stage.Id;
-                //rvm.StageName = $"Etappe {stage.StageName}: {stage.StartLocation}-{stage.FinishLocation}";
-
-                var resultItems = new List<ResultItemViewModel>();
-                //first, get the event from stage, and it's configuration
                 var config = stage.Event.Configuration;
-                //then we create a resultListItem for every configurationitem found
-                foreach (var configItem in config.ConfigurationItems)
-                {
-                    var rivm = new ResultItemViewModel
-                    {
-                        Id = configItem.Id,
-                        Position = configItem.Position,
-                        CompetitorName = string.Empty
-                    };
-                    resultItems.Add(rivm);
-                }
+                var configItems = config.ConfigurationItems;
 
-                //rvm.Results = resultItems;
-                var rvm = new ResultViewModel(stage.Id, stage.EventId, config.Id, $"Etappe {stage.StageName}: {stage.StartLocation}-{stage.FinishLocation}", config.ConfigurationItems.Count, resultItems);
-                ViewData["CompetitorId"] = new SelectList(_context.Competitors.OrderBy(c => c.FirstName), "CompetitorId", "CompetitorName");
+                var resultItems = configItems.Select(ci => new ResultItemViewModel
+                {
+                    Id = ci.Id,
+                    Position = ci.Position,
+                    CompetitorName = string.Empty
+                }).ToList();
+
+                var competitorsInEvent = _context.CompetitorsInEvent
+                      .Where(c => c.EventId.Equals(stage.EventId) && !c.OutOfCompetition)
+                      .Include(c => c.Competitor)
+                      .ToList();
+
+                var rvm = new ResultViewModel(
+                        stage.Id, 
+                        stage.EventId, 
+                        config.Id, 
+                        $"Etappe {stage.StageName}: {stage.StartLocation}-{stage.FinishLocation}", 
+                        configItems.Count, 
+                        resultItems,
+                        competitorsInEvent
+                        );
+
                 return View(rvm);
             }
 
@@ -185,6 +230,7 @@ namespace WebCycleManager.Controllers
 
             var result = await _context.Results
                 .Include(r => r.CompetitorInEvent)
+                    .ThenInclude(r => r.Competitor)
                 .Include(r => r.Stage)
                 .Include(r => r.ConfigurationItem)
                 .FirstOrDefaultAsync(m => m.Id == id);
@@ -229,12 +275,8 @@ namespace WebCycleManager.Controllers
 
         private string GetCompetitorFullName(int competitorId)
         {
-            var competitor = _context.Competitors.FirstOrDefault(c => c.CompetitorId.Equals(competitorId));
-            if (competitor != null)
-            {
-                return $"{competitor.FirstName} {competitor.LastName}";
-            }
-            return string.Empty;
+            var competitor = _context.Competitors.FirstOrDefault(c => c.CompetitorId == competitorId);
+            return competitor != null ? $"{competitor.FirstName} {competitor.LastName}" : string.Empty;
         }
 
         private int GetResultId(int competitorId, int stageId)

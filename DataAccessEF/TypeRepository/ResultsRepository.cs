@@ -1,9 +1,9 @@
 ﻿using CycleManager.Domain.Dto;
+using DataAccessEF.Migrations;
 using Domain.Context;
 using Domain.Interfaces;
 using Domain.Models;
 using Microsoft.EntityFrameworkCore;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace DataAccessEF.TypeRepository
 {
@@ -16,21 +16,11 @@ namespace DataAccessEF.TypeRepository
 
         public async Task<IEnumerable<Result>> GetResultsByEventId(int eventId)
         {
-            //var results = new List<ResultDto>();
             var results = await context.Results
                 .Include(c => c.CompetitorInEvent)
                 .Include(s => s.Stage)
                 .Where(r => r.Stage.EventId == eventId)
                 .OrderBy(r => r.ConfigurationItem.Position).ToListAsync();
-
-
-            //_context.Results
-            //               .Include(c => c.ConfigurationItem).ThenInclude(i => i.Configuration)
-            //               .Include(r => r.Stage)
-            //               .Where(a => a.Stage.EventId.Equals(eventId));
-
-
-
 
             return results;
         }
@@ -49,7 +39,6 @@ namespace DataAccessEF.TypeRepository
             return results;
         }
 
-
         public async Task<int> GetResultsByStageId(int stageId)
         {
             var results = await context.Results
@@ -59,20 +48,52 @@ namespace DataAccessEF.TypeRepository
             return results.Count;
         }
 
+        public async Task<List<EtappeUitslagDto>?> GetEtappeUitslag(int stageId)
+        {
+            var stage = await context.Stages
+                .Include(s => s.Event)
+                    .ThenInclude(e => e.Configuration)
+                .FirstOrDefaultAsync(s => s.Id == stageId);
 
-        //public List<GameCompetitorEventPick> GetGameCompetitorsPicks(int eventId)
-        //{
-        //    var results = context.GameCompetitorEventPicks.Where(c => c.GameCompetitorEventId == eventId).ToList();
-        //    return results; 
-        //}
+            if (stage == null)
+            {
+                return null;
+            };
 
-        //public List<GameCompetitorEventPick> GetCompetitors(int eventId, int gameCompetitorId)
-        //{
-        //    var results = context.GameCompetitorEventPicks.Include(c => c.CompetitorsInEvent)
-        //        .Where(c => c.GameCompetitorEventId == eventId).ToList();
-        //    //&& c gameCompetitorId).ToList();
-        //    return results;
-        //}
+            var configItems = await context.ConfigurationItems
+                .AsNoTracking()
+                .Where(ci => ci.ConfigurationId == stage.Event.ConfigurationId)
+                .OrderBy(ci => ci.Position)
+                .ToListAsync();
 
+            var results = await context.Results
+                .AsNoTracking()
+                .Where(r => r.StageId == stageId)
+                .Include(r => r.CompetitorInEvent)
+                    .ThenInclude(cie => cie.Competitor)
+                        .ThenInclude(t => t.Team)
+                .Include(r => r.ConfigurationItem)
+                .ToListAsync();
+
+            var top15 = configItems.Select(ci =>
+            {
+                var result = results.FirstOrDefault(r => r.ConfigurationItem.Position == ci.Position);
+                if (result == null || result.CompetitorInEvent?.Competitor == null)
+                    return null;
+
+                var competitor = result.CompetitorInEvent.Competitor;
+                return new EtappeUitslagDto
+                {
+                    Positie = ci.Position,
+                    CompetitorName = $"{competitor.FirstName} {competitor.LastName}",
+                    TeamName = competitor.Team?.TeamName,
+                    Score = ci.Score
+                };
+            })
+            .Where(r => r != null)
+            .ToList();
+
+            return top15;
+        }
     }
 }

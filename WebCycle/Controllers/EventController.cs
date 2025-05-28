@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using CycleManager.Domain.Dto;
 using CycleManager.Services;
+using CycleManager.Services.Interfaces;
 using Domain.Dto;
 using Domain.Interfaces;
 using Microsoft.AspNetCore.Mvc;
@@ -13,21 +14,44 @@ namespace WebCycle.Controllers
     {
         private readonly IEventRepository eventRepository;
         private readonly IEventService eventService;
+        private readonly IResultService _resultService;
+        private readonly IGameCompetitorInEventService _deelnemerService;
         private readonly IMapper _mapper;
 
-        public EventController(IEventRepository eventRepository, IEventService eventService, IMapper mapper)
+        public EventController(IEventRepository eventRepository, IEventService eventService, IGameCompetitorInEventService deelnemerService, IResultService resultService, IMapper mapper)
         {
             this.eventRepository = eventRepository;
             this.eventService = eventService;
+            _deelnemerService = deelnemerService;
+            _resultService = resultService;
             this._mapper = mapper;
         }
 
         [HttpGet(Name = "GetActiveEvent")]
         public async Task<IActionResult> GetEvent()
         {
-            //TODO: add GetActiveEvents to service and remove repository from this class!
             var events = await eventRepository.GetActiveEvents();
             var eventResponse = _mapper.Map<List<EventDto>>(events);
+            foreach(var cEvent in eventResponse)
+            {
+                if (cEvent.Deelnemers != null)
+                {
+                    foreach (var deelnemer in cEvent.Deelnemers)
+                    {
+                        var picks = await _deelnemerService.GetAllPicks(deelnemer.Id);
+                        int totaal = 0;
+
+                        foreach (var pick in picks)
+                        {
+                            var results = await _resultService.GetCompetitorResultsByEventId(cEvent.EventId, pick.CompetitorsInEventId);
+                            if (results != null)
+                                totaal += results.TotalScore;
+                        }
+
+                        deelnemer.Punten = totaal;
+                    }
+                }
+            }
             return Ok(eventResponse);
         }
 
@@ -36,7 +60,23 @@ namespace WebCycle.Controllers
         {
             var e = await eventService.GetEventById(id);
             var eventResponse = _mapper.Map<EventDto>(e);
-            return Ok(eventResponse);
+
+            foreach(var deelnemer in eventResponse.Deelnemers)
+            {
+                var picks = await _deelnemerService.GetAllPicks(deelnemer.Id);
+                int totaal = 0;
+
+                foreach(var pick in picks)
+                {
+                    var results = await _resultService.GetCompetitorResultsByEventId(id, pick.CompetitorsInEventId);
+                    if (results != null)
+                        totaal += results.TotalScore;
+                }
+
+                deelnemer.Punten = totaal;
+            }
+
+                return Ok(eventResponse);
         }
 
         [HttpGet("{id}/stages")]
@@ -49,6 +89,7 @@ namespace WebCycle.Controllers
         [HttpGet("{userid}/user")]
         public async Task<IActionResult> GetEventByUserId(string userid)
         {
+            //TODO: check this one
             var allEvents = await eventService.GetEventsByUserId(userid);
             var nu = DateTime.UtcNow;
 

@@ -5,6 +5,7 @@ namespace Domain.Interfaces
     public interface ICompetitorRepository : IGenericRepository<Competitor> 
     {
         IQueryable<Competitor> GetAllCompetitors();
+        Task<Competitor> GetById(int competitorId);
         Task<IEnumerable<Competitor>> GetByTeamId(int teamId);
         Task<int> GetCompetitorsByCountry(int countryId);
     }

@@ -26,5 +26,12 @@ namespace CycleManager.Services.Interfaces
         /// <param name="eventId"></param>
         /// <returns></returns>
         Task<IEnumerable<Result>> GetResultsByEventId(int eventId);
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="stageId"></param>
+        /// <returns></returns>
+        Task<List<EtappeUitslagDto>> GetEtappeUitslag(int stageId);
     }
 }
