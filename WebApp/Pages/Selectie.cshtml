@@ -1,0 +1,105 @@
+﻿@page
+@using System.Text.Json
+@model WebApp.Pages.SelectieModel
+@{
+    int pageSize = 3;
+}
+<h2>Selecteer je wielrenners</h2>
+<form method="post" id="selectForm">
+    <input type="hidden" asp-for="StartIndex" value="@Model.StartIndex" />
+    <input type="hidden" asp-for="SelectedRidersJson" id="SelectedRidersJson" name="SelectedRidersJson" value='@JsonSerializer.Serialize(Model.SelectedRiders)' />
+    <input type="hidden" asp-for="EvenementId" />
+    <input type="hidden" asp-for="DeelnemerId" />
+    <div id="teams">
+        @foreach (var team in Model.VisibleTeams)
+        {
+            <div style="border: 1px solid #ccc; padding: 10px; margin-bottom: 10px;">
+                <h4>@team.Naam</h4>
+                @foreach (var renner in team.Renners)
+                {
+                    <input type="checkbox" class="renner-checkbox" value="@renner.CompetitorId" @(Model.SelectedRiders.Contains(renner.CompetitorId) ? "checked" : "") />
+                        @(renner.CompetitorName)
+                }
+            </div>
+        }
+    </div>
+
+    <p><strong>Geselecteerde renners: <span id="riderCount">0</span></strong></p>
+    <div id="maxSelectedMessage" style="color: red; font-size: 0.9em; display: none;">
+        Je mag maximaal 15 renners selecteren.
+    </div>
+    <div style="margin-top: 20px;">
+        <button type="submit" name="action" value="previous" @(Model.StartIndex == 0 ? "disabled" : "")>Vorige</button>
+        <button type="submit" name="action" value="next" @(Model.StartIndex + pageSize >= Model.AllTeams.Count ? "disabled" : "")>Volgende</button>
+        <button type="submit" asp-page-handler="Bevestigen" onclick="prepareFinalSelection()">Bevestig selectie</button>
+    </div>
+</form>
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const MAX_SELECTED = 15;
+
+            const checkboxes = document.querySelectorAll(".renner-checkbox");
+            const hiddenInput = document.getElementById("SelectedRidersJson");
+            const counter = document.getElementById("riderCount");
+            const message = document.getElementById("maxSelectedMessage");
+
+            // Parse de bestaande selectie uit hidden input
+            let selected = [];
+            try {
+                selected = JSON.parse(hiddenInput.value || "[]");
+            } catch {
+                selected = [];
+            }
+
+            checkboxes.forEach(cb => {
+                const id = parseInt(cb.value);
+                cb.checked = selected.includes(id);
+             });
+            
+            counter.innerText = selected.length;
+
+            const updateUI = () => {
+                    counter.innerText = selected.length;
+                    hiddenInput.value = JSON.stringify(selected);
+
+                    if (selected.length >= MAX_SELECTED) {
+                        message.style.display = "block";
+                        // Disable niet-geselecteerde checkboxes
+                        checkboxes.forEach(cb => {
+                            if (!selected.includes(parseInt(cb.value))) {
+                                cb.disabled = true;
+                            }
+                        });
+                    } else {
+                        message.style.display = "none";
+                        // Enable alles
+                        checkboxes.forEach(cb => cb.disabled = false);
+                    }
+                };
+
+                 updateUI();
+
+                checkboxes.forEach(cb => {
+                    cb.addEventListener("change", () => {
+                        const id = parseInt(cb.value);
+
+                        if (cb.checked) {
+                            if (!selected.includes(id)) {
+                                selected.push(id);
+                            }
+                         } else {
+                                selected = selected.filter(x => x !== id);
+                         }
+                         
+                         updateUI();
+
+                    });
+               });
+            });
+
+            function prepareFinalSelection() {
+                document.getElementById("SelectedRidersJson").value = JSON.stringify(selected);
+            }
+    </script>
+}

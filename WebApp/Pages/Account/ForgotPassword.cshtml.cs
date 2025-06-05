@@ -23,7 +23,7 @@ namespace WebApp.Pages.Account
         {
             var client = _clientFactory.CreateClient();
             var apiBaseUrl = _configuration["ClientSettings:ApiBaseUrl"];
-            var response = await client.PostAsJsonAsync($"{apiBaseUrl}/account/forgotpassword", new { Input.Email });
+            var response = await client.PostAsJsonAsync($"{apiBaseUrl}/api/account/forgotpassword", new { Input.Email });
 
             if (response.IsSuccessStatusCode)
             {

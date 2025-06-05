@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+﻿using CycleManager.Domain.Models;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 
@@ -30,5 +31,6 @@ namespace Domain.Models
         public virtual ICollection<Stage> Stages { get; set; } = [];
         public virtual ICollection<GameCompetitorEvent> GameCompetitorEvents { get; set; } = [];
         public virtual ICollection<CompetitorsInEvent> CompetitorsInEvent { get; set; } = [];
+        public ICollection<EventTeam>? EventTeams { get; set; }
     }
 }

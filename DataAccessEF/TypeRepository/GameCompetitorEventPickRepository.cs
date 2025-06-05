@@ -51,5 +51,18 @@ namespace DataAccessEF.TypeRepository
                  .ToListAsync();
             return picks;
         }
+
+        public async Task CreateGamePicksAsync(List<GameCompetitorEventPick> picks)
+        {
+            await context.GameCompetitorEventPicks.AddRangeAsync(picks);
+            try
+            {
+                var changes = await context.SaveChangesAsync();
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine($"Er is een fout opgetreden: {ex.Message}");
+            }
+        }
     }
 }

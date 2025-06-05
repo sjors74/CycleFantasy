@@ -1,4 +1,6 @@
 ﻿using CycleManager.Domain.Dto;
+using Domain.Models;
+using System.ComponentModel;
 
 namespace Domain.Dto
 {

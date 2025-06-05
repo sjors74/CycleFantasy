@@ -7,5 +7,8 @@ namespace WebApp.Pages.ViewModels
         public string Titel { get; set; } = string.Empty;
         public string InlineText { get; set; } = string.Empty;
         public List<EventForUserDto> Evenementen { get; set; } = new();
+        public bool ShowLinkToevoegen { get; set; } = true;
+
+        public int CurrentEventId { get; set; }
     }
 }

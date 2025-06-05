@@ -6,5 +6,6 @@ namespace CycleManager.Domain.Dto
     {
         public List<EventForUserDto> ActieveEvenementen { get; set; } = [];
         public List<EventForUserDto> ToekomstigeEvenementen { get; set; } = [];
+        public List<EventForUserDto> HistorischeEvenementen { get; set; } = [];
     }
 }

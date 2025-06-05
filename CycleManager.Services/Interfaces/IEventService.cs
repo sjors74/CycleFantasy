@@ -47,5 +47,11 @@ namespace CycleManager.Services
         Task<IEnumerable<EventForUserDto>> GetEventsByUserId(string userId);
 
         Task<EventDetailsViewModel?> GetEventDetailsViewModelById(int eventId);
+
+        Task<IEnumerable<TeamDto>> GetTeamsForEvent(int eventId);
+
+        Task<DeelnemerDto> CreatePoolAsync(DeelnemerDto deelnemerDto);
+        Task SaveSelectie(SelectieDto selectie);
+
     }
 }

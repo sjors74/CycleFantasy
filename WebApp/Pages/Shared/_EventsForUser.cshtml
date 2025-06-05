@@ -6,7 +6,7 @@
         <h5 class="mb-0">@Model.Titel</h5>
     </div>
     <div class="card-body">
-        @if (!Model.Evenementen.Any())
+        @if (!Model.Evenementen.Any())  //TODO: add boolean 'inschrijving geopend => if true show button 'maak pool aan'
         {
             <p class="text-muted">Er zijn momenteel geen @Model.InlineText evenementen.</p>
         }
@@ -25,31 +25,64 @@
                             <button class="btn btn-sm btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#@collapseId" aria-expanded="false" aria-controls="@collapseId">
                                 Details
                             </button>
+
                         </div>
                         <div class="collapse mt-2" id="@collapseId">
                             <div class="card card-body">
-                                <p><strong>Je renners</strong></p>
-                                @if (evt.Renners != null && evt.Renners.Any())
+
+                                <p><strong>Je pools</strong></p>
+                                @if (evt.Deelnemers == null || !evt.Deelnemers.Any())
                                 {
-                                    <ul class="list-group mt-3">
-                                        @foreach (var renner in evt.Renners)
-                                        {
-                                            <li class="list-group-item  @(renner.OutOfCompetition ? "out-of-competition" : "")">
-                                                <div class="row">
-                                                <div class="col-md-1">
-                                                    <img src="https://flagcdn.com/24x18/@(renner.CountryCode?.ToLower() ?? "unknown").png" alt="Vlag" />
-                                                </div>
-                                                    <div class="col-md-3 fw-bold">@renner.CompetitorName</div>
-                                                    <div class="col-md-4 text-muted">@renner.CompetitorTeam</div>
-                                                    <div class="col-md-2 text-end">@renner.Points</div>
-                                                </div>
-                                          </li>
-                                        }
-                                    </ul>
+                                    <div>
+                                        <p>Maak een pool aan</p>
+                                        <form method="post" asp-page-handler="CreatePool" class="mt-4">
+                                            <div class="mb-3">
+                                                <label for="poolNaam" class="form-label">Pool Naam</label>
+                                                <input type="text" class="form-control" id="poolNaam" name="poolNaam" required>
+                                                <input type="hidden" asp-for="CurrentEventId" id="CurrentEventId" name="CurrentEventId" value="@evt.EventId" />
+                                            </div>
+                                            <button type="submit" class="btn btn-primary">Maak Pool</button>
+                                        </form>
+                                    </div>
                                 }
                                 else
                                 {
-                                    <p class="text-muted">Geen renners geselecteerd voor dit evenement.</p>
+                                    <ul class="list-group mt-3">
+
+                                        @foreach(var deelnemer in evt.Deelnemers)
+                                        {
+                                            <li class="list-group-item ">
+                                                <div class="row">
+                                                    <div class="col-md-4 fw-bold">@deelnemer.PoolNaam</div>
+                                                    <div class="col-md-4 text-muted">@deelnemer.Renners.Count renners geselecteerd</div>
+                                                    <div class="col-md-2 text-end">
+                                                        @if (Model.ShowLinkToevoegen)
+                                                        {
+                                                            <a class="btn btn-sm btn-secondary" href="/Selectie?EvenementId=@evt.EventId&DeelnemerId=@deelnemer.Id">Voeg renners toe</a>
+                                                        }
+                                                    </div>
+                                                </div>
+                                            </li>
+
+                                        <p><strong>Je geselecteerde renners</strong></p>
+                                        @if (deelnemer.Renners != null && deelnemer.Renners.Any())
+                                        {
+                                            @foreach (var renner in deelnemer.Renners)
+                                            {
+                                                <li class="list-group-item">
+                                                    <div class="row">
+                                                        <div class="col-md-1">
+                                                            <img src="https://flagcdn.com/24x18/@(renner.CountryShort?.ToLower() ?? "unknown").png" alt="Vlag" />
+                                                        </div>
+                                                        <div class="col-md-3 fw-bold">@renner.CompetitorName</div>
+                                                        <div class="col-md-4 text-muted">@renner.TeamName</div>
+                                                        <div class="col-md-2 text-end">@renner.Punten</div>
+                                                    </div>
+                                                </li>
+                                            }
+                                        }
+                                    }
+                                    </ul>
                                 }
                             </div>
                         </div>

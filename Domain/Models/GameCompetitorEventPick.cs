@@ -13,7 +13,7 @@ namespace Domain.Models
         public int GameCompetitorEventId { get; set; }
         public int CompetitorsInEventId { get; set; }
 
-        public virtual GameCompetitorEvent GameCompetitorEvent { get; set; } = new GameCompetitorEvent();
-        public virtual CompetitorsInEvent CompetitorsInEvent { get; set;} = new CompetitorsInEvent();
+        public GameCompetitorEvent GameCompetitorEvent { get; set; }
+        public CompetitorsInEvent CompetitorsInEvent { get; set;}
     }
 }

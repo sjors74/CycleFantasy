@@ -1,6 +1,7 @@
 ﻿using CycleManager.Domain.Dto;
 using CycleManager.Domain.Interfaces;
 using CycleManager.Domain.ViewModel;
+using CycleManager.Services.Interfaces;
 using Domain.Dto;
 using Domain.Interfaces;
 using Domain.Models;
@@ -13,13 +14,19 @@ namespace CycleManager.Services
         private readonly IStageRepository _stageRepository;
         private readonly IResultsRepository _resultRepository;
         private readonly IGameCompetitorInEventRepository _deelnemersRepository;
+        private readonly IGameCompetitorEventPickRepository _picksRepository;
+        private readonly ICompetitorInEventService _competitorService;
 
-        public EventService(IEventRepository eventRepository, IStageRepository stageRepository, IResultsRepository resultsRepository, IGameCompetitorInEventRepository deelnemersRepository)
+        public EventService(IEventRepository eventRepository, IStageRepository stageRepository, 
+            IResultsRepository resultsRepository, IGameCompetitorInEventRepository deelnemersRepository, 
+            IGameCompetitorEventPickRepository picksRepository, ICompetitorInEventService competitorService)
         {
             _eventRepository = eventRepository;
             _stageRepository = stageRepository;
             _resultRepository = resultsRepository;
             _deelnemersRepository = deelnemersRepository;
+            _picksRepository = picksRepository;
+            _competitorService = competitorService;
         }
 
         public async Task Create(Event entity)
@@ -80,24 +87,89 @@ namespace CycleManager.Services
         public async Task<IEnumerable<EventForUserDto>> GetEventsByUserId(string userId)
         {
             var events = await _deelnemersRepository.GetEventsByUserId(userId);
-
-            return events.Select(e => new EventForUserDto
+            var eventsForUserDto = new List<EventForUserDto>();
+            foreach(var ev in events)
             {
-                EventId = e.EventId,
-                EventName = e.EventName,
-                StartDate = e.StartDate.GetValueOrDefault(),
-                EndDate = e.EndDate.GetValueOrDefault(),
-                Slogan = e.Slogan,
-                CountryCode = e.CountryCode,
-                ColorName = e.ColorName,
-                UserId = userId,
+                foreach (var gce in ev.GameCompetitorEvents)
+                {
+                    var renners = new List<CompetitorDto>();
+                    foreach(var renner in gce.Renners)
+                    {
+                        renners.Add(new CompetitorDto
+                        {
+                            CompetitorId = renner.CompetitorsInEvent.CompetitorId,
+                            CompetitorName = renner.CompetitorsInEvent.CompetitorName,
+                            CountryShort = renner.CompetitorsInEvent.Competitor.Country.CountryNameShort,
+                            EventNumber = renner.CompetitorsInEvent.EventNumber.ToString(),
+                            TeamName = renner.CompetitorsInEvent.Competitor.Team.TeamName,
+                        });
+                    }
+                    eventsForUserDto.Add(
+                    new EventForUserDto
+                    {
+                        EventId = gce.EventId,
+                        EventName = gce.Event.EventName,
+                        StartDate = gce.Event.StartDate.GetValueOrDefault(),
+                        EndDate = gce.Event.EndDate.GetValueOrDefault(),
+                        Slogan = gce.Event.Slogan,
+                        CountryCode = gce.Event.CountryCode,
+                        ColorName = gce.Event.CountryCode,
+                        UserId = gce.UserId,
+                        Deelnemers = new List<DeelnemerDto>
+                        { new DeelnemerDto
+                            {
+                                Id = gce.Id,
+                                PoolNaam = gce.TeamName,
+                                DeelnemerNaam = $"{gce.User.FirstName} {gce.User.LastName}",
+                                Renners = renners
+                            }
+                        }
+                    });
+                }
+            }
+            return eventsForUserDto;
+        }
 
-            }).ToList();
+        public async Task SaveSelectie(SelectieDto selectie)
+        {
+            var gamePicks = new List<GameCompetitorEventPick>();
+            foreach(var geselecteerde_renner in selectie.RennerIds)
+            {
+                var cie = await _competitorService.FindOrCreate(selectie.EventId, geselecteerde_renner);
+
+                gamePicks.Add(
+                new GameCompetitorEventPick
+                {
+                    CompetitorsInEventId = cie.Id,
+                    GameCompetitorEventId = selectie.DeelnemerId
+                });
+            }
+
+            await _picksRepository.CreateGamePicksAsync(gamePicks);
+        }
+
+        public async Task<DeelnemerDto> CreatePoolAsync(DeelnemerDto deelnemerDto)
+        {
+            var gameCompetitorEvent = new GameCompetitorEvent
+            {
+                TeamName = deelnemerDto.PoolNaam,
+                UserId = deelnemerDto.UserId,
+                EventId = deelnemerDto.EventId,
+            };
+
+            var createdEvent = await _deelnemersRepository.CreateGameCompetitorEventAsync(gameCompetitorEvent);
+            deelnemerDto.Id = createdEvent.Id;
+            return deelnemerDto;
         }
 
         public async Task<EventDetailsViewModel?> GetEventDetailsViewModelById(int eventId)
         {
             return await _eventRepository.GetEventDetailsViewModelById(eventId);
+        }
+
+        public async Task<IEnumerable<TeamDto>> GetTeamsForEvent(int eventId)
+        {
+            return await _eventRepository.GetTeamsForEvent(eventId);
         }
     }
 }

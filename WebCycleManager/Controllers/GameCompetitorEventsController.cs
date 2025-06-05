@@ -319,7 +319,7 @@ namespace WebCycleManager.Controllers
         {
             var competitors = new List<SelectListItem>();
 
-            var competitorsDb = _context.CompetitorsInEvent.OrderBy(c => c.Competitor.FirstName).Where(c => c.EventId.Equals(eventId) && c.OutOfCompetition.Equals(false)).ToList();
+            var competitorsDb = _context.CompetitorsInEvent.Include(c => c.Competitor).ThenInclude(t => t.Team).OrderBy(c => c.Competitor.FirstName).Where(c => c.EventId.Equals(eventId) && c.OutOfCompetition.Equals(false)).ToList();
             var groupedCompetitors = competitorsDb.GroupBy(x => x.Competitor.Team.TeamName);
             foreach (var group in groupedCompetitors)
             {

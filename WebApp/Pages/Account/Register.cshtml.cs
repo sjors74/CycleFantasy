@@ -30,7 +30,7 @@ namespace WebApp.Pages.Account
             var client = _httpClientFactory.CreateClient();
             var apiBaseUrl = _configuration["ClientSettings:ApiBaseUrl"];
 
-            var response = await client.PostAsJsonAsync($"{apiBaseUrl}/account", Input);
+            var response = await client.PostAsJsonAsync($"{apiBaseUrl}/api/account", Input);
 
             if (response.IsSuccessStatusCode)
             {

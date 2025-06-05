@@ -1,5 +1,7 @@
-﻿using CycleManager.Domain.ViewModel;
+﻿using CycleManager.Domain.Dto;
+using CycleManager.Domain.ViewModel;
 using Domain.Context;
+using Domain.Dto;
 using Domain.Interfaces;
 using Domain.Models;
 using Microsoft.EntityFrameworkCore;
@@ -85,6 +87,32 @@ namespace DataAccessEF.TypeRepository
                 })
                 .AsNoTracking()
                 .FirstOrDefaultAsync();
+        }
+
+        public async Task<IEnumerable<TeamDto>> GetTeamsForEvent(int id)
+        {
+            var eventExists = await context.Events.AnyAsync(e => e.EventId == id);
+            if (!eventExists)
+                return null;
+            var teams = await context.EventTeam
+                .Where(et => et.EventId == id)
+                .Include(et => et.Team)
+                    .ThenInclude(t => t.Competitors) // laad ook renners
+                    .OrderBy(et => et.Team.TeamName)
+                    .Select(et => new TeamDto
+                    {
+                        Id = et.Team.TeamId,
+                        Naam = et.Team.TeamName,
+                        Renners = et.Team.Competitors.Select(r => new CompetitorDto
+                        {
+                            CompetitorId = r.CompetitorId,
+                            CompetitorName = r.CompetitorName,
+                            CountryShort = r.Country.CountryNameShort,
+                            TeamName = et.Team.TeamName
+                        }).ToList()
+                    })
+                    .ToListAsync();
+            return teams;
         }
     }
 }
