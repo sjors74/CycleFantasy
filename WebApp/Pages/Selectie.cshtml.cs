@@ -23,7 +23,7 @@ namespace WebApp.Pages
         public string SelectedRidersJson { get; set; } = "";
 
         [BindProperty(SupportsGet = true)]
-        public int DeelnemerId { get;set; }
+        public int DeelnemerId { get; set; }
 
         public List<int> SelectedRiders { get; set; } = [];
 
@@ -40,6 +40,8 @@ namespace WebApp.Pages
 
         public void OnGet()
         {
+            var savedIds = GetSavedRiders();
+            SaveSelectedRidersToSession(savedIds);
             LoadTeams(); // Doe een fetch naar [api/event/id/teams-with-renners")]
             StartIndex = 0;
             VisibleTeams = AllTeams.Take(3).ToList();
@@ -51,7 +53,7 @@ namespace WebApp.Pages
             LoadTeams();
             VisibleTeams = AllTeams.Skip(StartIndex).Take(3).ToList();
 
-            if(!string.IsNullOrEmpty(SelectedRidersJson))
+            if (!string.IsNullOrEmpty(SelectedRidersJson))
             {
                 SelectedRiders = JsonSerializer.Deserialize<List<int>>(SelectedRidersJson) ?? new List<int>();
             }
@@ -75,7 +77,7 @@ namespace WebApp.Pages
                 StartIndex -= 3;
 
             if (StartIndex < 0) StartIndex = 0;
-            
+
             int pageSize = 3;
             int maxPage = (AllTeams.Count + pageSize - 1) / pageSize - 1; // aantal pagina's - 1
             int maxStartIndex = maxPage * pageSize;
@@ -152,6 +154,25 @@ namespace WebApp.Pages
         {
             var json = JsonSerializer.Serialize(riderIds);
             HttpContext.Session.SetString(SessionKey, json);
+        }
+
+        private List<int> GetSavedRiders()
+        {
+            var savedIds = new List<int>();
+            var apiBaseUrl = _configuration["ClientSettings:ApiBaseUrl"];
+            var response = _httpClient.GetAsync($"{apiBaseUrl}/api/Deelnemer/Picks/{DeelnemerId}").Result;
+
+            if (response.IsSuccessStatusCode)
+            {
+                var json = response.Content.ReadAsStringAsync().Result;
+                savedIds = JsonSerializer.Deserialize<List<int>>(json, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                }) ?? new List<int>();
+
+
+            }
+            return savedIds;
         }
     }
 }

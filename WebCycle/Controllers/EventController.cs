@@ -89,8 +89,6 @@ namespace WebCycle.Controllers
         [HttpGet("{userid}/user")]
         public async Task<IActionResult> GetEventByUserId(string userid)
         {
-            //TODO: check this one
-           // var allEvents = await eventService.GetAllEvents();
             var allEventsForUser = await eventService.GetEventsByUserId(userid);
             var nu = DateTime.UtcNow;
 

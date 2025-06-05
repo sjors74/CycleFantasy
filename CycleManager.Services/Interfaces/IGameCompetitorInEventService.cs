@@ -64,5 +64,7 @@ namespace CycleManager.Services.Interfaces
         Task<IEnumerable<CompetitorsInEvent>> GetCompetitors(int id, int number);
 
         Task<CompetitorsInEvent> GetCompetitorInEventById(int id);
+
+        Task<IEnumerable<int>> GetAllPicksAsCompetitorIds(int id);
     }
 }

@@ -76,7 +76,6 @@ namespace CycleManager.Services
         /// <summary>
         /// Get all picks for a gamecompetitor in event
         /// </summary>
-        /// <param name="eventId"></param>
         /// <param name="id"></param>
         /// <returns></returns>
         public async Task<IEnumerable<GameCompetitorEventPick>> GetAllPicks(int id)
@@ -111,6 +110,19 @@ namespace CycleManager.Services
         {
             return await _competitorRepo.GetRandomNumberofCompetitors(id, number);
         }
+
+        public async Task<IEnumerable<int>> GetAllPicksAsCompetitorIds(int id)
+        {
+            var competitorPicks = new List<int>();
+            var picks = await _pickRepository.GetCompetitorEventPicksById(id);
+            foreach (var pick in picks)
+            {
+                competitorPicks.Add(pick.CompetitorsInEvent.CompetitorId);
+            }
+
+            return competitorPicks;
+        }
+
 
         public async Task<CompetitorsInEvent> GetCompetitorInEventById(int id)
         {

@@ -148,5 +148,13 @@ namespace WebCycle.Controllers
 
             return Ok(result);
         }
+
+        [HttpGet("Picks/{deelnemerId}")]
+        public async Task<IActionResult> GetPicksForDeelnemer(int deelnemerId)
+        {
+            var picks = await deelnemerService.GetAllPicksAsCompetitorIds(deelnemerId);
+            var picksDto = _mapper.Map<List<int>>(picks);
+            return Ok(picksDto);
+        }
     }
 }

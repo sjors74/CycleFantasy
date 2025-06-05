@@ -54,7 +54,36 @@ namespace DataAccessEF.TypeRepository
 
         public async Task CreateGamePicksAsync(List<GameCompetitorEventPick> picks)
         {
-            await context.GameCompetitorEventPicks.AddRangeAsync(picks);
+            var gameCompetitorEventId = picks.First().GameCompetitorEventId;
+
+            // Maak een HashSet van actuele picks (vanuit frontend)
+            var incomingPickIds = picks
+                .Select(p => p.CompetitorsInEventId)
+                .ToHashSet();
+
+            // Haal bestaande picks van deze deelnemer op
+            var existingPicks = await context.GameCompetitorEventPicks
+                .Where(p => p.GameCompetitorEventId == gameCompetitorEventId)
+                .ToListAsync();
+
+            // Vind de picks die verwijderd moeten worden
+            var toDelete = existingPicks
+                .Where(p => !incomingPickIds.Contains(p.CompetitorsInEventId))
+                .ToList();
+
+            // Vind de picks die nieuw zijn
+            var existingPickIds = existingPicks
+                .Select(p => p.CompetitorsInEventId)
+                .ToHashSet();
+
+            var newPicks = picks
+                .Where(p => !existingPickIds.Contains(p.CompetitorsInEventId))
+                .ToList();
+
+            // Pas wijzigingen toe
+            context.GameCompetitorEventPicks.RemoveRange(toDelete);
+            await context.GameCompetitorEventPicks.AddRangeAsync(newPicks);
+            
             try
             {
                 var changes = await context.SaveChangesAsync();
