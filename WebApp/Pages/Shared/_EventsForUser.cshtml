@@ -37,38 +37,53 @@
 
                                         @foreach(var deelnemer in evt.Deelnemers)
                                         {
+                                            var deelnemerCollapseId = $"collapse-deelnemer-{deelnemer.Id}";
                                             <li class="list-group-item ">
-                                                <div class="row">
-                                                    <div class="col-md-4 fw-bold">@deelnemer.PoolNaam</div>
-                                                    <div class="col-md-4 text-muted">@deelnemer.Renners.Count renners geselecteerd</div>
-                                                    <div class="col-md-2 text-end">
+                                                @* <div class="row"> *@
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <div>
+                                                        <div class="fw-bold">@deelnemer.PoolNaam</div>
+                                                        <div class="text-muted">@deelnemer.Renners.Count renners geselecteerd</div>
+                                                    </div>
+                                                    <div class="text-end">
                                                         @if (Model.ShowLinkToevoegen)
                                                         {
-                                                            <a class="btn btn-sm btn-secondary" href="/Selectie?EvenementId=@evt.EventId&DeelnemerId=@deelnemer.Id">Voeg renners toe</a>
+                                                            <a class="btn btn-sm btn-secondary me-2" href="/Selectie?EvenementId=@evt.EventId&DeelnemerId=@deelnemer.Id">Voeg renners toe</a>
                                                         }
                                                     </div>
+                                                    <button class="btn btn-sm btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#@deelnemerCollapseId" aria-expanded="false" aria-controls="@deelnemerCollapseId">
+                                                        Renners
+                                                    </button>
                                                 </div>
-                                            </li>
+                                                <div class="collapse mt-2" id="@deelnemerCollapseId">
 
-                                        @if (deelnemer.Renners != null && deelnemer.Renners.Any())
-                                        {
-                                            <p><strong>Je geselecteerde renners</strong></p>
+                                                @if (deelnemer.Renners != null && deelnemer.Renners.Any())
+                                                {
+                                                  <ul class="list-group mt-2">
+                                                  @* <p><strong>Je geselecteerde renners</strong></p> *@
 
-                                            @foreach (var renner in deelnemer.Renners)
-                                            {
-                                                <li class="list-group-item">
-                                                    <div class="row">
-                                                        <div class="col-md-1">
-                                                            <img src="https://flagcdn.com/24x18/@(renner.CountryShort?.ToLower() ?? "unknown").png" alt="Vlag" />
+                                                  @foreach (var renner in deelnemer.Renners)
+                                                  {
+                                                    <li class="list-group-item">
+                                                        <div class="row">
+                                                            <div class="col-md-1">
+                                                                <img src="https://flagcdn.com/24x18/@(renner.CountryShort?.ToLower() ?? "unknown").png" alt="Vlag" />
+                                                            </div>
+                                                            <div class="col-md-3 fw-bold">@renner.CompetitorName</div>
+                                                            <div class="col-md-4 text-muted">@renner.TeamName</div>
+                                                            <div class="col-md-2 text-end">@renner.Punten</div>
                                                         </div>
-                                                        <div class="col-md-3 fw-bold">@renner.CompetitorName</div>
-                                                        <div class="col-md-4 text-muted">@renner.TeamName</div>
-                                                        <div class="col-md-2 text-end">@renner.Punten</div>
-                                                    </div>
-                                                </li>
+                                                    </li>
+                                                   }
+                                                </ul>
                                             }
-                                        }
-                                    }
+                                            else
+                                            {
+                                                        <p class="text-muted mt-2">Geen renners geselecteerd.</p>
+                                            }
+                                        </div>
+                                    </li>
+                                 }
                                     </ul>
                                 }
                                 <!-- Pool toevoegen: altijd zichtbaar -->
