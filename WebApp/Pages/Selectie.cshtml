@@ -4,34 +4,136 @@
 @{
     int pageSize = 3;
 }
+@section Styles {
+    <style>
+        @@media (min-width: 768px) {
+            .top-buttons {
+                text-align: center;
+                margin-bottom: 20px;
+            }
+
+            .teams-grid {
+                display: grid;
+                grid-template-columns: 1fr 3fr 1fr;
+                gap: 10px;
+                align-items: start;
+            }
+
+            .teams-container {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 10px;
+            }
+
+            .team-box {
+                border: 1px solid #ccc;
+                padding: 10px;
+                background: #f9f9f9;
+            }
+
+            .rider-list {
+                display: flex;
+                flex-direction: column;
+                gap: 5px;
+            }
+
+            .prev-button,
+            .next-button {
+                display: flex;
+                align-items: start;
+                padding-top: 30px; /* zorgt dat ze iets lager beginnen */
+            }
+        }
+
+        @@media (max-width: 767px) {
+            .top-buttons {
+                text-align: center;
+                margin-bottom: 15px;
+            }
+
+            .teams-grid {
+                display: block;
+            }
+
+            .teams-container {
+                display: block;
+            }
+
+            .team-box {
+                margin-bottom: 10px;
+            }
+
+            .prev-button,
+            .next-button {
+                text-align: center;
+                margin-top: 15px;
+            }
+        }
+    </style>
+}
 <h2>Selecteer je wielrenners</h2>
 <form method="post" id="selectForm">
     <input type="hidden" asp-for="StartIndex" value="@Model.StartIndex" />
     <input type="hidden" asp-for="SelectedRidersJson" id="SelectedRidersJson" name="SelectedRidersJson" value='@JsonSerializer.Serialize(Model.SelectedRiders)' />
     <input type="hidden" asp-for="EvenementId" />
     <input type="hidden" asp-for="DeelnemerId" />
-    <div id="teams">
+
+    <div class="top-buttons">
+        <button type="submit" asp-page-handler="Bevestigen" onclick="prepareFinalSelection()">Bevestig selectie</button>
+        <button type="button" onclick="history.back()">Annuleren</button>
+    </div>
+
+    <div class="teams-grid">
+        <div class="prev-button">
+            <button type="submit" name="action" value="previous" @(Model.StartIndex == 0 ? "disabled" : "")>← Vorige</button>
+        </div>
+        <div class="teams-container">
         @foreach (var team in Model.VisibleTeams)
         {
-            <div style="border: 1px solid #ccc; padding: 10px; margin-bottom: 10px;">
+            int maxVisible = 10;
+            bool showMoreNeeded = team.Renners.Count > maxVisible;
+            var firstRenners = team.Renners.Take(maxVisible).ToList();
+            var hiddenRenners = team.Renners.Skip(maxVisible).ToList();
+
+            <div class="team-box">
                 <h4>@team.Naam</h4>
-                @foreach (var renner in team.Renners)
-                {
-                    <input type="checkbox" class="renner-checkbox" value="@renner.CompetitorId" @(Model.SelectedRiders.Contains(renner.CompetitorId) ? "checked" : "") />
-                        @(renner.CompetitorName)
-                }
+                <div class="rider-list">
+                    @foreach (var renner in firstRenners)
+                    {
+                        <label>
+                            <input type="checkbox" class="renner-checkbox" value="@renner.CompetitorId" 
+                                @(Model.SelectedRiders.Contains(renner.CompetitorId) ? "checked" : "") />
+                            @(renner.CompetitorName)
+                        </label>
+                    }
+                    <div class="extra-renners" style="display: none;">
+                        @foreach (var renner in hiddenRenners)
+                        {
+                            <label>
+                                <input type="checkbox" class="renner-checkbox" value="@renner.CompetitorId"
+                                @(Model.SelectedRiders.Contains(renner.CompetitorId) ? "checked" : "") />
+                                @renner.CompetitorName
+                            </label>
+                        }
+                    </div>
+
+                    @if (showMoreNeeded)
+                    {
+                        <button type="button" class="show-more-btn">Meer...</button>
+                    }
+
+                </div>
             </div>
         }
+    </div>
+        <div class="next-button" style="text-align: right;">
+            <button type="submit" name="action" value="next" @(Model.StartIndex + pageSize >= Model.AllTeams.Count ? "disabled" : "")>Volgende →</button>
+        </div>
     </div>
 
     <p><strong>Geselecteerde renners: <span id="riderCount">0</span></strong></p>
     <div id="maxSelectedMessage" style="color: red; font-size: 0.9em; display: none;">
         Je mag maximaal 15 renners selecteren.
-    </div>
-    <div style="margin-top: 20px;">
-        <button type="submit" name="action" value="previous" @(Model.StartIndex == 0 ? "disabled" : "")>Vorige</button>
-        <button type="submit" name="action" value="next" @(Model.StartIndex + pageSize >= Model.AllTeams.Count ? "disabled" : "")>Volgende</button>
-        <button type="submit" asp-page-handler="Bevestigen" onclick="prepareFinalSelection()">Bevestig selectie</button>
     </div>
 </form>
 @section Scripts {
@@ -101,5 +203,19 @@
             function prepareFinalSelection() {
                 document.getElementById("SelectedRidersJson").value = JSON.stringify(selected);
             }
+    </script>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            document.querySelectorAll(".show-more-btn").forEach(btn => {
+                btn.addEventListener("click", () => {
+                    const container = btn.closest(".rider-list");
+                    const extra = container.querySelector(".extra-renners");
+                    if (extra) {
+                        extra.style.display = "block";
+                        btn.style.display = "none"; // knop verbergen na openen
+                    }
+                });
+            });
+        });
     </script>
 }
