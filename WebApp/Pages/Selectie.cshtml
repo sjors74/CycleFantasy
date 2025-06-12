@@ -7,72 +7,81 @@
 @section Styles {
     <style>
         @@media (min-width: 768px) {
-            .top-buttons {
-                text-align: center;
-                margin-bottom: 20px;
-            }
+        .top-buttons {
+        text-align: center;
+        margin-bottom: 20px;
+        }
 
-            .teams-grid {
-                display: grid;
-                grid-template-columns: 1fr 3fr 1fr;
-                gap: 10px;
-                align-items: start;
-            }
+        .teams-grid {
+        display: grid;
+        grid-template-columns: 1fr 3fr 1fr;
+        gap: 10px;
+        align-items: start;
+        }
 
-            .teams-container {
-                display: grid;
-                grid-template-columns: repeat(3, 1fr);
-                gap: 10px;
-            }
+        .teams-container {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        }
 
-            .team-box {
-                border: 1px solid #ccc;
-                padding: 10px;
-                background: #f9f9f9;
-            }
+        .team-box {
+        border: 1px solid #ccc;
+        padding: 10px;
+        background: #f9f9f9;
+        }
 
-            .rider-list {
-                display: flex;
-                flex-direction: column;
-                gap: 5px;
-            }
+        .rider-list {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        }
 
-            .prev-button,
-            .next-button {
-                display: flex;
-                align-items: start;
-                padding-top: 30px; /* zorgt dat ze iets lager beginnen */
-            }
+        .in-selectie {
+        font-weight: 600;
+        }
+
+        .niet-in-selectie {
+        font-weight: 200;
+        }
+
+        .prev-button,
+        .next-button {
+        display: flex;
+        align-items: start;
+        padding-top: 30px; /* zorgt dat ze iets lager beginnen */
+        }
         }
 
         @@media (max-width: 767px) {
-            .top-buttons {
-                text-align: center;
-                margin-bottom: 15px;
-            }
+        .top-buttons {
+        text-align: center;
+        margin-bottom: 15px;
+        }
 
-            .teams-grid {
-                display: block;
-            }
+        .teams-grid {
+        display: block;
+        }
 
-            .teams-container {
-                display: block;
-            }
+        .teams-container {
+        display: block;
+        }
 
-            .team-box {
-                margin-bottom: 10px;
-            }
+        .team-box {
+        margin-bottom: 10px;
+        }
 
-            .prev-button,
-            .next-button {
-                text-align: center;
-                margin-top: 15px;
-            }
+        .prev-button,
+        .next-button {
+        text-align: center;
+        margin-top: 15px;
+        }
         }
     </style>
 }
 <h2>Selecteer je wielrenners</h2>
 <form method="post" id="selectForm">
+    @Html.AntiForgeryToken()
     <input type="hidden" asp-for="StartIndex" value="@Model.StartIndex" />
     <input type="hidden" asp-for="SelectedRidersJson" id="SelectedRidersJson" name="SelectedRidersJson" value='@JsonSerializer.Serialize(Model.SelectedRiders)' />
     <input type="hidden" asp-for="EvenementId" />
@@ -88,41 +97,63 @@
             <button type="submit" name="action" value="previous" @(Model.StartIndex == 0 ? "disabled" : "")>← Vorige</button>
         </div>
         <div class="teams-container">
-        @foreach (var team in Model.VisibleTeams)
-        {
-            int maxVisible = 10;
-            bool showMoreNeeded = team.Renners.Count > maxVisible;
-            var firstRenners = team.Renners.Take(maxVisible).ToList();
-            var hiddenRenners = team.Renners.Skip(maxVisible).ToList();
+            @foreach (var team in Model.VisibleTeams)
+            {
+                var maxTonen = 10;
+                var geselecteerd = team.Renners.Where(r => r.InSelectie).ToList();
+                var nietGeselecteerd = team.Renners.Where(r => !r.InSelectie).ToList();
+                var aantalGeselecteerd = geselecteerd.Count;
+                var aantalNogVrij = maxTonen - aantalGeselecteerd;
 
-            <div class="team-box">
-                <h4>@team.Naam</h4>
-                <div class="rider-list">
-                    @foreach (var renner in firstRenners)
+                var getoondeRenners = team.Renners
+                .OrderByDescending(r => Model.SelectedRiders.Contains(r.CompetitorId)) // gekozen renners eerst
+                .Take(maxTonen)
+                .ToList();
+
+                var getoondeGeselecteerdDoorTeam = getoondeRenners.Where(r => r.InSelectie).ToList();
+                var getoondeNietGeselecteerdDoorTeam = getoondeRenners.Where(r => !r.InSelectie).ToList();
+
+                <div class="team-box">
+                    <h4>@team.Naam</h4>
+                    @if (getoondeGeselecteerdDoorTeam.Any())
                     {
-                        <label>
-                            <input type="checkbox" class="renner-checkbox" value="@renner.CompetitorId" 
-                                @(Model.SelectedRiders.Contains(renner.CompetitorId) ? "checked" : "") />
-                            @(renner.CompetitorName)
-                        </label>
-                    }
-                    <div class="extra-renners" style="display: none;">
-                        @foreach (var renner in hiddenRenners)
+                        <strong>Geselecteerd</strong>
+                        <div class="rider-list">
+                        @foreach (var renner in getoondeGeselecteerdDoorTeam)
                         {
                             <label>
-                                <input type="checkbox" class="renner-checkbox" value="@renner.CompetitorId"
-                                @(Model.SelectedRiders.Contains(renner.CompetitorId) ? "checked" : "") />
-                                @renner.CompetitorName
+                                <input type="checkbox" class="renner-checkbox" value="@renner.CompetitorId" 
+                                    @(Model.SelectedRiders.Contains(renner.CompetitorId) ? "checked" : "") />
+                                 @(renner.CompetitorName) 
                             </label>
                         }
-                    </div>
-
-                    @if (showMoreNeeded)
-                    {
-                        <button type="button" class="show-more-btn">Meer...</button>
+                        </div>
                     }
 
-                </div>
+                    @if (getoondeNietGeselecteerdDoorTeam.Any())
+                    {
+                        <strong style="margin-top:10px; display:block;">Niet geselecteerd</strong>
+                        <div class="rider-list">
+                            @foreach (var renner in getoondeNietGeselecteerdDoorTeam)
+                            {
+                            <label>
+                                   <input type="checkbox" class="renner-checkbox" value="@renner.CompetitorId"
+                                    @(Model.SelectedRiders.Contains(renner.CompetitorId) ? "checked" : "") />
+                                    @renner.CompetitorName
+                            </label>
+                        }
+                        </div>
+                    }
+
+                    <button type="button" class="show-more-btn"
+                            data-team-id="@team.Id"
+                            data-event-id="@Model.EvenementId"
+                            data-loaded-ids='@string.Join(",", getoondeRenners.Select(r => r.CompetitorId))'>
+                        Meer...
+                    </button>
+
+                    <div id="team-@team.Id-extra-renners"></div>
+
             </div>
         }
     </div>
@@ -138,84 +169,120 @@
 </form>
 @section Scripts {
     <script>
-        document.addEventListener("DOMContentLoaded", () => {
-            const MAX_SELECTED = 15;
+        const MAX_SELECTED = 15;
+        let selected = [];
 
-            const checkboxes = document.querySelectorAll(".renner-checkbox");
-            const hiddenInput = document.getElementById("SelectedRidersJson");
-            const counter = document.getElementById("riderCount");
-            const message = document.getElementById("maxSelectedMessage");
+        function registerCheckboxEvents() {
+        const checkboxes = document.querySelectorAll(".renner-checkbox");
+        const hiddenInput = document.getElementById("SelectedRidersJson");
+        const counter = document.getElementById("riderCount");
+        const message = document.getElementById("maxSelectedMessage");
 
-            // Parse de bestaande selectie uit hidden input
-            let selected = [];
-            try {
-                selected = JSON.parse(hiddenInput.value || "[]");
-            } catch {
-                selected = [];
-            }
+        try {
+            selected = JSON.parse(hiddenInput.value || "[]");
+        } catch {
+            selected = [];
+        }
 
-            checkboxes.forEach(cb => {
-                const id = parseInt(cb.value);
-                cb.checked = selected.includes(id);
-             });
-            
-            counter.innerText = selected.length;
-
-            const updateUI = () => {
-                    counter.innerText = selected.length;
-                    hiddenInput.value = JSON.stringify(selected);
-
-                    if (selected.length >= MAX_SELECTED) {
-                        message.style.display = "block";
-                        // Disable niet-geselecteerde checkboxes
-                        checkboxes.forEach(cb => {
-                            if (!selected.includes(parseInt(cb.value))) {
-                                cb.disabled = true;
-                            }
-                        });
-                    } else {
-                        message.style.display = "none";
-                        // Enable alles
-                        checkboxes.forEach(cb => cb.disabled = false);
-                    }
-                };
-
-                 updateUI();
-
-                checkboxes.forEach(cb => {
-                    cb.addEventListener("change", () => {
-                        const id = parseInt(cb.value);
-
-                        if (cb.checked) {
-                            if (!selected.includes(id)) {
-                                selected.push(id);
-                            }
-                         } else {
-                                selected = selected.filter(x => x !== id);
-                         }
-                         
-                         updateUI();
-
-                    });
-               });
+        checkboxes.forEach(cb => {
+            const id = parseInt(cb.value);
+            cb.checked = selected.includes(id);
             });
+            
+        const updateUI = () => {
+            counter.innerText = selected.length;
+            hiddenInput.value = JSON.stringify(selected);
 
-            function prepareFinalSelection() {
-                document.getElementById("SelectedRidersJson").value = JSON.stringify(selected);
-            }
-    </script>
-    <script>
-        document.addEventListener("DOMContentLoaded", () => {
-            document.querySelectorAll(".show-more-btn").forEach(btn => {
-                btn.addEventListener("click", () => {
-                    const container = btn.closest(".rider-list");
-                    const extra = container.querySelector(".extra-renners");
-                    if (extra) {
-                        extra.style.display = "block";
-                        btn.style.display = "none"; // knop verbergen na openen
+            if (selected.length >= MAX_SELECTED) {
+                message.style.display = "block";
+                // Disable niet-geselecteerde checkboxes
+                checkboxes.forEach(cb => {
+                    if (!selected.includes(parseInt(cb.value))) {
+                        cb.disabled = true;
                     }
                 });
-            });
+            } else {
+                message.style.display = "none";
+                // Enable alles
+                checkboxes.forEach(cb => cb.disabled = false);
+            }
+        };
+
+        checkboxes.forEach(cb => { 
+            cb.removeEventListener("change", checkboxHandler);
+            cb.addEventListener("change", checkboxHandler);
         });
+
+        function checkboxHandler(e) {
+            const cb = e.target;
+            const id = parseInt(cb.value);
+            if (cb.checked) {
+                if (!selected.includes(id)) {
+                    selected.push(id);
+                }
+            } else {
+                    selected = selected.filter(x => x !== id);
+            }
+                updateUI();
+            }
+            updateUI();
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            registerCheckboxEvents();
+        });
+
+        function prepareFinalSelection() {
+            document.getElementById("SelectedRidersJson").value = JSON.stringify(selected);
+        }
+    </script>
+    <script>
+        document.querySelectorAll('.show-more-btn').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const teamId = btn.dataset.teamId;
+                const eventId = btn.dataset.eventId;
+                const loadedIds = btn.dataset.loadedIds
+                    .split(',')
+                    .map(id => parseInt(id))
+                    .filter(id => !isNaN(id));
+
+                const formData = new FormData();
+                formData.append('teamId', teamId);
+                formData.append('eventId', eventId);
+                loadedIds.forEach(id => formData.append('alreadyLoadedIds', id));
+
+                const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+                if (token) {
+                  formData.append('__RequestVerificationToken', token);
+                }
+
+                const response = await fetch('?handler=LaadMeerRenners', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error("Server error:", errorText);
+                    return;
+                }
+
+                const renners = await response.json();
+
+                const container = document.getElementById(`team-${teamId}-extra-renners`);
+                renners.forEach(renner => {
+                    const label = document.createElement('label');
+                    label.innerHTML = `
+                        <input type="checkbox" class="renner-checkbox" value="${renner.competitorId}" ${renner.inSelectie ? "checked" : ""} />
+                        ${renner.competitorName}
+                    `;
+                    container.appendChild(label);
+                });
+
+                btn.style.display = 'none';
+
+                registerCheckboxEvents();
+            });
+        });    
     </script>
 }

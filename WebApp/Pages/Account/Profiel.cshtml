@@ -35,6 +35,20 @@
         </div>
     </div>
 </div>
+@section Scripts {
+    <script>
+        function handlePoolClick(e, el) {
+            e.preventDefault();
+            const url = el.getAttribute("href");
+            console.log("Navigeren naar:", url);
+
+            // eventueel logica, bv. opslaan van accordion state
+            sessionStorage.setItem("openAccordionId", el.closest(".accordion-collapse").id);
+
+            window.location.href = url;
+        }
+    </script>
+}
 
 
 

@@ -1,5 +1,5 @@
 ﻿using CycleManager.Domain.Dto;
-using Humanizer;
+using Domain.Dto;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.Security.Claims;
@@ -8,6 +8,7 @@ using System.Text.Json;
 
 namespace WebApp.Pages
 {
+    [IgnoreAntiforgeryToken]
     public class SelectieModel : PageModel
     {
         private readonly HttpClient _httpClient;
@@ -173,6 +174,27 @@ namespace WebApp.Pages
 
             }
             return savedIds;
+        }
+
+        public async Task<IActionResult> OnPostLaadMeerRennersAsync(int teamId, int eventId, List<int> alreadyLoadedIds)
+        {
+            var competitors = new List<CompetitorDto>();
+            var apiBaseUrl = _configuration["ClientSettings:ApiBaseUrl"];
+            var response = _httpClient.GetAsync($"{apiBaseUrl}/api/event/team/{teamId}/teams-with-more-renners").Result;
+            if (response.IsSuccessStatusCode)
+            {
+                var json = response.Content.ReadAsStringAsync().Result;
+                competitors = JsonSerializer.Deserialize<List<CompetitorDto>>(json, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                }) ?? new List<CompetitorDto>();
+            }
+
+            var filteredCompetitors = competitors
+                .Where(dto => !alreadyLoadedIds.Contains(dto.CompetitorId))
+                .ToList();
+           
+            return new JsonResult(filteredCompetitors);
         }
     }
 }

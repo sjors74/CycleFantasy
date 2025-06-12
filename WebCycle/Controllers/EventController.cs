@@ -16,14 +16,16 @@ namespace WebCycle.Controllers
         private readonly IEventService eventService;
         private readonly IResultService _resultService;
         private readonly IGameCompetitorInEventService _deelnemerService;
+        private readonly ITeamService _teamService;
         private readonly IMapper _mapper;
 
-        public EventController(IEventRepository eventRepository, IEventService eventService, IGameCompetitorInEventService deelnemerService, IResultService resultService, IMapper mapper)
+        public EventController(IEventRepository eventRepository, IEventService eventService, IGameCompetitorInEventService deelnemerService, ITeamService teamService, IResultService resultService, IMapper mapper)
         {
             this.eventRepository = eventRepository;
             this.eventService = eventService;
             _deelnemerService = deelnemerService;
             _resultService = resultService;
+            _teamService = teamService;
             this._mapper = mapper;
         }
 
@@ -137,6 +139,21 @@ namespace WebCycle.Controllers
                 return NotFound();
             }
             return Ok(teams);
+        }
+
+
+        [HttpGet("team/{teamId}/teams-with-more-renners")]
+        public async Task<ActionResult<IEnumerable<CompetitorDto>>> GetTeamsWithRennersFromTeam(int teamId)
+        {
+            var team = await _teamService.GetTeamById(teamId);
+
+            if (team == null)
+            {
+                return NotFound();
+            }
+
+            var competitors = team.Competitors;
+            return Ok(competitors);
         }
 
         [HttpPost("selectie")]
