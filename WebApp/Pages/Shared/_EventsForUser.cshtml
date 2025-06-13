@@ -94,28 +94,27 @@
                                             </div>
                                         }
                                     </div>
-
-                                    @if (Model.ShowLinkToevoegen)
-                                    {
-                                        <div class="mt-4">
-                                            <button class="btn btn-outline-primary mb-3" type="button" data-bs-toggle="collapse" data-bs-target="#poolFormCollapse" aria-expanded="false" aria-controls="poolFormCollapse">
-                                                + Pool aanmaken
-                                            </button>
-
-                                            <div class="collapse" id="poolFormCollapse">
-                                                <form method="post" asp-page-handler="CreatePool">
-                                                    <div class="mb-3">
-                                                        <label for="poolNaam" class="form-label">Pool Naam</label>
-                                                        <input type="text" class="form-control" id="poolNaam" name="poolNaam" required />
-                                                        <input type="hidden" asp-for="CurrentEventId" id="CurrentEventId" name="CurrentEventId" value="@evt.EventId" />
-                                                    </div>
-                                                    <button type="submit" class="btn btn-primary">Voeg toe</button>
-                                                </form>
-                                            </div>
-                                        </div>
-                                    }
                                 }                             
                             </div>
+                            @if (Model.ShowLinkToevoegen)
+                            {
+                                <div class="mt-4">
+                                    <button class="btn btn-outline-primary mb-3" type="button" data-bs-toggle="collapse" data-bs-target="#poolFormCollapse" aria-expanded="false" aria-controls="poolFormCollapse">
+                                        + Pool aanmaken
+                                    </button>
+
+                                    <div class="collapse" id="poolFormCollapse">
+                                        <form method="post" asp-page-handler="CreatePool">
+                                            <div class="mb-3">
+                                                <label for="poolNaam" class="form-label">Pool Naam</label>
+                                                <input type="text" class="form-control" id="poolNaam" name="poolNaam" required />
+                                                <input type="hidden" asp-for="CurrentEventId" id="CurrentEventId" name="CurrentEventId" value="@evt.EventId" />
+                                            </div>
+                                            <button type="submit" class="btn btn-primary">Voeg toe</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            }
                          </div>
                     </li>
                }

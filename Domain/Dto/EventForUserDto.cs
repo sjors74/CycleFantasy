@@ -9,5 +9,6 @@ namespace Domain.Dto
         public string UserId { get; set; } = string.Empty;
         public int CompetitorInEventId { get; set; }
         public List<ResultDto> Renners { get; set; } = [];
+        public bool IsIngeschreven { get; set; }
     }
 }
