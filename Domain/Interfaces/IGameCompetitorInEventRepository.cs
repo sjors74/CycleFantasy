@@ -8,5 +8,7 @@ namespace CycleManager.Domain.Interfaces
         Task<IEnumerable<GameCompetitorEvent>> GetAllGameCompetitorsInEventByEventId(int eventId);
 
         Task<List<Event>> GetEventsByUserId(string userId);
+
+        Task<GameCompetitorEvent> CreateGameCompetitorEventAsync(GameCompetitorEvent gameCompetitorEvent);
     }
 }

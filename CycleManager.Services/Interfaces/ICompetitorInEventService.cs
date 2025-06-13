@@ -47,5 +47,7 @@ namespace CycleManager.Services.Interfaces
         /// <param name="competitorId"></param>
         /// <returns></returns>
         Task<CompetitorsInEvent> GetCompetitorsInEventByIds(int eventId, int competitorId);
+
+        Task<CompetitorsInEvent> FindOrCreate(int eventId, int competitorId);
     }
 }

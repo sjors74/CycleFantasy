@@ -1,5 +1,7 @@
-﻿using CycleManager.Domain.ViewModel;
+﻿using CycleManager.Domain.Dto;
+using CycleManager.Domain.ViewModel;
 using Domain.Context;
+using Domain.Dto;
 using Domain.Interfaces;
 using Domain.Models;
 using Microsoft.EntityFrameworkCore;
@@ -85,6 +87,43 @@ namespace DataAccessEF.TypeRepository
                 })
                 .AsNoTracking()
                 .FirstOrDefaultAsync();
+        }
+
+        public async Task<IEnumerable<TeamDto>> GetTeamsForEvent(int id)
+        {
+            var eventExists = await context.Events.AnyAsync(e => e.EventId == id);
+            if (!eventExists)
+                return Enumerable.Empty<TeamDto>();
+
+            var competitorsInEvent = await context.CompetitorsInEvent
+                .Where(cie => cie.EventId == id)
+                .Include(cie => cie.Competitor)
+                    .ThenInclude(c => c.Country)
+                .ToListAsync();
+
+            var eventTeams = await context.EventTeam
+                .Where(et => et.EventId == id)
+                .Include(et => et.Team)
+                .OrderBy(et => et.Team.TeamName)
+                .ToListAsync();
+
+            var teams = eventTeams.Select(et => new TeamDto
+            { 
+                   Id = et.Team.TeamId,
+                   Naam = et.Team.TeamName,
+                   Renners = competitorsInEvent
+                    .Where(cie => cie.Competitor.TeamId == et.Team.TeamId)
+                    .OrderByDescending(cie => cie.InSelectie)
+                    .Select(cie => new CompetitorDto
+                    {
+                            CompetitorId = cie.Competitor.CompetitorId,
+                            CompetitorName = cie.CompetitorName,
+                            CountryShort = cie.Competitor.Country.CountryNameShort,
+                            TeamName = et.Team.TeamName,
+                            InSelectie = cie.InSelectie
+                    }).ToList()
+            }).ToList();
+            return teams;
         }
     }
 }

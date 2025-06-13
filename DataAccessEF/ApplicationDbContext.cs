@@ -22,6 +22,8 @@ namespace Domain.Context
         public DbSet<Result> Results { get; set; }
         public DbSet<GameCompetitorEvent> GameCompetitorsEvent { get; set; }
         public DbSet<GameCompetitorEventPick> GameCompetitorEventPicks { get; set; }
+        public DbSet<EventTeam> EventTeam { get; set; }
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -103,6 +105,9 @@ namespace Domain.Context
                 .WithMany(gce => gce.Renners)
                 .HasForeignKey(p => p.GameCompetitorEventId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<EventTeam>()
+                .HasKey(et => new { et.EventId, et.TeamId });
         }
     }
 

@@ -147,7 +147,6 @@ document.addEventListener('DOMContentLoaded', function () {
     function renderDeelnemers(deelnemers, eventId) {
         const list = document.getElementById("deelnemer-list");
         list.innerHTML = "";
-        console.table(deelnemers);
         deelnemers
             .sort((a, b) => (b.punten || 0) - (a.punten || 0))
             .forEach(deelnemer => {

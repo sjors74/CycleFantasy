@@ -75,5 +75,27 @@ namespace CycleManager.Services
             _competitorsInEventRepository.Update(entity);
             await _competitorsInEventRepository.SaveChangesAsync();
         }
+
+        public async Task<CompetitorsInEvent> FindOrCreate(int eventId, int competitorId)
+        {
+            var cie = await _competitorsInEventRepository.GetCompetitorsInEventByIds(eventId, competitorId);
+            if(cie == null)
+            {
+                var newCie = new CompetitorsInEvent
+                {
+                    CompetitorId = competitorId,
+                    EventId = eventId,
+                };
+                //create new cie
+                _competitorsInEventRepository.Add(newCie);
+                await _competitorsInEventRepository.SaveChangesAsync();
+
+                return newCie;
+            }
+            else
+            {
+                return cie;
+            }
+        }
     }
 }

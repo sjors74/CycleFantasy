@@ -16,14 +16,16 @@ namespace WebCycle.Controllers
         private readonly IEventService eventService;
         private readonly IResultService _resultService;
         private readonly IGameCompetitorInEventService _deelnemerService;
+        private readonly ITeamService _teamService;
         private readonly IMapper _mapper;
 
-        public EventController(IEventRepository eventRepository, IEventService eventService, IGameCompetitorInEventService deelnemerService, IResultService resultService, IMapper mapper)
+        public EventController(IEventRepository eventRepository, IEventService eventService, IGameCompetitorInEventService deelnemerService, ITeamService teamService, IResultService resultService, IMapper mapper)
         {
             this.eventRepository = eventRepository;
             this.eventService = eventService;
             _deelnemerService = deelnemerService;
             _resultService = resultService;
+            _teamService = teamService;
             this._mapper = mapper;
         }
 
@@ -89,30 +91,107 @@ namespace WebCycle.Controllers
         [HttpGet("{userid}/user")]
         public async Task<IActionResult> GetEventByUserId(string userid)
         {
-            //TODO: check this one
-            var allEvents = await eventService.GetEventsByUserId(userid);
+            var allEventsForUser = await eventService.GetEventsByUserId(userid);
             var nu = DateTime.UtcNow;
 
-            var active = allEvents
+            var active = allEventsForUser
                 .Where(e => e.StartDate <= nu && e.EndDate >= nu)
                 .ToList();
-            var future = allEvents
+            var future = allEventsForUser
                 .Where(e => e.StartDate > nu)
+                .ToList();
+            var historic = allEventsForUser
+            
+                .Where(e => e.EndDate < nu)
                 .ToList();
 
             var activeDtos = _mapper.Map<List<EventForUserDto>>(active);
             var futureDtos = _mapper.Map<List<EventForUserDto>>(future);
+            var historicDtos = _mapper.Map<List<EventForUserDto>>(historic);
 
             activeDtos.ForEach(e => e.UserId = userid);
             futureDtos.ForEach(e => e.UserId = userid);
+            historicDtos.ForEach(e => e.UserId = userid);
 
             var result = new EventViewDto
             {
                 ActieveEvenementen = activeDtos,
-                ToekomstigeEvenementen = futureDtos
+                ToekomstigeEvenementen = futureDtos,
+                HistorischeEvenementen = historicDtos
             };
           
             return Ok(result);
         }
+
+        [HttpGet("{id}/teams-with-renners")]
+        public async Task<ActionResult<IEnumerable<TeamDto>>> GetTeamsWithRennersForEvent(int id)
+        {
+            var eventExists = await eventService.GetEventById(id);
+            if (eventExists == null)
+            {
+                return NotFound();
+            }
+
+            var teams = await eventService.GetTeamsForEvent(id);
+
+            if(teams == null)
+            {
+                return NotFound();
+            }
+            return Ok(teams);
+        }
+
+
+        [HttpGet("team/{teamId}/teams-with-more-renners")]
+        public async Task<ActionResult<IEnumerable<CompetitorDto>>> GetTeamsWithRennersFromTeam(int teamId)
+        {
+            var team = await _teamService.GetTeamById(teamId);
+
+            if (team == null)
+            {
+                return NotFound();
+            }
+
+            var competitors = team.Competitors;
+            return Ok(competitors);
+        }
+
+        [HttpPost("selectie")]
+        public async Task<IActionResult> SlaSelectieOp([FromBody] SelectieDto dto)
+        {
+            if (dto == null)
+            {
+                return BadRequest("Selectie dto is null.");
+            }
+
+            try
+            {
+                await eventService.SaveSelectie(dto);
+            }
+            catch
+            {
+                return BadRequest("Er ging iets mis met het opslaan van je pool.");
+            }
+            return Ok();
+        }
+
+        [HttpPost("createpool")]
+        public async Task<IActionResult> CreatePool([FromBody] DeelnemerDto dto)
+        {
+            if(dto == null)
+            {
+                return BadRequest("Deelnemer dto is null.");
+            }
+
+            var result = await eventService.CreatePoolAsync(dto);
+
+            if (result != null && result.Id > 0)
+            {
+                return Ok(result);
+            }
+
+            return BadRequest("Er is iets misgegaan bij het aanmaken van de pool.");
+        }
+
     }
 }

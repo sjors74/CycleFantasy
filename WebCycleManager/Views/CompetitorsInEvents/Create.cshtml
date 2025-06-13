@@ -43,21 +43,21 @@
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
-}
-<script src="~/lib/jquery/dist/jquery.js"></script>
-<script type="text/javascript">
-    $(document).ready(function () {
-        $('#SelectTeamId').change(function() {
-            var url = '@Url.Content("~/")' + "CompetitorsInEvents/GetCompetitorForEvent";
-            var ddlsource = "#SelectTeamId";
-            $.getJSON(url, { TeamId: $(ddlsource).val() }, function(data) {
-                var items = '';
-                $("#SelectCompetitorId").empty();
-                $.each(data, function(i, competitor) {
-                    items += "<option value='" + competitor.value + "'>" +  competitor.text + "</option>";
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $('#SelectTeamId').change(function() {
+                var url = '@Url.Content("~/")' + "CompetitorsInEvents/GetCompetitorForEvent";
+                var ddlsource = "#SelectTeamId";
+                $.getJSON(url, { TeamId: $(ddlsource).val() }, function(data) {
+                    var items = '';
+                    $("#SelectCompetitorId").empty();
+                    $.each(data, function(i, competitor) {
+                        items += "<option value='" + competitor.value + "'>" +  competitor.text + "</option>";
+                    });
+                    $('#SelectCompetitorId').html(items);
                 });
-                $('#SelectCompetitorId').html(items);
             });
         });
-    });
-</script>
+    </script>
+}

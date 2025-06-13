@@ -20,6 +20,7 @@ namespace DataAccessEF.TypeRepository
         public async Task<Team> GetTeamById(int id)
         {
             var team = await context.Teams
+                .Include(cm => cm.Competitors)
                 .Include(c => c.Country)
                 .Where(c => c.TeamId == id)
                 .FirstOrDefaultAsync();

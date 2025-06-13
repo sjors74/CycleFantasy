@@ -39,6 +39,10 @@ namespace Domain.Mapping
                 .ForMember(c => c.StageNumber, d => d.MapFrom(s => s.StageName))
                 .ForMember(c => c.HasResult, d => d.MapFrom(s => s.Results.Any()))
                 .ForMember(c => c.VanNaar, d => d.MapFrom(s => $"{s.StartLocation}-{s.FinishLocation}"));
+            CreateMap<GameCompetitorEvent, DeelnemerDto>()
+                .ForMember(c => c.DeelnemerNaam, d => d.MapFrom(s => $"{s.User.FirstName} {s.User.LastName}"))
+                .ForMember(c => c.PoolNaam, d => d.MapFrom(s => s.TeamName))
+                .ForMember(c => c.Renners, d => d.MapFrom(s => s.Renners));
         }
     }
 }

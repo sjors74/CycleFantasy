@@ -45,6 +45,7 @@ namespace WebCycleManager.Controllers
                         EventId =eventId,
                         EventName = GetEvent(eventId).Result.EventName,
                         OutOfCompetition = GetCompetitorInEvent(eventId,d.CompetitorId).Result.OutOfCompetition,
+                        InSelection = GetCompetitorInEvent(eventId, d.CompetitorId).Result.InSelectie,
                         TeamId = d.Competitor.TeamId
                 };
                 deelnemersViewModel.Add(cvm);
@@ -127,7 +128,7 @@ namespace WebCycleManager.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("EventNumber", "CompetitorInEventId", "OutOfCompetition","EventId", "TeamId")] CompetitorInEventViewModel vm)
+        public async Task<IActionResult> Edit(int id, [Bind("EventNumber", "CompetitorInEventId", "InSelection", "OutOfCompetition","EventId", "TeamId")] CompetitorInEventViewModel vm)
         {
             if (id != vm.CompetitorInEventId)
             {
@@ -145,6 +146,7 @@ namespace WebCycleManager.Controllers
                     }
                     competitorInEvent.EventNumber = vm.EventNumber;
                     competitorInEvent.OutOfCompetition = vm.OutOfCompetition;
+                    competitorInEvent.InSelectie = vm.InSelection;
                     await _competitorInEventService.Update(competitorInEvent);
                 }
                 catch
@@ -219,7 +221,9 @@ namespace WebCycleManager.Controllers
                 FirstName = competitorsInEvent.Competitor.FirstName,
                 LastName = competitorsInEvent.Competitor.LastName,
                 TeamId = competitorsInEvent.Competitor.TeamId,
-                OutOfCompetition = competitorsInEvent.OutOfCompetition
+                OutOfCompetition = competitorsInEvent.OutOfCompetition,
+                InSelection = competitorsInEvent.InSelectie
+
             };
             return vm;
         }

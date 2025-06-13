@@ -1,4 +1,5 @@
-﻿using CycleManager.Domain.ViewModel;
+﻿using CycleManager.Domain.Dto;
+using CycleManager.Domain.ViewModel;
 using Domain.Models;
 
 namespace Domain.Interfaces
@@ -9,5 +10,6 @@ namespace Domain.Interfaces
         Task<IEnumerable<Event>> GetAllEvents();
         Task<Event> GetEventById(int id);
         Task<EventDetailsViewModel?> GetEventDetailsViewModelById(int eventId);
+        Task<IEnumerable<TeamDto>> GetTeamsForEvent(int eventId);
     }
 }

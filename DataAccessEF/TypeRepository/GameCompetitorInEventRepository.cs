@@ -11,6 +11,13 @@ namespace DataAccessEF.TypeRepository
         {
         }
 
+        public async Task<GameCompetitorEvent> CreateGameCompetitorEventAsync(GameCompetitorEvent gameCompetitorEvent)
+        {
+            await context.GameCompetitorsEvent.AddAsync(gameCompetitorEvent);
+            await context.SaveChangesAsync();
+            return gameCompetitorEvent;
+        }
+
         public async Task<IEnumerable<GameCompetitorEvent>> GetAllGameCompetitorsInEventByEventId(int eventId)
         {
             var gameCompetitorsInEvent = context.GameCompetitorsEvent

@@ -28,7 +28,7 @@ namespace WebApp.Pages.Account
             var client = _httpClientFactory.CreateClient();
             var apiUrl = _config["ClientSettings:ApiBaseUrl"]; // bijv. https://localhost:5001
 
-            var response = await client.GetAsync($"{apiUrl}/account/confirmemail?userId={userId}&token={Uri.EscapeDataString(token)}");
+            var response = await client.GetAsync($"{apiUrl}/api/account/confirmemail?userId={userId}&token={Uri.EscapeDataString(token)}");
 
             if (response.IsSuccessStatusCode)
                 Message = "Je e-mailadres is bevestigd!";

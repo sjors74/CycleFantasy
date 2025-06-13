@@ -13,21 +13,42 @@
                     {
                         Evenementen = Model.ActueleEvenementen,
                         Titel = "Actuele evenementen",
-                        InlineText = "actuele"
+                        InlineText = "actuele",
+                        ShowLinkToevoegen = false
                     })
                     @await Html.PartialAsync("_EventsForUser", new EventListViewModel
                     {
                        Evenementen = Model.ToekomstigeEvenementen,
                        Titel = "Toekomstige evenementen",
-                       InlineText = "toekomstige"
+                       InlineText = "toekomstige",
+                       ShowLinkToevoegen = true
+                    })
+                    @await Html.PartialAsync("_EventsForUser", new EventListViewModel
+                    {
+                        Evenementen = Model.HistorischeEvenementen,
+                        Titel = "Evenementen in het verleden",
+                        InlineText = "historische",
+                        ShowLinkToevoegen = false
                     })
                 }
             </div>
         </div>
     </div>
 </div>
+@section Scripts {
+    <script>
+        function handlePoolClick(e, el) {
+            e.preventDefault();
+            const url = el.getAttribute("href");
+            console.log("Navigeren naar:", url);
 
+            // eventueel logica, bv. opslaan van accordion state
+            sessionStorage.setItem("openAccordionId", el.closest(".accordion-collapse").id);
 
+            window.location.href = url;
+        }
+    </script>
+}
 
 
 

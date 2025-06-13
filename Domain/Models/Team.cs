@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+﻿using CycleManager.Domain.Models;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
@@ -17,5 +18,6 @@ namespace Domain.Models
         public virtual Country? Country { get; set; }
         [JsonIgnore]
         public virtual ICollection<Competitor>? Competitors { get; set;}
+        public ICollection<EventTeam>? EventTeams { get; set; }
     }
 }
