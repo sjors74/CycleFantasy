@@ -44,12 +44,19 @@ namespace WebCycleApi.Controllers
                 return BadRequest( new { Errors = errors});
             }
 
-            var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-            var frontEndUrl = _configuration["ClientSettings:FrontendBaseUrl"];
-            var confirmationLink = $"{frontEndUrl}/Account/Bevestiging?userId={user.Id}&token={Uri.EscapeDataString(token)}";
+            try
+            {
+                var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+                var frontEndUrl = _configuration["ClientSettings:FrontendBaseUrl"];
+                var confirmationLink = $"{frontEndUrl}/Account/Bevestiging?userId={user.Id}&token={Uri.EscapeDataString(token)}";
 
-            await _emailSender.SendEmailAsync(model.Email, "Bevestig je e-mail", 
-                $"Klik op deze link om je account te bevestigen: <a href='{confirmationLink}'>link</a>");
+                await _emailSender.SendEmailAsync(model.Email, "Bevestig je e-mail",
+                    $"Klik op deze link om je account te bevestigen: <a href='{confirmationLink}'>link</a>");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { Errors = new[] { "Fout bij verzenden van bevestigingsmail.", ex.Message } });
+            }
 
             return Ok("Registratie succesvol! Bevestig je e-mail.");
         }

@@ -1,6 +1,7 @@
 using CycleManager.Domain.Dto;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using System.Text.Json;
 
 namespace WebApp.Pages.Account
 {
@@ -40,11 +41,28 @@ namespace WebApp.Pages.Account
             }
             else
             {
-                var errors = await response.Content.ReadFromJsonAsync<IEnumerable<string>>();
-                foreach (var error in errors)
+                string content = await response.Content.ReadAsStringAsync();
+
+                try
                 {
-                    ModelState.AddModelError(string.Empty, error);
+                    var errors = JsonSerializer.Deserialize<IEnumerable<string>>(content);
+                    if (errors != null)
+                    {
+                        foreach (var error in errors)
+                        {
+                            ModelState.AddModelError(string.Empty, error);
+                        }
+                    }
+                    else
+                    {
+                        ModelState.AddModelError(string.Empty, "Er is een fout opgetreden tijdens registratie.");
+                    }
                 }
+                catch (JsonException)
+                {
+                    ModelState.AddModelError(string.Empty, $"Er is een fout opgetreden: {content}");
+                }
+
                 return Page();
             }
 
