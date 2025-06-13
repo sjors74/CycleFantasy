@@ -91,26 +91,50 @@ namespace WebCycle.Controllers
         [HttpGet("{userid}/user")]
         public async Task<IActionResult> GetEventByUserId(string userid)
         {
+            var allEvents = await eventService.GetAllEvents();
             var allEventsForUser = await eventService.GetEventsByUserId(userid);
             var nu = DateTime.UtcNow;
 
             var active = allEventsForUser
                 .Where(e => e.StartDate <= nu && e.EndDate >= nu)
                 .ToList();
-            var future = allEventsForUser
+            var future = allEvents
+                .Where(e => e.StartDate > nu)
+                .ToList();
+            var futureWithUser = allEventsForUser
                 .Where(e => e.StartDate > nu)
                 .ToList();
             var historic = allEventsForUser
-            
                 .Where(e => e.EndDate < nu)
                 .ToList();
 
             var activeDtos = _mapper.Map<List<EventForUserDto>>(active);
-            var futureDtos = _mapper.Map<List<EventForUserDto>>(future);
             var historicDtos = _mapper.Map<List<EventForUserDto>>(historic);
+            var futureWithUserDtos = _mapper.Map<List<EventForUserDto>>(futureWithUser);
+            var futureAllDtos = _mapper.Map<List<EventForUserDto>>(future);
+            var userIds = new HashSet<int>(futureWithUser.Select(e => e.EventId));
+
+            futureWithUserDtos.ForEach(e =>
+            {
+                e.UserId = userid;
+                e.IsIngeschreven = true;
+            });
+
+            var notIngeschrevenDtos = futureAllDtos
+                .Where(e => !userIds.Contains(e.EventId))
+                .ToList();
+
+            notIngeschrevenDtos.ForEach(e =>
+            {
+                e.UserId = userid;
+                e.IsIngeschreven = false;
+            });
+
+            var futureDtos = futureWithUserDtos
+                .Concat(notIngeschrevenDtos)
+                .ToList();
 
             activeDtos.ForEach(e => e.UserId = userid);
-            futureDtos.ForEach(e => e.UserId = userid);
             historicDtos.ForEach(e => e.UserId = userid);
 
             var result = new EventViewDto

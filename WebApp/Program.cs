@@ -19,6 +19,10 @@ builder.Services.AddAuthentication("MyCookieAuth")
         options.AccessDeniedPath = "/Account/AccessDenied";
         options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
         options.SlidingExpiration = true;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+        options.Cookie.SameSite = SameSiteMode.None; // of None bij meerdere domeinen
+        options.Cookie.HttpOnly = true;
+        options.Cookie.Name = "MyAppAuth"; // optioneel: unieke naam om verwarring te voorkomen
     });
 var app = builder.Build();
 
