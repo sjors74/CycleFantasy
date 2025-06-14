@@ -26,6 +26,7 @@
             background-color: var(--light-bg);
             backdrop-filter: blur(6px);
             border-bottom: 1px solid #ccc;
+            z-index: 1050;
         }
 
         .navbar .btn {
@@ -65,19 +66,22 @@
             background-color: #f4f4f4;
             color: var(--text-color);
         }
+
+        main.container {
+            padding-top: 70px;
+        }
     </style>
     @RenderSection("Styles", required: false)
 </head>
 <body>
     <header>
-        <nav class="navbar navbar-expand navbar-transparant fixed-top px-3 py-2">
+        <nav class="navbar navbar-expand navbar-custom fixed-top px-3 py-2">
             <div class="container-fluid">
                 <div class="d-flex align-items-center ms-auto">
                    <partial name="_MenuPartial" />
                 </div>
             </div>
         </nav>
-        <div style="height: 14px;"></div> <!-- spacer voor fixed navbar -->
     </header>
     <main class="container">
         @RenderBody()
