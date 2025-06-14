@@ -13,7 +13,6 @@
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
     <link rel="manifest" href="/site.webmanifest">
-    <script src="@Url.Content("~/js/config.js")" asp-append-version="true"></script>
     <style>
         :root {
             --primary-color: #2d6a4f; /* donkergroen */
@@ -100,17 +99,17 @@
             <div class="loader-icon">
                 <div class="bicycle-wrapper">
                     <div class="bicycle">🚴‍♂️</div>
-@*                     <div class="bicycle">🚴‍♀️</div>
-                    <div class="bicycle">🚴‍♂️</div>
- *@                </div>
+                </div>
             </div>
         </div>
         <div class="loader-text">Laden...</div>
     </div>
+    <script src="~/js/config.js" asp-append-version="true"></script>
+    <script src="~/js/init.js" asp-append-version="true"></script>
+    <script>
+            window.addEventListener("load", () => {
+            toggleGlobalLoader(false);
+        });
+    </script>
 </body>
 </html>
-<script>
-        window.addEventListener("load", () => {
-        toggleGlobalLoader(false);
-    });
-</script>

@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 
 namespace WebCycle.Controllers
 {
@@ -19,6 +18,12 @@ namespace WebCycle.Controllers
         {
             var apiBaseUrl = _configuration["ClientSettings:ApiBaseUrl"];
             return Ok(new {  apiBaseUrl });
+        }
+
+        [HttpGet("ping")]
+        public IActionResult Ping()
+        {
+            return Ok("pong");
         }
     }
 }
