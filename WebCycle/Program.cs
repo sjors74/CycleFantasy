@@ -1,16 +1,14 @@
-using DataAccessEF.UnitOfWork;
+using CycleManager.Domain.Interfaces;
+using CycleManager.Domain.Models;
+using CycleManager.Services;
+using CycleManager.Services.Interfaces;
+using CycleManager.Services.Settings;
 using DataAccessEF.TypeRepository;
 using Domain.Context;
 using Domain.Interfaces;
-using Microsoft.EntityFrameworkCore;
-using System.Text.Json.Serialization;
-using CycleManager.Domain.Interfaces;
-using CycleManager.Services.Interfaces;
-using CycleManager.Services;
-using CycleManager.Domain.Models;
-using Microsoft.AspNetCore.Identity.UI.Services;
-using CycleManager.Services.Settings;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity.UI.Services;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
@@ -33,7 +31,13 @@ builder.Services.Configure<SmtpSettings>(
     builder.Configuration.GetSection("SmtpSettings"));
 
 builder.Services.AddDbContext<ApplicationDbContext>(options => 
-    options.UseLazyLoadingProxies(false).UseSqlServer(connectionString));
+    options.UseLazyLoadingProxies(false)
+        .UseSqlServer(connectionString, sqlOptions => 
+            sqlOptions.EnableRetryOnFailure(
+                maxRetryCount: 5,
+                maxRetryDelay: TimeSpan.FromSeconds(10),
+                errorNumbersToAdd: null
+            )));
 builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
 {
     options.SignIn.RequireConfirmedAccount = true;
