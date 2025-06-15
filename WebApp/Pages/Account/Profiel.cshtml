@@ -35,6 +35,24 @@
         </div>
     </div>
 </div>
+<!-- Verwijder Bevestiging Modal -->
+<div class="modal fade" id="verwijderModal" tabindex="-1" aria-labelledby="verwijderModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="verwijderModalLabel">Bevestig verwijdering</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Sluiten"></button>
+            </div>
+            <div class="modal-body">
+                Weet je zeker dat je deze deelnemer wilt verwijderen?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuleer</button>
+                <button type="button" class="btn btn-danger" id="bevestigVerwijderBtn">Verwijder</button>
+            </div>
+        </div>
+    </div>
+</div>
 @section Scripts {
     <script>
         function handlePoolClick(e, el) {
@@ -47,6 +65,43 @@
 
             window.location.href = url;
         }
+    </script>
+    <script>
+        let geselecteerdeDeelnemerId = null;
+
+        function verwijderDeelnemer(deelnemerId) {
+            geselecteerdeDeelnemerId = deelnemerId;
+
+            const verwijderModal = new bootstrap.Modal(document.getElementById('verwijderModal'));
+            verwijderModal.show();
+        }
+
+        document.getElementById('bevestigVerwijderBtn').addEventListener('click', async function () {
+            if (!geselecteerdeDeelnemerId) return;
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/event/${geselecteerdeDeelnemerId}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    // Verwijder DOM element
+                    const element = document.getElementById(`accordion-deelnemer-${geselecteerdeDeelnemerId}`);
+                    if (element) element.remove();
+
+                    // Sluit modal
+                    bootstrap.Modal.getInstance(document.getElementById('verwijderModal')).hide();
+                } else {
+                    console.error("Verwijderen mislukt.");
+                }
+            } catch (error) {
+                console.error("Fout:", error);
+            } finally {
+                bootstrap.Modal.getInstance(document.getElementById('verwijderModal')).hide();
+            }
+
+            geselecteerdeDeelnemerId = null;
+        });
     </script>
 }
 

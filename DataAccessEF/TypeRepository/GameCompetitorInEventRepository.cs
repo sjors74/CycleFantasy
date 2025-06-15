@@ -53,5 +53,11 @@ namespace DataAccessEF.TypeRepository
             return events;
         }
 
+        public async Task<GameCompetitorEvent> GetyCompetitorWithPicksById(int id)
+        {
+            return await context.GameCompetitorsEvent
+                .Include(p => p.Renners) // of Picks
+                .FirstOrDefaultAsync(p => p.Id == id);
+        }
     }
 }

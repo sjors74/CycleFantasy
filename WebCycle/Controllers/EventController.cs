@@ -34,7 +34,7 @@ namespace WebCycle.Controllers
         {
             var events = await eventRepository.GetActiveEvents();
             var eventResponse = _mapper.Map<List<EventDto>>(events);
-            foreach(var cEvent in eventResponse)
+            foreach (var cEvent in eventResponse)
             {
                 if (cEvent.Deelnemers != null)
                 {
@@ -63,12 +63,12 @@ namespace WebCycle.Controllers
             var e = await eventService.GetEventById(id);
             var eventResponse = _mapper.Map<EventDto>(e);
 
-            foreach(var deelnemer in eventResponse.Deelnemers)
+            foreach (var deelnemer in eventResponse.Deelnemers)
             {
                 var picks = await _deelnemerService.GetAllPicks(deelnemer.Id);
                 int totaal = 0;
 
-                foreach(var pick in picks)
+                foreach (var pick in picks)
                 {
                     var results = await _resultService.GetCompetitorResultsByEventId(id, pick.CompetitorsInEventId);
                     if (results != null)
@@ -78,7 +78,7 @@ namespace WebCycle.Controllers
                 deelnemer.Punten = totaal;
             }
 
-                return Ok(eventResponse);
+            return Ok(eventResponse);
         }
 
         [HttpGet("{id}/stages")]
@@ -143,7 +143,7 @@ namespace WebCycle.Controllers
                 ToekomstigeEvenementen = futureDtos,
                 HistorischeEvenementen = historicDtos
             };
-          
+
             return Ok(result);
         }
 
@@ -158,7 +158,7 @@ namespace WebCycle.Controllers
 
             var teams = await eventService.GetTeamsForEvent(id);
 
-            if(teams == null)
+            if (teams == null)
             {
                 return NotFound();
             }
@@ -202,7 +202,7 @@ namespace WebCycle.Controllers
         [HttpPost("createpool")]
         public async Task<IActionResult> CreatePool([FromBody] DeelnemerDto dto)
         {
-            if(dto == null)
+            if (dto == null)
             {
                 return BadRequest("Deelnemer dto is null.");
             }
@@ -215,6 +215,20 @@ namespace WebCycle.Controllers
             }
 
             return BadRequest("Er is iets misgegaan bij het aanmaken van de pool.");
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteDeelnemer(int id)
+        {
+            try
+            {
+                await eventService.DeletePoolAsync(id);
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Fout bij verwijderen deelnemer.");
+            }
         }
 
     }
