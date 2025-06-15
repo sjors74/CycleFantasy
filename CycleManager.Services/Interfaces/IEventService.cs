@@ -52,6 +52,6 @@ namespace CycleManager.Services
 
         Task<DeelnemerDto> CreatePoolAsync(DeelnemerDto deelnemerDto);
         Task SaveSelectie(SelectieDto selectie);
-
+        Task DeletePoolAsync(int id);
     }
 }

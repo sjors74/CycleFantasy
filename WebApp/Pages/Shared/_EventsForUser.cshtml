@@ -36,7 +36,7 @@
                                         {
                                             var collapseDlnId = $"collapse-deelnemer-{evt.EventId}-{deelnemer.Id}";
                                             var headingId = $"heading-deelnemer-{evt.EventId}-{deelnemer.Id}";
-                                            <div class="accordion-item">
+                                            <div class="accordion-item" id="accordion-deelnemer-@deelnemer.Id">
                                                 <h2 class="accordion-header" id="@headingId">
                                                     <button class="d-flex justify-content-between align-items-center accordion-button collapsed px-3 py-2"
                                                          data-bs-toggle="collapse"
@@ -56,39 +56,42 @@
                                                 aria-labelledby="@headingId"
                                                 data-bs-parent="#accordion-@evt.EventId">
                                                     <div class="accordion-body">
-                                                        @if (Model.ShowLinkToevoegen)
-                                                        {
-                                                            <div class="d-flex justify-content-end mb-2">
-                                                                <a class="btn btn-sm btn-light"
-                                                                   href="/Selectie?EvenementId=@evt.EventId&DeelnemerId=@deelnemer.Id"
-                                                                   onclick="handlePoolClick(event, this)">
-                                                                    Voeg renners toe
-                                                                </a>
-                                                            </div>
-                                                        }
+                                                      <div id="deelnemer-@deelnemer.Id" class="deelnemer-blok">
+                                                            @if (Model.ShowLinkToevoegen)
+                                                            {
+                                                                <div class="d-flex justify-content-end mb-2">
+                                                                    <a class="btn btn-sm btn-light"
+                                                                       href="/Selectie?EvenementId=@evt.EventId&DeelnemerId=@deelnemer.Id"
+                                                                       onclick="handlePoolClick(event, this)">
+                                                                     Voeg renners toe
+                                                                    </a>
+                                                                    <button class="btn btn-sm btn-light" onclick="verwijderDeelnemer(@deelnemer.Id)">Verwijder</button>
+                                                                </div>
+                                                            }
 
-                                                        @if (deelnemer.Renners != null && deelnemer.Renners.Any())
-                                                        {
-                                                            <ul class="list-group">
-                                                                @foreach (var renner in deelnemer.Renners)
-                                                                {
-                                                                    <li class="list-group-item">
-                                                                        <div class="row">
-                                                                            <div class="col-md-1">
-                                                                                <img src="https://flagcdn.com/24x18/@(renner.CountryShort?.ToLower() ?? "unknown").png" alt="Vlag" />
+                                                            @if (deelnemer.Renners != null && deelnemer.Renners.Any())
+                                                            {
+                                                                <ul class="list-group">
+                                                                    @foreach (var renner in deelnemer.Renners)
+                                                                    {
+                                                                        <li class="list-group-item">
+                                                                            <div class="row">
+                                                                                <div class="col-md-1">
+                                                                                    <img src="https://flagcdn.com/24x18/@(renner.CountryShort?.ToLower() ?? "unknown").png" alt="Vlag" />
+                                                                                </div>
+                                                                                <div class="col-md-3 fw-bold">@renner.CompetitorName</div>
+                                                                                <div class="col-md-4 text-muted">@renner.TeamName</div>
+                                                                                <div class="col-md-2 text-end">@renner.Punten</div>
                                                                             </div>
-                                                                            <div class="col-md-3 fw-bold">@renner.CompetitorName</div>
-                                                                            <div class="col-md-4 text-muted">@renner.TeamName</div>
-                                                                            <div class="col-md-2 text-end">@renner.Punten</div>
-                                                                        </div>
-                                                                    </li>
-                                                                }
-                                                            </ul>
-                                                        }
-                                                        else
-                                                        {
-                                                            <p class="text-muted">Geen renners geselecteerd.</p>
-                                                        }
+                                                                        </li>
+                                                                    }
+                                                                </ul>
+                                                            }
+                                                            else
+                                                            {   
+                                                                <p class="text-muted">Geen renners geselecteerd.</p>
+                                                            }
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>

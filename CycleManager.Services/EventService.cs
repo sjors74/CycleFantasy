@@ -173,6 +173,21 @@ namespace CycleManager.Services
             return deelnemerDto;
         }
 
+        public async Task DeletePoolAsync(int id)
+        {
+            var deelnemer = await _deelnemersRepository.GetyCompetitorWithPicksById(id);
+            if(deelnemer != null)
+            {
+                if(deelnemer.Renners.Any())
+                {
+                    _picksRepository.RemoveRange(deelnemer.Renners);
+                    await _picksRepository.SaveChangesAsync();
+                }
+                _deelnemersRepository.Remove(deelnemer);
+                await _deelnemersRepository.SaveChangesAsync();
+            }
+        }
+
         public async Task<EventDetailsViewModel?> GetEventDetailsViewModelById(int eventId)
         {
             return await _eventRepository.GetEventDetailsViewModelById(eventId);
