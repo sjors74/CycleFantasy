@@ -1,6 +1,7 @@
 ﻿@using Microsoft.AspNetCore.Authentication
 @using Microsoft.AspNetCore.Authorization
 
+<a class="btn btn-outline-dark position-absolute top-0 start-0 m-2" asp-page="/Index">Home</a>
 @if (User.Identity?.IsAuthenticated == true)
 {
     <span class="me-2 text-muted small">Welkom, @User.Identity.Name</span>
