@@ -89,7 +89,10 @@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
-
+    <script src="~/js/config.js" asp-append-version="true"></script>
+    <script src="~/js/init.js" asp-append-version="true"></script>
+    <script src="~/js/passwordchecker.js" asp-append-version="true"></script>
+    
     @await RenderSectionAsync("Scripts", required: false)
 
     <div id="global-loader" class="loader-container">
@@ -104,8 +107,7 @@
         </div>
         <div class="loader-text">Laden...</div>
     </div>
-    <script src="~/js/config.js" asp-append-version="true"></script>
-    <script src="~/js/init.js" asp-append-version="true"></script>
+
     <script>
             window.addEventListener("load", () => {
             toggleGlobalLoader(false);
