@@ -18,9 +18,55 @@ namespace CycleManager.Services
         /// </summary>
         /// <param name="eventId"></param>
         /// <returns></returns>
-        public Task<IEnumerable<Result>> GetResultsByEventId(int eventId)
+        public async Task<IEnumerable<ResultDto>> GetResultsByEventId(int eventId)
         {
-            return _resultsRepository.GetResultsByEventId(eventId);
+            var dto = new List<ResultDto>();
+            var results = await _resultsRepository.GetResultsByEventId(eventId);
+            var groupedList = results
+                .GroupBy(g => g.CompetitorInEventId)
+                .Select(c =>
+                {
+                    var first = c.FirstOrDefault();
+                    return new ResultDto
+                    {
+                        CompetitorName = first?.CompetitorInEvent?.Competitor?.CompetitorName ?? "onbekend",
+                        EventId = first?.Stage?.EventId ?? 0,
+                        CompetitorInEventId = first?.CompetitorInEventId ?? 0,
+                        Points = c.Sum(a => a.ConfigurationItem?.Score ?? 0)
+                    };
+            })
+                .OrderByDescending(c => c.Points)
+                .ThenBy(c => c.CompetitorName)
+                .ToList();
+
+            var top15 = groupedList.Take(15).ToList();
+            int minScoreInTop15 = top15.LastOrDefault()?.Points ?? 0;
+
+            var extendedTop15 = groupedList
+                .Skip(15)
+                .TakeWhile(x => x.Points == minScoreInTop15)
+                .ToList();
+
+            var finalTop = top15.Concat(extendedTop15).ToList();
+
+            int rank = 1;
+            int actualRank = -1;
+            int? previousScore = null;
+
+            foreach(var item in finalTop)
+            {
+                if(previousScore != item.Points)
+                {
+                    actualRank = rank;
+                }
+
+                item.Position = actualRank;
+                previousScore = item.Points;
+                rank++;
+            }
+
+            dto = finalTop;
+            return dto;
         }
 
         /// <summary>

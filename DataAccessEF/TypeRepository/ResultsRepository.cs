@@ -18,9 +18,12 @@ namespace DataAccessEF.TypeRepository
         {
             var results = await context.Results
                 .Include(c => c.CompetitorInEvent)
+                    .ThenInclude(ci => ci.Competitor)
                 .Include(s => s.Stage)
+                .Include(r => r.ConfigurationItem)
                 .Where(r => r.Stage.EventId == eventId)
-                .OrderBy(r => r.ConfigurationItem.Position).ToListAsync();
+                .OrderBy(r => r.ConfigurationItem.Position)
+                .ToListAsync();
 
             return results;
         }

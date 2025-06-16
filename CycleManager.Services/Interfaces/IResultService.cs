@@ -25,7 +25,7 @@ namespace CycleManager.Services.Interfaces
         /// </summary>
         /// <param name="eventId"></param>
         /// <returns></returns>
-        Task<IEnumerable<Result>> GetResultsByEventId(int eventId);
+        Task<IEnumerable<ResultDto>> GetResultsByEventId(int eventId);
 
         /// <summary>
         /// 
