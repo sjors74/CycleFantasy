@@ -107,7 +107,7 @@ namespace DataAccessEF.Migrations
 
                     b.HasIndex("TeamId");
 
-                    b.ToTable("EventTeam");
+                    b.ToTable("EventTeam", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Models.Competitor", b =>
@@ -138,7 +138,7 @@ namespace DataAccessEF.Migrations
 
                     b.HasIndex("TeamId");
 
-                    b.ToTable("Competitors");
+                    b.ToTable("Competitors", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Models.CompetitorsInEvent", b =>
@@ -170,7 +170,7 @@ namespace DataAccessEF.Migrations
 
                     b.HasIndex("EventId");
 
-                    b.ToTable("CompetitorsInEvent");
+                    b.ToTable("CompetitorsInEvent", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Models.Configuration", b =>
@@ -187,7 +187,7 @@ namespace DataAccessEF.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Configurations");
+                    b.ToTable("Configurations", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Models.ConfigurationItem", b =>
@@ -211,7 +211,7 @@ namespace DataAccessEF.Migrations
 
                     b.HasIndex("ConfigurationId");
 
-                    b.ToTable("ConfigurationItems");
+                    b.ToTable("ConfigurationItems", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Models.Country", b =>
@@ -232,7 +232,7 @@ namespace DataAccessEF.Migrations
 
                     b.HasKey("CountryId");
 
-                    b.ToTable("Country");
+                    b.ToTable("Country", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Models.Event", b =>
@@ -275,7 +275,7 @@ namespace DataAccessEF.Migrations
 
                     b.HasIndex("ConfigurationId");
 
-                    b.ToTable("Events");
+                    b.ToTable("Events", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Models.GameCompetitorEvent", b =>
@@ -302,7 +302,7 @@ namespace DataAccessEF.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("GameCompetitorsEvent");
+                    b.ToTable("GameCompetitorsEvent", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Models.GameCompetitorEventPick", b =>
@@ -325,7 +325,7 @@ namespace DataAccessEF.Migrations
 
                     b.HasIndex("GameCompetitorEventId");
 
-                    b.ToTable("GameCompetitorEventPicks");
+                    b.ToTable("GameCompetitorEventPicks", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Models.Result", b =>
@@ -353,7 +353,7 @@ namespace DataAccessEF.Migrations
 
                     b.HasIndex("StageId");
 
-                    b.ToTable("Results");
+                    b.ToTable("Results", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Models.Stage", b =>
@@ -386,7 +386,7 @@ namespace DataAccessEF.Migrations
 
                     b.HasIndex("EventId");
 
-                    b.ToTable("Stages");
+                    b.ToTable("Stages", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Models.Team", b =>
@@ -408,7 +408,7 @@ namespace DataAccessEF.Migrations
 
                     b.HasIndex("CountryId");
 
-                    b.ToTable("Teams");
+                    b.ToTable("Teams", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
