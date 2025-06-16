@@ -176,7 +176,7 @@ namespace WebApp.Pages
             return savedIds;
         }
 
-        public async Task<IActionResult> OnPostLaadMeerRennersAsync(int teamId, int eventId, List<int> alreadyLoadedIds)
+        public Task<IActionResult> OnPostLaadMeerRennersAsync(int teamId, int eventId, List<int> alreadyLoadedIds)
         {
             var competitors = new List<CompetitorDto>();
             var apiBaseUrl = _configuration["ClientSettings:ApiBaseUrl"];
@@ -194,7 +194,7 @@ namespace WebApp.Pages
                 .Where(dto => !alreadyLoadedIds.Contains(dto.CompetitorId))
                 .ToList();
            
-            return new JsonResult(filteredCompetitors);
+            return Task.FromResult<IActionResult>(new JsonResult(filteredCompetitors));
         }
     }
 }

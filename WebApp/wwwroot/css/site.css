@@ -20,3 +20,28 @@ html {
 body {
   margin-bottom: 60px;
 }
+
+/* password checker */
+input.input-validation-error {
+    border-color: red;
+    outline: none;
+    box-shadow: 0 0 4px red;
+}
+
+.is-invalid {
+    border-color: red !important;
+    box-shadow: 0 0 4px red !important;
+}
+
+#password-rules li {
+    margin-bottom: 5px;
+}
+
+.valid .icon {
+    color: green;
+}
+
+.invalid .icon {
+    color: red;
+}
+/* password checker */
