@@ -14,7 +14,6 @@ namespace WebCycleApi.Controllers
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IConfiguration _configuration;
-        //private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly IEmailSender _emailSender;
         private readonly ITokenService _tokenService;
 
@@ -49,9 +48,29 @@ namespace WebCycleApi.Controllers
                 var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
                 var frontEndUrl = _configuration["ClientSettings:FrontendBaseUrl"];
                 var confirmationLink = $"{frontEndUrl}/Account/Bevestiging?userId={user.Id}&token={Uri.EscapeDataString(token)}";
+                var subject = "Bevestig je e-mail";
+                var body = $@"
+                    <p>Hoi,</p>
+                    <p>Leuk dat je je hebt aangemeld bij mijn wielrenpool!</p>
+                    <p>Om je account te activeren, hoef je alleen nog even je e-mailadres te bevestigen. Klik op de knop hieronder:</p>
+                    <p><a href='{confirmationLink}' style='
+                        background-color: #4CAF50;
+                        color: white;
+                        padding: 10px 20px;
+                        text-decoration: none;
+                        display: inline-block;
+                        border-radius: 4px;
+                        font-family: sans-serif;
+                        font-size: 16px;
+                        '>Bevestig mijn e-mailadres</a></p>
+                    <p>De link is 24 uur geldig.</p>
+                    <p>Was jij dit niet? Dan kun je deze mail gewoon negeren.</p>
+                    <p>Groetjes,<br/>
+                    Sjors</p>
+                ";
 
-                await _emailSender.SendEmailAsync(model.Email, "Bevestig je e-mail",
-                    $"Klik op deze link om je account te bevestigen: <a href='{confirmationLink}'>link</a>");
+
+                await _emailSender.SendEmailAsync(model.Email, subject, body);
             }
             catch (Exception ex)
             {
@@ -107,11 +126,27 @@ namespace WebCycleApi.Controllers
             var token = await _userManager.GeneratePasswordResetTokenAsync(user);
             var encodedToken = WebUtility.UrlEncode(token);
             var frontendBaseUrl = _configuration["ClientSettings:FrontendBaseUrl"];
+            var resetLink = $"{frontendBaseUrl}/account/resetpassword?email={dto.Email}&token={encodedToken}";
+            var subject = "Wachtwoord vergeten? Dat lossen we op";
+            var body = $@"
+                <p>Hey,</p>
+                <p>Je hebt aangegeven dat je je wachtwoord bent vergeten. Geen probleem, dat gebeurt de besten!</p>
+                <p>Klik op de knop hieronder om een nieuw wachtwoord in te stellen:</p>
+                <p><a href='{resetLink}' style='
+                    display: inline-block;
+                    padding: 10px 20px;
+                    background-color: #007bff;
+                    color: white;
+                    text-decoration: none;
+                    border-radius: 5px;
+                '>Stel nieuw wachtwoord in</a></p>
+                <p>De link is 1 uur geldig en werkt maar één keer.</p>
+                <p>Heb je dit niet zelf aangevraagd? Dan kun je deze mail gerust negeren.</p>
+                <p>Groet,<br/>
+                Sjors</p>
+            ";
 
-            var callbackUrl = $"{frontendBaseUrl}/account/resetpassword?email={dto.Email}&token={encodedToken}";
-
-            // Send email (use IEmailSender or SMTP)
-            await _emailSender.SendEmailAsync(dto.Email, "Reset je wachtwoord", $"Reset via: <a href='{callbackUrl}'>link</a>");
+            await _emailSender.SendEmailAsync(dto.Email, subject, body);
 
             return Ok();
         }
