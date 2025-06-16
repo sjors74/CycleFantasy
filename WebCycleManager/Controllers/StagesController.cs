@@ -73,7 +73,17 @@ namespace WebCycleManager.Controllers
         // GET: Stages/Create
         public IActionResult Create()
         {
-            ViewData["EventId"] = new SelectList(_context.Events, "EventId", "EventName");
+            ViewData["EventId"] = new SelectList(
+                _context.Events
+                    .Select(e => new {
+                        e.EventId,
+                        Text = e.EventName + " (" + e.EventYear + ")"
+                    })
+                    .ToList(),
+                "EventId",
+                "Text"
+            );
+
             return View();
         }
 
@@ -87,12 +97,21 @@ namespace WebCycleManager.Controllers
             if (ModelState.IsValid)
             {
                 var s = CreateFromViewModel(stage);
-
                 _context.Add(s);
                 await _context.SaveChangesAsync();
+                ViewData["EventId"] = new SelectList(
+                  _context.Events
+                    .Select(e => new {
+                        e.EventId,
+                        Text = e.EventName + " (" + e.EventYear + ")"
+                    })
+                    .ToList(),
+                    "EventId",
+                    "Text",
+                    stage.EventId
+                );
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["EventId"] = new SelectList(_context.Events, "EventId", "EventName", stage.EventId);
             return View(stage);
         }
 
@@ -110,7 +129,17 @@ namespace WebCycleManager.Controllers
                 return NotFound();
             }
             var vm = CreateViewModel(stage);
-            ViewData["EventId"] = new SelectList(_context.Events, "EventId", "EventName", stage.EventId);
+            ViewData["EventId"] = new SelectList(
+                _context.Events
+                    .Select(e => new {
+                        e.EventId,
+                        Text = e.EventName + " (" + e.EventYear + ")"
+                    })
+                    .ToList(),
+                "EventId",
+                "Text",
+                stage.EventId
+            );
             return View(vm);
         }
 
@@ -148,7 +177,17 @@ namespace WebCycleManager.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["EventId"] = new SelectList(_context.Events, "EventId", "EventName", stage.EventId);
+            ViewData["EventId"] = new SelectList(
+                _context.Events
+                    .Select(e => new {
+                        e.EventId,
+                        Text = e.EventName + " (" + e.EventYear + ")"
+                    })
+                    .ToList(),
+                "EventId",
+                "Text",
+                stage.EventId
+            );
             return View(stage);
         }
 
@@ -213,7 +252,10 @@ namespace WebCycleManager.Controllers
 
         public Stage CreateFromViewModel(StageViewModel vm)
         {
-            var stage = _context.Stages.Find(vm.StageId);
+            var stage = _context.Stages
+                .Include(s => s.Event)
+                .FirstOrDefault(s => s.Id == vm.StageId);
+
             try
             {
                 if (stage == null)
