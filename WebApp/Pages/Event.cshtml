@@ -11,7 +11,10 @@
     <div class="progress-container">
         <div class="progress-bar" id="progress-bar"></div>
     </div>
-    <div class="steps" id="steps-container"></div>
+    <div class="steps-wrapper">
+        <div class="steps" id="steps-container"></div>
+        <button id="top15-button" title="Bekijk top 15" aria-label="Top15">⭐</button>
+    </div>
 </div>
 
 <div class="card shadow-sm mt-4">
@@ -25,4 +28,10 @@
 
 @section Scripts {
     <script type="module" src="~/js/event.js" asp-append-version="true"></script>
+    <script>
+        document.getElementById("top15-button").addEventListener("click", () => {
+            const eventId = document.getElementById("event-id").dataset.eventId;
+            window.location.href = `/Top15?eventId=${eventId}`;
+        });
+    </script>
 }

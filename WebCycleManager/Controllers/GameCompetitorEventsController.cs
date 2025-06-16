@@ -49,7 +49,7 @@ namespace WebCycleManager.Controllers
                 .Select(cl => new ResultLineViewModel
                 {
                     CompetitorInEventId = cl.First().CompetitorInEventId,
-                    Score = cl.Sum(c => c.ConfigurationItem.Score),
+                    Score = cl.Sum(c => c.ConfigurationItems.First().Score), //todo : gaat dit goed???
                 }).ToList();
 
             foreach(var team in teamsForEvent)
@@ -162,7 +162,7 @@ namespace WebCycleManager.Controllers
                     .Select(cl => new ResultLineViewModel
                     {
                         CompetitorInEventId = cl.First().CompetitorInEventId,
-                        Score = cl.Sum(c => c.ConfigurationItem.Score),
+                        Score = cl.Sum(c => c.ConfigurationItems.First().Score), //TODO : gaat dit goed?
                     }).ToList();
             }
 

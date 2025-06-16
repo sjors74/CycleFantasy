@@ -121,6 +121,25 @@
         cursor: pointer;
     }
 
+.steps-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+#top15-button {
+    font-size: 24px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+    #top15-button:hover {
+        transform: scale(1.2);
+    }
+
 .spinner {
     border: 4px solid #f3f3f3;
     border-top: 4px solid #4caf50;

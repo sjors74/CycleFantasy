@@ -19,7 +19,7 @@ namespace WebCycle.Controllers
         public async Task<int> GetById(int id)
         {
             return await _resultService.GetResultsByStageId(id);
-           
+
         }
 
         [HttpGet("{stageId}/uitslag")]
@@ -27,6 +27,13 @@ namespace WebCycle.Controllers
         {
             var uitslag = await _resultService.GetEtappeUitslag(stageId);
             return Ok(uitslag);
+        }
+
+        [HttpGet("top15/{eventId}")]
+        public async Task<IActionResult> GetTop15(int eventId)
+        {
+            var top15 = await _resultService.GetResultsByEventId(eventId);
+            return Ok(top15);
         }
     }
 }
