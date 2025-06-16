@@ -17,7 +17,7 @@ namespace Domain.Models
         [DisplayName("Evenement")]
         public int EventId { get; set; }
         
-        public virtual Event Event{ get; set; } = new Event();
+        public virtual Event Event{ get; set; } 
         public virtual ICollection<Result> Results { get; set; } = [];
     }
 }
