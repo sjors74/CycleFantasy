@@ -68,10 +68,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (event.deelnemers && event.deelnemers.length > 0) {
             renderDeelnemers(event.deelnemers, eventId, event);
-            console.log("Deelnemers geladen");
         } else {
             document.getElementById("deelnemer-list").innerHTML = `<p class="text-muted p-3">Geen deelnemers gevonden.</p>`;
         }
+
+        document.getElementById("top15-button").addEventListener("click", () => {
+            const eventId = document.getElementById("event-id").dataset.eventId;
+            window.location.href = `/Top15?eventId=${eventId}`;
+        });
 
         toggleGlobalLoader(false);
     })();
@@ -202,7 +206,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         document.querySelectorAll('.podium .place').forEach(p => p.classList.remove('active'));
-        console.log("Klik op plaats:", plaats);
         const podiumElement = document.querySelector(`.podium .place-${plaats}`);
         if (podiumElement) {
             podiumElement.classList.add('active');
@@ -310,7 +313,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 toggleGlobalLoader(true);
 
                 try {
-                    console.log("Collapse triggered for:", { deelnemerId, eventId });
                     const response = await fetch(`${API_BASE_URL}/api/Deelnemer/Picks/${deelnemerId}/event/${eventId}`);
                     if (!response.ok) throw new Error("Fout bij ophalen picks");
 
