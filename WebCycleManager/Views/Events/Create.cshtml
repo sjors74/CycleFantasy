@@ -41,6 +41,11 @@
                 <span asp-validation-for="IsActive" class="text-danger"></span>
             </div>
             <div class="form-group">
+                <label asp-for="ShowPodium" class="control-label"></label>
+                <input type="checkbox" asp-for="ShowPodium" class="form-check" />
+                <span asp-validation-for="ShowPodium" class="text-danger"></span>
+            </div>
+            <div class="form-group">
                 <label asp-for="CountryCode" class="control-label"></label>
                 <input asp-for="CountryCode" class="form-control" />
                 <span asp-validation-for="CountryCode" class="text-danger"></span>

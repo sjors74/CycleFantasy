@@ -67,11 +67,15 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('endDate').textContent = new Date(event.endDate).toLocaleDateString('nl-NL', options);
 
         if (event.deelnemers && event.deelnemers.length > 0) {
-            renderDeelnemers(event.deelnemers, eventId);
-            console.log("Deelnemers geladen");
+            renderDeelnemers(event.deelnemers, eventId, event);
         } else {
             document.getElementById("deelnemer-list").innerHTML = `<p class="text-muted p-3">Geen deelnemers gevonden.</p>`;
         }
+
+        document.getElementById("top15-button").addEventListener("click", () => {
+            const eventId = document.getElementById("event-id").dataset.eventId;
+            window.location.href = `/Top15?eventId=${eventId}`;
+        });
 
         toggleGlobalLoader(false);
     })();
@@ -144,39 +148,150 @@ document.addEventListener('DOMContentLoaded', function () {
         stepsContainer.appendChild(fragment);
     }
 
-    function renderDeelnemers(deelnemers, eventId) {
+    function renderDeelnemers(deelnemers, eventId, event) {
         const list = document.getElementById("deelnemer-list");
-        list.innerHTML = "";
-        deelnemers
-            .sort((a, b) => (b.punten || 0) - (a.punten || 0))
-            .forEach(deelnemer => {
-                const collapseId = `collapse-${deelnemer.id}`;
-                const li = document.createElement("li");
-                li.classList.add("list-group-item", "p-2");
+        const podiumContainer = document.getElementById("podium-container");
 
-                li.innerHTML = `
-                                    <div class="row align-items-center"
-                         data-bs-toggle="collapse"
-                         data-bs-target="#${collapseId}"
-                         aria-expanded="false"
-                         aria-controls="${collapseId}"
-                         style="cursor: pointer;"
-                         data-deelnemer-id="${deelnemer.id}"
-                         data-event-id="${eventId}">
-                        <div class="col-md-4 text-uppercase">${deelnemer.poolNaam || "onbekende pool"}</div>
-                        <div class="col-md-6 text-uppercase">${deelnemer.deelnemerNaam || "onbekende deelnemer"}</div>
-                        <div class="col-md-2 text-end ms-auto">
-                            <span class="fw-bold fs-4">${deelnemer.punten ?? 0}</span>
-                        </div>
-                    </div>
-                    <div class="collapse mt-2" id="${collapseId}" data-bs-parent="#deelnemer-list">
-                        <div class="card card-body details-content" data-loaded="false">
-                        </div>
-                    </div>
+        list.innerHTML = "";
+        podiumContainer.innerHTML = "";
+
+        const sorted = [...deelnemers].sort((a, b) => (b.punten || 0) - (a.punten || 0));
+
+        if (event.showPodium) {
+            podiumContainer.style.display = "flex";
+
+            const top3 = [
+                { deelnemer: sorted[1], plaats: 2 },
+                { deelnemer: sorted[0], plaats: 1 },
+                { deelnemer: sorted[2], plaats: 3 }
+            ];
+
+            const rest = sorted.slice(3);
+
+            top3.forEach(({ deelnemer, plaats }) => {
+                const wrapper = document.createElement("div");
+                wrapper.className = `place place-${plaats}`;
+                wrapper.innerHTML = `
+                    <div class="plaats-badge">${plaats}</div>
+                    <div class="naam">${deelnemer.poolNaam || "onbekende pool"}</div>
+                    <div class="naam">${deelnemer.deelnemerNaam || "onbekende deelnemer"}</div>
+                    <div class="punten">${deelnemer.punten ?? 0}</div>
                 `;
-                list.appendChild(li);
+                wrapper.addEventListener("click", () => handlePodiumClick(deelnemer, plaats, eventId));
+                podiumContainer.appendChild(wrapper);
             });
+
+            rest.forEach((deelnemer, index) => {
+                const plaats = index + 4;
+                list.appendChild(makeDeelnemerListItem(deelnemer, plaats, eventId));
+            });
+        } else {
+            podiumContainer.style.display = "none";
+
+            sorted.forEach((deelnemer, index) => {
+                const plaats = index + 1;
+                list.appendChild(makeDeelnemerListItem(deelnemer, plaats, eventId));
+            });
+        }
         initializeCollapseHandlers();
+    }
+
+    function handlePodiumClick(deelnemer, plaats, eventId) {
+        const lijst = document.getElementById("deelnemer-list");
+
+        document.querySelectorAll('#deelnemer-list .podium-collapse').forEach(el => el.remove());
+
+        lijst?.querySelectorAll('.collapse.show').forEach(c => {
+            new bootstrap.Collapse(c, { toggle: false }).hide();
+        });
+
+        document.querySelectorAll('.podium .place').forEach(p => p.classList.remove('active'));
+        const podiumElement = document.querySelector(`.podium .place-${plaats}`);
+        if (podiumElement) {
+            podiumElement.classList.add('active');
+        }
+
+        const wrapperLi = document.createElement("li");
+        wrapperLi.className = "list-group-item p-2 podium-collapse";
+
+        const collapseDiv = document.createElement("div");
+        const collapseId = `collapse-podium-${deelnemer.id}`;
+        collapseDiv.className = "collapse mt-2 w-100";
+        collapseDiv.id = collapseId;
+        collapseDiv.setAttribute("data-bs-parent", "#deelnemer-list");
+        collapseDiv.innerHTML = `
+            <div class="card card-body details-content" data-loaded="false">
+                <em>Laden...</em>
+            </div>
+        `;
+
+        wrapperLi.appendChild(collapseDiv);
+
+        lijst.insertBefore(wrapperLi, lijst.firstElementChild);
+
+        const detailsDiv = collapseDiv.querySelector(".details-content");
+
+        (async () => {
+            try {
+                toggleGlobalLoader(true);
+
+                const response = await fetch(`${API_BASE_URL}/api/Deelnemer/Picks/${deelnemer.id}/event/${eventId}`);
+                if (!response.ok) throw new Error("Fout bij ophalen picks");
+
+                const data = await response.json();
+                detailsDiv.innerHTML = data.map(pick => {
+                    const isOut = pick.outOfCompetition === true;
+                    const rowStyle = isOut ? 'background-color: #eee; text-decoration: line-through;' : '';
+                    return `
+                        <div class="row mb-1" style="${rowStyle}">
+                            <div class="col-md-1">
+                                <img src="${FLAGS_BASE_URL}/24x18/${pick.countryCode.toLowerCase()}.png" class="img-fluid" style="max-height: 40px;" />
+                            </div>
+                            <div class="col-md-4 fw-bold">${pick.competitorName}</div>
+                            <div class="col-md-5 text-muted">${pick.competitorTeam}</div>
+                            <div class="col-md-2 text-end">${pick.points}</div>
+                        </div>
+                    `;
+                }).join('');
+                detailsDiv.dataset.loaded = "true";
+
+            } catch (err) {
+                detailsDiv.innerHTML = `<p class="text-danger">Details ophalen mislukt.</p>`;
+                console.error(err);
+            } finally {
+                toggleGlobalLoader(false);
+            }
+
+            setTimeout(() => {
+                new bootstrap.Collapse(collapseDiv, { toggle: true });
+            }, 250);
+        })();
+    }
+
+    function makeDeelnemerListItem(deelnemer, plaats, eventId) {
+        const collapseId = `collapse-${deelnemer.id}`;
+        const li = document.createElement("li");
+        li.className = "list-group-item p-2";
+        li.innerHTML = `
+        <div class="row align-items-center"
+            data-bs-toggle="collapse"
+            data-bs-target="#${collapseId}"
+            aria-expanded="false"
+            aria-controls="${collapseId}"
+            style="cursor: pointer;"
+            data-deelnemer-id="${deelnemer.id}"
+            data-event-id="${eventId}">
+            <div class="col-md-4 text-uppercase">${deelnemer.poolNaam || "onbekende pool"}</div>
+            <div class="col-md-6 text-uppercase">${deelnemer.deelnemerNaam || "onbekende deelnemer"}</div>
+            <div class="col-md-2 text-end ms-auto">
+                <span class="fw-bold fs-4">${deelnemer.punten ?? 0}</span>
+            </div>
+        </div>
+        <div class="collapse mt-2" id="${collapseId}" data-bs-parent="#deelnemer-list">
+            <div class="card card-body details-content" data-loaded="false"></div>
+        </div>
+        `;
+        return li;
     }
 
     function initializeCollapseHandlers() {

@@ -62,7 +62,7 @@ namespace WebCycleManager.Controllers
         // POST: Events/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Name,Year,StartDate,EndDate,Slogan,CountryCode,ColorName,ConfigurationId,IsActive")] EventItemViewModel @event)
+        public async Task<IActionResult> Create([Bind("Id,Name,Year,StartDate,EndDate,Slogan,CountryCode,ColorName,ConfigurationId,IsActive,ShowPodium")] EventItemViewModel @event)
         {
             if (ModelState.IsValid)
             {
@@ -95,7 +95,7 @@ namespace WebCycleManager.Controllers
         // POST: Events/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Name,Year,StartDate,EndDate,Slogan,CountryCode,ColorName,ConfigurationId,IsActive")] EventItemViewModel @event)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,Name,Year,StartDate,EndDate,Slogan,CountryCode,ColorName,ConfigurationId,IsActive,ShowPodium")] EventItemViewModel @event)
         {
             if (id != @event.Id)
             {
@@ -172,6 +172,7 @@ namespace WebCycleManager.Controllers
                 ColorName = @event.ColorName,
                 CountryCode = @event.CountryCode,
                 IsActive = @event.IsActive,
+                ShowPodium = @event.ShowPodium,
                 ConfigurationId = @event.ConfigurationId
             };
             return vm;
@@ -194,6 +195,7 @@ namespace WebCycleManager.Controllers
                 @event.CountryCode = vm.CountryCode;
                 @event.ColorName = vm.ColorName;
                 @event.IsActive = vm.IsActive;
+                @event.ShowPodium = vm.ShowPodium;
                 @event.ConfigurationId = vm.ConfigurationId;
 
                 return @event;

@@ -29,6 +29,8 @@ namespace WebCycleManager.Models
         public string? Slogan { get; set; }
         [DisplayName("Actief")]
         public bool IsActive { get; set; }
+        [DisplayName("Show podium")]
+        public bool ShowPodium { get; set; }
         [DisplayName("Landcode")]
         public string? CountryCode { get; set; }
         [DisplayName("Kleurnaam")]
