@@ -146,16 +146,114 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function renderDeelnemers(deelnemers, eventId) {
         const list = document.getElementById("deelnemer-list");
+        const podiumContainer = document.getElementById("podium-container");
+
         list.innerHTML = "";
-        deelnemers
-            .sort((a, b) => (b.punten || 0) - (a.punten || 0))
+        podiumContainer.innerHTML = "";
+
+        const sorted = [...deelnemers].sort((a, b) => (b.punten || 0) - (a.punten || 0));
+
+        const podiumTop3 = [sorted[1], sorted[0], sorted[2]]; // volgorde: 2, 1, 3
+        podiumTop3.forEach((deelnemer, index) => {
+            if (!deelnemer) return;
+
+            const plaats = index === 0 ? 2 : index === 1 ? 1 : 3;
+            const collapseId = `collapse-podium-${deelnemer.id}`;
+
+            const wrapper = document.createElement("div");
+            wrapper.className = `place place-${plaats} mb-2 p-2`;
+            wrapper.setAttribute("style", "cursor: pointer;");
+            wrapper.setAttribute("data-deelnemer-id", deelnemer.id);
+            wrapper.setAttribute("data-event-id", eventId);
+
+            wrapper.innerHTML = `
+                <div class="row align-items-center">
+                    <div class="col-md-4 text-uppercase">${deelnemer.poolNaam || "onbekende pool"}</div>
+                    <div class="col-md-6 text-uppercase">${deelnemer.deelnemerNaam || "onbekende deelnemer"}</div>
+                    <div class="col-md-2 text-end ms-auto">
+                        <span class="fw-bold fs-4">${deelnemer.punten ?? 0}</span>
+                    </div>
+                </div>
+                <div class="plaatsnummer">${plaats}</div>
+            `;
+
+            wrapper.addEventListener("click", async () => {
+                const lijst = document.getElementById("deelnemer-list");
+                document.querySelectorAll('#deelnemer-list .podium-collapse').forEach(el => el.remove());
+                document.querySelectorAll('.podium .place').forEach(p => p.classList.remove('active'));
+
+                wrapper.classList.add('active');
+
+                if (lijst) {
+                    lijst.querySelectorAll('.collapse.show').forEach(c => {
+                        new bootstrap.Collapse(c, { toggle: false }).hide();
+                    });
+                }
+
+                const wrapperLi = document.createElement("li");
+                wrapperLi.className = "list-group-item p-2 podium-collapse";
+
+                const collapseDiv = document.createElement("div");
+                collapseDiv.className = "collapse mt-2 w-100";
+                collapseDiv.id = collapseId;
+                collapseDiv.setAttribute("data-bs-parent", "#deelnemer-list");
+                collapseDiv.innerHTML = `
+                    <div class="card card-body details-content" data-loaded="false">
+                        <em>Laden...</em>
+                    </div>
+                `;
+                wrapperLi.appendChild(collapseDiv);
+
+                const insertTarget = lijst.firstElementChild;
+                lijst.insertBefore(wrapperLi, insertTarget);
+
+                const detailsDiv = collapseDiv.querySelector('.details-content');
+
+                try {
+                    toggleGlobalLoader(true);
+
+                    const response = await fetch(`${API_BASE_URL}/api/Deelnemer/Picks/${deelnemer.id}/event/${eventId}`);
+                    if (!response.ok) throw new Error("Fout bij ophalen picks");
+
+                    const data = await response.json();
+                    detailsDiv.innerHTML = data.map(pick => {
+                        const isOut = pick.outOfCompetition === true;
+                        const rowStyle = isOut ? 'background-color: #eee; text-decoration: line-through;' : '';
+                        return `
+                            <div class="row mb-1" style="${rowStyle}">
+                                <div class="col-md-1">
+                                    <img src="${FLAGS_BASE_URL}/24x18/${pick.countryCode.toLowerCase()}.png" class="img-fluid" style="max-height: 40px;" />
+                                </div>
+                                <div class="col-md-4 fw-bold">${pick.competitorName}</div>
+                                <div class="col-md-5 text-muted">${pick.competitorTeam}</div>
+                                <div class="col-md-2 text-end">${pick.points}</div>
+                            </div>
+                        `;
+                    }).join('');
+                    detailsDiv.dataset.loaded = "true";
+                } catch (err) {
+                    detailsDiv.innerHTML = `<p class="text-danger">Details ophalen mislukt.</p>`;
+                    console.error(err);
+                } finally {
+                    toggleGlobalLoader(false);
+                }
+
+                setTimeout(() => {
+                    new bootstrap.Collapse(collapseDiv, { toggle: true });
+                }, 250);
+
+            });
+            podiumContainer.appendChild(wrapper);
+        });
+
+        sorted.slice(3)
             .forEach(deelnemer => {
                 const collapseId = `collapse-${deelnemer.id}`;
                 const li = document.createElement("li");
                 li.classList.add("list-group-item", "p-2");
 
                 li.innerHTML = `
-                                    <div class="row align-items-center"
+                   <div class="row align-items-center"
                          data-bs-toggle="collapse"
                          data-bs-target="#${collapseId}"
                          aria-expanded="false"
@@ -198,6 +296,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 toggleGlobalLoader(true);
 
                 try {
+                    console.log("Collapse triggered for:", { deelnemerId, eventId });
                     const response = await fetch(`${API_BASE_URL}/api/Deelnemer/Picks/${deelnemerId}/event/${eventId}`);
                     if (!response.ok) throw new Error("Fout bij ophalen picks");
 

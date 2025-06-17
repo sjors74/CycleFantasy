@@ -25,6 +25,7 @@ namespace Domain.Models
         [DisplayName("Kleur")]
         public string? ColorName { get; set; }
         public bool IsActive { get; set; } = false;
+        public bool ShowPodium { get; set; } = false;
         public int? ConfigurationId { get; set; }
         [JsonIgnore]
         public virtual Configuration? Configuration {get;set;}
