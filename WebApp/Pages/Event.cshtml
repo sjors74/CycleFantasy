@@ -10,33 +10,20 @@
         height: 180px;
     }
 
-.podium .place {
-        width: 100%;
-        max-width:600px;
-        margin: 0 auto;
-        word-break: break-word;
-        color: white;
-        padding: 0.5rem;
-        border-radius: 10px 10px 0 0;
-        text-align: center;
-        display: block;
-        flex-direction: column;
-        justify-content: flex-end;
-    }
-
-    .podium .place .naam {
-        font-weight: bold;
-        font-size: 1rem;
-    }
-
-   .podium .place .punten {
-       font-size: 0.9rem;
-    }
-
-    .podium .place .plaatsnummer {
-         margin-top: -6px;
-         font-size: 2rem;
-    }
+        .podium .place {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            word-break: break-word;
+            color: white;
+            padding: 0.5rem;
+            border-radius: 10px 10px 0 0;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+        }
 
     .place-1 {
         background: gold;
@@ -49,8 +36,37 @@
     }
 
     .place-3 {
-        background: #cd7f32; /* brons */
+        background: #cd7f32;
         height: 80px;
+    }
+
+    .plaats-badge {
+        position: absolute;
+        top: -10px;
+        right: -10px;
+        background: #343a40;
+        color: white;
+        font-weight: bold;
+        font-size: 1.2rem;
+        padding: 0.25rem 0.6rem;
+        border-radius: 50%;
+        z-index: 10;
+        box-shadow: 0 0 6px rgba(0, 0, 0, 0.3);
+    }
+
+    .place-1 .plaats-badge {
+        background: gold;
+        color: black;
+    }
+
+    .place-2 .plaats-badge {
+        background: silver;
+        color: black;
+    }
+
+    .place-3 .plaats-badge {
+        background: #cd7f32;
+        color: white;
     }
 
     .place.active {
