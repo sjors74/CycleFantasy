@@ -196,6 +196,32 @@ document.addEventListener('DOMContentLoaded', function () {
         initializeCollapseHandlers();
     }
 
+    function renderRenner(pick) {
+        const isOut = pick.outOfCompetition === true;
+        const rowStyle = isOut ? 'background-color: #eee; text-decoration: line-through;' : '';
+        const flagUrl = `${FLAGS_BASE_URL}/24x18/${pick.countryCode.toLowerCase()}.png`;
+
+        return `
+        <div class="renner-item border-bottom py-2 mb-2" style="${rowStyle}">
+            <div class="d-flex justify-content-between align-items-start">
+                <!-- Linkerzijde -->
+                <div class="d-flex w-100">
+                    <img src="${flagUrl}" class="img-fluid me-2 mt-1" style="max-height: 24px; width: 24px;" />
+
+                    <div class="d-flex flex-column flex-md-row d-md-grid w-100"
+                         style="--bs-columns: 3; grid-template-columns: 200px 250px auto; gap: 0.5rem;">
+                        <div class="fw-bold text-truncate">${pick.competitorName}</div>
+                        <div class="text-muted small text-truncate">${pick.competitorTeam}</div>
+                    </div>
+                </div>
+
+                <div class="text-end ms-2" style="min-width: 50px;">
+                    <span class="fw-bold fs-5">${pick.points}</span>
+                </div>
+            </div>
+        </div>
+    `;
+    }
     function handlePodiumClick(deelnemer, plaats, eventId) {
         const lijst = document.getElementById("deelnemer-list");
 
@@ -239,20 +265,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (!response.ok) throw new Error("Fout bij ophalen picks");
 
                 const data = await response.json();
-                detailsDiv.innerHTML = data.map(pick => {
-                    const isOut = pick.outOfCompetition === true;
-                    const rowStyle = isOut ? 'background-color: #eee; text-decoration: line-through;' : '';
-                    return `
-                        <div class="row mb-1" style="${rowStyle}">
-                            <div class="col-md-1">
-                                <img src="${FLAGS_BASE_URL}/24x18/${pick.countryCode.toLowerCase()}.png" class="img-fluid" style="max-height: 40px;" />
-                            </div>
-                            <div class="col-md-4 fw-bold">${pick.competitorName}</div>
-                            <div class="col-md-5 text-muted">${pick.competitorTeam}</div>
-                            <div class="col-md-2 text-end">${pick.points}</div>
-                        </div>
-                    `;
-                }).join('');
+                detailsDiv.innerHTML = data.map(renderRenner).join('');
                 detailsDiv.dataset.loaded = "true";
 
             } catch (err) {
@@ -318,20 +331,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
                     const data = await response.json();
 
-                    detailsDiv.innerHTML = data.map(pick => {
-                        const isOut = pick.outOfCompetition === true;
-                        const rowStyle = isOut ? 'background-color: #eee; text-decoration: line-through;' : '';
-                        return `
-                            <div class="row mb-1" style="${rowStyle}">
-                                <div class="col-md-1">
-                                    <img src="${FLAGS_BASE_URL}/24x18/${pick.countryCode.toLowerCase()}.png" class="img-fluid" style="max-height: 40px;" />
-                                </div>
-                                <div class="col-md-4 fw-bold">${pick.competitorName}</div>
-                                <div class="col-md-5 text-muted">${pick.competitorTeam}</div>
-                                <div class="col-md-2 text-end">${pick.points}</div>
-                            </div>
-                        `;
-                    }).join('');
+                    if (data.length === 0) {
+                        detailsDiv.innerHTML = `<p class="text-muted fst-italic mb-0">Geen renners geselecteerd.</p>`;
+                    } else {
+                        detailsDiv.innerHTML = data.map(renderRenner).join('');
+                    }
                     detailsDiv.dataset.loaded = "true";
                 } catch (err) {
                     detailsDiv.innerHTML = `<p class="text-danger">Details ophalen mislukt.</p>`;
