@@ -98,6 +98,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const renners = await response.json();
             const container = document.getElementById(`team-${teamId}-extra-renners`);
+            const currentSelectedCount = selected.length;
 
             renners.forEach(renner => {
                 const formCheck = document.createElement('div');
@@ -109,6 +110,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 input.value = renner.competitorId;
                 input.checked = selected.includes(renner.competitorId);
 
+                if (currentSelectedCount >= MAX_SELECTED && !selected.includes(renner.competitorId)) {
+                    input.disabled = true;
+                }
                 const label = document.createElement('label');
                 label.className = 'form-check-label';
                 label.textContent = renner.competitorName;
