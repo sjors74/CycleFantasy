@@ -6,6 +6,7 @@ function updateUI() {
     const hiddenInput = document.getElementById("SelectedRidersJson");
     const checkboxes = document.querySelectorAll(".renner-checkbox");
     const message = document.getElementById("maxSelectedMessage");
+    const suggestieBtn = document.getElementById("suggestieBtn");
 
     if (headerCount) headerCount.innerText = selected.length;
     if (hiddenInput) hiddenInput.value = JSON.stringify(selected);
@@ -22,6 +23,10 @@ function updateUI() {
 
     if (message) {
         message.style.display = opMax ? "block" : "none";
+    }
+
+    if (suggestieBtn) {
+        suggestieBtn.disabled = selected.length >= MAX_SELECTED;
     }
 }
 

@@ -2,7 +2,7 @@
 @using WebApp.Pages.ViewModels
 @model EventListViewModel
 <div class="card shadow-sm mt-4">
-    <div class="card-header bg-primary text-white">
+    <div class="card-header bg-secondary text-white">
         <h5 class="mb-0">@Model.Titel</h5>
     </div>
     <div class="card-body">
@@ -60,12 +60,12 @@
                                                             @if (Model.ShowLinkToevoegen)
                                                             {
                                                                 <div class="d-flex justify-content-end mb-2">
-                                                                    <a class="btn btn-sm btn-light"
+                                                                    <a class="btn btn-primary btn-sm"
                                                                        href="/Selectie?EvenementId=@evt.EventId&DeelnemerId=@deelnemer.Id"
                                                                        onclick="handlePoolClick(event, this)">
                                                                      Bewerk je team!
                                                                     </a>
-                                                                    <button class="btn btn-sm btn-light ms-2" onclick="verwijderDeelnemer(@deelnemer.Id)">Verwijder pool</button>
+                                                                    <button class="btn btn-danger btn-sm ms-2" onclick="verwijderDeelnemer(@deelnemer.Id)">Verwijder pool</button>
                                                                 </div>
                                                             }
 

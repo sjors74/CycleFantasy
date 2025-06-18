@@ -1,22 +1,18 @@
 ﻿@page
 @model IndexModel
 @{
+    ViewData["BodyClass"] = "index-page";
     ViewData["Title"] = "Home page";
 }
-<style>
-    html, body {
-        margin: 0;
-        padding: 0;
-        overflow-x: hidden; /* voorkomt horizontale scrollbar */
-    }
-    body {
-        background-image: url('/images/wielrennen.jpg'); /* plaats hier je eigen afbeelding */
-        background-size: cover;
-        background-position: center center;
-        background-repeat: no-repeat;
-        background-attachment: fixed;
-    }
-</style>
+@section Styles {
+    <link rel="stylesheet" href="~/css/index.css" asp-append-version="true" />
+}
+<div class="hero">
+    <div class="hero-overlay">
+        <h1>Welkom bij Tourmanager</h1>
+        <p class="lead">Stel je wielerteam samen en speel mee in één van de pools!</p>
+    </div>
+</div>
 <div id="container" class="tile-container"></div>
 @section Scripts {
     <script src="~/js/index.js" asp-append-version="true"></script>
