@@ -113,7 +113,18 @@
                                                 <input type="text" class="form-control" id="poolNaam" name="poolNaam" required />
                                                 <input type="hidden" asp-for="CurrentEventId" id="CurrentEventId" name="CurrentEventId" value="@evt.EventId" />
                                             </div>
-                                            <button type="submit" class="btn btn-primary">Voeg toe</button>
+                                            <div class="d-flex gap-2">
+                                                <button type="submit" class="btn btn-primary">Voeg toe</button>
+                                                <button type="button"
+                                                        class="btn btn-outline-secondary"
+                                                        data-bs-toggle="collapse"
+                                                        data-bs-target="#poolFormCollapse"
+                                                        aria-expanded="true"
+                                                        aria-controls="poolFormCollapse"
+                                                        onclick="document.getElementById('poolNaam').value = '';">
+                                                    Annuleren
+                                                </button>
+                                            </div>
                                         </form>
                                     </div>
                                 </div>

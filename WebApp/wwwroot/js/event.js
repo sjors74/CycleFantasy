@@ -209,9 +209,9 @@ document.addEventListener('DOMContentLoaded', function () {
                     <img src="${flagUrl}" class="img-fluid me-2 mt-1" style="max-height: 24px; width: 24px;" />
 
                     <div class="d-flex flex-column flex-md-row d-md-grid w-100"
-                         style="--bs-columns: 3; grid-template-columns: 200px 250px auto; gap: 0.5rem;">
-                        <div class="fw-bold text-truncate">${pick.competitorName}</div>
-                        <div class="text-muted small text-truncate">${pick.competitorTeam}</div>
+                         style="display: grid; grid-template-columns: 1fr 250px; gap: 0.5rem;">
+                        <div class="fw-bold">${pick.competitorName}</div>
+                        <div class="text-muted small">${pick.competitorTeam}</div>
                     </div>
                 </div>
 
