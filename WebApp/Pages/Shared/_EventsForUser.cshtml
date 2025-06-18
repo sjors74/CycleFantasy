@@ -2,11 +2,11 @@
 @using WebApp.Pages.ViewModels
 @model EventListViewModel
 <div class="card shadow-sm mt-4">
-    <div class="card-header bg-primary text-white">
+    <div class="card-header bg-secondary text-white">
         <h5 class="mb-0">@Model.Titel</h5>
     </div>
     <div class="card-body">
-        @if (!Model.Evenementen.Any())  //TODO: add boolean 'inschrijving geopend => if true show button 'maak pool aan'
+        @if (!Model.Evenementen.Any())
         {
             <p class="text-muted">Er zijn momenteel geen @Model.InlineText evenementen.</p>
         }
@@ -28,10 +28,10 @@
                         </div>
                         <div class="collapse mt-2" id="@collapseId">
                             <div class="card card-body">
-                                <p><strong>Je pools</strong></p>
+                                <div class="fw-bold mb-1">Je pools</div>
                                 @if (evt.Deelnemers != null && evt.Deelnemers.Any())
                                 {
-                                    <div class="accordion mt-3" id="accordion-@evt.EventId">
+                                    <div class="accordion mt-1" id="accordion-@evt.EventId">
                                         @foreach(var deelnemer in evt.Deelnemers)
                                         {
                                             var collapseDlnId = $"collapse-deelnemer-{evt.EventId}-{deelnemer.Id}";
@@ -60,12 +60,12 @@
                                                             @if (Model.ShowLinkToevoegen)
                                                             {
                                                                 <div class="d-flex justify-content-end mb-2">
-                                                                    <a class="btn btn-sm btn-light"
+                                                                    <a class="btn btn-primary btn-sm"
                                                                        href="/Selectie?EvenementId=@evt.EventId&DeelnemerId=@deelnemer.Id"
                                                                        onclick="handlePoolClick(event, this)">
-                                                                     Voeg renners toe
+                                                                     Bewerk je team!
                                                                     </a>
-                                                                    <button class="btn btn-sm btn-light" onclick="verwijderDeelnemer(@deelnemer.Id)">Verwijder</button>
+                                                                    <button class="btn btn-danger btn-sm ms-2" onclick="verwijderDeelnemer(@deelnemer.Id)">Verwijder pool</button>
                                                                 </div>
                                                             }
 
