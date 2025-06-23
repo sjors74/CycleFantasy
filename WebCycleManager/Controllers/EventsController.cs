@@ -62,7 +62,7 @@ namespace WebCycleManager.Controllers
         // POST: Events/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Name,Year,StartDate,EndDate,Slogan,CountryCode,ColorName,ConfigurationId,IsActive,ShowPodium")] EventItemViewModel @event)
+        public async Task<IActionResult> Create([Bind("Id,Name,Code,Year,StartDate,EndDate,Slogan,CountryCode,ColorName,ConfigurationId,IsActive,ShowPodium")] EventItemViewModel @event)
         {
             if (ModelState.IsValid)
             {
@@ -95,7 +95,7 @@ namespace WebCycleManager.Controllers
         // POST: Events/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Name,Year,StartDate,EndDate,Slogan,CountryCode,ColorName,ConfigurationId,IsActive,ShowPodium")] EventItemViewModel @event)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,Name,Code,Year,StartDate,EndDate,Slogan,CountryCode,ColorName,ConfigurationId,IsActive,ShowPodium")] EventItemViewModel @event)
         {
             if (id != @event.Id)
             {
@@ -165,6 +165,7 @@ namespace WebCycleManager.Controllers
             {
                 Id = @event.EventId,
                 Name = @event.EventName,
+                Code = @event.EventCode,
                 Year = @event.EventYear,
                 StartDate = @event.StartDate.HasValue ? (DateTime)@event.StartDate : DateTime.MinValue,
                 EndDate = @event.EndDate.HasValue ? (DateTime)@event.EndDate : DateTime.MaxValue,
@@ -188,6 +189,7 @@ namespace WebCycleManager.Controllers
                     @event = new Event();
                 }
                 @event.EventName = vm.Name;
+                @event.EventCode = vm.Code;
                 @event.EventYear = vm.Year;
                 @event.StartDate = vm.StartDate;
                 @event.EndDate = vm.EndDate;
