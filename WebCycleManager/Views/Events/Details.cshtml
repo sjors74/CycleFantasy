@@ -26,6 +26,7 @@
                     </th>
                     <th></th>
                     <th></th>
+                    <th></th>
                 </tr>
             </thead>
             <tbody>
@@ -50,6 +51,14 @@
                         <td>
                             <a class="text-danger"  asp-controller="Results" asp-action="Index" asp-route-stageId="@item.StageId">Uitslag</a> |
                             @item.AantalPosities
+                        </td>
+                        <td>
+                            <a class="text-primary"
+                               asp-controller="AdminScraper"
+                               asp-action="ScrapeAndPair"
+                               asp-route-stageId="@item.StageName" asp-route-eventId="@Model.EventId" asp-route-eventName="@Model.EventCode" asp-route-year="@Model.StartDate.Value.Year">
+                                Scrape resultaten
+                            </a>
                         </td>
                     </tr>
                 }

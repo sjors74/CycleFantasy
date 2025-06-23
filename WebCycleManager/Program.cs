@@ -2,6 +2,7 @@ using CycleManager.Domain.Interfaces;
 using CycleManager.Domain.Models;
 using CycleManager.Services;
 using CycleManager.Services.Interfaces;
+using CycleManager.Services.Settings;
 using DataAccessEF.TypeRepository;
 using Domain.Context;
 using Domain.Interfaces;
@@ -42,10 +43,13 @@ builder.Services.AddTransient<ICompetitorInEventService, CompetitorInEventServic
 builder.Services.AddTransient<ITeamService, TeamService>();
 builder.Services.AddTransient<IGameCompetitorInEventService, GameCompetitorInEventService>();
 builder.Services.AddTransient<IUserService, UserService>();
+builder.Services.AddScoped<ScraperService>();
+builder.Services.AddScoped<PcsScraper>();
 builder.Services.AddControllersWithViews();
 builder.Services.Configure<ApiSettings>(
 builder.Configuration.GetSection("ApiSettings"));
-
+builder.Services.Configure<ScraperSettings>(builder.Configuration.GetSection("ScraperSettings"));
+builder.Services.AddLogging();
 // Voeg HttpClient toe en gebruik BaseUrl uit config
 builder.Services.AddHttpClient<IApiClient, ApiClient>((serviceProvider, client) =>
 {

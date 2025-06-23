@@ -69,6 +69,7 @@ namespace DataAccessEF.TypeRepository
                 .Select(e => new EventDetailsViewModel
                 {
                     EventId = e.EventId,
+                    EventCode = e.EventCode,
                     EventName = e.EventName,
                     Slogan = e.Slogan,
                     StartDate = e.StartDate,

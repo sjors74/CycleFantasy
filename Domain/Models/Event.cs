@@ -13,6 +13,8 @@ namespace Domain.Models
         public string EventName { get; set; } = string.Empty;
         [DisplayName("Jaar")]
         public int EventYear { get; set; }
+        [DisplayName("Code")]
+        public string EventCode { get; set; } = string.Empty;
         [DisplayName("Startdatum")]
         [DataType(DataType.Date)]
         public DateTime? StartDate { get; set; }
