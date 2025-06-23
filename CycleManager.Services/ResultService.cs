@@ -1,7 +1,6 @@
 ﻿using CycleManager.Domain.Dto;
 using CycleManager.Services.Interfaces;
 using Domain.Interfaces;
-using Domain.Models;
 
 namespace CycleManager.Services
 {
@@ -32,7 +31,8 @@ namespace CycleManager.Services
                         CompetitorName = first?.CompetitorInEvent?.Competitor?.CompetitorName ?? "onbekend",
                         EventId = first?.Stage?.EventId ?? 0,
                         CompetitorInEventId = first?.CompetitorInEventId ?? 0,
-                        Points = c.Sum(a => a.ConfigurationItem?.Score ?? 0)
+                        Points = c.Sum(a => a.ConfigurationItem?.Score ?? 0),
+                        CompetitorTeam = first?.CompetitorInEvent?.Competitor?.Team?.TeamName ?? "onbekend"
                     };
             })
                 .OrderByDescending(c => c.Points)

@@ -52,6 +52,17 @@
             const tbody = document.getElementById("renner-lijst");
             tbody.innerHTML = "";
 
+            if (top15.length === 0) {
+                const tr = document.createElement("tr");
+                const td = document.createElement("td");
+                td.colSpan = 4; // aantal kolommen van de tabel
+                td.className = "text-muted text-center";
+                td.textContent = "Er zijn nog geen uitslagen bekend.";
+                tr.appendChild(td);
+                tbody.appendChild(tr);
+                return;
+            }
+
             top15.forEach(renner => {
                 const tr = document.createElement("tr");
 

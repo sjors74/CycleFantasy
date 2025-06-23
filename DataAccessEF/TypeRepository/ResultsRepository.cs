@@ -19,6 +19,7 @@ namespace DataAccessEF.TypeRepository
             var results = await context.Results
                 .Include(c => c.CompetitorInEvent)
                     .ThenInclude(ci => ci.Competitor)
+                        .ThenInclude(t => t.Team)
                 .Include(s => s.Stage)
                 .Include(r => r.ConfigurationItem)
                 .Where(r => r.Stage.EventId == eventId)

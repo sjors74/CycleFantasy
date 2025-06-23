@@ -26,7 +26,7 @@ namespace WebCycleManager.Controllers
             if (stage == null)
             {
                 TempData["Error"] = "Stage niet gevonden.";
-                return RedirectToAction("Index", "Stages", new { eventId = 0 });
+                return RedirectToAction("Details", "Events", new { eventId });
             }
 
             await _scraperService.RunAsync(
@@ -38,7 +38,7 @@ namespace WebCycleManager.Controllers
             );
 
             TempData["Success"] = "Scrape voltooid.";
-            return RedirectToAction("Index", "Stages", new { eventId = stage.EventId });
+            return RedirectToAction("Details", "Events", new { id = eventId });
         }
     }
 }

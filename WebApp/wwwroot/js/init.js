@@ -11,6 +11,19 @@
         } else {
             console.warn("Ping faalde met status:", response.status);
         }
+
+        setInterval(() => {
+            if (document.visibilityState === 'visible') {
+                fetch(pingUrl)
+                    .then(response => {
+                        if (!response.ok) throw new Error('Ping response not OK');
+                        console.log('Keep-alive ping verzonden');
+                    })
+                    .catch(err => console.error('Ping error:', err));
+            }
+        }, 5 * 60 * 1000); // elke 5 minuten
+
+
     } catch (err) {
         console.error("Fout bij config/ping:", err);
     }
