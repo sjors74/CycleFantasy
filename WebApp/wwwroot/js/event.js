@@ -43,21 +43,58 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
 
-        if (!event) {
-            // Event niet gevonden in cache, ophalen van API
-            const eventRes = await fetch(`${API_BASE_URL}/api/Event/${eventId}`);
-            if (!eventRes.ok) {
-                console.error("Fout bij ophalen van event");
-                toggleGlobalLoader(false);
-                return;
+        async function fetchWithRetry(url, retries = 3, delay = 1000) {
+            for (let i = 0; i < retries; i++) {
+                try {
+                    const res = await fetch(url);
+                    if (!res.ok) throw new Error(`Status ${res.status}`);
+                    return await res.json();
+                } catch (err) {
+                    console.warn(`Poging ${i + 1} mislukt:`, err);
+                    if (i < retries - 1) await sleep(delay);
+                }
             }
-            event = await eventRes.json();
-            console.log("Event geladen door api:", event);
+            throw new Error("Alle pogingen mislukt voor " + url);
+        }
 
-            let updatedEvents = cachedEvents ? JSON.parse(cachedEvents) : [];
-            updatedEvents = updatedEvents.filter(e => e.eventId != event.eventId);
-            updatedEvents.push(event);
-            localStorage.setItem('events', JSON.stringify(updatedEvents));
+        if (!event) {
+            try {
+                await fetch(`${API_BASE_URL}/config/ping`);
+                await sleep(500);
+
+                event = await fetchWithRetry(`${API_BASE_URL}/api/Event/${eventId}`, 3, 1000);
+                console.log("Event geladen via API:", event);
+
+                let updatedEvents = cachedEvents ? JSON.parse(cachedEvents) : [];
+                updatedEvents = updatedEvents.filter(e => e.eventId != event.eventId);
+                updatedEvents.push(event);
+                localStorage.setItem('events', JSON.stringify(updatedEvents));
+
+            } catch (err) {
+                console.error("Kon event niet laden via API:", err);
+
+                if (cachedEvents) {
+                    const fallbackEvents = JSON.parse(cachedEvents);
+                    event = fallbackEvents.find(e => e.eventId == eventId);
+
+                    if (event) {
+                        console.warn("Event geladen uit cache als fallback:", event);
+                        showWarning("Eventinformatie is mogelijk verouderd.");
+                    }
+                }
+
+                if (!event) {
+                    document.body.innerHTML = `
+                        <div class="container mt-5">
+                            <h2 class="text-danger">Kon evenement niet laden</h2>
+                            <p>Er is mogelijk een probleem met de server of je verbinding.</p>
+                            <button onclick="location.reload()" class="btn btn-primary mt-3">Probeer opnieuw</button>
+                        </div>
+                    `;
+                    toggleGlobalLoader(false);
+                    return;
+                }
+            }
         }
 
         document.getElementById('eventName').textContent = event.eventName;
@@ -78,6 +115,15 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         toggleGlobalLoader(false);
+
+        // Toon een waarschuwing indien data uit cache komt
+        function showWarning(message) {
+            const div = document.createElement("div");
+            div.className = "alert alert-warning text-center mt-3";
+            div.innerText = message;
+            document.body.prepend(div);
+        }
+
     })();
     function showPlaceholders() {
         const stepsContainer = document.getElementById("steps-container");
