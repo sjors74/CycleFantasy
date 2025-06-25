@@ -59,6 +59,8 @@ builder.Services.AddTransient<ICompetitorService, CompetitorService>();
 builder.Services.AddTransient<ICompetitorInEventService, CompetitorInEventService>();
 builder.Services.AddTransient<ITeamService, TeamService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddTransient<INewsItemRepository, NewsItemRepository>();
+builder.Services.AddTransient<INewsService, NewsService>();
 builder.Services.AddControllers();
 builder.Services.AddHttpClient();
 builder.Services.AddTransient<IEmailSender, EmailSender>();
