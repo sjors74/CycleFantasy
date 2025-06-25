@@ -45,31 +45,86 @@
 
 /* Tile grid */
 .tile-container {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 20px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1rem;
     padding: 10px 20px 20px 20px;
     overflow: auto;
     align-content: flex-start;
     box-sizing: border-box;
+    flex-wrap: wrap;
     width: 100%;
     height: 100%;
 }
 
-.tile {
+.tile, .tile-news {
     position: relative;
-    background-color: transparent;
-    padding: 40px 50px 20px 20px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: transform 0.2s;
+    height: 220px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 1rem;
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     overflow: hidden;
 }
 
+.tile-header {
+    flex-shrink: 0;
+    margin-bottom: 0.5rem;
+}
+
+.tile-body {
+    flex-grow: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+    .tile-body p {
+        margin: 0 0 0.5rem 0;
+        overflow-wrap: break-word;
+        word-break: break-word;
+        line-height: 1.4;
+        flex-shrink: 0;
+    }
+
+    .tile-body .btn {
+        margin-top: auto;
+        flex-shrink: 0;
+    }
     .tile:hover {
         transform: scale(1.05);
     }
+    .tile-footer {
+        margin-top: auto;
+    }
+
+    .news-message {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+    }
+
+.news-title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap; /* max 1 regel */
+    font-size: 1.75rem;
+    font-weight: 300;
+    margin-bottom: 0.5rem;
+}
+
+.news-icon {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-size: 1.5rem;
+    color: #666;
+}
 
 /* Vlaggen in tiles */
 .flag {
@@ -82,9 +137,25 @@
     overflow: hidden;
     box-shadow: 0 0 2px rgba(0, 0, 0, 0.3);
 }
+.tile-news {
+    background-color: white;
+    color: #333;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border: none; /* optioneel */
+}
 
     .flag img {
         width: 100%;
         height: auto;
         display: block;
     }
+
+.toggle-message {
+    background: none;
+    border: none;
+    color: #007bff;
+    padding: 0;
+    font-size: 0.9rem;
+    cursor: pointer;
+    text-decoration: underline;
+}

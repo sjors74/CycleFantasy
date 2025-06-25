@@ -43,6 +43,7 @@ namespace Domain.Mapping
                 .ForMember(c => c.DeelnemerNaam, d => d.MapFrom(s => $"{s.User.FirstName} {s.User.LastName}"))
                 .ForMember(c => c.PoolNaam, d => d.MapFrom(s => s.TeamName))
                 .ForMember(c => c.Renners, d => d.MapFrom(s => s.Renners));
+            CreateMap<NewsItem, NewsItemDto>();
         }
     }
 }

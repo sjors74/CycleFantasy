@@ -24,6 +24,7 @@ namespace Domain.Context
         public DbSet<GameCompetitorEventPick> GameCompetitorEventPicks { get; set; }
         public DbSet<EventTeam> EventTeam { get; set; }
         public DbSet<ScrapedStageResult> ScrapedStageResults { get; set; }
+        public DbSet<NewsItem> NewsItems { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

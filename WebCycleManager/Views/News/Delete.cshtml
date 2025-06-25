@@ -1,0 +1,25 @@
+﻿@model Domain.Models.NewsItem
+
+@{
+    ViewData["Title"] = "Verwijder Nieuwsbericht";
+}
+
+<h2 class="mb-4">Verwijder Nieuwsbericht</h2>
+
+<div class="alert alert-warning">
+    Weet je zeker dat je dit nieuwsbericht wilt verwijderen?
+</div>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <h4 class="card-title">@Model.Title</h4>
+        <p class="card-text">@Model.Message</p>
+        <p class="text-muted">Geplaatst op: @Model.DatePosted.ToString("dd-MM-yyyy HH:mm")</p>
+    </div>
+</div>
+
+<form asp-action="Delete" method="post">
+    <input type="hidden" asp-for="Id" />
+    <button type="submit" class="btn btn-danger">Verwijder</button>
+    <a asp-action="Index" class="btn btn-secondary">Annuleer</a>
+</form>

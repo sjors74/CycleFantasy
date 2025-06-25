@@ -45,3 +45,29 @@ input.input-validation-error {
     color: red;
 }
 /* password checker */
+
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+main {
+    flex: 1 0 auto;
+}
+
+.modal-news {
+    max-width: 500px; /* smaller dan standaard */
+    height: 70vh;
+}
+
+    .modal-news .modal-content {
+        height: 20%;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .modal-news .modal-body {
+        overflow-y: auto;
+        flex-grow: 1;
+    }
