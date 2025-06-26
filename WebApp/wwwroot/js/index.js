@@ -63,27 +63,34 @@ async function fetchDataAndRenderTiles(retries = 3, delay = 1000) {
 
             container.innerHTML = '';
 
-            events.forEach(event => {
+            for (const event of events) {
                 const tile = document.createElement("div");
                 tile.className = "tile tile-event";
+
+                const count = await fetchParticipantCount(event.eventId);
+                const daysText = getDaysUntilText(event.startDate, event.endDate);
 
                 if (event.colorName) {
                    tile.style.backgroundColor = event.colorName;
                 }
 
                 tile.innerHTML = `
-                     <div class="flag">
-                         <img src="${FLAGS_BASE_URL}/w40/${event.countryCode.toLowerCase()}.png" alt="Vlag">
-                      </div>
-                      <h3>${event.eventName}</h3>
-                      <p><strong>Start:</strong> ${formatDate(event.startDate)}</p>
-                      <p><strong>Einde:</strong> ${formatDate(event.endDate)}</p>
+                        <div class="flag">
+                            <img src="${FLAGS_BASE_URL}/w40/${event.countryCode.toLowerCase()}.png" alt="Vlag">
+                        </div>
+                        <div class="participant-count">
+                            <i class="bi bi-people-fill"></i> ${count}
+                        </div>
+                        <h3>${event.eventName}</h3>
+                        <p><strong>Start:</strong> ${formatDate(event.startDate)}<br>
+                        <strong>Einde:</strong> ${formatDate(event.endDate)}</p>
+                        <p class="text-muted">${daysText}</p>
                  `;
 
                 // Click-handler
                 tile.onclick = () => handleTileClick(event);
                 container.appendChild(tile);
-            });
+            };
 
             if (nieuwsItems.length > 0) {
                 const newsTile = document.createElement("div");
@@ -171,5 +178,42 @@ function stopNewsRotation() {
     if (newsIntervalId) {
         clearInterval(newsIntervalId);
         newsIntervalId = null;
+    }
+}
+
+function getDaysUntilText(startDateStr, endDateStr) {
+    const startDate = new Date(startDateStr);
+    const endDate = new Date(endDateStr);
+    const today = new Date();
+
+    startDate.setHours(0, 0, 0, 0);
+    endDate.setHours(0, 0, 0, 0);
+    today.setHours(0, 0, 0, 0);
+
+    if (today > endDate) {
+        return ""; // Evenement is afgelopen
+    }
+    const daysUntil = Math.ceil((startDate - today) / (1000 * 60 * 60 * 24));
+
+    if (daysUntil > 1) {
+        return `Start over ${daysUntil} dagen`;
+    } else if (daysUntil === 1) {
+        return `Start over 1 dag`;
+    } else if (daysUntil === 0) {
+        return 'Start vandaag!';
+    } else {
+        return `Gestart op ${startDate.toLocaleDateString('nl-NL')}`;
+    }
+}
+
+async function fetchParticipantCount(eventId) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/event/${eventId}/deelnemers`);
+        if (!response.ok) throw new Error("Ophalen #deelnemers mislukt");
+        const count = await response.json();
+        return count;
+    } catch (err) {
+        console.error(`Deelnemers ophalen mislukt voor event ${eventId}:`, err);
+        return 0;
     }
 }

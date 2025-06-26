@@ -101,6 +101,27 @@
         margin-top: auto;
     }
 
+.participant-count {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #333;
+    margin: 0.5rem 0 0.5rem 0;
+}
+
+    .participant-count .bi {
+        font-size: 1.4rem;
+        color: #333;
+    }
+
+    .participant-count .label {
+        font-size: 0.8rem;
+        font-weight: 400;
+        color: #333;
+        margin-left: 0.25rem;
+    }
     .news-message {
         overflow: hidden;
         text-overflow: ellipsis;

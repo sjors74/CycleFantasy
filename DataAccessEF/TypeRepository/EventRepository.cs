@@ -14,6 +14,14 @@ namespace DataAccessEF.TypeRepository
         { 
         }
 
+        public async Task<int> GetAantalDeelnemers(int eventId)
+        {
+            var eventGameCompetitors = await context.GameCompetitorsEvent
+                .Where(e => e.EventId == eventId)
+                .ToListAsync();
+            return eventGameCompetitors == null ? 0 : eventGameCompetitors.Count();
+        }
+
         public async Task<IEnumerable<Event>> GetActiveEvents()
         {
             var eventList = await context.Events
@@ -50,15 +58,6 @@ namespace DataAccessEF.TypeRepository
                         .ThenInclude(gce => gce.Renners)
                     .Include(c => c.GameCompetitorEvents)
                         .ThenInclude(gce => gce.User)
-                    //.Include(c => c.CompetitorsInEvent)
-                        //.ThenInclude(ci => ci.Competitor)
-                        //    .ThenInclude(comp => comp.Team)
-                    //.Include(c => c.CompetitorsInEvent)
-                    //    .ThenInclude(ci => ci.Competitor)
-                    //        .ThenInclude(comp => comp.Country)
-                    //.Include(c => c.CompetitorsInEvent)
-                    //    .ThenInclude(ci => ci.GameCompetitorEventPicks) // BELANGRIJK
-                    //.Include(e => e.Configuration)
                     .FirstOrDefaultAsync(e => e.EventId == id); return e;
         }
 
