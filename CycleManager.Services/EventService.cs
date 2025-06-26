@@ -197,5 +197,15 @@ namespace CycleManager.Services
         {
             return await _eventRepository.GetTeamsForEvent(eventId);
         }
+
+        /// <summary>
+        /// Return number of participants for an event
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        public async Task<int> GetAantalDeelnemers(int id)
+        {
+            return await _eventRepository.GetAantalDeelnemers(id);
+        }
     }
 }

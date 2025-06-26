@@ -45,13 +45,16 @@ namespace CycleManager.Services
         /// <param name="userId"></param>
         /// <returns></returns>
         Task<IEnumerable<EventForUserDto>> GetEventsByUserId(string userId);
-
         Task<EventDetailsViewModel?> GetEventDetailsViewModelById(int eventId);
-
         Task<IEnumerable<TeamDto>> GetTeamsForEvent(int eventId);
-
         Task<DeelnemerDto> CreatePoolAsync(DeelnemerDto deelnemerDto);
         Task SaveSelectie(SelectieDto selectie);
         Task DeletePoolAsync(int id);
+        /// <summary>
+        /// Return number of participants to an event
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        Task<int> GetAantalDeelnemers(int id);
     }
 }

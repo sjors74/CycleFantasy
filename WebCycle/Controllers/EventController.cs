@@ -231,5 +231,10 @@ namespace WebCycle.Controllers
             }
         }
 
+        [HttpGet("{id}/deelnemers")]
+        public async Task<int> GetDeelnemersAantal(int id)
+        {
+            return await eventService.GetAantalDeelnemers(id);
+        }
     }
 }
