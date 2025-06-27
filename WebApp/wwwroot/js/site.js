@@ -10,5 +10,9 @@
 
 function toggleGlobalLoader(show = true) {
     const loader = document.getElementById('global-loader');
+    if (!loader) {
+        console.warn("global-loader niet gevonden in DOM");
+        return;
+    }
     loader.style.display = show ? 'flex' : 'none';
 }
