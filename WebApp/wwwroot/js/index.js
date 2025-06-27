@@ -24,7 +24,7 @@ document.addEventListener("click", function (e) {
 });
 
 async function fetchDataAndRenderTiles(retries = 3, delay = 1000) {
-    const loader = document.getElementById('loader');
+    toggleGlobalLoader(true);
     const container = document.getElementById("container");
 
     if (!container) {
@@ -36,13 +36,10 @@ async function fetchDataAndRenderTiles(retries = 3, delay = 1000) {
         await loadConfig();
     } catch (err) {
         console.error("Configuratie laden mislukt:", err);
-        loader.innerHTML = '<p>Fout bij laden configuratie</p>';
         return;
     }
 
     for (let attempt = 1; attempt <= retries; attempt++) {
-
-        toggleGlobalLoader(true);
 
         try {
             const response = await fetch(`${API_BASE_URL}/api/event`);
