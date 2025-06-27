@@ -1,4 +1,11 @@
-﻿function formatDate(dateString) {
+﻿document.addEventListener("DOMContentLoaded", () => {
+    // Alleen automatisch sluiten als de pagina dat niet uitdrukkelijk overschrijft
+    if (!window._suppressAutoLoaderToggle) {
+        toggleGlobalLoader(false);
+    }
+});
+
+function formatDate(dateString) {
     const date = new Date(dateString);
     if (isNaN(date)) return "—"; // of "" of "Onbekend"
     return date.toLocaleDateString("nl-NL", {
