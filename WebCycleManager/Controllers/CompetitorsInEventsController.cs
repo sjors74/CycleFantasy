@@ -26,46 +26,48 @@ namespace WebCycleManager.Controllers
         public async Task<IActionResult> Index(int eventId, int? FilterTeam = 0)
         {
             var deelnemers = await _competitorInEventService.GetCompetitors(eventId);
-            var filteredDeelnemers = deelnemers;
+
             if (FilterTeam > 0)
             {
-                filteredDeelnemers = deelnemers.Where(t => t.Competitor.TeamId == FilterTeam).ToList();
-            }
-
-            var deelnemersViewModel = new List<CompetitorInEventViewModel>();
-            foreach(var d in filteredDeelnemers)
-            { 
-                var cvm = new CompetitorInEventViewModel { 
-                        CompetitorId = d.CompetitorId, 
-                        EventNumber = GetCompetitorInEvent(eventId, d.CompetitorId).Result.EventNumber,
-                        FirstName = d.Competitor.FirstName, 
-                        LastName = d.Competitor.LastName, 
-                        TeamName = GetTeam(d.Competitor.TeamId).Result.TeamName,
-                        CompetitorInEventId = GetCompetitorInEvent(eventId, d.CompetitorId).Result.Id,
-                        EventId =eventId,
-                        EventName = GetEvent(eventId).Result.EventName,
-                        OutOfCompetition = GetCompetitorInEvent(eventId,d.CompetitorId).Result.OutOfCompetition,
-                        InSelection = GetCompetitorInEvent(eventId, d.CompetitorId).Result.InSelectie,
-                        TeamId = d.Competitor.TeamId
-                };
-                deelnemersViewModel.Add(cvm);
+                deelnemers = deelnemers.Where(t => t.Competitor.TeamId == FilterTeam).ToList();
             }
             var currentEvent = await _eventService.GetEventById(eventId);
-            if (currentEvent != null)
-            {
-                var vm = new CompetitorsInEventViewModel(deelnemersViewModel.OrderBy(x => x.EventNumber).ThenBy(x => x.LastName).ThenBy(x => x.FirstName).ToList(), currentEvent.EventName, currentEvent.EventYear, currentEvent.EventId);
-                var teams = await _teamService.GetAll();
-                vm.Teams = teams.OrderBy(x => x.TeamName).Select(x =>
-                                  new SelectListItem()
-                                  {
-                                      Value = x.TeamId.ToString(),
-                                      Text = x.TeamName.ToString()
-                                  });
-                vm.FilterTeam = FilterTeam == null ? 0 : FilterTeam;
+            if (currentEvent == null) return NotFound();
 
-                return View(vm);
-            }
-            return NotFound();
+            var deelnemersViewModel = deelnemers.Select(d => new CompetitorInEventViewModel
+            {
+                CompetitorId = d.CompetitorId,
+                EventNumber = d.EventNumber,
+                FirstName = d.Competitor.FirstName,
+                LastName = d.Competitor.LastName,
+                TeamName = d.Competitor.Team?.TeamName ?? "onbekend",
+                CompetitorInEventId = d.Id,
+                EventId = d.EventId,
+                EventName = currentEvent.EventName,
+                OutOfCompetition = d.OutOfCompetition,
+                InSelection = d.InSelectie,
+                TeamId = d.Competitor.TeamId
+            }).OrderBy(x => x.EventNumber)
+              .ThenBy(x => x.LastName)
+              .ThenBy(x => x.FirstName)
+              .ToList();
+
+            var teams = await _teamService.GetAll();
+
+            var vm = new CompetitorsInEventViewModel(
+                deelnemersViewModel,
+                currentEvent.EventName,
+                currentEvent.EventYear,
+                currentEvent.EventId)
+            {
+                Teams = teams.Select(t => new SelectListItem()
+                {
+                    Value = t.TeamId.ToString(),
+                    Text = t.TeamName
+                }),
+                FilterTeam = FilterTeam ?? 0
+            };
+            return View(vm);
         }
 
         // GET: CompetitorsInEvents/Create

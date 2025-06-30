@@ -26,11 +26,9 @@ namespace DataAccessEF.TypeRepository
         public async Task<IEnumerable<CompetitorsInEvent>> GetCompetitors(int eventId)
         {
             return await context.CompetitorsInEvent
+                .Where(c => c.EventId == eventId)
                 .Include(c => c.Competitor)
                     .ThenInclude(c => c.Team)
-                .Include(c => c.Competitor)
-                    .ThenInclude(c => c.Country)
-                .Where(c => c.EventId == eventId)
                 .ToListAsync();
         }
 
