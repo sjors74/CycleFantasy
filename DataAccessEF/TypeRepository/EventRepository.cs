@@ -52,13 +52,8 @@ namespace DataAccessEF.TypeRepository
         public async Task<Event> GetEventById(int id)
         {
             var e = await context.Events
-                    .Include(s => s.Stages)
-                        .ThenInclude(r => r.Results)
-                    .Include(c => c.GameCompetitorEvents)
-                        .ThenInclude(gce => gce.Renners)
-                    .Include(c => c.GameCompetitorEvents)
-                        .ThenInclude(gce => gce.User)
-                    .FirstOrDefaultAsync(e => e.EventId == id); return e;
+                    .FirstOrDefaultAsync(e => e.EventId == id);
+            return e;
         }
 
         public async Task<EventDetailsViewModel?> GetEventDetailsViewModelById(int eventId)

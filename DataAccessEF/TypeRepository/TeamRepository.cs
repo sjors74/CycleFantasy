@@ -12,7 +12,6 @@ namespace DataAccessEF.TypeRepository
         public async Task<IEnumerable<Team>> GetAll()
         {
             var teams = await context.Teams
-                .Include(c => c.Country)
                 .ToListAsync();
             return teams;
         }
