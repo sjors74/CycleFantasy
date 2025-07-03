@@ -109,6 +109,8 @@ namespace DataAccessEF.TypeRepository
                    Renners = competitorsInEvent
                     .Where(cie => cie.Competitor.TeamId == et.Team.TeamId)
                     .OrderByDescending(cie => cie.InSelectie)
+                    .ThenBy(cie => cie.EventNumber)
+                    .ThenBy(cie => cie.Competitor.LastName)
                     .Select(cie => new CompetitorDto
                     {
                             CompetitorId = cie.Competitor.CompetitorId,
