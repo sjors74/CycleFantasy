@@ -16,7 +16,9 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 var connectionString = builder.Configuration.GetConnectionString("CycleDb");
-builder.Services.AddDbContext<ApplicationDbContext>(x => x.UseLazyLoadingProxies(false).UseSqlServer(connectionString));
+builder.Services.AddDbContext<ApplicationDbContext>(x => x.UseLazyLoadingProxies(false).UseSqlServer(connectionString, sqlOptions =>
+    sqlOptions.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery)
+));
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
