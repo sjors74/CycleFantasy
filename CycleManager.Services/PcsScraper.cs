@@ -61,7 +61,7 @@ namespace CycleManager.Services
 
                 var bib = int.TryParse(cols[3].InnerText.Trim(), out var bibNr) ? bibNr : 0;
                 var team = cols[8].InnerText.Trim();
-                var riderCell = cols[6].SelectSingleNode(".//a");
+                var riderCell = cols[7].SelectSingleNode(".//a");
                 var rider = riderCell?.InnerText.Trim() ?? "(onbekend)";
                 var result = new ScrapedStageResult
                 {
