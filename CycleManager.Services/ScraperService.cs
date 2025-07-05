@@ -85,18 +85,30 @@ namespace CycleManager.Services
                         r.StageId == stage.Id &&
                         r.CompetitorInEventId == match.Id);
 
+
+                    var configurationItemId = await GetIdForPositon(2, scrapedResult.Position); //TODO: 2 = configuratie wielerevenement groot
                     if (existingResult != null)
                     {
-                        existingResult.ConfigurationItemId = await GetIdForPositon(2, scrapedResult.Position); // eventueel dynamisch
+                        if (configurationItemId > 0)
+                        {
+                            existingResult.ConfigurationItemId = configurationItemId;
+                        }
+                        else
+                        {
+                            _db.Results.Remove(existingResult);
+                        }
                     }
                     else
                     {
-                        _db.Results.Add(new Result
+                        if (configurationItemId > 0)
                         {
-                            StageId = stage.Id,
-                            CompetitorInEventId = match.Id,
-                            ConfigurationItemId = await GetIdForPositon(2, scrapedResult.Position) //TODO: 2 = configuratie wielerevenement groot
-                        });
+                            _db.Results.Add(new Result
+                            {
+                                StageId = stage.Id,
+                                CompetitorInEventId = match.Id,
+                                ConfigurationItemId = await GetIdForPositon(2, scrapedResult.Position) //TODO: 2 = configuratie wielerevenement groot
+                            });
+                        }
                     }
                 }
                 else
