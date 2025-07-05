@@ -34,7 +34,8 @@ namespace CycleManager.Services
                 return results;
             }
            
-            foreach (var row in rows.Skip(1)) // skip header
+            //foreach (var row in rows.Skip(1)) // skip header
+            foreach (var row in rows)
             {
                 var rowClass = row.GetAttributeValue("class", "").ToLowerInvariant();
                 var cols = row.SelectNodes(".//td");
