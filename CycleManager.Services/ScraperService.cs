@@ -29,6 +29,11 @@ namespace CycleManager.Services
             .Include(s => s.Event)
                         .FirstOrDefaultAsync(s => s.StageName == stageNumber.ToString() && s.EventId == eventId);
 
+            // Oude resultaten verwijderen
+            var oudeResultaten = _db.ScrapedStageResults
+                .Where(r => r.StageId == stageNumber && r.EventId == eventId);
+            _db.ScrapedStageResults.RemoveRange(oudeResultaten);
+            await _db.SaveChangesAsync();
 
             string url = $"https://www.procyclingstats.com/race/{eventName}/{year}/stage-{stageNumber}";
             _logger.LogInformation($"Start scraping {eventName}: EventId={eventId}, StageId={stageNumber}");
@@ -37,32 +42,17 @@ namespace CycleManager.Services
 
             foreach (var scraped in nieuweScrape)
             {
-                var existing = await _db.ScrapedStageResults.FirstOrDefaultAsync(r =>
-                    r.StageId == stageNumber &&
-                    r.EventId == eventId &&
-                    r.Position == scraped.Position);
-
-                if(existing != null)
+                _db.ScrapedStageResults.Add(new ScrapedStageResult
                 {
-                    existing.RiderName = scraped.RiderName;
-                    existing.TeamName = scraped.TeamName;
-                    existing.BibNumber = scraped.BibNumber;
-                    existing.ImportedAt = DateTime.UtcNow;
-                }
-                else
-                {
-                    _db.ScrapedStageResults.Add(new ScrapedStageResult
-                    {
-                        EventId = eventId,
-                        StageId = stageNumber,
-                        BibNumber = scraped.BibNumber,
-                        RiderName = scraped.RiderName,
-                        TeamName = scraped.TeamName,
-                        Position = scraped.Position,
-                    });
-                }
+                    EventId = eventId,
+                    StageId = stageNumber,
+                    BibNumber = scraped.BibNumber,
+                    RiderName = scraped.RiderName,
+                    TeamName = scraped.TeamName,
+                    Position = scraped.Position,
+                    ImportedAt = DateTime.UtcNow
+                });
             }
-
             await _db.SaveChangesAsync();
 
             var scrapedResults = await _db.ScrapedStageResults
