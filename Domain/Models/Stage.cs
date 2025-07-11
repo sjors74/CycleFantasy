@@ -7,6 +7,8 @@ namespace Domain.Models
     {
         [Key]
         public int Id { get; set; }
+        [DisplayName("Datum")]
+        public DateTime StageDate { get; set; }
         [DisplayName("Etappe")]
         public string StageName { get; set; } = string.Empty;
         public int StageOrder { get; set; }

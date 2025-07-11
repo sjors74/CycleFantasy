@@ -17,6 +17,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebApp", "WebApp\WebApp.csp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebCycleScraper", "WebCycleScraper\WebCycleScraper.csproj", "{0C351474-1EEF-4AC2-BBA9-02DC9B4BF6D5}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ScraperFunction", "ScraperFunction\ScraperFunction.csproj", "{483516D1-AED5-416B-B968-0D4B81063FA5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -51,6 +53,10 @@ Global
 		{0C351474-1EEF-4AC2-BBA9-02DC9B4BF6D5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0C351474-1EEF-4AC2-BBA9-02DC9B4BF6D5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0C351474-1EEF-4AC2-BBA9-02DC9B4BF6D5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{483516D1-AED5-416B-B968-0D4B81063FA5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{483516D1-AED5-416B-B968-0D4B81063FA5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{483516D1-AED5-416B-B968-0D4B81063FA5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{483516D1-AED5-416B-B968-0D4B81063FA5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
