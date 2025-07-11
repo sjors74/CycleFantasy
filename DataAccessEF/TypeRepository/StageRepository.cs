@@ -2,6 +2,7 @@
 using Domain.Interfaces;
 using Domain.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Identity.Client;
 
 namespace DataAccessEF.TypeRepository
 {
@@ -20,6 +21,30 @@ namespace DataAccessEF.TypeRepository
                 .OrderBy(s => s.StageOrder)
                 .ToListAsync();
             return stages;
+        }
+
+        public async Task<int> GetStageNumber(DateTime date, int eventId)
+        {
+            var startDate = date.Date;
+            var endDate = startDate.AddDays(1);
+            var stage = await context.Stages
+                .Where(s => s.EventId.Equals(eventId) && s.StageDate.Date >= startDate && s.StageDate < endDate)
+                .FirstOrDefaultAsync();
+            if (stage != null && int.TryParse(stage.StageName, out int stageNumber))
+            {
+                return stageNumber;
+            }
+            else
+            {
+                return 0;
+            }
+        }
+
+        public async Task<int> GetStagesResults(int stageNumber, int eventId)
+        {
+            return await context.ScrapedStageResults
+                .Where(s => s.StageId.Equals(stageNumber) && s.EventId.Equals(eventId))
+                .CountAsync();
         }
     }
 }

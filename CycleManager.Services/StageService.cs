@@ -16,5 +16,15 @@ namespace CycleManager.Services
         {
             return _stageRepository.GetByEventId(eventId);
         }
+
+        public Task<int> GetStageNumberForDateAsync(DateTime date, int eventId)
+        {
+            return _stageRepository.GetStageNumber(date, eventId);
+        }
+
+        public Task<int> GetStageResults(int stageNumber, int eventId)
+        {
+            return _stageRepository.GetStagesResults(stageNumber, eventId);
+        }
     }
 }
