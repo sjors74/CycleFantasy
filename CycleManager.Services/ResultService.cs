@@ -79,6 +79,16 @@ namespace CycleManager.Services
             return await _resultsRepository.GetCompetitorResultsByEventId(eventId, competitorId);
         }
 
+        /// <summary>
+        /// Get result in latest stage for competitor
+        /// </summary>
+        /// <param name="eventId"></param>
+        /// <param name="competitorInEventId"></param>
+        /// <returns></returns>
+        public async Task<int> GetCompetitorScoreByEventAndStageIdAsync(int eventId, int competitorInEventId)
+        {
+            return await _resultsRepository.GetCompetitorLatestScore(eventId, competitorInEventId);
+        }
 
         /// <summary>
         ///  Get number of results for a given stage
