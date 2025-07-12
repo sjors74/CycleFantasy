@@ -22,6 +22,14 @@ namespace Domain.Interfaces
         Task<CompetitorScoreDto?> GetCompetitorResultsByEventId(int eventId, int competitorId);
 
         /// <summary>
+        /// Get the latest (stage) score for an competitor in an event
+        /// </summary>
+        /// <param name="eventId"></param>
+        /// <param name="competitorInEventId"></param>
+        /// <returns></returns>
+        Task<int> GetCompetitorLatestScore(int eventId, int competitorInEventId);
+        
+        /// <summary>
         /// Get the number of results for a stage
         /// </summary>
         /// <param name="stageId"></param>

@@ -21,6 +21,14 @@ namespace CycleManager.Services.Interfaces
         Task<CompetitorScoreDto?> GetCompetitorResultsByEventId(int eventId, int competitorId);
 
         /// <summary>
+        /// Get latest (stage) score for a competitor in an event
+        /// </summary>
+        /// <param name="eventId"></param>
+        /// <param name="competitorInEventId"></param>
+        /// <returns></returns>
+        Task<int> GetCompetitorScoreByEventAndStageIdAsync(int eventId, int competitorInEventId);
+        
+        /// <summary>
         /// Get a list of all results for an event
         /// </summary>
         /// <param name="eventId"></param>

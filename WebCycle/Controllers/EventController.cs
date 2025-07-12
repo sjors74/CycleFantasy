@@ -51,6 +51,15 @@ namespace WebCycle.Controllers
                         }
 
                         deelnemer.Punten = totaal;
+
+                        // Bereken score voor laatste stage
+                        int laatsteScore = 0;
+                        foreach (var pick in picks)
+                        {
+                            var scoreLaatsteStage = await _resultService.GetCompetitorScoreByEventAndStageIdAsync(cEvent.EventId, pick.CompetitorsInEventId);
+                            laatsteScore += scoreLaatsteStage;
+                        }
+                        deelnemer.LaatsteScore = laatsteScore;
                     }
                 }
             }

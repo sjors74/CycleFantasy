@@ -330,6 +330,11 @@ document.addEventListener('DOMContentLoaded', function () {
     function makeDeelnemerListItem(deelnemer, plaats, eventId) {
         const collapseId = `collapse-${deelnemer.id}`;
         const li = document.createElement("li");
+        const punten = deelnemer.punten ?? 0;
+        const laatsteScore = deelnemer.laatsteScore ?? 0;
+        const laatsteScoreHtml = (laatsteScore > 0)
+            ? `<div class="dagscore text-success small position-absolute end-0 top-50 translate-middle-y ms-2">(+${laatsteScore})</div>`
+            : ''; 
         li.className = "list-group-item p-2";
         li.innerHTML = `
         <div class="row align-items-center"
@@ -342,10 +347,11 @@ document.addEventListener('DOMContentLoaded', function () {
             data-event-id="${eventId}">
             <div class="col-md-4 text-uppercase">${deelnemer.poolNaam || "onbekende pool"}</div>
             <div class="col-md-6 text-uppercase">${deelnemer.deelnemerNaam || "onbekende deelnemer"}</div>
-            <div class="col-md-2 text-end ms-auto">
-                <span class="fw-bold fs-4">${deelnemer.punten ?? 0}</span>
-            </div>
-        </div>
+            <div class="col-md-2 position-relative">
+                <div class="fw-bold fs-4 text-end pe-5">${punten}</div>
+                ${laatsteScoreHtml}
+            </div>        
+        </div>        
         <div class="collapse mt-2" id="${collapseId}" data-bs-parent="#deelnemer-list">
             <div class="card card-body details-content" data-loaded="false"></div>
         </div>

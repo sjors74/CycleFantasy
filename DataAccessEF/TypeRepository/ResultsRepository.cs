@@ -1,5 +1,4 @@
 ﻿using CycleManager.Domain.Dto;
-using DataAccessEF.Migrations;
 using Domain.Context;
 using Domain.Interfaces;
 using Domain.Models;
@@ -39,8 +38,25 @@ namespace DataAccessEF.TypeRepository
                     CompetitorInEventId = g.Key,
                     TotalScore = g.Sum(r => r.ConfigurationItem.Score)
                 }).FirstOrDefaultAsync();
-
             return results;
+        }
+
+        public async Task<int> GetCompetitorLatestScore(int eventId, int competitorInEventId)
+        {
+            var configItems = await context.ConfigurationItems.ToListAsync();
+            var configDict = configItems.ToDictionary(ci => ci.Id, ci => ci.Score);
+            int laatsteStageId = await context.Stages
+                                        .Where(s => s.EventId == eventId)
+                                        .OrderByDescending(s => s.Id)
+                                        .Select(s => s.Id)
+                                        .FirstOrDefaultAsync();
+
+            var results = await context.Results
+                .Where(r => r.StageId == laatsteStageId && r.CompetitorInEventId == competitorInEventId)
+                .ToListAsync();
+
+            int score = results.Sum(r => configDict.TryGetValue(r.ConfigurationItemId, out var s) ? s : 0);
+            return score;
         }
 
         public async Task<int> GetResultsByStageId(int stageId)
