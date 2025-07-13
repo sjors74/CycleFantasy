@@ -45,14 +45,21 @@ namespace DataAccessEF.TypeRepository
         {
             var configItems = await context.ConfigurationItems.ToListAsync();
             var configDict = configItems.ToDictionary(ci => ci.Id, ci => ci.Score);
-            int laatsteStageId = await context.Stages
-                                        .Where(s => s.EventId == eventId)
-                                        .OrderByDescending(s => s.Id)
-                                        .Select(s => s.Id)
-                                        .FirstOrDefaultAsync();
+
+            int? laatsteVerredenStageId = await context.Results
+                .Where(r => r.CompetitorInEvent.EventId == eventId)
+                .Select(r => r.StageId)
+                .Distinct()
+                .OrderByDescending(id => id)
+                .FirstOrDefaultAsync();
+
+            if (laatsteVerredenStageId == 0)
+            {
+                return 0;
+            }
 
             var results = await context.Results
-                .Where(r => r.StageId == laatsteStageId && r.CompetitorInEventId == competitorInEventId)
+                .Where(r => r.StageId == laatsteVerredenStageId && r.CompetitorInEventId == competitorInEventId)
                 .ToListAsync();
 
             int score = results.Sum(r => configDict.TryGetValue(r.ConfigurationItemId, out var s) ? s : 0);
