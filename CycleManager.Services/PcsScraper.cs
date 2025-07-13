@@ -81,5 +81,55 @@ namespace CycleManager.Services
             _logger.LogInformation("Scraping voltooid. Aantal geldige resultaten: {Count}", results.Count);
             return results;
         }
+        public async Task<List<int>> ScrapeDropoutBibsAsync(string url)
+        {
+            var web = new HtmlWeb();
+            var doc = await web.LoadFromWebAsync(url);
+
+            var dropoutBibs = new List<int>();
+
+            // Zoek alle UL's waarvan de class begint met 'startlist'
+            var ulNodes = doc.DocumentNode.SelectNodes("//ul[starts-with(@class, 'startlist')]");
+            if (ulNodes == null)
+            {
+                _logger.LogWarning("Geen startlist UL's gevonden.");
+                return dropoutBibs;
+            }
+
+            foreach (var ul in ulNodes)
+            {
+                var liNodes = ul.SelectNodes(".//li");
+                if (liNodes == null)
+                    continue;
+
+                foreach (var li in liNodes)
+                {
+                    var ridersContDiv = li.SelectSingleNode(".//div[contains(@class, 'ridersCont')]");
+                    if (ridersContDiv == null)
+                        continue;
+
+                    var innerUl = ridersContDiv.SelectSingleNode(".//ul");
+                    if (innerUl == null)
+                        continue;
+
+                    var dropoutLis = innerUl.SelectNodes(".//li[contains(@class, 'dropout')]");
+                    if (dropoutLis == null)
+                        continue;
+
+                    foreach (var dropoutLi in dropoutLis)
+                    {
+                        var bibSpan = dropoutLi.SelectSingleNode(".//span[contains(@class, 'bib')]");
+                        if (bibSpan != null && int.TryParse(bibSpan.InnerText.Trim(), out var bibNr))
+                        {
+                            dropoutBibs.Add(bibNr);
+                        }
+                    }
+                }
+            }
+
+            _logger.LogInformation("Aantal dropout bibs gevonden: {Count}", dropoutBibs.Count);
+            return dropoutBibs;
+        }
+
     }
 }
