@@ -1,7 +1,4 @@
-using System;
-using CycleManager.Services.Interfaces;
 using CycleManager.Services;
-using DataAccessEF.Migrations;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -12,8 +9,7 @@ public class DropoutScraperFunction
 {
     private readonly ILogger _logger;
     private readonly ScraperService _scraper;
-    //private readonly IStageService _stageService;
-
+    
     public DropoutScraperFunction(ILoggerFactory loggerFactory, ScraperService scraper)
     {
         _logger = loggerFactory.CreateLogger<DropoutScraperFunction>();
@@ -21,11 +17,10 @@ public class DropoutScraperFunction
     }
 
     [Function("DropoutScraperFunction")]
-    public async Task RunDropoutScraper([TimerTrigger("0 0 14-23 * * *")] TimerInfo myTimer)
+    public async Task RunDropoutScraper([TimerTrigger("0 5,35 14-18 * * *")] TimerInfo myTimer)
     {
         _logger.LogInformation($"Dropout scraper gestart op: {DateTime.Now}");
 
-        // Config ophalen zoals in de andere functie
         var config = new ConfigurationBuilder()
             .SetBasePath(AppContext.BaseDirectory)
             .AddJsonFile("local.settings.json", optional: true, reloadOnChange: true)
@@ -56,7 +51,5 @@ public class DropoutScraperFunction
         {
             _logger.LogInformation($"Next timer schedule at: {myTimer.ScheduleStatus.Next}");
         }
-
     }
-
 }
