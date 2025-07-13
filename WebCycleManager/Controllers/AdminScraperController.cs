@@ -40,5 +40,12 @@ namespace WebCycleManager.Controllers
             TempData["Success"] = "Scrape voltooid.";
             return RedirectToAction("Details", "Events", new { id = eventId });
         }
+
+        [HttpGet]
+        public async Task<IActionResult> ScrapeDropouts(int eventId, string eventName, int year)
+        {
+            await _scraperService.RunDropoutsAsync(eventId, eventName, year);
+            return RedirectToAction("Details", "Events", new { id = eventId });
+        }
     }
 }

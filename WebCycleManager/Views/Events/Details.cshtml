@@ -63,6 +63,18 @@
                                 </a>
                             }
                         </td>
+                        <td>
+                            @if (!string.IsNullOrWhiteSpace(Model.EventCode))
+                            {
+                                <a class="text-primary"
+                                   asp-controller="AdminScraper"
+                                   asp-action="ScrapeDropouts"
+                                   asp-route-eventId="@Model.EventId" asp-route-eventName="@Model.EventCode" asp-route-year="@Model.StartDate.Value.Year">
+                                    Scrape dropouts
+                                </a>
+                            }
+                        </td>
+
                     </tr>
                 }
             </tbody>

@@ -110,9 +110,47 @@ namespace CycleManager.Services
             await _db.SaveChangesAsync();
         }
 
+        public async Task RunDropoutsAsync(int eventId, string eventName, int year)
+        {
+            string url = $"https://www.procyclingstats.com/race/{eventName}/{year}/startlist";
+            _logger.LogInformation($"Start scraping dropouts {eventName}: EventId={eventId}");
+
+            var dropoutBibs = await ScrapeDropoutsAsync(url);
+            int updateCount = 0;
+
+            var competitors = await _db.CompetitorsInEvent
+                .Include(c => c.Competitor)
+                .Where(c => c.EventId == eventId)
+                .ToListAsync();
+
+            foreach (var competitor in competitors)
+            {
+                if (dropoutBibs.Contains(competitor.EventNumber))
+                {
+                    if(!competitor.OutOfCompetition)
+                    {
+                        competitor.OutOfCompetition = true;
+                        updateCount++;
+                    }
+                }
+            }
+
+            if (updateCount > 0)
+            {
+                await _db.SaveChangesAsync();
+                _logger.LogInformation($"{updateCount} deelnemers gemarkeerd als uitgevallen voor EventId {eventId}.");
+            }
+        }
+
         private Task<List<ScrapedStageResult>> ScrapeStageResultsAsync(string url, int topN, int eventId)
         {
             return _pcsScraper.ScrapeStageResultsAsync(url, topN, eventId);
+        }
+
+
+        private Task<List<int>> ScrapeDropoutsAsync(string url)
+        {
+            return _pcsScraper.ScrapeDropoutBibsAsync(url);
         }
 
         private async Task<int> GetIdForPositon(int configuratieId, int position)
