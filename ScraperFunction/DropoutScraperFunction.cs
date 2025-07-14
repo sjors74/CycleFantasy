@@ -17,7 +17,7 @@ public class DropoutScraperFunction
     }
 
     [Function("DropoutScraperFunction")]
-    public async Task RunDropoutScraper([TimerTrigger("0 5,35 14-18 * * *")] TimerInfo myTimer)
+    public async Task RunDropoutScraper([TimerTrigger("0 5,10,35,40 14-18 * * *")] TimerInfo myTimer)
     {
         _logger.LogInformation($"Dropout scraper gestart op: {DateTime.Now}");
 
