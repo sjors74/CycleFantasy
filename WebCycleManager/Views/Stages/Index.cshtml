@@ -24,6 +24,7 @@
 <table class="table">
     <thead>
         <tr>
+            <th>@Html.DisplayName("Datum")</th>
             <th>@Html.DisplayName("Etappe")</th>
             <th>@Html.DisplayName("Van") </th>
             <th>@Html.DisplayName("Naar")</th>
@@ -35,6 +36,9 @@
     <tbody>
     @foreach (var item in Model.Stages) {
         <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.StageDate)
+            </td>
             <td>
                 @Html.DisplayFor(modelItem => item.StageName)
             </td>

@@ -21,6 +21,8 @@ namespace WebCycleManager.Models
         [DisplayName("Etappe")]
         public string StageName { get; set; } = string.Empty;
         public int StageOrder { get; set; }
+        [DisplayName("Datum")]
+        public DateOnly StageDate { get; set; }
         [DisplayName("Start locatie")]
         public string StartLocation { get; set; } = string.Empty;
         [DisplayName("Finish locatie")]

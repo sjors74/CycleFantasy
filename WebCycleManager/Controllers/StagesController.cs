@@ -92,7 +92,7 @@ namespace WebCycleManager.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("StageId,StageName,StageOrder,StartLocation,FinishLocation,EventId")] StageViewModel stage)
+        public async Task<IActionResult> Create([Bind("StageId,StageDate,StageName,StageOrder,StartLocation,FinishLocation,EventId")] StageViewModel stage)
         {
             if (ModelState.IsValid)
             {
@@ -148,7 +148,7 @@ namespace WebCycleManager.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("StageId,StageName,StageOrder,StartLocation,FinishLocation,EventId")] StageViewModel stage)
+        public async Task<IActionResult> Edit(int id, [Bind("StageId,StageDate,StageName,StageOrder,StartLocation,FinishLocation,EventId")] StageViewModel stage)
         {
             if (id != stage.StageId)
             {
@@ -238,6 +238,7 @@ namespace WebCycleManager.Controllers
         {
             var vm = new StageViewModel
             {
+                StageDate = DateOnly.FromDateTime(stage.StageDate),
                 StageId = stage.Id,
                 StageName = stage.StageName,
                 StageOrder = stage.StageOrder,
@@ -262,6 +263,7 @@ namespace WebCycleManager.Controllers
                 { 
                     stage = new Stage();
                 }
+                stage.StageDate = vm.StageDate.ToDateTime(TimeOnly.MinValue);
                 stage.StageName = vm.StageName;
                 stage.StageOrder = vm.StageOrder;
                 stage.StartLocation = vm.StartLocation;
