@@ -34,35 +34,7 @@ namespace WebCycle.Controllers
         {
             var events = await eventRepository.GetActiveEvents();
             var eventResponse = _mapper.Map<List<EventDto>>(events);
-            foreach (var cEvent in eventResponse)
-            {
-                if (cEvent.Deelnemers != null)
-                {
-                    foreach (var deelnemer in cEvent.Deelnemers)
-                    {
-                        var picks = await _deelnemerService.GetAllPicks(deelnemer.Id);
-                        int totaal = 0;
 
-                        foreach (var pick in picks)
-                        {
-                            var results = await _resultService.GetCompetitorResultsByEventId(cEvent.EventId, pick.CompetitorsInEventId);
-                            if (results != null)
-                                totaal += results.TotalScore;
-                        }
-
-                        deelnemer.Punten = totaal;
-
-                        // Bereken score voor laatste stage
-                        int laatsteScore = 0;
-                        foreach (var pick in picks)
-                        {
-                            var scoreLaatsteStage = await _resultService.GetCompetitorScoreByEventAndStageIdAsync(cEvent.EventId, pick.CompetitorsInEventId);
-                            laatsteScore += scoreLaatsteStage;
-                        }
-                        deelnemer.LaatsteScore = laatsteScore;
-                    }
-                }
-            }
             return Ok(eventResponse);
         }
 
