@@ -25,7 +25,8 @@ namespace Domain.Context
         public DbSet<EventTeam> EventTeam { get; set; }
         public DbSet<ScrapedStageResult> ScrapedStageResults { get; set; }
         public DbSet<NewsItem> NewsItems { get; set; }
-
+        public DbSet<DeelnemerScore> DeelnemerScores { get; set; }
+        public DbSet<DeelnemerPickScore> DeelnemerPickScores { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -109,7 +110,18 @@ namespace Domain.Context
 
             modelBuilder.Entity<EventTeam>()
                 .HasKey(et => new { et.EventId, et.TeamId });
+
+            modelBuilder.Entity<DeelnemerScore>()
+                .HasOne(ds => ds.Stage)
+                .WithMany()
+                .HasForeignKey(ds => ds.StageId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<DeelnemerPickScore>()
+                .HasOne(dps => dps.Stage)
+                .WithMany()
+                .HasForeignKey(dps => dps.StageId)
+                .OnDelete(DeleteBehavior.Restrict);
         }
     }
-
 }

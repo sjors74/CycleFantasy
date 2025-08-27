@@ -13,16 +13,19 @@ namespace WebCycle.Controllers
     public class EventController : ControllerBase
     {
         private readonly IEventRepository eventRepository;
+        private readonly IScoreRepository scoreRepository;
         private readonly IEventService eventService;
         private readonly IResultService _resultService;
         private readonly IGameCompetitorInEventService _deelnemerService;
         private readonly ITeamService _teamService;
         private readonly IMapper _mapper;
 
-        public EventController(IEventRepository eventRepository, IEventService eventService, IGameCompetitorInEventService deelnemerService, ITeamService teamService, IResultService resultService, IMapper mapper)
+        public EventController(IEventRepository eventRepository, IScoreRepository scoreRepository, IEventService eventService, IGameCompetitorInEventService deelnemerService, ITeamService teamService, IResultService resultService, IMapper mapper)
         {
             this.eventRepository = eventRepository;
+            this.scoreRepository = scoreRepository;
             this.eventService = eventService;
+
             _deelnemerService = deelnemerService;
             _resultService = resultService;
             _teamService = teamService;
@@ -34,6 +37,27 @@ namespace WebCycle.Controllers
         {
             var events = await eventRepository.GetActiveEvents();
             var eventResponse = _mapper.Map<List<EventDto>>(events);
+
+            foreach(var cEvent in eventResponse)
+            {
+                if(cEvent.Deelnemers != null)
+                {
+                    var deelnemerScores = await scoreRepository.GetScoresByEventIdAsync(cEvent.EventId);
+
+                    foreach(var deelnemer in cEvent.Deelnemers)
+                    {
+                        var scoresForDeelnemer = deelnemerScores
+                            .Where(s => s.GameCompetitorEventId == deelnemer.Id)
+                            .ToList();
+
+                        deelnemer.Punten = scoresForDeelnemer.Sum(s => s.TotalScore);
+
+                        deelnemer.LaatsteScore = scoresForDeelnemer
+                            .OrderByDescending(s => s.StageId)
+                            .FirstOrDefault()?.TotalScore ?? 0;
+                    }
+                }
+            }
 
             return Ok(eventResponse);
         }

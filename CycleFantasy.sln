@@ -9,7 +9,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CycleManager.Domain", "Doma
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DataAccessEF", "DataAccessEF\DataAccessEF.csproj", "{5C0BB5AB-810C-47C1-9AEF-AD7CE349A901}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebCycleManager", "WebCycleManager\WebCycleManager.csproj", "{C10CF99F-9F79-45EF-A7B9-4E7FBC38E9B5}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebCycleManager", "WebCycleManager\WebCycleManager.csproj", "{C10CF99F-9F79-45EF-A7B9-4E7FBC38E9B5}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CycleManager.Services", "CycleManager.Services\CycleManager.Services.csproj", "{0590D339-A38B-47CF-9FE2-4EA0193033E9}"
 EndProject

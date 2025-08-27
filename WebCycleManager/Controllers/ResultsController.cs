@@ -1,4 +1,5 @@
-﻿using Domain.Context;
+﻿using CycleManager.Services;
+using Domain.Context;
 using Domain.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -12,11 +13,13 @@ namespace WebCycleManager.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly IApiClient _apiClient;
+        private readonly ScoreService _scoreService;
 
-        public ResultsController(ApplicationDbContext context, IApiClient apiClient)
+        public ResultsController(ApplicationDbContext context, IApiClient apiClient, ScoreService scoreService)
         {
             _context = context;
             _apiClient = apiClient;
+            _scoreService = scoreService;
         }
 
         // GET: Results
@@ -124,10 +127,10 @@ namespace WebCycleManager.Controllers
             _context.Results.AddRange(resultList);
             await _context.SaveChangesAsync();
 
+            await _scoreService.UpdateScoresForStageAsync(model.EventId, model.StageId);
+
             await InvalidateCacheInApi(model.EventId);
 
-            //var competitors = _context.Competitors.OrderBy(c => c.LastName).ToList();
-            //model.DropdownList = new SelectList(competitors, "CompetitorId", "CompetitorName");
             return RedirectToAction("Index", new { stageId = model.StageId});
         }
 

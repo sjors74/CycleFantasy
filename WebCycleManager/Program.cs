@@ -47,6 +47,7 @@ builder.Services.AddTransient<IGameCompetitorInEventService, GameCompetitorInEve
 builder.Services.AddTransient<IUserService, UserService>();
 builder.Services.AddScoped<ScraperService>();
 builder.Services.AddScoped<PcsScraper>();
+builder.Services.AddScoped<ScoreService>();
 builder.Services.AddControllersWithViews();
 builder.Services.Configure<ApiSettings>(
 builder.Configuration.GetSection("ApiSettings"));
