@@ -8,11 +8,13 @@ namespace WebCycleManager.Controllers
     public class AdminScraperController : Controller
     {
         private readonly ScraperService _scraperService;
+        private readonly ScoreService _scoreService;
         private readonly ApplicationDbContext _db;
 
-        public AdminScraperController(ScraperService scraperService, ApplicationDbContext db)
+        public AdminScraperController(ScraperService scraperService, ScoreService scoreService, ApplicationDbContext db)
         {
             _scraperService = scraperService;
+            _scoreService = scoreService;
             _db = db;
         }
 
@@ -34,8 +36,9 @@ namespace WebCycleManager.Controllers
                 eventName: eventName,
                 stageNumber: stageId,
                 year: year
-               
             );
+
+            await _scoreService.UpdateScoresForStageAsync(eventId, stageId);
 
             TempData["Success"] = "Scrape voltooid.";
             return RedirectToAction("Details", "Events", new { id = eventId });
