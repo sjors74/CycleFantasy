@@ -70,7 +70,9 @@ namespace ScraperFunction
                 _logger.LogInformation($"Next timer schedule at: {myTimer.ScheduleStatus.Next}");
             }
 
-            //await _scoreService.UpdateScoresForStageAsync(eventId, stageId);
+            var stageId = await _stageService.GetStageIdFromStageNumber(stageNumber,eventId);
+            if(stageId > 0)
+               await _scoreService.UpdateScoresForStageAsync(eventId, stageId);
         }
     }
 }

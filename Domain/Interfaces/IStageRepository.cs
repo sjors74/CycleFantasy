@@ -1,4 +1,5 @@
 ﻿using Domain.Models;
+using Microsoft.Extensions.Logging;
 
 namespace Domain.Interfaces
 {
@@ -7,5 +8,6 @@ namespace Domain.Interfaces
         Task<IEnumerable<Stage>> GetByEventId(int eventId);
         Task<int> GetStageNumber(DateTime date, int eventId);
         Task<int> GetStagesResults(int stageNumber, int eventId);
+        Task<int> GetStageId(int stageNumber, int eventId);
     }
 }
