@@ -24,6 +24,10 @@ namespace WebCycleManager.Controllers
             var stage = await _db.Stages
                 .Include(s => s.Event)
                 .FirstOrDefaultAsync(s => s.Id == stageId);
+            if (stage == null)
+                throw new Exception("Stage not found while trying to scrape results.");
+
+            int.TryParse(stage.StageName, out var stageNumber);
 
             if (stage == null)
             {
@@ -34,7 +38,7 @@ namespace WebCycleManager.Controllers
             await _scraperService.RunAsync(
                 eventId: eventId,
                 eventName: eventName,
-                stageNumber: stageId,
+                stageNumber: stageNumber,
                 year: year
             );
 
