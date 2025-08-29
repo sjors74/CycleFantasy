@@ -40,5 +40,7 @@ namespace WebCycleManager.Models
                 return $"Etappe {StageName}: {StartLocation}-{FinishLocation}";
             }
         }
+
+        public bool NoScore { get; set; }
     }
 }

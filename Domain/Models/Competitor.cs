@@ -13,6 +13,8 @@ namespace Domain.Models
         public string FirstName { get; set; } = string.Empty;
         [DisplayName("Achternaam")]
         public string LastName { get; set; } = string.Empty;
+        public string PcsName { get; set; } = string.Empty;
+        public bool IsNationalChampion { get; set; }
 
         [DisplayName("Team")]
         public int TeamId { get; set; }
@@ -22,7 +24,7 @@ namespace Domain.Models
         public int CountryId { get; set; }
         [DisplayName("Land")]
         public Country? Country { get; set; }
-
+        
         [NotMapped]
         [DisplayName("Naam")]
         public string CompetitorName

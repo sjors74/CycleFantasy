@@ -17,6 +17,7 @@ var host = new HostBuilder()
             context.Configuration.GetSection("ScraperSettings"));
         services.AddScoped<ScraperService>();
         services.AddScoped<PcsScraper>();
+        services.AddScoped<ScoreService>();
         services.AddTransient<IStageService, StageService>();
         services.AddTransient<IStageRepository, StageRepository>();
         services.AddApplicationInsightsTelemetryWorkerService();
