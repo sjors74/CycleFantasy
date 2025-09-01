@@ -30,7 +30,8 @@ namespace Domain.Mapping
                             .ForMember(c => c.CompetitorTeam, d => d.MapFrom(s => s.CompetitorsInEvent.Competitor.Team.TeamName))
                             .ForMember(c => c.CompetitorInEventId, d => d.MapFrom(s => s.CompetitorsInEvent.Id))
                             .ForMember(c => c.OutOfCompetition, d => d.MapFrom(s => s.CompetitorsInEvent.OutOfCompetition))
-                            .ForMember(c => c.CountryCode, d => d.MapFrom(s => s.CompetitorsInEvent.Competitor.Country.CountryNameShort));
+                            .ForMember(c => c.CountryCode, d => d.MapFrom(s => s.CompetitorsInEvent.Competitor.Country.CountryNameShort))
+                            .ForMember(c => c.PcsName, d => d.MapFrom(s => s.CompetitorsInEvent.Competitor.PcsName));
 
             CreateMap<GameCompetitorEventPick, CompetitorDto>()
                 .ForMember(c => c.CompetitorName, d => d.MapFrom(s => s.CompetitorsInEvent.CompetitorName));

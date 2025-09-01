@@ -110,6 +110,8 @@ namespace CycleManager.Services
                             CompetitorName = renner.CompetitorsInEvent.CompetitorName,
                             CountryShort = renner.CompetitorsInEvent.Competitor.Country.CountryNameShort,
                             EventNumber = renner.CompetitorsInEvent.EventNumber.ToString(),
+                            PcsName = renner.CompetitorsInEvent.Competitor.PcsName,
+                            IsNationalChampion = renner.CompetitorsInEvent.Competitor.IsNationalChampion,
                             TeamName = renner.CompetitorsInEvent.Competitor.Team.TeamName,
                             Punten = punten
                         });
