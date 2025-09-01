@@ -70,7 +70,16 @@
                                             <input type="checkbox" class="form-check-input renner-checkbox" value="@renner.CompetitorId" 
                                                 @(Model.SelectedRiders.Contains(renner.CompetitorId) ? "checked" : "") />
                                             <label class="form-check-label">
-                                                @(renner.CompetitorName)
+                                                @if (!string.IsNullOrEmpty(renner.PcsName))
+                                                {
+                                                    <a href="https://www.procyclingstats.com/rider/@renner.PcsName" target="_blank" rel="noopener noreferrer">
+                                                        @renner.CompetitorName
+                                                    </a>
+                                                }
+                                                else
+                                                {
+                                                    @renner.CompetitorName
+                                                }
                                             </label>
                                         </div>
                                     }

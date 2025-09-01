@@ -8,11 +8,13 @@ namespace WebCycleManager.Controllers
     public class AdminScraperController : Controller
     {
         private readonly ScraperService _scraperService;
+        private readonly ScoreService _scoreService;
         private readonly ApplicationDbContext _db;
 
-        public AdminScraperController(ScraperService scraperService, ApplicationDbContext db)
+        public AdminScraperController(ScraperService scraperService, ScoreService scoreService, ApplicationDbContext db)
         {
             _scraperService = scraperService;
+            _scoreService = scoreService;
             _db = db;
         }
 
@@ -22,6 +24,10 @@ namespace WebCycleManager.Controllers
             var stage = await _db.Stages
                 .Include(s => s.Event)
                 .FirstOrDefaultAsync(s => s.Id == stageId);
+            if (stage == null)
+                throw new Exception("Stage not found while trying to scrape results.");
+
+            int.TryParse(stage.StageName, out var stageNumber);
 
             if (stage == null)
             {
@@ -32,10 +38,11 @@ namespace WebCycleManager.Controllers
             await _scraperService.RunAsync(
                 eventId: eventId,
                 eventName: eventName,
-                stageNumber: stageId,
+                stageNumber: stageNumber,
                 year: year
-               
             );
+
+            await _scoreService.UpdateScoresForStageAsync(eventId, stageId);
 
             TempData["Success"] = "Scrape voltooid.";
             return RedirectToAction("Details", "Events", new { id = eventId });

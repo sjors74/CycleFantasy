@@ -225,6 +225,15 @@
     outline: 3px solid #343a40;
 }
 
+.nc-badge
+{
+    font-size: 0.65em;
+    font-weight: bold;
+    color: #d4af37;
+    margin-left: 2px;
+    vertical-align: super;
+}
+
 @keyframes spin {
     0% {
         transform: rotate(0deg);

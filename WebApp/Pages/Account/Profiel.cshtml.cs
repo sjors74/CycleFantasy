@@ -48,39 +48,8 @@ namespace WebApp.Pages.Account
                 }
 
                 ActueleEvenementen = response.ActieveEvenementen ?? new();
-                foreach(var evenement in ActueleEvenementen)
-                {
-                    var geselecteerdeRennersInEvenement = await client.GetFromJsonAsync<List<ResultDto>>($"{apiBaseUrl}/api/deelnemer/picks/{evenement.CompetitorInEventId}/event/{evenement.EventId}");
-                    if(geselecteerdeRennersInEvenement != null && geselecteerdeRennersInEvenement.Any())
-                    {
-                        evenement.Renners = geselecteerdeRennersInEvenement;
-                    }
-                }
                 ToekomstigeEvenementen = response.ToekomstigeEvenementen ?? new();
-                foreach (var evenement in ToekomstigeEvenementen)
-                {
-                    var geselecteerdeRennersInEvenement = await client.GetFromJsonAsync<List<ResultDto>>($"{apiBaseUrl}/api/deelnemer/picks/{evenement.CompetitorInEventId}/event/{evenement.EventId}");
-                    if (geselecteerdeRennersInEvenement != null && geselecteerdeRennersInEvenement.Any())
-                    {
-                        evenement.Renners = geselecteerdeRennersInEvenement;
-                    }
-                }
-
                 HistorischeEvenementen = response.HistorischeEvenementen ?? new();
-                foreach(var evenement in HistorischeEvenementen)
-                {
-                    foreach (var deelnemer in evenement.Deelnemers)
-                    {
-                        if (deelnemer.UserId == userId)
-                        {
-                            var geselecteerdeRennersInEvenement = await client.GetFromJsonAsync<List<ResultDto>>($"{apiBaseUrl}/api/deelnemer/picks/{deelnemer.Id}/event/{evenement.EventId}");
-                            if (geselecteerdeRennersInEvenement != null && geselecteerdeRennersInEvenement.Any())
-                            {
-                                evenement.Renners = geselecteerdeRennersInEvenement;
-                            }
-                        }
-                    }
-                }
             }
         }
 

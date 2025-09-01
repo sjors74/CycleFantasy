@@ -9,6 +9,8 @@ namespace CycleManager.Domain.Dto
         public string CompetitorTeam { get; set; } = string.Empty;
         public int Position { get; set; }
         public int Points { get; set; }
+        public string PcsName { get; set; }
+        public bool IsNationalChampion { get; set; }
         public List<ConfigurationItem> ConfigurationItems { get; set; } = [];
         public int EventId { get; set; }
         public int CompetitorInEventId { get; set; }

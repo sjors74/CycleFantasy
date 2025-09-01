@@ -11,13 +11,15 @@ namespace ScraperFunction
     {
         private readonly ILogger _logger;
         private readonly ScraperService _scraper;
+        private readonly ScoreService _scoreService;
         private readonly IStageService _stageService;
 
-        public ScraperFunction(ILoggerFactory loggerFactory, ScraperService scraper, IStageService stageService)
+        public ScraperFunction(ILoggerFactory loggerFactory, ScraperService scraper, IStageService stageService, ScoreService scoreService)
         {
             _logger = loggerFactory.CreateLogger<ScraperFunction>();
             _scraper = scraper;
             _stageService = stageService;
+            _scoreService = scoreService;
         }
 
         [Function("ScraperFunction")]
@@ -67,6 +69,10 @@ namespace ScraperFunction
             {
                 _logger.LogInformation($"Next timer schedule at: {myTimer.ScheduleStatus.Next}");
             }
+
+            var stageId = await _stageService.GetStageIdFromStageNumber(stageNumber,eventId);
+            if(stageId > 0)
+               await _scoreService.UpdateScoresForStageAsync(eventId, stageId);
         }
     }
 }

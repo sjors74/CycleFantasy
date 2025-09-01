@@ -115,6 +115,8 @@ namespace DataAccessEF.TypeRepository
                     {
                             CompetitorId = cie.Competitor.CompetitorId,
                             CompetitorName = cie.CompetitorName,
+                            PcsName = cie.Competitor.PcsName,
+                            IsNationalChampion = cie.Competitor.IsNationalChampion,
                             CountryShort = cie.Competitor.Country.CountryNameShort,
                             TeamName = et.Team.TeamName,
                             InSelectie = cie.InSelectie

@@ -37,6 +37,11 @@
                 <span asp-validation-for="FinishLocation" class="text-danger"></span>
             </div>
             <div class="form-group">
+                <input asp-for="NoScore" class="form-check-input" type="checkbox" />
+                <label asp-for="NoScore" class="form-check-label"></label>
+                <span asp-validation-for="NoScore" class="text-danger"></span>
+            </div>
+            <div class="form-group">
                 <label asp-for="EventId" class="control-label"></label>
                 <select asp-for="EventId" class="form-control" asp-items="ViewBag.EventId"></select>
                 <span asp-validation-for="EventId" class="text-danger"></span>

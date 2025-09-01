@@ -18,6 +18,7 @@ namespace Domain.Models
         public string FinishLocation { get; set; } = string.Empty;
         [DisplayName("Evenement")]
         public int EventId { get; set; }
+        public bool NoScore { get; set; }
         
         public virtual Event Event{ get; set; } 
         public virtual ICollection<Result> Results { get; set; } = [];

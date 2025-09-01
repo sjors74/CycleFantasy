@@ -79,7 +79,28 @@
                                                                                 <div class="col-md-1">
                                                                                     <img src="https://flagcdn.com/24x18/@(renner.CountryShort?.ToLower() ?? "unknown").png" alt="Vlag" />
                                                                                 </div>
-                                                                                <div class="col-md-3 fw-bold">@renner.CompetitorName</div>
+                                                                                <div class="col-md-3 fw-bold">
+                                                                                    @if (!string.IsNullOrEmpty(renner.PcsName))
+                                                                                    {
+                                                                                        <a href="https://procyclingstats.com/rider/@renner.PcsName"
+                                                                                           target="_blank" rel="noopener noreferrer"
+                                                                                           class="text-dark text-decoration-none">
+                                                                                            @renner.CompetitorName
+                                                                                        </a>
+                                                                                        @if(renner.IsNationalChampion)
+                                                                                        {
+                                                                                            <span class="nc-badge">NC</span>
+                                                                                        }
+                                                                                    }
+                                                                                    else
+                                                                                    {
+                                                                                        @renner.CompetitorName
+                                                                                        @if (renner.IsNationalChampion)
+                                                                                        {
+                                                                                            <span class="nc-label">NC</span>
+                                                                                        }
+                                                                                     }
+                                                                                </div>
                                                                                 <div class="col-md-4 text-muted">@renner.TeamName</div>
                                                                                 <div class="col-md-2 text-end">@renner.Punten</div>
                                                                             </div>

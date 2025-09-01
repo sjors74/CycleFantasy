@@ -22,6 +22,11 @@ namespace CycleManager.Services
             return _stageRepository.GetStageNumber(date, eventId);
         }
 
+        public Task<int> GetStageIdFromStageNumber(int stageNumber, int eventId)
+        {
+            return _stageRepository.GetStageId(stageNumber, eventId);
+        }
+
         public Task<int> GetStageResults(int stageNumber, int eventId)
         {
             return _stageRepository.GetStagesResults(stageNumber, eventId);

@@ -23,6 +23,21 @@ namespace DataAccessEF.TypeRepository
             return stages;
         }
 
+        public async Task<int> GetStageId(int stageNumber, int eventId)
+        {
+            var stageNumberString = stageNumber.ToString();
+            var stage = await context.Stages
+                .Include(e => e.Event)
+                .Where(s => s.EventId == eventId && s.StageName == stageNumberString)
+                .FirstOrDefaultAsync();
+
+            if (stage != null)
+            {
+                return stage.Id;
+            }
+            return 0;
+        }
+
         public async Task<int> GetStageNumber(DateTime date, int eventId)
         {
             var startDate = date.Date;

@@ -13,16 +13,19 @@ namespace WebCycle.Controllers
     public class EventController : ControllerBase
     {
         private readonly IEventRepository eventRepository;
+        private readonly IScoreRepository scoreRepository;
         private readonly IEventService eventService;
         private readonly IResultService _resultService;
         private readonly IGameCompetitorInEventService _deelnemerService;
         private readonly ITeamService _teamService;
         private readonly IMapper _mapper;
 
-        public EventController(IEventRepository eventRepository, IEventService eventService, IGameCompetitorInEventService deelnemerService, ITeamService teamService, IResultService resultService, IMapper mapper)
+        public EventController(IEventRepository eventRepository, IScoreRepository scoreRepository, IEventService eventService, IGameCompetitorInEventService deelnemerService, ITeamService teamService, IResultService resultService, IMapper mapper)
         {
             this.eventRepository = eventRepository;
+            this.scoreRepository = scoreRepository;
             this.eventService = eventService;
+
             _deelnemerService = deelnemerService;
             _resultService = resultService;
             _teamService = teamService;
@@ -34,35 +37,28 @@ namespace WebCycle.Controllers
         {
             var events = await eventRepository.GetActiveEvents();
             var eventResponse = _mapper.Map<List<EventDto>>(events);
-            foreach (var cEvent in eventResponse)
+
+            foreach(var cEvent in eventResponse)
             {
-                if (cEvent.Deelnemers != null)
+                if(cEvent.Deelnemers != null)
                 {
-                    foreach (var deelnemer in cEvent.Deelnemers)
+                    var deelnemerScores = await scoreRepository.GetScoresByEventIdAsync(cEvent.EventId);
+
+                    foreach(var deelnemer in cEvent.Deelnemers)
                     {
-                        var picks = await _deelnemerService.GetAllPicks(deelnemer.Id);
-                        int totaal = 0;
+                        var scoresForDeelnemer = deelnemerScores
+                            .Where(s => s.GameCompetitorEventId == deelnemer.Id)
+                            .ToList();
 
-                        foreach (var pick in picks)
-                        {
-                            var results = await _resultService.GetCompetitorResultsByEventId(cEvent.EventId, pick.CompetitorsInEventId);
-                            if (results != null)
-                                totaal += results.TotalScore;
-                        }
+                        deelnemer.Punten = scoresForDeelnemer.Sum(s => s.TotalScore);
 
-                        deelnemer.Punten = totaal;
-
-                        // Bereken score voor laatste stage
-                        int laatsteScore = 0;
-                        foreach (var pick in picks)
-                        {
-                            var scoreLaatsteStage = await _resultService.GetCompetitorScoreByEventAndStageIdAsync(cEvent.EventId, pick.CompetitorsInEventId);
-                            laatsteScore += scoreLaatsteStage;
-                        }
-                        deelnemer.LaatsteScore = laatsteScore;
+                        deelnemer.LaatsteScore = scoresForDeelnemer
+                            .OrderByDescending(s => s.StageId)
+                            .FirstOrDefault()?.TotalScore ?? 0;
                     }
                 }
             }
+
             return Ok(eventResponse);
         }
 

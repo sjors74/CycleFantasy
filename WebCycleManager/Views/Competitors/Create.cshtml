@@ -23,6 +23,16 @@
                 <span asp-validation-for="LastName" class="text-danger"></span>
             </div>
             <div class="form-group">
+                <label asp-for="PcsName" class="control-label"></label>
+                <input asp-for="PcsName" class="form-control" />
+                <span asp-validation-for="PcsName" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <input asp-for="IsNationalChampion" class="form-check-input" />
+                <label asp-for="IsNationalChampion" class="form-check-label"></label>
+                <span asp-validation-for="IsNationalChampion" class="text-danger"></span>
+            </div>
+            <div class="form-group">
                 <label asp-for="TeamId" class="control-label"></label>
                 <select asp-for="TeamId" class ="form-control" asp-items="ViewBag.TeamId"></select>
             </div>

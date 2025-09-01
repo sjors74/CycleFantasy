@@ -256,7 +256,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
                     <div class="d-flex flex-column flex-md-row d-md-grid w-100"
                          style="display: grid; grid-template-columns: 1fr 250px; gap: 0.5rem;">
-                        <div class="fw-bold">${pick.competitorName}</div>
+                        <div class="fw-bold">${pick.pcsName
+                            ? `<a href="https://procyclingstats.com/rider/${pick.pcsName}" target="_blank" class="text-dark text-decoration-none">${pick.competitorName}</a>`
+                            : pick.competitorName} ${pick.isNationalChampion ? `<span class="nc-badge">NC</span>` : ''}</div>
                         <div class="text-muted small">${pick.competitorTeam}</div>
                     </div>
                 </div>

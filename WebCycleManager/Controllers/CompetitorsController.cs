@@ -79,7 +79,7 @@ namespace WebCycleManager.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("CompetitorId,FirstName,LastName,TeamId, CountryId")] Competitor competitor)
+        public async Task<IActionResult> Create([Bind("CompetitorId,FirstName,LastName,PcsName,IsNationalChampion,TeamId, CountryId")] Competitor competitor)
         {
             if (ModelState.IsValid)
             {
@@ -114,7 +114,7 @@ namespace WebCycleManager.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("CompetitorId,FirstName,LastName,TeamId,CountryId")] Competitor competitor)
+        public async Task<IActionResult> Edit(int id, [Bind("CompetitorId,FirstName,LastName,PcsName,IsNationalChampion,TeamId,CountryId")] Competitor competitor)
         {
             if (id != competitor.CompetitorId)
             {
