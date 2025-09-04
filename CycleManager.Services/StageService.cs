@@ -31,5 +31,10 @@ namespace CycleManager.Services
         {
             return _stageRepository.GetStagesResults(stageNumber, eventId);
         }
+
+        public Task<Stage> GetStage(int stageNumber, int eventId)
+        {
+            return _stageRepository.GetStage(stageNumber, eventId);
+        }
     }
 }

@@ -54,25 +54,32 @@ namespace ScraperFunction
                 return;
             }
             var stageNumber = await _stageService.GetStageNumberForDateAsync(today, eventId);
+            var stage = await _stageService.GetStage(stageNumber, eventId);
 
-            var count = await _stageService.GetStageResults(stageNumber, eventId);
-
-            if (count >= 15)
+            if (stage != null && stage.NoScore == false)
             {
-                _logger.LogInformation($"Al {count} resultaten voor {today:yyyy-MM-dd}. Scrape wordt overgeslagen.");
-                return;
+                var count = await _stageService.GetStageResults(stageNumber, eventId);
+
+                if (count >= 15)
+                {
+                    _logger.LogInformation($"Al {count} resultaten voor {today:yyyy-MM-dd}. Scrape wordt overgeslagen.");
+                    return;
+                }
+
+                await _scraper.RunAsync(eventId, eventName, eventYear, stageNumber);
+
+                if (myTimer.ScheduleStatus is not null)
+                {
+                    _logger.LogInformation($"Next timer schedule at: {myTimer.ScheduleStatus.Next}");
+                }
+
+                if (stage.Id > 0)
+                    await _scoreService.UpdateScoresForStageAsync(eventId, stage.Id);
             }
-
-            await _scraper.RunAsync(eventId, eventName, eventYear, stageNumber);
-
-            if (myTimer.ScheduleStatus is not null)
+            else
             {
-                _logger.LogInformation($"Next timer schedule at: {myTimer.ScheduleStatus.Next}");
+                _logger.LogInformation($"Geen etappe gevonden óf er worden geen resultaten verwacht voor deze etappe.");
             }
-
-            var stageId = await _stageService.GetStageIdFromStageNumber(stageNumber,eventId);
-            if(stageId > 0)
-               await _scoreService.UpdateScoresForStageAsync(eventId, stageId);
         }
     }
 }

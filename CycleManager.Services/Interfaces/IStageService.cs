@@ -34,5 +34,12 @@ namespace CycleManager.Services.Interfaces
         /// <param name="eventId"></param>
         /// <returns></returns>
         Task<int> GetStageIdFromStageNumber(int stageNumber, int eventId);
+        /// <summary>
+        /// Get the stage for an event and stagenumber
+        /// </summary>
+        /// <param name="stageNumber"></param>
+        /// <param name="eventId"></param>
+        /// <returns></returns>
+        Task<Stage> GetStage(int stageNumber, int eventId);
     }
 }

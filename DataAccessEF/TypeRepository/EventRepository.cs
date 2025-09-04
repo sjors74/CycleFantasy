@@ -77,7 +77,8 @@ namespace DataAccessEF.TypeRepository
                             StageOrder = s.StageOrder,
                             StartLocation = s.StartLocation,
                             FinishLocation = s.FinishLocation,
-                            AantalPosities = s.Results.Count
+                            AantalPosities = s.Results.Count,
+                            NoScore = s.NoScore
                         }).ToList()
                 })
                 .AsNoTracking()
