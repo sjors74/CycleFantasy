@@ -351,8 +351,9 @@ document.addEventListener('DOMContentLoaded', function () {
             style="cursor: pointer;"
             data-deelnemer-id="${deelnemer.id}"
             data-event-id="${eventId}">
-            <div class="col-md-5 text-uppercase">${deelnemer.poolNaam || "onbekende pool"}</div>
-            <div class="col-md-5 text-uppercase">${deelnemer.deelnemerNaam || "onbekende deelnemer"}</div>
+            <div class="col-md-1">${plaats}</div>
+            <div class="col-md-4 text-uppercase">${deelnemer.poolNaam || "onbekende pool"}</div>
+            <div class="col-md-4 text-uppercase">${deelnemer.deelnemerNaam || "onbekende deelnemer"}</div>
             <div class="col-md-2 position-relative">
                 <div class="fw-bold fs-4 text-end pe-5">${punten}</div>
                 ${laatsteScoreHtml}
