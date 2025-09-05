@@ -103,12 +103,15 @@
     color: white;
     font-size: 12px;
     font-weight: bold;
-    cursor: help;
     transition: background-color 0.3s;
 }
 
     .step.completed {
         background-color: #4caf50;
+    }
+
+    .step.noscore {
+        background-color: #ff4081;
     }
 
     .step.placeholder {

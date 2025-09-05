@@ -179,6 +179,10 @@ document.addEventListener('DOMContentLoaded', function () {
         etappes.forEach((etappe) => {
             const step = document.createElement("div");
             step.classList.add("step");
+            if (etappe.noScore) {
+                step.classList.add("noscore");
+            }
+
             if (etappe.hasResult) {
                 step.classList.add("completed");
 
