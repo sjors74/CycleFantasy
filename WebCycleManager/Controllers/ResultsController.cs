@@ -87,6 +87,7 @@ namespace WebCycleManager.Controllers
                 stage.EventId,
                 config.Id,
                 $"Etappe {stage.StageName}: {stage.StartLocation}-{stage.FinishLocation}",
+                stage.NoScore,
                 configItems.Count,
                 resultItems,
                 competitorsInEvent
@@ -193,6 +194,7 @@ namespace WebCycleManager.Controllers
                         stage.EventId, 
                         config.Id, 
                         $"Etappe {stage.StageName}: {stage.StartLocation}-{stage.FinishLocation}", 
+                        stage.NoScore,
                         configItems.Count, 
                         resultItems,
                         competitorsInEvent

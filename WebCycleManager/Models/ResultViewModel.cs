@@ -14,6 +14,7 @@ namespace WebCycleManager.Models
             int eventId, 
             int configurationId, 
             string stageName, 
+            bool noScore,
             int configurationItems, 
             List<ResultItemViewModel> results,
             List<CompetitorsInEvent> competitorsInEvent
@@ -23,6 +24,7 @@ namespace WebCycleManager.Models
             EventId = eventId;
             ConfigurationId = configurationId;
             StageName = stageName;
+            NoScore = noScore;
             ConfigurationItems = configurationItems;
             Results = results;
             Competitors = competitorsInEvent;
@@ -36,6 +38,8 @@ namespace WebCycleManager.Models
         public string CompetitorName { get; set; } = string.Empty;
 
         public string StageName { get; set; } = string.Empty;
+
+        public bool NoScore { get; set; }
 
         public int ConfigurationItems { get; set; }
 

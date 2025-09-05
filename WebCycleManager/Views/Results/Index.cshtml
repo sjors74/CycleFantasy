@@ -2,62 +2,70 @@
 @model ResultViewModel
 <h1>@Model.StageName</h1>
 <div id="autocomplete-root" data-count="@Model.ConfigurationItems"></div>
-<form method="post" asp-controller="Results" asp-action="Index">
-    <table class="table">
-        <thead>
-            <tr>
-                <th>
-                    @Html.DisplayNameFor(model => model.Results.First().Position)
-                </th>
-                <th>
-                    @Html.DisplayNameFor(model => model.Results.First().CompetitorName)
-                </th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-            @for(var i = 0; i < Model.ConfigurationItems; i++) {
+
+@if(Model.NoScore)
+{
+ <h5>Voor deze etappe worden geen scores berekend.</h5>
+}
+else
+{
+    <form method="post" asp-controller="Results" asp-action="Index">
+        <table class="table">
+            <thead>
                 <tr>
-                    <td>
-                        @Html.HiddenFor(model => model.EventId)
-                        @Html.HiddenFor(model => model.Results[i].Position)
-                        <label>@Model.Results[i].Position</label>
-                    </td>
-                    <td>
-                        @if (Model.Results[i].SelectedCompetitorId > 0)
-                        {
-                            <label>@Model.Results[i].CompetitorName</label>
-                            @Html.HiddenFor(m => m.Results[i].SelectedCompetitorId)
-                        }
-                        else
-                        {
-                            <input 
-                                type="text"
-                                id="competitor-autocomplete-@i"
-                                name="Results[@i].CompetitorName"
-                                value="@Model.Results[i].CompetitorName" 
-                                placeholder="Typ hier naam..."
-                                autocomplete="on"
-                                />
-                             <input type="hidden" name="Results[@i].SelectedCompetitorId" id="selectedCompetitorId-@i" value="@Model.Results[i].SelectedCompetitorId" />
-                        }
-                    </td>
-                    <td>
-                        @if (Model.Results[i].Id > 0)
-                        {
-                            <a asp-action="Delete" asp-route-id="@Model.Results[i].Id">Verwijder</a>
-                        }
-                    </td>
+                    <th>
+                        @Html.DisplayNameFor(model => model.Results.First().Position)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model.Results.First().CompetitorName)
+                    </th>
+                    <th></th>
                 </tr>
-            }
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
 
-    <input type="hidden" id="configurationId" name="configurationId" value="@Model.ConfigurationId" />
-    <input type="hidden" id="stageId" name="stageId" value="@Model.StageId" />
-    <button type="submit" value="Opslaan">Opslaan</button>
-</form>
+                @for(var i = 0; i < Model.ConfigurationItems; i++) {
+                    <tr>
+                        <td>
+                            @Html.HiddenFor(model => model.EventId)
+                            @Html.HiddenFor(model => model.Results[i].Position)
+                            <label>@Model.Results[i].Position</label>
+                        </td>
+                        <td>
+                            @if (Model.Results[i].SelectedCompetitorId > 0)
+                            {
+                                <label>@Model.Results[i].CompetitorName</label>
+                                @Html.HiddenFor(m => m.Results[i].SelectedCompetitorId)
+                            }
+                            else
+                            {
+                                <input 
+                                    type="text"
+                                    id="competitor-autocomplete-@i"
+                                    name="Results[@i].CompetitorName"
+                                    value="@Model.Results[i].CompetitorName" 
+                                    placeholder="Typ hier naam..."
+                                    autocomplete="on"
+                                    />
+                                 <input type="hidden" name="Results[@i].SelectedCompetitorId" id="selectedCompetitorId-@i" value="@Model.Results[i].SelectedCompetitorId" />
+                            }
+                        </td>
+                        <td>
+                            @if (Model.Results[i].Id > 0)
+                            {
+                                <a asp-action="Delete" asp-route-id="@Model.Results[i].Id">Verwijder</a>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
 
+        <input type="hidden" id="configurationId" name="configurationId" value="@Model.ConfigurationId" />
+        <input type="hidden" id="stageId" name="stageId" value="@Model.StageId" />
+        <button type="submit" value="Opslaan">Opslaan</button>
+    </form>
+}
 <div>
     <a asp-controller="Events" asp-action="Details" asp-route-id=@Model.EventId>Terug naar evenement</a>
 </div>

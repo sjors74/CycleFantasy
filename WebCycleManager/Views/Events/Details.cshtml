@@ -53,7 +53,7 @@
                             @item.AantalPosities
                         </td>
                         <td>
-                            @if(!string.IsNullOrWhiteSpace(Model.EventCode))
+                            @if(!string.IsNullOrWhiteSpace(Model.EventCode) && !item.NoScore)
                             {
                                 <a class="text-primary"
                                 asp-controller="AdminScraper"

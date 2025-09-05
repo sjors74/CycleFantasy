@@ -8,5 +8,6 @@
         public string StartLocation { get; set; } = string.Empty;
         public string FinishLocation { get; set; } = string.Empty;
         public int AantalPosities { get; set; }
+        public bool NoScore { get; set; }
     }
 }

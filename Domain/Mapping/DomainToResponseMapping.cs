@@ -39,6 +39,7 @@ namespace Domain.Mapping
             CreateMap<Stage, StageResultDto>()
                 .ForMember(c => c.StageId, d => d.MapFrom(s => s.Id))
                 .ForMember(c => c.StageNumber, d => d.MapFrom(s => s.StageName))
+                .ForMember(c => c.NoScore, d => d.MapFrom(s => s.NoScore))
                 .ForMember(c => c.HasResult, d => d.MapFrom(s => s.Results.Any()))
                 .ForMember(c => c.VanNaar, d => d.MapFrom(s => $"{s.StartLocation}-{s.FinishLocation}"));
             CreateMap<GameCompetitorEvent, DeelnemerDto>()
