@@ -65,7 +65,7 @@ namespace DataAccessEF.TypeRepository
         public async Task<Stage> GetStage(int stageNumber, int eventId)
         {
             var stage = await context.Stages
-                .Where(s => s.EventId.Equals(eventId) && s.StageName.Equals(stageNumber))
+                .Where(s => s.EventId.Equals(eventId) && s.StageName.Equals(stageNumber.ToString()))
                 .FirstOrDefaultAsync();
             if (stage != null)
             {
