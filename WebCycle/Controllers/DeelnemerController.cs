@@ -46,7 +46,7 @@ namespace WebCycle.Controllers
                         var results = await resultService.GetCompetitorResultsByEventId(eventId, pick.CompetitorsInEvent.Id);
                         if (results != null)
                         {
-                            score += results.TotalScore;
+                        //    score += results.TotalScore;
                         }
                     }
 
@@ -85,6 +85,7 @@ namespace WebCycle.Controllers
                 if (results != null)
                 {
                     score = score + results.TotalScore;
+                    pick.LatestPoints = results.LaatsteScore;
                 }
                 pick.Points = score;
                 

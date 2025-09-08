@@ -1,4 +1,5 @@
 ﻿using CycleManager.Domain.Dto;
+using DataAccessEF.Migrations;
 using Domain.Context;
 using Domain.Interfaces;
 using Domain.Models;
@@ -28,19 +29,45 @@ namespace DataAccessEF.TypeRepository
             return results;
         }
 
-        public async Task<CompetitorScoreDto?> GetCompetitorResultsByEventId(int eventId, int competitorId)
+        public async Task<CompetitorScoreDto?> GetCompetitorResultsByEventId(int eventId, int competitorInEventId)
         {
-            var results = await context.Results
-                .Where(r => r.Stage != null && r.CompetitorInEvent != null && r.Stage.EventId == eventId && r.CompetitorInEvent.Id == competitorId)
-                .GroupBy(r => r.CompetitorInEventId)
-                .Select(g => new CompetitorScoreDto
-                {
-                    CompetitorInEventId = g.Key,
-                    TotalScore = g.Sum(r => r.ConfigurationItem.Score)
-                }).FirstOrDefaultAsync();
+            //    var results = await context.Results
+            //        .Where(r => r.Stage != null && r.CompetitorInEvent != null && r.Stage.EventId == eventId && r.CompetitorInEvent.Id == competitorId)
+            //        .GroupBy(r => r.CompetitorInEventId)
+            //        .Select(g => new CompetitorScoreDto
+            //        {
+            //            CompetitorInEventId = g.Key,
+            //            TotalScore = g.Sum(r => r.ConfigurationItem.Score)
+            //        }).FirstOrDefaultAsync();
+            //    return results;
+            //}
+
+            var results =
+                (from ds in context.DeelnemerPickScores
+                 join s in context.Stages on ds.StageId equals s.Id
+                 join e in context.Events on s.EventId equals e.EventId
+                 join gep in context.GameCompetitorEventPicks on ds.GameCompetitorEventPickId equals gep.Id
+                 join cie in context.CompetitorsInEvent on gep.CompetitorsInEventId equals cie.Id
+                 join c in context.Competitors on cie.CompetitorId equals c.CompetitorId
+                 join t in context.Teams on c.TeamId equals t.TeamId
+                 where e.EventId == eventId
+                    && gep.CompetitorsInEventId == competitorInEventId
+                 group new { ds, c, t, gep }
+                 by new { gep.CompetitorsInEventId, c.FirstName, c.LastName, t.TeamName } into g
+                 select new CompetitorScoreDto
+                 {
+                     CompetitorInEventId = g.Key.CompetitorsInEventId,
+                     FirstName = g.Key.FirstName,
+                     LastName = g.Key.LastName,
+                     TeamName = g.Key.TeamName,
+                     TotalScore = g.Sum(x => x.ds.Score),
+                     LaatsteScore = g
+                         .OrderByDescending(x => x.ds.StageId)
+                         .Select(x => x.ds.Score)
+                         .FirstOrDefault()
+                 }).FirstOrDefault();
             return results;
         }
-
         public async Task<int> GetCompetitorLatestScore(int eventId, int competitorInEventId)
         {
             var configItems = await context.ConfigurationItems.ToListAsync();

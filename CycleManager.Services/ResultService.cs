@@ -74,9 +74,9 @@ namespace CycleManager.Services
         /// </summary>
         /// <param name="eventId"></param>
         /// <returns></returns>
-        public async Task<CompetitorScoreDto?> GetCompetitorResultsByEventId(int eventId, int competitorId)
+        public async Task<CompetitorScoreDto?> GetCompetitorResultsByEventId(int eventId, int competitorInEventId)
         {
-            return await _resultsRepository.GetCompetitorResultsByEventId(eventId, competitorId);
+            return await _resultsRepository.GetCompetitorResultsByEventId(eventId, competitorInEventId);
         }
 
         /// <summary>

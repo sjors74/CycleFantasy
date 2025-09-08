@@ -19,7 +19,7 @@ namespace Domain.Interfaces
         /// <param name="eventId"></param>
         /// <param name="competitorId"></param>
         /// <returns></returns>
-        Task<CompetitorScoreDto?> GetCompetitorResultsByEventId(int eventId, int competitorId);
+        Task<CompetitorScoreDto?> GetCompetitorResultsByEventId(int eventId, int competitorInEventId);
 
         /// <summary>
         /// Get the latest (stage) score for an competitor in an event

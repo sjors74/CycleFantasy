@@ -18,7 +18,7 @@ namespace CycleManager.Services.Interfaces
         /// <param name="eventId"></param>
         /// <param name="competitorId"></param>
         /// <returns></returns>
-        Task<CompetitorScoreDto?> GetCompetitorResultsByEventId(int eventId, int competitorId);
+        Task<CompetitorScoreDto?> GetCompetitorResultsByEventId(int eventId, int competitorInEventId);
 
         /// <summary>
         /// Get latest (stage) score for a competitor in an event

@@ -267,7 +267,10 @@ document.addEventListener('DOMContentLoaded', function () {
                     </div>
                 </div>
 
-                <div class="text-end ms-2" style="min-width: 50px;">
+                <div class="text-end ms-2" style="min-width: 70px; display: flex; justify-content: flex-end; align-items: center; gap: 0.25rem;">
+                    ${pick.latestPoints > 0
+                                ? `<span class="fs-7 text-success">(+${pick.latestPoints})</span>`
+                                : ''}
                     <span class="fw-bold fs-5">${pick.points}</span>
                 </div>
             </div>

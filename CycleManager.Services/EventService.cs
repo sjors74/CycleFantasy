@@ -103,18 +103,18 @@ namespace CycleManager.Services
                     foreach (var renner in gce.Renners)
                     {
                         var results = await _resultService.GetCompetitorResultsByEventId(renner.CompetitorsInEvent.EventId, renner.CompetitorsInEventId);
-                        var punten = results != null ? results.TotalScore : 0;
-                        renners.Add(new CompetitorDto
-                        {
-                            CompetitorId = renner.CompetitorsInEvent.CompetitorId,
-                            CompetitorName = renner.CompetitorsInEvent.CompetitorName,
-                            CountryShort = renner.CompetitorsInEvent.Competitor.Country.CountryNameShort,
-                            EventNumber = renner.CompetitorsInEvent.EventNumber.ToString(),
-                            PcsName = renner.CompetitorsInEvent.Competitor.PcsName,
-                            IsNationalChampion = renner.CompetitorsInEvent.Competitor.IsNationalChampion,
-                            TeamName = renner.CompetitorsInEvent.Competitor.Team.TeamName,
-                            Punten = punten
-                        });
+                        //var punten = results != null ? results.TotalScore : 0;
+                        //renners.Add(new CompetitorDto
+                        //{
+                        //    CompetitorId = renner.CompetitorsInEvent.CompetitorId,
+                        //    CompetitorName = renner.CompetitorsInEvent.CompetitorName,
+                        //    CountryShort = renner.CompetitorsInEvent.Competitor.Country.CountryNameShort,
+                        //    EventNumber = renner.CompetitorsInEvent.EventNumber.ToString(),
+                        //    PcsName = renner.CompetitorsInEvent.Competitor.PcsName,
+                        //    IsNationalChampion = renner.CompetitorsInEvent.Competitor.IsNationalChampion,
+                        //    TeamName = renner.CompetitorsInEvent.Competitor.Team.TeamName,
+                        //    Punten = punten
+                        //});
                     }
                     deelnemers.Add(new DeelnemerDto
                     {
