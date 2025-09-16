@@ -76,8 +76,8 @@ namespace WebCycle.Controllers
                 foreach (var pick in picks)
                 {
                     var results = await _resultService.GetCompetitorResultsByEventId(id, pick.CompetitorsInEventId);
-                    //if (results != null)
-                    //    totaal += results.TotalScore;
+                    if (results != null)
+                        totaal += results.TotalScore;
                 }
 
                 deelnemer.Punten = totaal;

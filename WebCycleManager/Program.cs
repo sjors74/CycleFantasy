@@ -45,6 +45,7 @@ builder.Services.AddTransient<ICompetitorInEventService, CompetitorInEventServic
 builder.Services.AddTransient<ITeamService, TeamService>();
 builder.Services.AddTransient<IGameCompetitorInEventService, GameCompetitorInEventService>();
 builder.Services.AddTransient<IUserService, UserService>();
+builder.Services.AddTransient<IScoreRepository, ScoreRepository>();
 builder.Services.AddScoped<ScraperService>();
 builder.Services.AddScoped<PcsScraper>();
 builder.Services.AddScoped<ScoreService>();
