@@ -7,9 +7,11 @@ namespace CycleManager.Services
     public class ResultService : IResultService
     {
         private readonly IResultsRepository _resultsRepository;
-        public ResultService(IResultsRepository resultsRepository)
+        private readonly IScoreRepository _scoreRepository;
+        public ResultService(IResultsRepository resultsRepository, IScoreRepository scoreRepository)
         {
             _resultsRepository = resultsRepository;
+            _scoreRepository = scoreRepository;
         }
 
         /// <summary>
@@ -108,6 +110,11 @@ namespace CycleManager.Services
         public Task<List<EtappeUitslagDto>> GetEtappeUitslag(int stageId)
         {
             return _resultsRepository.GetEtappeUitslag(stageId);
+        }
+
+        public Task<List<DeelnemerDto>> GetPoolRankingForStage(int eventId, string stageNumber)
+        {
+            return _scoreRepository.GetPoolRankingForStage(eventId, stageNumber);
         }
     }
 }

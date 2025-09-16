@@ -10,7 +10,7 @@ namespace Domain.Mapping
         public DomainToResponseMappingProfile()
         {
             CreateMap<Event, EventDto>()
-                .ForMember(c => c.Stages, d => d.MapFrom(s => s.Stages.OrderBy(s => s.StageName)))
+                .ForMember(c => c.Stages, d => d.MapFrom(s => s.Stages.OrderBy(s => s.StageOrder)))
                 .ForMember(c => c.Deelnemers, d => d.MapFrom(s => s.GameCompetitorEvents));
             CreateMap<Event, EventForUserDto>();
             CreateMap<Competitor, CompetitorDto>()

@@ -41,5 +41,13 @@ namespace CycleManager.Services.Interfaces
         /// <param name="stageId"></param>
         /// <returns></returns>
         Task<List<EtappeUitslagDto>> GetEtappeUitslag(int stageId);
+
+        /// <summary>
+        /// Get pool ranking for a given event and stage number
+        /// </summary>
+        /// <param name="eventId"></param>
+        /// <param name="stageNumber"></param>
+        /// <returns></returns>
+        Task<List<DeelnemerDto>> GetPoolRankingForStage(int eventId, string stageNumber);
     }
 }

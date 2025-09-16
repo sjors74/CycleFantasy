@@ -35,5 +35,12 @@ namespace WebCycle.Controllers
             var top15 = await _resultService.GetResultsByEventId(eventId);
             return Ok(top15);
         }
+
+        [HttpGet("{eventId}/event/{stagenumber}/stage")]
+        public async Task<IActionResult> GetResultsByEventAndStageNumber(int eventId, string stagenumber)
+        {
+            var results = await _resultService.GetPoolRankingForStage(eventId, stagenumber);
+            return Ok(results);
+        }
     }
 }
