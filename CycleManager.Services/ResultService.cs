@@ -75,6 +75,7 @@ namespace CycleManager.Services
         /// Get a list of all results for an event and competitorId
         /// </summary>
         /// <param name="eventId"></param>
+        /// <param name="competitorInEventId">id van renner in een pool</param>
         /// <returns></returns>
         public async Task<CompetitorScoreDto?> GetCompetitorResultsByEventId(int eventId, int competitorInEventId)
         {
