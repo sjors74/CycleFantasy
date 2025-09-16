@@ -131,5 +131,30 @@ namespace CycleManager.Services
             return dropoutBibs;
         }
 
+        public async Task<List<ScrapedCompetitor>> ScrapeCompetitorsAsync(string url, int teamId, int year)
+        {
+            var web = new HtmlWeb();
+            var doc = await web.LoadFromWebAsync(url);
+
+            var results = new List<ScrapedCompetitor>();
+            var riderDiv = doc.DocumentNode
+            .SelectSingleNode("//div[contains(@class,'stab') and contains(@class,'riderlistcont')]");
+
+            if (riderDiv == null) return new List<ScrapedCompetitor>();
+
+            var riderNodes = riderDiv.SelectNodes(".//ul/li/a");
+
+            if (riderNodes == null) return new List<ScrapedCompetitor>();
+
+            var competitors = riderNodes.Select(node => new ScrapedCompetitor
+            {
+                RiderName = node.InnerText.Trim(),
+                TeamId = teamId,
+                ImportedAt = DateTime.UtcNow
+            }).ToList();
+
+            return competitors;
+        }
+
     }
 }
