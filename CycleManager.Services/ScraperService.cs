@@ -142,6 +142,26 @@ namespace CycleManager.Services
             }
         }
 
+        public async Task RunCompetitorsAsync(int teamId, int year)
+        {
+            var team = await _db.Teams
+                .Where(t => t.TeamId == teamId)
+                .FirstOrDefaultAsync();
+
+            if (team == null) return;
+
+            string url = $"https://www.procyclingstats.com/team/{team.PcsName}-{year}/overview/start";
+            _logger.LogInformation($"Start scraping competitors for team {team.TeamName}, year {year}");
+
+            var competitors = await _pcsScraper.ScrapeCompetitorsAsync(url, teamId, year);
+
+            foreach (var c in competitors)
+            {
+                //TODO: save competitors to table.
+                Console.WriteLine($"{c.RiderName} - {team.TeamName} (id {c.TeamId}) imported at {c.ImportedAt})");
+            }
+        }
+
         private Task<List<ScrapedStageResult>> ScrapeStageResultsAsync(string url, int topN, int eventId)
         {
             return _pcsScraper.ScrapeStageResultsAsync(url, topN, eventId);

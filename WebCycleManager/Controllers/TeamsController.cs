@@ -31,6 +31,7 @@ namespace WebCycleManager.Controllers
                 {
                     Id = team.TeamId,
                     TeamName = team.TeamName,
+                    PcsName = team.PcsName,
                     CountryNameShort = team.Country == null ? string.Empty : team.Country.CountryNameShort,
                     CompetitorsInTeam = team.Competitors == null ? 0 : team.Competitors.Count,
                 });
@@ -54,6 +55,7 @@ namespace WebCycleManager.Controllers
             var vm = new TeamViewModel();
             vm.Id = team.TeamId;
             vm.TeamName = team.TeamName;
+            vm.PcsName = team.PcsName;
             vm.CountryNameShort = team.Country == null ? string.Empty : team.Country.CountryNameShort;
 
             if (team.Competitors != null)
@@ -82,7 +84,7 @@ namespace WebCycleManager.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("TeamId,TeamName,CountryId")] Team team)
+        public async Task<IActionResult> Create([Bind("TeamId,TeamName,PcsName,CountryId")] Team team)
         {
             if (ModelState.IsValid)
             {
@@ -116,7 +118,7 @@ namespace WebCycleManager.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("TeamId,TeamName,CountryId")] Team team)
+        public async Task<IActionResult> Edit(int id, [Bind("TeamId,TeamName,PcsName,CountryId")] Team team)
         {
             if (id != team.TeamId)
             {

@@ -14,6 +14,8 @@ namespace Domain.Models
         public string TeamName { get; set; } = string.Empty;
         [DisplayName("Land")]
         public int? CountryId { get; set; }
+        public string PcsName { get; set; } = string.Empty;
+
         [NotMapped]
         public virtual Country? Country { get; set; }
         [JsonIgnore]

@@ -10,6 +10,7 @@ namespace WebCycleManager.Models
         [DisplayName("Land")]
         public string CountryNameShort { get; set; } = string.Empty;
         [DisplayName("Aantal renners")]
+        public string PcsName { get; set; } = string.Empty;
         public int? CompetitorsInTeam { get; set; }
         public IEnumerable<CompetitorViewModel> Competitors { get; set; } = Enumerable.Empty<CompetitorViewModel>();
     }

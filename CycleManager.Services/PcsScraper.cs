@@ -137,16 +137,16 @@ namespace CycleManager.Services
             var doc = await web.LoadFromWebAsync(url);
 
             var results = new List<ScrapedCompetitor>();
-            var riderDiv = doc.DocumentNode
-            .SelectSingleNode("//div[contains(@class,'stab') and contains(@class,'riderlistcont')]");
+            var nameTab = doc.DocumentNode
+            .SelectSingleNode("//div[contains(@class,'stab') and contains(@class,'name') and contains(@class, 'riderlistcont')]");
 
-            if (riderDiv == null) return new List<ScrapedCompetitor>();
+            if (nameTab == null) return new List<ScrapedCompetitor>();
 
-            var riderNodes = riderDiv.SelectNodes(".//ul/li/a");
+            var riderLinks = nameTab.SelectNodes(".//ul/li//div[@class='w80']//a");
 
-            if (riderNodes == null) return new List<ScrapedCompetitor>();
+            if (riderLinks == null) return new List<ScrapedCompetitor>();
 
-            var competitors = riderNodes.Select(node => new ScrapedCompetitor
+            var competitors = riderLinks.Select((node, Index) => new ScrapedCompetitor
             {
                 RiderName = node.InnerText.Trim(),
                 TeamId = teamId,

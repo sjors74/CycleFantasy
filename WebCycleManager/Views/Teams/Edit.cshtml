@@ -23,6 +23,11 @@
                 <select asp-for="CountryId" class="form-control" asp-items="ViewBag.CountryId"></select>
                 <span asp-validation-for="CountryId" class="text-danger"></span>
             </div>
+            <div class="form-group">
+                <label asp-for="PcsName" class="control-label"></label>
+                <input asp-for="PcsName" class="form-control" />
+                <span asp-validation-for="PcsName" class="text-danger"></span>
+            </div>
 
             <div class="form-group">
                 <input type="submit" value="Opslaan" class="btn btn-primary" />

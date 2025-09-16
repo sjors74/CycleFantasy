@@ -54,5 +54,18 @@ namespace WebCycleManager.Controllers
             await _scraperService.RunDropoutsAsync(eventId, eventName, year);
             return RedirectToAction("Details", "Events", new { id = eventId });
         }
+
+        [HttpGet]
+        public async Task<IActionResult> ScrapeCompetitors(int teamId, int year)
+        {
+            var team = await _db.Teams
+                .FirstOrDefaultAsync(t => t.TeamId == teamId);
+            if (team == null)
+                throw new Exception("Team not found while trying to scrape competitors.");
+
+            await _scraperService.RunCompetitorsAsync(teamId, year);
+            TempData["Success"] = "Scrape voltooid.";
+            return RedirectToAction("Index", "Teams", new { id = teamId });
+        }
     }
 }

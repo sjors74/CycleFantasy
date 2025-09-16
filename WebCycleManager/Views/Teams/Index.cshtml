@@ -21,6 +21,9 @@
             <th>
                 @Html.DisplayNameFor(model => model.CompetitorsInTeam)
             </th>
+            <th>
+                @Html.DisplayNameFor(model => model.PcsName)
+            </th>
             <th></th>
         </tr>
     </thead>
@@ -35,6 +38,17 @@
             </td>
             <td>
                 @Html.DisplayFor(modelItem => item.CompetitorsInTeam)
+             </td>
+             <td>
+                 @Html.DisplayFor(modelItem => item.PcsName)
+             </td>
+             <td>
+                 <a class="text-primary"
+                      asp-controller="AdminScraper"
+                      asp-action="ScrapeCompetitors"
+                      asp-route-teamId="@item.Id" asp-route-year=2026> <!--TODO Dropdownlist oid for year?-->
+                            Scrape resultaten
+                 </a>
             </td>
             <td>
                 <a asp-action="Edit" asp-route-id="@item.Id">Wijzig</a> |

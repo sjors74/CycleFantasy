@@ -1,5 +1,6 @@
 ﻿using CycleManager.Domain.Models;
 using Domain.Models;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
@@ -122,6 +123,18 @@ namespace Domain.Context
                 .WithMany()
                 .HasForeignKey(dps => dps.StageId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<IdentityUserToken<string>>(b =>
+            {
+                b.Property(t => t.Name).HasMaxLength(450);
+                b.Property(t => t.LoginProvider).HasMaxLength(450);
+            });
+
+            modelBuilder.Entity<IdentityUserLogin<string>>(b =>
+            {
+                b.Property(t => t.LoginProvider).HasMaxLength(450);
+                b.Property(t => t.ProviderKey).HasMaxLength(450);
+            });
         }
     }
 }
