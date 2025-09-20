@@ -31,14 +31,9 @@
                 @Html.DisplayName("Pcs-naam")
             </th>
             <th>
-                @Html.DisplayName("Nationaal kampioen")
-            </th>
-            <th>
-                @Html.DisplayName("Team naam")
-            </th>
-            <th>
                 @Html.DisplayName("Land")
             </th>
+            <th></th>
             <th></th>
         </tr>
     </thead>
@@ -55,13 +50,10 @@
                 @Html.DisplayFor(modelItem => item.PcsName)
             </td>
             <td>
-                @Html.DisplayFor(modelItem => item.IsNationalChampion)
+                    @(item.Country?.CountryNameLong ?? "onbekend")
             </td>
             <td>
-                @Html.DisplayFor(modelItem => item.Team.TeamName)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Country.CountryNameShort)
+                ToDo: link naar team
             </td>
             <td>
                 <a asp-action="Edit" asp-route-id="@item.CompetitorId">Wijzig</a> |

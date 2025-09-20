@@ -14,28 +14,28 @@ namespace Domain.Mapping
                 .ForMember(c => c.Deelnemers, d => d.MapFrom(s => s.GameCompetitorEvents));
             CreateMap<Event, EventForUserDto>();
             CreateMap<Competitor, CompetitorDto>()
-                .ForMember(c => c.TeamName, d => d.MapFrom(s => s.Team.TeamName))
+                .ForMember(c => c.TeamName, d => d.MapFrom(s => s.CompetitorInTeams.FirstOrDefault().Team.TeamName))
                 .ForMember(c => c.CountryShort, d => d.MapFrom(s => s.Country.CountryNameShort));
             
             CreateMap<CompetitorsInEvent, CompetitorDto>()
-                .ForMember(c => c.CompetitorName, d => d.MapFrom(s => s.Competitor.CompetitorName))
-                .ForMember(c => c.TeamName, d => d.MapFrom(s => s.Competitor.Team.TeamName))
-                .ForMember(c => c.CountryShort, d => d.MapFrom(s => s.Competitor.Country.CountryNameShort));
+                .ForMember(c => c.CompetitorName, d => d.MapFrom(s => s.CompetitorInTeam.Competitor.CompetitorName))
+                .ForMember(c => c.TeamName, d => d.MapFrom(s => s.CompetitorInTeam.Team.TeamName))
+                .ForMember(c => c.CountryShort, d => d.MapFrom(s => s.CompetitorInTeam.Competitor.Country.CountryNameShort));
 
             CreateMap<GameCompetitorEvent, DeelnemerDto>()
                 .ForMember(c => c.DeelnemerNaam, d => d.MapFrom(s => s.User.FirstName + " " + s.User.LastName))
                 .ForMember(c => c.PoolNaam, d => d.MapFrom(s => s.TeamName));
             CreateMap<GameCompetitorEventPick, ResultDto>()
-                            .ForMember(c => c.CompetitorName, d => d.MapFrom(s => s.CompetitorsInEvent.Competitor.CompetitorName))
-                            .ForMember(c => c.CompetitorTeam, d => d.MapFrom(s => s.CompetitorsInEvent.Competitor.Team.TeamName))
+                            .ForMember(c => c.CompetitorName, d => d.MapFrom(s => s.CompetitorsInEvent.CompetitorInTeam.Competitor.CompetitorName))
+                            .ForMember(c => c.CompetitorTeam, d => d.MapFrom(s => s.CompetitorsInEvent.CompetitorInTeam.Team.TeamName))
                             .ForMember(c => c.CompetitorInEventId, d => d.MapFrom(s => s.CompetitorsInEvent.Id))
                             .ForMember(c => c.OutOfCompetition, d => d.MapFrom(s => s.CompetitorsInEvent.OutOfCompetition))
-                            .ForMember(c => c.CountryCode, d => d.MapFrom(s => s.CompetitorsInEvent.Competitor.Country.CountryNameShort))
-                            .ForMember(c => c.PcsName, d => d.MapFrom(s => s.CompetitorsInEvent.Competitor.PcsName))
-                            .ForMember(c => c.IsNationalChampion, d => d.MapFrom(s => s.CompetitorsInEvent.Competitor.IsNationalChampion));
+                            .ForMember(c => c.CountryCode, d => d.MapFrom(s => s.CompetitorsInEvent.CompetitorInTeam.Competitor.Country.CountryNameShort))
+                            .ForMember(c => c.PcsName, d => d.MapFrom(s => s.CompetitorsInEvent.CompetitorInTeam.Competitor.PcsName))
+                            .ForMember(c => c.IsNationalChampion, d => d.MapFrom(s => s.CompetitorsInEvent.CompetitorInTeam.IsNationalChampion));
 
             CreateMap<GameCompetitorEventPick, CompetitorDto>()
-                .ForMember(c => c.CompetitorName, d => d.MapFrom(s => s.CompetitorsInEvent.CompetitorName));
+                .ForMember(c => c.CompetitorName, d => d.MapFrom(s => s.CompetitorsInEvent.CompetitorInTeam.Competitor.CompetitorName));
             CreateMap<Stage, StageResultDto>()
                 .ForMember(c => c.StageId, d => d.MapFrom(s => s.Id))
                 .ForMember(c => c.StageNumber, d => d.MapFrom(s => s.StageName))

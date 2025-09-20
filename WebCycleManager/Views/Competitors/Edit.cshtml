@@ -28,17 +28,17 @@
                 <input asp-for="PcsName" class="form-control" />
                 <span asp-validation-for="PcsName" class="text-danger"></span>
             </div>
-            <div class="form-group">
+@*             <div class="form-group">
                 <input asp-for="IsNationalChampion" class="form-check-input" />
                 <label asp-for="IsNationalChampion" class="form-check-label"></label>
                 <span asp-validation-for="IsNationalChampion" class="text-danger"></span>
-            </div>
+            </div> 
             <div class="form-group">
                 <label asp-for="TeamId" class="control-label"></label>
                 <select asp-for="TeamId" class="form-control" asp-items="ViewBag.TeamId"></select>
                 <span asp-validation-for="TeamId" class="text-danger"></span>
             </div>
-            <div class="form-group">
+           *@ <div class="form-group">
                 <label asp-for="CountryId" class="control-label"></label>
                 <select asp-for="CountryId" class="form-control" asp-items="ViewBag.CountryId"></select>
                 <span asp-validation-for="CountryId" class="text-danger"></span>

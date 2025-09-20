@@ -83,7 +83,7 @@ namespace CycleManager.Services
             {
                 var newCie = new CompetitorsInEvent
                 {
-                    CompetitorId = competitorId,
+                    CompetitorInTeamId = competitorId,
                     EventId = eventId,
                 };
                 //create new cie

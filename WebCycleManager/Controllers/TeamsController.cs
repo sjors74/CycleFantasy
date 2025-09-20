@@ -25,6 +25,7 @@ namespace WebCycleManager.Controllers
         {
             var _teamViewModels = new List<TeamViewModel>();
             var teams = await _teamRepository.GetAll();
+
             foreach (var team in teams.OrderBy(t => t.TeamName))
             {
                 _teamViewModels.Add(new TeamViewModel
@@ -32,10 +33,11 @@ namespace WebCycleManager.Controllers
                     Id = team.TeamId,
                     TeamName = team.TeamName,
                     PcsName = team.PcsName,
-                    CountryNameShort = team.Country == null ? string.Empty : team.Country.CountryNameShort,
-                    CompetitorsInTeam = team.Competitors == null ? 0 : team.Competitors.Count,
+                    CountryNameShort = team.Country?.CountryNameShort ?? string.Empty,
+                    CompetitorsInTeam = team.CompetitorInTeams?.Count ?? 0, // telt via CompetitorInTeams
                 });
             }
+
             return View(_teamViewModels);
         }
 
@@ -46,28 +48,46 @@ namespace WebCycleManager.Controllers
             {
                 return NotFound();
             }
+
             var team = await _teamRepository.GetById((int)id);
+
             if (team == null)
             {
                 return NotFound();
             }
-            var competitorsList = new List<CompetitorViewModel>();
-            var vm = new TeamViewModel();
-            vm.Id = team.TeamId;
-            vm.TeamName = team.TeamName;
-            vm.PcsName = team.PcsName;
-            vm.CountryNameShort = team.Country == null ? string.Empty : team.Country.CountryNameShort;
 
-            if (team.Competitors != null)
+            var competitorsList = new List<CompetitorViewModel>();
+            var vm = new TeamViewModel
             {
-                var orderedCompetitors = team.Competitors.OrderBy(c => c.LastName);
+                Id = team.TeamId,
+                TeamName = team.TeamName,
+                PcsName = team.PcsName,
+                CountryNameShort = team.Country?.CountryNameShort ?? string.Empty
+            };
+
+            // Haal competitors via CompetitorInTeams
+            if (team.CompetitorInTeams != null)
+            {
+                var orderedCompetitors = team.CompetitorInTeams
+                    .Select(cit => cit.Competitor)
+                    .OrderBy(c => c.LastName);
+
                 foreach (var comp in orderedCompetitors)
                 {
-                    var compViewModel = new CompetitorViewModel { CompetitorId = comp.CompetitorId, FirstName = comp.FirstName, LastName = comp.LastName, Land = comp.Country == null ? string.Empty : comp.Country.CountryNameShort };
+                    var compViewModel = new CompetitorViewModel
+                    {
+                        CompetitorId = comp.CompetitorId,
+                        FirstName = comp.FirstName,
+                        LastName = comp.LastName,
+                        Land = comp.Country?.CountryNameShort ?? string.Empty
+                    };
                     competitorsList.Add(compViewModel);
                 }
-                vm = new TeamViewModel {  CompetitorsInTeam = team.Competitors.Count, Competitors = competitorsList };
+
+                vm.CompetitorsInTeam = team.CompetitorInTeams.Count;
+                vm.Competitors = competitorsList;
             }
+
             return View(vm);
         }
 

@@ -93,8 +93,9 @@ namespace DataAccessEF.TypeRepository
 
             var competitorsInEvent = await context.CompetitorsInEvent
                 .Where(cie => cie.EventId == id)
-                .Include(cie => cie.Competitor)
-                    .ThenInclude(c => c.Country)
+                .Include(cie => cie.CompetitorInTeam)
+                    .ThenInclude(cie => cie.Competitor)
+                        .ThenInclude(c => c.Country)
                 .ToListAsync();
 
             var eventTeams = await context.EventTeam
@@ -108,19 +109,24 @@ namespace DataAccessEF.TypeRepository
                    Id = et.Team.TeamId,
                    Naam = et.Team.TeamName,
                    Renners = competitorsInEvent
-                    .Where(cie => cie.Competitor.TeamId == et.Team.TeamId)
+                    .Where(cie => cie.CompetitorInTeam.TeamId == et.Team.TeamId)
                     .OrderByDescending(cie => cie.InSelectie)
                     .ThenBy(cie => cie.EventNumber)
-                    .ThenBy(cie => cie.Competitor.LastName)
-                    .Select(cie => new CompetitorDto
+                    .ThenBy(cie => cie.CompetitorInTeam.Competitor.LastName)
+                    .Select(cie =>
                     {
-                            CompetitorId = cie.Competitor.CompetitorId,
-                            CompetitorName = cie.CompetitorName,
-                            PcsName = cie.Competitor.PcsName,
-                            IsNationalChampion = cie.Competitor.IsNationalChampion,
-                            CountryShort = cie.Competitor.Country.CountryNameShort,
-                            TeamName = et.Team.TeamName,
+                        var competitor = cie.CompetitorInTeam.Competitor;
+                        var team = cie.CompetitorInTeam.Team;
+                        return new CompetitorDto
+                        {
+                            CompetitorId = competitor.CompetitorId,
+                            CompetitorName = cie.CompetitorInTeam.Competitor.CompetitorName,
+                            PcsName = competitor.PcsName,
+                            IsNationalChampion = cie.CompetitorInTeam.IsNationalChampion,
+                            CountryShort = competitor.Country.CountryNameShort,
+                            TeamName = team.TeamName,
                             InSelectie = cie.InSelectie
+                        };
                     }).ToList()
             }).ToList();
             return teams;

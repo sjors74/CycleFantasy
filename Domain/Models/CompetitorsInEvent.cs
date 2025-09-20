@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using CycleManager.Domain.Models;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Domain.Models
@@ -7,9 +8,8 @@ namespace Domain.Models
     {
         [Key]
         public int Id { get; set; }
-
-        public int CompetitorId { get; set; }
-        public Competitor Competitor { get; set; }
+        public int CompetitorInTeamId { get; set; }
+        public CompetitorInTeam CompetitorInTeam { get; set; }
 
         public int EventId { get; set; }
         public Event Event { get; set; }
@@ -20,8 +20,6 @@ namespace Domain.Models
         public bool OutOfCompetition { get; set;} = false;
 
         public bool InSelectie { get; set; } = false;
-        [NotMapped]
-        public string CompetitorName => Competitor != null ? $"{Competitor.FirstName} {Competitor.LastName}" : string.Empty;
 
         public virtual ICollection<GameCompetitorEventPick> GameCompetitorEventPicks { get; set; } = [];
 

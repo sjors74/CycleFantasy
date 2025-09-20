@@ -28,20 +28,13 @@ namespace Domain.Context
         public DbSet<NewsItem> NewsItems { get; set; }
         public DbSet<DeelnemerScore> DeelnemerScores { get; set; }
         public DbSet<DeelnemerPickScore> DeelnemerPickScores { get; set; }
+        public DbSet<ScrapedCompetitor> ScrapedCompetitors { get; set; }
+        public DbSet<CompetitorInTeam> CompetitorInTeams { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
-            modelBuilder.Entity<Team>()
-                .HasMany(c => c.Competitors)
-                .WithOne(t => t.Team)
-                .IsRequired();
-            modelBuilder.Entity<Team>()
-                .HasOne(c => c.Country);
-            modelBuilder.Entity<Competitor>()
-                .HasOne(c => c.Team)
-                .WithMany(t => t.Competitors)
-                .HasForeignKey(c => c.TeamId);
             modelBuilder.Entity<Competitor>()
                 .HasOne(c => c.Country)
                 .WithMany()
@@ -123,6 +116,17 @@ namespace Domain.Context
                 .WithMany()
                 .HasForeignKey(dps => dps.StageId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<CompetitorInTeam>()
+                .HasOne(cit => cit.Competitor)
+                .WithMany(c => c.CompetitorInTeams)
+                .HasForeignKey(cit => cit.CompetitorId);
+
+            modelBuilder.Entity<CompetitorInTeam>()
+                .HasOne(cit => cit.Team)
+                .WithMany(t => t.CompetitorInTeams)
+                .HasForeignKey(cit => cit.TeamId);
+
 
             modelBuilder.Entity<IdentityUserToken<string>>(b =>
             {

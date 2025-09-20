@@ -86,7 +86,12 @@ namespace WebCycleManager.Controllers
                 await _competitorService.Create(competitor);
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["TeamId"] = new SelectList((await _teamService.GetAll()).OrderBy(t => t.TeamName), "TeamId", "TeamName", competitor.TeamId);
+            var allTeams = (await _teamService.GetAll()).OrderBy(t => t.TeamName);
+
+            // Kies het eerste team van de competitor (of filter op een specifiek jaar)
+            var selectedTeamId = competitor.CompetitorInTeams.FirstOrDefault()?.TeamId ?? 0;
+
+            ViewData["TeamId"] = new SelectList(allTeams, "TeamId", "TeamName", selectedTeamId);
             ViewData["CountryId"] = new SelectList(await CountrySelectListHelper.GetOrderedCountries(_countryService), "CountryId", "CountryNameLong", competitor.CountryId);
             return View(competitor);
         }
@@ -104,7 +109,12 @@ namespace WebCycleManager.Controllers
             {
                 return NotFound();
             }
-            ViewData["TeamId"] = new SelectList((await _teamService.GetAll()).OrderBy(t=> t.TeamName), "TeamId", "TeamName", competitor.TeamId);
+            var allTeams = (await _teamService.GetAll()).OrderBy(t => t.TeamName);
+
+            // Kies het eerste team van de competitor (of filter op een specifiek jaar)
+            var selectedTeamId = competitor.CompetitorInTeams.FirstOrDefault()?.TeamId ?? 0;
+
+            ViewData["TeamId"] = new SelectList(allTeams, "TeamId", "TeamName", selectedTeamId);
             ViewData["CountryId"] = new SelectList(await CountrySelectListHelper.GetOrderedCountries(_countryService), "CountryId", "CountryNameLong", competitor.CountryId);
             return View(competitor);
         }
@@ -140,7 +150,12 @@ namespace WebCycleManager.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["TeamId"] = new SelectList(await _teamService.GetAll(), "TeamId", "TeamName", competitor.TeamId);
+            var allTeams = (await _teamService.GetAll()).OrderBy(t => t.TeamName);
+
+            // Kies het eerste team van de competitor (of filter op een specifiek jaar)
+            var selectedTeamId = competitor.CompetitorInTeams.FirstOrDefault()?.TeamId ?? 0;
+
+            ViewData["TeamId"] = new SelectList(allTeams, "TeamId", "TeamName", selectedTeamId);
             ViewData["CountryId"] = new SelectList(await CountrySelectListHelper.GetOrderedCountries(_countryService), "CountryId", "CountryNameLong", competitor.CountryId);
             return View(competitor);
         }

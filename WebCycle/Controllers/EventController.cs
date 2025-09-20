@@ -181,7 +181,11 @@ namespace WebCycle.Controllers
                 return NotFound();
             }
 
-            var competitors = team.Competitors;
+            // Haal competitors via CompetitorInTeams
+            var competitors = team.CompetitorInTeams
+                .Select(cit => cit.Competitor)
+                .ToList();
+
             return Ok(competitors);
         }
 

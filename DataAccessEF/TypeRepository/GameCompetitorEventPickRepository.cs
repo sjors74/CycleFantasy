@@ -20,7 +20,8 @@ namespace DataAccessEF.TypeRepository
         {
             var picks = context.GameCompetitorEventPicks
                 .Include(c => c.CompetitorsInEvent)
-                    .ThenInclude(a => a.Competitor)
+                    .ThenInclude(c => c.CompetitorInTeam)
+                       .ThenInclude(a => a.Competitor)
                 .Include(g => g.GameCompetitorEvent)
                     .ThenInclude(b => b.User)
                 .Where(c => c.CompetitorsInEvent.EventId.Equals(eventId));
@@ -35,20 +36,22 @@ namespace DataAccessEF.TypeRepository
         /// <returns></returns>
         public async Task<IEnumerable<GameCompetitorEventPick>> GetCompetitorEventPicksById(int id)
         {
-            var picks =  await context.GameCompetitorEventPicks
-                 .Include(g => g.GameCompetitorEvent)
+            var picks = await context.GameCompetitorEventPicks
+                .Include(g => g.GameCompetitorEvent)
                     .ThenInclude(b => b.User)
-                 .Include(c => c.CompetitorsInEvent)
-                    .ThenInclude(c => c.Competitor)
-                         .ThenInclude(c => c.Team)
-                 .Include(c => c.CompetitorsInEvent)
-                    .ThenInclude(c => c.Competitor)
-                         .ThenInclude(c => c.Country)
-                 .Include(c => c.CompetitorsInEvent)
-                    .ThenInclude(e => e.Event)
-                 .Where(c => c.GameCompetitorEvent.Id.Equals(id))
-                 .OrderBy(c => c.CompetitorsInEvent.EventNumber)
-                 .ToListAsync();
+                .Include(c => c.CompetitorsInEvent)
+                    .ThenInclude(c => c.CompetitorInTeam)
+                        .ThenInclude(cie => cie.Competitor)
+                            .ThenInclude(c => c.Country)
+                .Include(c => c.CompetitorsInEvent)
+                        .ThenInclude(c => c.CompetitorInTeam)
+                            .ThenInclude(cit => cit.Team)
+                .Include(c => c.CompetitorsInEvent)
+                    .ThenInclude(cie => cie.Event)
+                .Where(c => c.GameCompetitorEvent.Id == id)
+                .OrderBy(c => c.CompetitorsInEvent.EventNumber)
+                .ToListAsync();
+
             return picks;
         }
 

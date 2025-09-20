@@ -19,7 +19,7 @@ namespace WebCycleManager.Models
         [DisplayName("Evenement")]
         public string Name { get; set; } = string.Empty;
         [DisplayName("Code")]
-        public string Code { get; set; } = string.Empty;
+        public string? Code { get; set; }
         [DisplayName("Jaar")]
         public int Year { get; set; }
         [DisplayName("Startdatum")]

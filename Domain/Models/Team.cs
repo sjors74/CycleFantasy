@@ -2,7 +2,6 @@
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Text.Json.Serialization;
 
 namespace Domain.Models
 {
@@ -14,12 +13,10 @@ namespace Domain.Models
         public string TeamName { get; set; } = string.Empty;
         [DisplayName("Land")]
         public int? CountryId { get; set; }
-        public string PcsName { get; set; } = string.Empty;
-
-        [NotMapped]
         public virtual Country? Country { get; set; }
-        [JsonIgnore]
-        public virtual ICollection<Competitor>? Competitors { get; set;}
+        public string PcsName { get; set; } = string.Empty;
+        public virtual ICollection<CompetitorInTeam> CompetitorInTeams { get; set; } = [];
+
         public ICollection<EventTeam>? EventTeams { get; set; }
     }
 }

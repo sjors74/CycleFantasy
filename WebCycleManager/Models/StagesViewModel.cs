@@ -40,7 +40,9 @@ namespace WebCycleManager.Models
                 return $"Etappe {StageName}: {StartLocation}-{FinishLocation}";
             }
         }
-
+        [DisplayName("Geen uitslag")]
         public bool NoScore { get; set; }
+        [DisplayName("Opmerking")]
+        public string? NoScoreDescription { get; set; }
     }
 }

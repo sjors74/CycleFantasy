@@ -150,6 +150,7 @@ namespace CycleManager.Services
             {
                 RiderName = node.InnerText.Trim(),
                 TeamId = teamId,
+                Year = year,
                 ImportedAt = DateTime.UtcNow
             }).ToList();
 

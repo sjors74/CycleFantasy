@@ -64,14 +64,14 @@
                         {
                             <tr>
                                 <td>
-                                    @Html.DisplayFor(modelItem => Model.SuggestedCompetitors[i].Competitor.FirstName)
+                                    @Html.DisplayFor(modelItem => Model.SuggestedCompetitors[i].CompetitorInTeam.Competitor.FirstName)
                                 </td>
                                 <td>
-                                    @Html.DisplayFor(modelItem => Model.SuggestedCompetitors[i].Competitor.LastName)
+                                    @Html.DisplayFor(modelItem => Model.SuggestedCompetitors[i].CompetitorInTeam.Competitor.LastName)
                                 </td>
                                 <td>
-                                    <button type="button" onclick="AddCompetitor(@Model.SuggestedCompetitors[i].CompetitorId)">voeg toe</button> |
-                                    <button type="button" onclick="RemoveCompetitor(@Model.SuggestedCompetitors[i].CompetitorId)">verwijder</button>
+                                    <button type="button" onclick="AddCompetitor(@Model.SuggestedCompetitors[i].CompetitorInTeamId)">voeg toe</button> |
+                                    <button type="button" onclick="RemoveCompetitor(@Model.SuggestedCompetitors[i].CompetitorInTeamId)">verwijder</button>
                                 </td>
                                 <td>
                                     

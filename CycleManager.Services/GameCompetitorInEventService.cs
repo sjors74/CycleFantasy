@@ -117,7 +117,7 @@ namespace CycleManager.Services
             var picks = await _pickRepository.GetCompetitorEventPicksById(id);
             foreach (var pick in picks)
             {
-                competitorPicks.Add(pick.CompetitorsInEvent.CompetitorId);
+                competitorPicks.Add(pick.CompetitorsInEvent.CompetitorInTeamId);
             }
 
             return competitorPicks;

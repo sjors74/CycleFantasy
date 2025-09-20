@@ -29,28 +29,37 @@ namespace WebCycleManager.Controllers
 
             if (FilterTeam > 0)
             {
-                deelnemers = deelnemers.Where(t => t.Competitor.TeamId == FilterTeam).ToList();
+                deelnemers = deelnemers
+                    .Where(t => t.CompetitorInTeam.Team.TeamId == FilterTeam)
+                    .ToList();
             }
             var currentEvent = await _eventService.GetEventById(eventId);
             if (currentEvent == null) return NotFound();
 
-            var deelnemersViewModel = deelnemers.Select(d => new CompetitorInEventViewModel
+            var deelnemersViewModel = deelnemers.Select(d =>
             {
-                CompetitorId = d.CompetitorId,
-                EventNumber = d.EventNumber,
-                FirstName = d.Competitor.FirstName,
-                LastName = d.Competitor.LastName,
-                TeamName = d.Competitor.Team?.TeamName ?? "onbekend",
-                CompetitorInEventId = d.Id,
-                EventId = d.EventId,
-                EventName = currentEvent.EventName,
-                OutOfCompetition = d.OutOfCompetition,
-                InSelection = d.InSelectie,
-                TeamId = d.Competitor.TeamId
-            }).OrderBy(x => x.EventNumber)
-              .ThenBy(x => x.LastName)
-              .ThenBy(x => x.FirstName)
-              .ToList();
+                var competitor = d.CompetitorInTeam.Competitor;
+                var team = d.CompetitorInTeam.Team;
+
+                return new CompetitorInEventViewModel
+                {
+                    CompetitorId = d.CompetitorInTeamId,
+                    EventNumber = d.EventNumber,
+                    FirstName = competitor?.FirstName ?? "",
+                    LastName = competitor?.LastName ?? "",
+                    TeamName = team?.TeamName ?? "onbekend",
+                    CompetitorInEventId = d.Id,
+                    EventId = d.EventId,
+                    EventName = currentEvent.EventName,
+                    OutOfCompetition = d.OutOfCompetition,
+                    InSelection = d.InSelectie,
+                    TeamId = team?.TeamId ?? 0
+                };
+            })
+            .OrderBy(x => x.EventNumber)
+            .ThenBy(x => x.LastName)
+            .ThenBy(x => x.FirstName)
+            .ToList();
 
             var teams = await _teamService.GetAll();
 
@@ -94,7 +103,7 @@ namespace WebCycleManager.Controllers
                 foreach(var selectedCompetitorId in formCollection["SelectCompetitorId"])
                 {
                     int.TryParse(selectedCompetitorId, out int competitorId);
-                    listOfCompetitorsInEvent.Add(new CompetitorsInEvent { CompetitorId = competitorId, EventId = eventId });
+                    listOfCompetitorsInEvent.Add(new CompetitorsInEvent { CompetitorInTeamId = competitorId, EventId = eventId });
                 }
                 await _competitorInEventService.Create(listOfCompetitorsInEvent);
                 return RedirectToAction("Index", new { eventId } );
@@ -117,10 +126,11 @@ namespace WebCycleManager.Controllers
             {
                 return NotFound();
             }
-            var competitor = await  _competitorService.GetCompetitorById(competitorsInEvent.CompetitorId);
+            var competitor = await  _competitorService.GetCompetitorById(competitorsInEvent.CompetitorInTeamId);
             var vm = GetViewModel(competitorsInEvent);
-            vm.TeamId = competitor.TeamId;
-            ViewData["CompetitorId"] = new SelectList(_competitorService.GetAllCompetitors().OrderBy(c => c.FirstName), "CompetitorId", "FirstName", competitorsInEvent.CompetitorId);
+            var team = competitor?.CompetitorInTeams.FirstOrDefault()?.Team;
+            vm.TeamId = team?.TeamId ?? 0;
+            ViewData["CompetitorId"] = new SelectList(_competitorService.GetAllCompetitors().OrderBy(c => c.FirstName), "CompetitorId", "FirstName", competitorsInEvent.CompetitorInTeamId);
             ViewData["EventId"] = new SelectList(await _eventService.GetAllEvents(), "EventId", "EventName", competitorsInEvent.EventId);
             return View(vm);
         }
@@ -213,20 +223,25 @@ namespace WebCycleManager.Controllers
 
         private CompetitorInEventViewModel GetViewModel(CompetitorsInEvent competitorsInEvent)
         {
+            var competitor = competitorsInEvent.CompetitorInTeam.Competitor;
+
+            // Kies het eerste team (of filter op een specifiek jaar)
+            var team = competitor?.CompetitorInTeams.FirstOrDefault()?.Team;
+
             var vm = new CompetitorInEventViewModel
             {
-                CompetitorId = competitorsInEvent.CompetitorId,
+                CompetitorId = competitorsInEvent.CompetitorInTeamId,
                 CompetitorInEventId = competitorsInEvent.Id,
                 EventId = competitorsInEvent.EventId,
-                TeamName = competitorsInEvent.Competitor.Team != null ? competitorsInEvent.Competitor.Team.TeamName : string.Empty,
+                TeamName = team?.TeamName ?? string.Empty,
                 EventNumber = competitorsInEvent.EventNumber,
-                FirstName = competitorsInEvent.Competitor.FirstName,
-                LastName = competitorsInEvent.Competitor.LastName,
-                TeamId = competitorsInEvent.Competitor.TeamId,
+                FirstName = competitor?.FirstName ?? string.Empty,
+                LastName = competitor?.LastName ?? string.Empty,
+                TeamId = team?.TeamId ?? 0,
                 OutOfCompetition = competitorsInEvent.OutOfCompetition,
                 InSelection = competitorsInEvent.InSelectie
-
             };
+
             return vm;
         }
 

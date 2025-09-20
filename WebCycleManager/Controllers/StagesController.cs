@@ -93,7 +93,7 @@ namespace WebCycleManager.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("StageId,StageDate,StageName,StageOrder,StartLocation,FinishLocation,NoScore,EventId")] StageViewModel stage)
+        public async Task<IActionResult> Create([Bind("StageId,StageDate,StageName,StageOrder,StartLocation,FinishLocation,NoScore,NoScoreDescription,EventId")] StageViewModel stage)
         {
             if (ModelState.IsValid)
             {
@@ -149,7 +149,7 @@ namespace WebCycleManager.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("StageId,StageDate,StageName,StageOrder,StartLocation,FinishLocation,NoScore,EventId")] StageViewModel stage)
+        public async Task<IActionResult> Edit(int id, [Bind("StageId,StageDate,StageName,StageOrder,StartLocation,FinishLocation,NoScore,NoScoreDescription,EventId")] StageViewModel stage)
         {
             if (id != stage.StageId)
             {
@@ -246,6 +246,7 @@ namespace WebCycleManager.Controllers
                 StartLocation = stage.StartLocation,
                 FinishLocation = stage.FinishLocation,
                 NoScore = stage.NoScore,
+                NoScoreDescription = stage.NoScoreDescription,
                 EventId = stage.EventId,
                 EventName = stage.Event == null ? string.Empty : stage.Event.EventName,                
                 EventYear = stage.Event == null ? int.MinValue : stage.Event.EventYear,
@@ -271,6 +272,7 @@ namespace WebCycleManager.Controllers
                 stage.StartLocation = vm.StartLocation;
                 stage.FinishLocation = vm.FinishLocation;
                 stage.NoScore = vm.NoScore;
+                stage.NoScoreDescription = vm.NoScoreDescription;
                 stage.EventId = vm.EventId;
 
                 return stage;

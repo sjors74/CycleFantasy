@@ -19,7 +19,7 @@ namespace Domain.Models
         [DisplayName("Evenement")]
         public int EventId { get; set; }
         public bool NoScore { get; set; }
-        public string NoScoreDescription { get; set; } = string.Empty;
+        public string? NoScoreDescription { get; set; }
         public virtual Event Event{ get; set; } 
         public virtual ICollection<Result> Results { get; set; } = [];
     }

@@ -4,6 +4,7 @@ using Domain.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DataAccessEF.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250919134743_LinkCompetitorInEventToCompetitorInTeam")]
+    partial class LinkCompetitorInEventToCompetitorInTeam
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -229,6 +232,9 @@ namespace DataAccessEF.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int>("TeamId")
+                        .HasColumnType("int");
+
                     b.HasKey("CompetitorId");
 
                     b.HasIndex("CountryId");
@@ -243,6 +249,9 @@ namespace DataAccessEF.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CompetitorId")
+                        .HasColumnType("int");
 
                     b.Property<int>("CompetitorInTeamId")
                         .HasColumnType("int");
@@ -408,6 +417,7 @@ namespace DataAccessEF.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("EventCode")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("EventName")
@@ -560,6 +570,7 @@ namespace DataAccessEF.Migrations
                         .HasColumnType("bit");
 
                     b.Property<string>("NoScoreDescription")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("StageDate")
@@ -603,8 +614,6 @@ namespace DataAccessEF.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("TeamId");
-
-                    b.HasIndex("CountryId");
 
                     b.ToTable("Teams");
                 });
@@ -954,15 +963,6 @@ namespace DataAccessEF.Migrations
                         .IsRequired();
 
                     b.Navigation("Event");
-                });
-
-            modelBuilder.Entity("Domain.Models.Team", b =>
-                {
-                    b.HasOne("Domain.Models.Country", "Country")
-                        .WithMany()
-                        .HasForeignKey("CountryId");
-
-                    b.Navigation("Country");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>

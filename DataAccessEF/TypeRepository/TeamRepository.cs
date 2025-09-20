@@ -12,17 +12,23 @@ namespace DataAccessEF.TypeRepository
         public async Task<IEnumerable<Team>> GetAll()
         {
             var teams = await context.Teams
+                .Include(ct => ct.Country)
+                .Include(t => t.CompetitorInTeams) // koppelingen tussen team en competitors
+                    .ThenInclude(cit => cit.Competitor) // de competitors zelf
+                        .ThenInclude(c => c.Country) // optioneel: land van de competitor
                 .ToListAsync();
+
             return teams;
         }
 
         public async Task<Team> GetTeamById(int id)
         {
             var team = await context.Teams
-                .Include(cm => cm.Competitors)
-                .Include(c => c.Country)
-                .Where(c => c.TeamId == id)
-                .FirstOrDefaultAsync();
+                .Include(t => t.Country) // land van het team
+                .Include(t => t.CompetitorInTeams) // koppelingen tussen team en competitors
+                    .ThenInclude(cit => cit.Competitor) // de competitors zelf
+                        .ThenInclude(c => c.Country) // optioneel: land van de competitor
+                .FirstOrDefaultAsync(t => t.TeamId == id);
 
             return team;
         }

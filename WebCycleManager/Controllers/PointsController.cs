@@ -18,8 +18,8 @@ namespace WebCycleManager.Controllers
             var results = await _resultRepository.GetResultsByEventId(eventId);
             var groupedList = results.GroupBy(g => g.CompetitorInEventId).Select(c => new PointsCompetitorInEventViewModel
             {
-                FirstName = c.First().CompetitorInEvent.Competitor.FirstName,
-                LastName = c.First().CompetitorInEvent.Competitor.LastName,
+                FirstName = c.First().CompetitorInEvent.CompetitorInTeam.Competitor.FirstName,
+                LastName = c.First().CompetitorInEvent.CompetitorInTeam.Competitor.LastName,
                 EventId = c.First().Stage.EventId,
                 CompetitorEventId = c.First().CompetitorInEventId,
                 Points = c.Sum(a => a.ConfigurationItem.Score)
@@ -46,8 +46,8 @@ namespace WebCycleManager.Controllers
                 var results = await _resultRepository.GetResultsByEventId(eventId);
                 var groupedList = results.GroupBy(g => g.CompetitorInEventId).Select(c => new PointsCompetitorInEventViewModel
                 {
-                    FirstName = c.First().CompetitorInEvent.Competitor.FirstName,
-                    LastName = c.First().CompetitorInEvent.Competitor.LastName,
+                    FirstName = c.First().CompetitorInEvent.CompetitorInTeam.Competitor.FirstName,
+                    LastName = c.First().CompetitorInEvent.CompetitorInTeam.Competitor.LastName,
                     EventId = c.First().Stage.EventId,
                     CompetitorEventId = c.First().CompetitorInEventId,
                     Points = c.Sum(a => a.ConfigurationItem.Score)

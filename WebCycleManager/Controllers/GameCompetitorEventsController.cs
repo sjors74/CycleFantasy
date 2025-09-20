@@ -67,8 +67,8 @@ namespace WebCycleManager.Controllers
                         new ResultLineViewModel
                         {
                             CompetitorInEventId = competitorInEventPick.CompetitorsInEvent.Id,
-                            FirstName = competitorInEventPick.CompetitorsInEvent.Competitor.FirstName,
-                            LastName = competitorInEventPick.CompetitorsInEvent.Competitor.LastName,
+                            FirstName = competitorInEventPick.CompetitorsInEvent.CompetitorInTeam.Competitor.FirstName,
+                            LastName = competitorInEventPick.CompetitorsInEvent.CompetitorInTeam.Competitor.LastName,
                             Score = GetScoreFromResultList(competitorInEventPick.CompetitorsInEvent.Id),
                             OutOfCompetition = competitorInEventPick.CompetitorsInEvent.OutOfCompetition,
                             EventId = (int)eventId,
@@ -177,8 +177,8 @@ namespace WebCycleManager.Controllers
                     new ResultLineViewModel
                     {
                         CompetitorInEventId = competitorInEventPick.CompetitorsInEvent.Id,
-                        FirstName = competitorInEventPick.CompetitorsInEvent.Competitor.FirstName,
-                        LastName = competitorInEventPick.CompetitorsInEvent.Competitor.LastName,
+                        FirstName = competitorInEventPick.CompetitorsInEvent.CompetitorInTeam.Competitor.FirstName,
+                        LastName = competitorInEventPick.CompetitorsInEvent.CompetitorInTeam.Competitor.LastName,
                         Score = GetScoreFromResultList(competitorInEventPick.CompetitorsInEvent.Id),
                         OutOfCompetition = competitorInEventPick.CompetitorsInEvent.OutOfCompetition,
                         DropdownList = GetDropdownList((int)eventId),
@@ -319,8 +319,18 @@ namespace WebCycleManager.Controllers
         {
             var competitors = new List<SelectListItem>();
 
-            var competitorsDb = _context.CompetitorsInEvent.Include(c => c.Competitor).ThenInclude(t => t.Team).OrderBy(c => c.Competitor.FirstName).Where(c => c.EventId.Equals(eventId) && c.OutOfCompetition.Equals(false)).ToList();
-            var groupedCompetitors = competitorsDb.GroupBy(x => x.Competitor.Team.TeamName);
+            var competitorsDb = _context.CompetitorsInEvent
+                .Include(c => c.CompetitorInTeam)
+                    .ThenInclude(c => c.Competitor)
+                    .ThenInclude(c => c.CompetitorInTeams)
+                        .ThenInclude(cit => cit.Team)
+                .Where(c => c.EventId == eventId && !c.OutOfCompetition)
+                .OrderBy(c => c.CompetitorInTeam.Competitor.FirstName)
+                .ToList();
+
+            var groupedCompetitors = competitorsDb
+                .GroupBy(x => x.CompetitorInTeam?.Team?.TeamName ?? "Onbekend");
+            
             foreach (var group in groupedCompetitors)
             {
                 var optionGroup = new SelectListGroup() { Name = group.Key };
@@ -329,7 +339,7 @@ namespace WebCycleManager.Controllers
                     competitors.Add(new SelectListItem()
                     {
                         Value = item.Id.ToString(),
-                        Text = item.Competitor.CompetitorName,
+                        Text = item.CompetitorInTeam.Competitor.CompetitorName,
                         Group = optionGroup
                     });
                 }
@@ -377,7 +387,7 @@ namespace WebCycleManager.Controllers
             var c = b - a;
             var suggestedCompetitiorsList =  await _gameCompetitorEventService.GetCompetitors(eventId, c);
             var suggestedCompetitorsId = new List<int>();
-            suggestedCompetitorsId = suggestedCompetitiorsList.Select(c => c.CompetitorId).ToList();
+            suggestedCompetitorsId = suggestedCompetitiorsList.Select(c => c.CompetitorInTeamId).ToList();
             TempData["suggestedCompetitors"] = suggestedCompetitorsId;
             // and make sure there are no duplicates in a + c
             // return to detailview for the gamecompetitorevent with picks (a) and suggested picks (c)

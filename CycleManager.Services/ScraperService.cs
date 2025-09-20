@@ -1,5 +1,6 @@
 ﻿using CycleManager.Domain.Models;
 using CycleManager.Services.Settings;
+using DataAccessEF.Migrations;
 using Domain.Context;
 using Domain.Models;
 using Microsoft.EntityFrameworkCore;
@@ -60,7 +61,8 @@ namespace CycleManager.Services
                 .ToListAsync();
 
             var competitors = await _db.CompetitorsInEvent
-                .Include(c => c.Competitor)
+                .Include(c => c.CompetitorInTeam)
+                .ThenInclude(c => c.Competitor)
                 .Where(c => c.EventId == eventId)
                 .ToListAsync();
 
@@ -119,7 +121,8 @@ namespace CycleManager.Services
             int updateCount = 0;
 
             var competitors = await _db.CompetitorsInEvent
-                .Include(c => c.Competitor)
+                .Include(c => c.CompetitorInTeam)
+                    .ThenInclude(c => c.Competitor)
                 .Where(c => c.EventId == eventId)
                 .ToListAsync();
 
@@ -155,11 +158,10 @@ namespace CycleManager.Services
 
             var competitors = await _pcsScraper.ScrapeCompetitorsAsync(url, teamId, year);
 
-            foreach (var c in competitors)
-            {
-                //TODO: save competitors to table.
-                Console.WriteLine($"{c.RiderName} - {team.TeamName} (id {c.TeamId}) imported at {c.ImportedAt})");
-            }
+            _db.ScrapedCompetitors.AddRange(competitors);
+            await _db.SaveChangesAsync();
+            //Console.WriteLine($"{c.RiderName} - {team.TeamName} (id {c.TeamId}) imported at {c.ImportedAt})");
+            
         }
 
         private Task<List<ScrapedStageResult>> ScrapeStageResultsAsync(string url, int topN, int eventId)

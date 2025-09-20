@@ -4,6 +4,7 @@ using Domain.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DataAccessEF.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250919124231_ScraperAndCompetitorInTeams")]
+    partial class ScraperAndCompetitorInTeams
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -229,6 +232,9 @@ namespace DataAccessEF.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int>("TeamId")
+                        .HasColumnType("int");
+
                     b.HasKey("CompetitorId");
 
                     b.HasIndex("CountryId");
@@ -244,7 +250,7 @@ namespace DataAccessEF.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("CompetitorInTeamId")
+                    b.Property<int>("CompetitorId")
                         .HasColumnType("int");
 
                     b.Property<int>("EventId")
@@ -261,7 +267,7 @@ namespace DataAccessEF.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CompetitorInTeamId");
+                    b.HasIndex("CompetitorId");
 
                     b.HasIndex("EventId");
 
@@ -408,6 +414,7 @@ namespace DataAccessEF.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("EventCode")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("EventName")
@@ -560,6 +567,7 @@ namespace DataAccessEF.Migrations
                         .HasColumnType("bit");
 
                     b.Property<string>("NoScoreDescription")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("StageDate")
@@ -603,8 +611,6 @@ namespace DataAccessEF.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("TeamId");
-
-                    b.HasIndex("CountryId");
 
                     b.ToTable("Teams");
                 });
@@ -806,9 +812,9 @@ namespace DataAccessEF.Migrations
 
             modelBuilder.Entity("Domain.Models.CompetitorsInEvent", b =>
                 {
-                    b.HasOne("CycleManager.Domain.Models.CompetitorInTeam", "CompetitorInTeam")
+                    b.HasOne("Domain.Models.Competitor", "Competitor")
                         .WithMany()
-                        .HasForeignKey("CompetitorInTeamId")
+                        .HasForeignKey("CompetitorId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -818,7 +824,7 @@ namespace DataAccessEF.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("CompetitorInTeam");
+                    b.Navigation("Competitor");
 
                     b.Navigation("Event");
                 });
@@ -954,15 +960,6 @@ namespace DataAccessEF.Migrations
                         .IsRequired();
 
                     b.Navigation("Event");
-                });
-
-            modelBuilder.Entity("Domain.Models.Team", b =>
-                {
-                    b.HasOne("Domain.Models.Country", "Country")
-                        .WithMany()
-                        .HasForeignKey("CountryId");
-
-                    b.Navigation("Country");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>

@@ -1,4 +1,5 @@
 ﻿@using System.Text.Json
+@using System.Text.Json.Serialization
 @model ResultViewModel
 <h1>@Model.StageName</h1>
 <div id="autocomplete-root" data-count="@Model.ConfigurationItems"></div>
@@ -6,6 +7,7 @@
 @if(Model.NoScore)
 {
  <h5>Voor deze etappe worden geen scores berekend.</h5>
+ <h6>@Model.NoScoreDescription</h6>
 }
 else
 {
@@ -71,7 +73,20 @@ else
 </div>
 
 @{
-    var competitorsJson = JsonSerializer.Serialize(Model.Competitors);
+    var options = new JsonSerializerOptions
+    {
+        ReferenceHandler = ReferenceHandler.IgnoreCycles,
+        MaxDepth = 128,
+        WriteIndented = false
+    };
+
+    var competitorsJson = JsonSerializer.Serialize(
+        Model.Competitors
+             .Select(c => c.CompetitorInTeam)
+             .Select(cit => cit.Competitor)
+             .ToList(),
+        options
+    );
 }
 <script>
     const competitors = @Html.Raw(competitorsJson);

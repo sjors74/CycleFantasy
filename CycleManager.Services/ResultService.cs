@@ -28,13 +28,16 @@ namespace CycleManager.Services
                 .Select(c =>
                 {
                     var first = c.FirstOrDefault();
+                    var competitor = first?.CompetitorInEvent?.CompetitorInTeam.Competitor;
+                    var team = competitor?.CompetitorInTeams.FirstOrDefault()?.Team;
+
                     return new ResultDto
                     {
-                        CompetitorName = first?.CompetitorInEvent?.Competitor?.CompetitorName ?? "onbekend",
+                        CompetitorName = competitor?.CompetitorName ?? "onbekend",
                         EventId = first?.Stage?.EventId ?? 0,
                         CompetitorInEventId = first?.CompetitorInEventId ?? 0,
                         Points = c.Sum(a => a.ConfigurationItem?.Score ?? 0),
-                        CompetitorTeam = first?.CompetitorInEvent?.Competitor?.Team?.TeamName ?? "onbekend"
+                        CompetitorTeam = team?.TeamName ?? "onbekend"
                     };
             })
                 .OrderByDescending(c => c.Points)

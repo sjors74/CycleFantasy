@@ -35,11 +35,12 @@ namespace DataAccessEF.TypeRepository
                 .Include(e => e.GameCompetitorEvents.Where(gce => gce.UserId == userId))
                     .ThenInclude(gce => gce.Renners)
                         .ThenInclude(p => p.CompetitorsInEvent)
-                            .ThenInclude(ci => ci.Competitor)
-                                .ThenInclude(c => c.Team)
+                            .ThenInclude(c => c.CompetitorInTeam)
+                                    .ThenInclude(cit => cit.Team)
                 .Include(e => e.GameCompetitorEvents.Where(gce => gce.UserId == userId))
                     .ThenInclude(gce => gce.Renners)
                         .ThenInclude(p => p.CompetitorsInEvent)
+                            .ThenInclude(p => p.CompetitorInTeam)
                             .ThenInclude(ci => ci.Competitor)
                                 .ThenInclude(c => c.Country)
                 .Include(e => e.GameCompetitorEvents.Where(gce => gce.UserId == userId))
@@ -47,7 +48,6 @@ namespace DataAccessEF.TypeRepository
                         .ThenInclude(p => p.CompetitorsInEvent)
                             .ThenInclude(ci => ci.Event)
                 .ToListAsync();
-
 
 
             return events;

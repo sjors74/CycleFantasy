@@ -42,14 +42,16 @@ namespace WebCycleManager.Controllers
                 .AsNoTracking()
                 .Where(r => r.StageId == stageId)
                 .Include(r => r.CompetitorInEvent)
-                    .ThenInclude(cie => cie.Competitor)
+                    .ThenInclude(r => r.CompetitorInTeam)
+                        .ThenInclude(cie => cie.Competitor)
                 .Include(r => r.ConfigurationItem)
                 .ToList();
 
             var competitorsInEvent = _context.CompetitorsInEvent
                 .AsNoTracking()
                 .Where(c => c.EventId.Equals(currentEvent.EventId) && !c.OutOfCompetition)
-                .Include(c => c.Competitor)
+                    .Include(c => c.CompetitorInTeam)
+                        .ThenInclude(c => c.Competitor)
                 .ToList();
 
             var configItems = _context.ConfigurationItems
@@ -63,9 +65,9 @@ namespace WebCycleManager.Controllers
                     var result = results.FirstOrDefault(r => r.ConfigurationItem.Position == ci.Position);
                     int selectedCompetitorId = result?.CompetitorInEventId ?? 0;
                     string competitorName = string.Empty;
-                    if(result != null && result.CompetitorInEvent?.Competitor != null)
+                    if(result != null && result.CompetitorInEvent?.CompetitorInTeam?.Competitor != null)
                     {
-                        competitorName = GetCompetitorFullName(result.CompetitorInEvent.Competitor.CompetitorId);
+                        competitorName = GetCompetitorFullName(result.CompetitorInEvent.CompetitorInTeam.Competitor.CompetitorId);
                     }
                     else if(selectedCompetitorId > 0)
                     {
@@ -88,6 +90,7 @@ namespace WebCycleManager.Controllers
                 config.Id,
                 $"Etappe {stage.StageName}: {stage.StartLocation}-{stage.FinishLocation}",
                 stage.NoScore,
+                stage.NoScoreDescription,
                 configItems.Count,
                 resultItems,
                 competitorsInEvent
@@ -105,7 +108,7 @@ namespace WebCycleManager.Controllers
             foreach (var item in model.Results)
             {
                 var cie = await _context.CompetitorsInEvent
-                    .FirstOrDefaultAsync(c => c.CompetitorId == item.SelectedCompetitorId && c.EventId == model.EventId);
+                    .FirstOrDefaultAsync(c => c.CompetitorInTeam.Competitor.CompetitorId == item.SelectedCompetitorId && c.EventId == model.EventId);
     
                 if(cie != null)
                 {
@@ -186,7 +189,8 @@ namespace WebCycleManager.Controllers
 
                 var competitorsInEvent = _context.CompetitorsInEvent
                       .Where(c => c.EventId.Equals(stage.EventId) && !c.OutOfCompetition)
-                      .Include(c => c.Competitor)
+                      .Include(c => c.CompetitorInTeam)
+                        .ThenInclude(c => c.Competitor)
                       .ToList();
 
                 var rvm = new ResultViewModel(
@@ -195,6 +199,7 @@ namespace WebCycleManager.Controllers
                         config.Id, 
                         $"Etappe {stage.StageName}: {stage.StartLocation}-{stage.FinishLocation}", 
                         stage.NoScore,
+                        stage.NoScoreDescription,
                         configItems.Count, 
                         resultItems,
                         competitorsInEvent
@@ -235,7 +240,8 @@ namespace WebCycleManager.Controllers
 
             var result = await _context.Results
                 .Include(r => r.CompetitorInEvent)
-                    .ThenInclude(r => r.Competitor)
+                    .ThenInclude(c => c.CompetitorInTeam)      
+                        .ThenInclude(r => r.Competitor)
                 .Include(r => r.Stage)
                 .Include(r => r.ConfigurationItem)
                 .FirstOrDefaultAsync(m => m.Id == id);
@@ -248,7 +254,7 @@ namespace WebCycleManager.Controllers
                 Id = result.Id,
                 StageId = result.StageId,
                 Position = result.ConfigurationItem.Position,
-                CompetitorName = result.CompetitorInEvent.Competitor.CompetitorName
+                CompetitorName = result.CompetitorInEvent.CompetitorInTeam.Competitor.CompetitorName
             };
 
             return View(vm);
@@ -286,7 +292,7 @@ namespace WebCycleManager.Controllers
 
         private int GetResultId(int competitorId, int stageId)
         {
-            var r = _context.Results.FirstOrDefault(c => c.StageId == stageId && c.CompetitorInEvent.CompetitorId == competitorId);
+            var r = _context.Results.FirstOrDefault(c => c.StageId == stageId && c.CompetitorInEvent.CompetitorInTeamId == competitorId);
             if (r != null)
             {
                 return r.Id;
@@ -299,8 +305,11 @@ namespace WebCycleManager.Controllers
         {
             var competitors = new List<SelectListItem>();
 
-            var competitorsDb = _context.CompetitorsInEvent.OrderBy(c => c.EventNumber).ThenBy(c => c.Competitor.LastName).ThenBy(c => c.Competitor.FirstName).Where(c => c.EventId.Equals(eventId) && c.OutOfCompetition == false).ToList();
-            var groupedCompetitors = competitorsDb.GroupBy(x => x.Competitor.Team.TeamName);
+            var competitorsDb = _context.CompetitorsInEvent.OrderBy(c => c.EventNumber).ThenBy(c => c.CompetitorInTeam.Competitor.LastName).ThenBy(c => c.CompetitorInTeam.Competitor.FirstName).Where(c => c.EventId.Equals(eventId) && c.OutOfCompetition == false).ToList();
+            var groupedCompetitors = competitorsDb
+                .GroupBy(x => x.CompetitorInTeam.Competitor.CompetitorInTeams
+                    .FirstOrDefault()?.Team?.TeamName ?? "Onbekend");
+
             foreach (var group in groupedCompetitors)
             {
                 var optionGroup = new SelectListGroup() { Name = group.Key };
@@ -309,7 +318,7 @@ namespace WebCycleManager.Controllers
                     competitors.Add(new SelectListItem()
                     {
                         Value = item.Id.ToString(),
-                        Text = item.Competitor.CompetitorName,
+                        Text = item.CompetitorInTeam.Competitor.CompetitorName,
                         Group = optionGroup
                     });
                 }

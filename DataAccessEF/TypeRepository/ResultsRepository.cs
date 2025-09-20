@@ -18,14 +18,13 @@ namespace DataAccessEF.TypeRepository
         {
             var results = await context.Results
                 .Include(c => c.CompetitorInEvent)
-                    .ThenInclude(ci => ci.Competitor)
-                        .ThenInclude(t => t.Team)
+                    .ThenInclude(c => c.CompetitorInTeam)
+                        .ThenInclude(cit => cit.Team)
                 .Include(s => s.Stage)
                 .Include(r => r.ConfigurationItem)
                 .Where(r => r.Stage.EventId == eventId)
                 .OrderBy(r => r.ConfigurationItem.Position)
                 .ToListAsync();
-
             return results;
         }
 
@@ -112,23 +111,24 @@ namespace DataAccessEF.TypeRepository
                 .AsNoTracking()
                 .Where(r => r.StageId == stageId)
                 .Include(r => r.CompetitorInEvent)
-                    .ThenInclude(cie => cie.Competitor)
-                        .ThenInclude(t => t.Team)
+                    .ThenInclude(c => c.CompetitorInTeam)
+                    .ThenInclude(cit => cit.Team)
                 .Include(r => r.ConfigurationItem)
                 .ToListAsync();
 
             var top15 = configItems.Select(ci =>
             {
                 var result = results.FirstOrDefault(r => r.ConfigurationItem.Position == ci.Position);
-                if (result == null || result.CompetitorInEvent?.Competitor == null)
+                if (result == null || result.CompetitorInEvent?.CompetitorInTeam?.Competitor == null)
                     return null;
 
-                var competitor = result.CompetitorInEvent.Competitor;
+                var competitor = result.CompetitorInEvent.CompetitorInTeam.Competitor;
+                var team = competitor.CompetitorInTeams.FirstOrDefault()?.Team;
                 return new EtappeUitslagDto
                 {
                     Positie = ci.Position,
                     CompetitorName = $"{competitor.FirstName} {competitor.LastName}",
-                    TeamName = competitor.Team?.TeamName,
+                    TeamName = team?.TeamName,
                     Score = ci.Score
                 };
             })

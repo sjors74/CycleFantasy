@@ -14,32 +14,36 @@ namespace DataAccessEF.TypeRepository
         public async Task<CompetitorsInEvent> GetById(int id)
         {
             var competitorInEvent = await context.CompetitorsInEvent
-                .Include(c => c.Competitor)
-                    .ThenInclude(c => c.Team)
-                .Include(c => c.Competitor)
-                    .ThenInclude(c => c.Country)
-                .Where(c => c.Id == id)
-                .FirstOrDefaultAsync();
+                .Include(c => c.CompetitorInTeam)
+                    .ThenInclude(c => c.Competitor) 
+                        .ThenInclude(c => c.Country)
+                    .Include(c => c.CompetitorInTeam)
+                        .ThenInclude(cit => cit.Team)
+                .FirstOrDefaultAsync(cie => cie.Id == id); 
             return competitorInEvent;
         }
 
         public async Task<IEnumerable<CompetitorsInEvent>> GetCompetitors(int eventId)
         {
             return await context.CompetitorsInEvent
-                .Where(c => c.EventId == eventId)
-                .Include(c => c.Competitor)
-                    .ThenInclude(c => c.Team)
+                .Where(cie => cie.EventId == eventId)
+                    .Include(c => c.CompetitorInTeam)
+                        .ThenInclude(cit => cit.Team)
+                    .Include(c => c.CompetitorInTeam)
+                        .ThenInclude(cic => cic.Competitor)
                 .ToListAsync();
         }
 
         public async Task<IEnumerable<CompetitorsInEvent>> GetRandomNumberofCompetitors(int eventId, int number)
         {
             var competitorsInEvent = context.CompetitorsInEvent
-                .Include(c => c.Competitor)
-                    .ThenInclude(c => c.Team)
-                .Include(c => c.Competitor)
-                    .ThenInclude(c => c.Country)
-                .Where(c => c.EventId.Equals(eventId)).Select(c => c);
+                .Include(cie => cie.CompetitorInTeam)
+                    .ThenInclude(t=> t.Team)
+                        .ThenInclude(c => c.Country)
+                .Include(c => c.CompetitorInTeam)
+                        .ThenInclude(cit => cit.Team)
+                .Where(cie => cie.EventId == eventId)
+                .Select(cie => cie);
             var randomCompetitorsList = new List<CompetitorsInEvent>();
             randomCompetitorsList = GetRandomElements(competitorsInEvent, number);
             return randomCompetitorsList; 
@@ -54,12 +58,13 @@ namespace DataAccessEF.TypeRepository
         public async Task<CompetitorsInEvent> GetCompetitorsInEventByIds(int eventId, int competitorId)
         {
             var competitorsInEvent = await context.CompetitorsInEvent
-                .Include(c => c.Competitor)
-                    .ThenInclude(c => c.Team)
-                .Include(c => c.Competitor)
+                .Include(cie => cie.CompetitorInTeam)
+                .ThenInclude(cie => cie.Competitor)
                     .ThenInclude(c => c.Country)
-                .Where(e => e.EventId.Equals(eventId) && e.CompetitorId.Equals(competitorId))
-                .FirstOrDefaultAsync();
+                .Include(c => c.CompetitorInTeam)
+                        .ThenInclude(cit => cit.Team)
+                .FirstOrDefaultAsync(e => e.EventId == eventId && e.CompetitorInTeamId == competitorId);
+
             return competitorsInEvent;
         }
     }
