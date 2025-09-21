@@ -1,4 +1,5 @@
-﻿using Domain.Context;
+﻿using CycleManager.Domain.Models;
+using Domain.Context;
 using Domain.Interfaces;
 using Domain.Models;
 using Microsoft.EntityFrameworkCore;
@@ -11,12 +12,15 @@ namespace DataAccessEF.TypeRepository
         { 
         }
 
-        public IQueryable<Competitor> GetAllCompetitors()
+        public async Task<List<Competitor>> GetAllCompetitors(int year)
         {
-            var competitors = context.Competitors
-                .Include(c => c.Country)
-                .Include(c => c.CompetitorInTeams)
-                    .ThenInclude(cit => cit.Team);
+            var competitors = await context.Competitors
+                .Include(c => c.CompetitorInTeams) // <-- zo heb je de teams van de renner
+                    .ThenInclude(cit => cit.Team)   // inclusief Team
+                .Include(c => c.Country)            // land van de renner
+                .AsNoTracking()
+                .Where(c => c.CompetitorInTeams.Any(cit => cit.Year == year))
+                .ToListAsync();
 
             return competitors;
         }
@@ -50,6 +54,15 @@ namespace DataAccessEF.TypeRepository
                 .Where(c => c.CountryId == countryId)
                 .CountAsync();
             return numberOfCompetitors;
+        }
+
+        public async Task<List<int>> GetAvailableYears()
+        {
+            return await context.CompetitorInTeams
+                .Select(cit => cit.Year)
+                .Distinct()
+                .OrderByDescending(y => y)
+                .ToListAsync();
         }
     }
 }

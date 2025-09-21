@@ -1,62 +1,39 @@
-﻿@model WebCycleManager.Models.TeamViewModel
+﻿@model WebCycleManager.Models.TeamDetailsViewModel
 
 @{
     ViewData["Title"] = "Details";
 }
 
-<h1>Details</h1>
-
-<div>
-    <h4>Team</h4>
-    <hr />
-    <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.TeamName)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.TeamName)
-        </dd>
-    </dl>
-    <h5>Renners (@Model.CompetitorsInTeam)</h5>
-    <table class="table">
-        <thead>
+<h2>@Model.TeamName (@Model.Country)</h2>
+<form asp-action="Details" method="get">
+    <input type="hidden" name="id" value="@Model.TeamId" />
+    <select name="year" onchange="this.form.submit()">
+        @foreach(var year in Model.AvailableYears)
+        {
+            <option value="@year" selected="@(year == Model.SelectedYear)">
+                @year
+            </option>
+        }
+    </select>
+</form>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Naam</th>
+            <th>Land</th>
+            <th>Is kampioen</th>
+        </tr>
+        @foreach (var c in Model.Competitors)
+        {
             <tr>
-                <th>
-                    @Html.DisplayNameFor(model => model.Competitors.FirstOrDefault().FirstName)
-                </th>
-                <th>
-                    @Html.DisplayNameFor(model => model.Competitors.FirstOrDefault().LastName)
-                </th>
-                <th>
-                    @Html.DisplayNameFor(model => model.Competitors.FirstOrDefault().Land)
-                </th>
-                <th></th>
+                <td>@c.FirstName @c.LastName</td>
+                <td>@c.Land</td>
+                <td>@(c.IsNationalChampion ? "🏆" : "-")</td>
             </tr>
-        </thead>
-        <tbody>
-            @foreach (var item in Model.Competitors)
-            {
-                <tr>
-                    <td>
-                        @Html.DisplayFor(modelItem => item.FirstName)
-                    </td>
-                    <td>
-                        @Html.DisplayFor(modelItem => item.LastName)
-                    </td>
-                    <td>
-                        @Html.DisplayFor(modelItem => item.Land)
-                    </td>
-                    <td>
-                        <a asp-controller="Competitors" asp-action="Edit" asp-route-id="@item.CompetitorId">Wijzig</a> |
-                        <a asp-controller="Competitors" asp-action="Details" asp-route-id="@item.CompetitorId">Details</a> |
-                        <a asp-controller="Competitors" asp-action="Delete" asp-route-id="@item.CompetitorId">Verwijder</a>
-                    </td>
-                </tr>
-           }
-        </tbody>
-    </table>
-</div>
+        }
+    </thead>
+</table>
 <div>
-    <a asp-action="Edit" asp-route-id="@Model?.Id">Wijzig</a> |
+@*     <a asp-action="Edit" asp-route-id="@Model?.Id">Wijzig</a> |
     <a asp-action="Index">Terug naar de lijst</a>
-</div>
+ *@</div>

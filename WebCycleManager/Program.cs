@@ -23,6 +23,7 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
 builder.Services.AddTransient<ICompetitorRepository, CompetitorRepository>();
+builder.Services.AddTransient<ICompetitorInTeamRepository, CompetitorInTeamRepository>();
 builder.Services.AddTransient<ICompetitorsInEventRepository, CompetitorsInEventRepository>();
 builder.Services.AddTransient<IConfigurationRepository, ConfigurationRepository>(); 
 builder.Services.AddTransient<IConfigurationItemRepository, ConfigurationItemRepository>();

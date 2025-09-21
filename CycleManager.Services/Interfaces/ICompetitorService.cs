@@ -1,4 +1,5 @@
-﻿using Domain.Models;
+﻿using CycleManager.Domain.Models;
+using Domain.Models;
 
 namespace CycleManager.Services.Interfaces
 {
@@ -22,7 +23,7 @@ namespace CycleManager.Services.Interfaces
         /// Get all competitors
         /// </summary>
         /// <returns></returns>
-        IQueryable<Competitor> GetAllCompetitors();
+        Task<List<Competitor>> GetAllCompetitors(int year);
 
         /// <summary>
         /// Create a new competitor and save it
@@ -31,6 +32,12 @@ namespace CycleManager.Services.Interfaces
         /// <returns></returns>
         Task Create(Competitor entity);
 
+        /// <summary>
+        /// Create a new competitorInTeam and save it
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <returns></returns>
+        Task CreateCompetitorInTeam(CompetitorInTeam entity);
         /// <summary>
         /// Update and save a competitor
         /// </summary>
@@ -51,5 +58,6 @@ namespace CycleManager.Services.Interfaces
         /// <param name="teamId"></param>
         /// <returns></returns>
         Task<IEnumerable<Competitor>> GetByTeamId(int teamId);
+        Task<List<int>> GetAvailableYears();
     }
 }

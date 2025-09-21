@@ -82,7 +82,7 @@ namespace WebCycleManager.Controllers
         // GET: CompetitorsInEvents/Create
         public async Task<IActionResult> Create(int eventId)
         {
-            var competitors = _competitorService.GetAllCompetitors();
+            var competitors = await _competitorService.GetAllCompetitors(DateTime.Now.Year);
             var competitorsList = competitors.OrderBy(c => c.LastName).ThenBy(x => x.FirstName).ToList();
             var teams = await _teamService.GetAll();
             var teamList = teams.OrderBy(c => c.TeamName).ToList();
@@ -108,7 +108,12 @@ namespace WebCycleManager.Controllers
                 await _competitorInEventService.Create(listOfCompetitorsInEvent);
                 return RedirectToAction("Index", new { eventId } );
             }
-            ViewData["CompetitorId"] = new SelectList(_competitorService.GetAllCompetitors().OrderBy(c => c.LastName).ThenBy(c => c.FirstName), "CompetitorId", "CompetitorName");
+            var competitors = (await _competitorService.GetAllCompetitors(DateTime.Now.Year))
+                .OrderBy(c => c.LastName)
+                .ThenBy(c => c.FirstName)
+                .ToList();
+
+            ViewData["CompetitorId"] = new SelectList(competitors, "CompetitorId", "CompetitorName");
             ViewData["TeamId"] = new SelectList(await _teamService.GetAll(), "TeamId", "TeamName");
             return View();
         }
@@ -130,7 +135,11 @@ namespace WebCycleManager.Controllers
             var vm = GetViewModel(competitorsInEvent);
             var team = competitor?.CompetitorInTeams.FirstOrDefault()?.Team;
             vm.TeamId = team?.TeamId ?? 0;
-            ViewData["CompetitorId"] = new SelectList(_competitorService.GetAllCompetitors().OrderBy(c => c.FirstName), "CompetitorId", "FirstName", competitorsInEvent.CompetitorInTeamId);
+            var competitors = (await _competitorService.GetAllCompetitors(DateTime.Now.Year))
+                .OrderBy(c => c.LastName)
+                .ThenBy(c => c.FirstName)
+                .ToList();
+            ViewData["CompetitorId"] = new SelectList(competitors, "CompetitorId", "FirstName", competitorsInEvent.CompetitorInTeamId);
             ViewData["EventId"] = new SelectList(await _eventService.GetAllEvents(), "EventId", "EventName", competitorsInEvent.EventId);
             return View(vm);
         }

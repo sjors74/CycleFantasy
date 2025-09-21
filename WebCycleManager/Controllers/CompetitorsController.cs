@@ -1,10 +1,12 @@
-﻿using CycleManager.Services.Interfaces;
+﻿using CycleManager.Domain.Models;
+using CycleManager.Services.Interfaces;
 using DataAccessEF.Extensions;
 using Domain.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using WebCycleManager.Helpers;
+using WebCycleManager.Models;
 
 namespace WebCycleManager.Controllers
 {
@@ -22,7 +24,7 @@ namespace WebCycleManager.Controllers
         }
 
         // GET: Competitors
-        public async Task<IActionResult> Index(string currentFilter, string searchString, int? pageNumber)
+        public async Task<IActionResult> Index(string currentFilter, string searchString, int? pageNumber, int? year)
         {
             if (searchString != null)
             {
@@ -34,19 +36,35 @@ namespace WebCycleManager.Controllers
             }
 
             ViewData["CurrentFilter"] = searchString;
+            var availableYears = await _competitorService.GetAvailableYears();
+            ViewData["AvailableYears"] = availableYears;
+            
+            var selectedYear = year ?? DateTime.Now.Year;
+            ViewData["SelectedYear"] = selectedYear;
+
             var pageSize = ConfigurationConstants.PageSize;
-            var competitors = _competitorService.GetAllCompetitors();
+
+            var competitors = await _competitorService.GetAllCompetitors(selectedYear);
+
             if (!string.IsNullOrEmpty(searchString))
             {
-                competitors = competitors.Where(s => s.LastName.Contains(searchString) || s.FirstName.Contains(searchString));
-                if (competitors == null)
+                competitors = competitors
+                        .Where(s => s.LastName.Contains(searchString, StringComparison.OrdinalIgnoreCase) ||
+                                    s.FirstName.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+                        .ToList(); // materialiseer direct naar List
+
+                if (!competitors.Any())
                 {
                     return NotFound();
                 }
             }
-            var orderedList = competitors.OrderBy(c => c.LastName).ThenBy(c => c.FirstName);
 
-            return View(await PaginatedList<Competitor>.CreateAsync(orderedList, pageNumber ?? 1, pageSize));
+            var orderedList = competitors
+                .OrderBy(c => c.LastName)
+                .ThenBy(c => c.FirstName);
+
+            return View(PaginatedList<Competitor>.Create(
+                orderedList, pageNumber ?? 1, pageSize));
         }
 
         // GET: Competitors/Details/5
@@ -71,7 +89,7 @@ namespace WebCycleManager.Controllers
         {
             ViewData["TeamId"] = new SelectList((await _teamService.GetAll()).OrderBy(t => t.TeamName), "TeamId", "TeamName");
             ViewData["CountryId"] = new SelectList(await CountrySelectListHelper.GetOrderedCountries(_countryService), "CountryId", "CountryNameLong");
-            return View();
+            return View(new CreateCompetitorViewModel());
         }
 
         // POST: Competitors/Create
@@ -79,21 +97,45 @@ namespace WebCycleManager.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("CompetitorId,FirstName,LastName,PcsName,IsNationalChampion,TeamId, CountryId")] Competitor competitor)
+        public async Task<IActionResult> Create(CreateCompetitorViewModel model)
         {
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
-                await _competitorService.Create(competitor);
-                return RedirectToAction(nameof(Index));
+                ViewData["TeamId"] = new SelectList((await _teamService.GetAll()).OrderBy(t => t.TeamName), "TeamId", "TeamName");
+                ViewData["CountryId"] = new SelectList(await CountrySelectListHelper.GetOrderedCountries(_countryService), "CountryId", "CountryNameLong");
+                return View(model);
             }
-            var allTeams = (await _teamService.GetAll()).OrderBy(t => t.TeamName);
 
-            // Kies het eerste team van de competitor (of filter op een specifiek jaar)
-            var selectedTeamId = competitor.CompetitorInTeams.FirstOrDefault()?.TeamId ?? 0;
+            var competitor = new Competitor
+            {
+                FirstName = model.FirstName,
+                LastName = model.LastName,
+                PcsName = model.PcsName,
+                CountryId = model.CountryId
+            };
+            await _competitorService.Create(competitor);
 
-            ViewData["TeamId"] = new SelectList(allTeams, "TeamId", "TeamName", selectedTeamId);
-            ViewData["CountryId"] = new SelectList(await CountrySelectListHelper.GetOrderedCountries(_countryService), "CountryId", "CountryNameLong", competitor.CountryId);
-            return View(competitor);
+            var competitorInTeam = new CompetitorInTeam
+            {
+                CompetitorId = competitor.CompetitorId,
+                TeamId = model.TeamId,
+                Year = model.Year,
+                IsNationalChampion = model.IsNationalChampion
+            };
+
+            await _competitorService.CreateCompetitorInTeam(competitorInTeam);
+
+            return RedirectToAction(nameof(Index));
+
+
+            //var allTeams = (await _teamService.GetAll()).OrderBy(t => t.TeamName);
+
+            //// Kies het eerste team van de competitor (of filter op een specifiek jaar)
+            //var selectedTeamId = competitor.CompetitorInTeams.FirstOrDefault()?.TeamId ?? 0;
+
+            //ViewData["TeamId"] = new SelectList(allTeams, "TeamId", "TeamName", selectedTeamId);
+            //ViewData["CountryId"] = new SelectList(await CountrySelectListHelper.GetOrderedCountries(_countryService), "CountryId", "CountryNameLong", competitor.CountryId);
+            //return View(competitor);
         }
 
         // GET: Competitors/Edit/5

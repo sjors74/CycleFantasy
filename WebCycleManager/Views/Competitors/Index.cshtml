@@ -9,10 +9,19 @@
 <p>
     <a asp-action="Create">Maak nieuw</a>
 </p>
+
 <form asp-action="Index" method="get">
     <div class="form-actions no-color">
         <p>
             Zoek op naam: <input type="text" name="SearchString" value="@ViewData["CurrentFilter"]" />
+            <select name="year" onchange="this.form.submit()">
+                @foreach (var year in (List<int>)ViewData["AvailableYears"])
+                {
+                    <option value="@year" selected="@(year == (int)ViewData["SelectedYear"])">
+                        @year
+                    </option>
+                }
+            </select>
             <input type="submit" value="Zoek" class="btn btn-default" /> |
             <a asp-action="Index">Terug naar de volledige lijst</a>
         </p>
@@ -53,7 +62,7 @@
                     @(item.Country?.CountryNameLong ?? "onbekend")
             </td>
             <td>
-                ToDo: link naar team
+                @item.CompetitorInTeams.FirstOrDefault()?.Team.TeamName
             </td>
             <td>
                 <a asp-action="Edit" asp-route-id="@item.CompetitorId">Wijzig</a> |

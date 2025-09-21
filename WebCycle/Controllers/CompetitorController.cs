@@ -18,7 +18,7 @@ namespace WebCycle.Controllers
         [HttpGet]
         public async Task<IEnumerable<Competitor>> GetCompetitors()
         {
-            var competitors = _competitorService.GetAllCompetitors();
+            var competitors = await _competitorService.GetAllCompetitors(DateTime.Now.Year);
             return competitors;
         }
 

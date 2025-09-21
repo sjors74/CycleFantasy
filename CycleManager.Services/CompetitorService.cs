@@ -1,4 +1,5 @@
-﻿using CycleManager.Services.Interfaces;
+﻿using CycleManager.Domain.Models;
+using CycleManager.Services.Interfaces;
 using Domain.Interfaces;
 using Domain.Models;
 
@@ -7,11 +8,13 @@ namespace CycleManager.Services
     public class CompetitorService : ICompetitorService
     {
         private readonly ICompetitorRepository _competitorRepository;
-        public CompetitorService(ICompetitorRepository competitorRepository) 
+        private readonly ICompetitorInTeamRepository _competitorInTeamRepository;
+        public CompetitorService(ICompetitorRepository competitorRepository, ICompetitorInTeamRepository competitorInTeamRepository)
         {
             _competitorRepository = competitorRepository;
+            _competitorInTeamRepository = competitorInTeamRepository;
         }
-    
+
         /// <summary>
         /// Create a new competitor and save it
         /// </summary>
@@ -21,6 +24,12 @@ namespace CycleManager.Services
         {
             _competitorRepository.Add(entity);
             await _competitorRepository.SaveChangesAsync();
+        }
+
+        public async Task CreateCompetitorInTeam(CompetitorInTeam entity)
+        {
+            _competitorInTeamRepository.Add(entity);
+            await _competitorInTeamRepository.SaveChangesAsync();
         }
 
         /// <summary>
@@ -38,9 +47,14 @@ namespace CycleManager.Services
         /// Get all competitors
         /// </summary>
         /// <returns></returns>
-        public IQueryable<Competitor> GetAllCompetitors()
+        public async Task<List<Competitor>> GetAllCompetitors(int year)
         {
-            return _competitorRepository.GetAllCompetitors();
+            return await _competitorRepository.GetAllCompetitors(year);
+        }
+
+        public Task<List<int>> GetAvailableYears()
+        {
+            return _competitorRepository.GetAvailableYears();
         }
 
         /// <summary>

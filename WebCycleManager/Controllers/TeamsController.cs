@@ -1,10 +1,8 @@
 ﻿using CycleManager.Services.Interfaces;
-using Domain.Context;
 using Domain.Interfaces;
 using Domain.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
 using WebCycleManager.Helpers;
 using WebCycleManager.Models;
 
@@ -42,51 +40,61 @@ namespace WebCycleManager.Controllers
         }
 
         // GET: Teams/Details/5
-        public async Task<IActionResult> Details(int? id)
+        public async Task<IActionResult> Details(int id, int? year)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var team = await _teamRepository.GetById((int)id);
+            var team = await _teamRepository.GetTeamById(id);
 
             if (team == null)
             {
                 return NotFound();
             }
 
-            var competitorsList = new List<CompetitorViewModel>();
-            var vm = new TeamViewModel
+            var selectedYear = year ?? DateTime.Now.Year;
+            var competitors = team.CompetitorInTeams
+                .Where(cit => cit.Year == selectedYear)
+                .Select(cit => new CompetitorViewModel
+                {
+                    CompetitorId = cit.CompetitorId,
+                    FirstName = cit.Competitor.FirstName,
+                    LastName = cit.Competitor.LastName,
+                    Land = cit.Competitor.Country?.CountryNameShort ?? "onbekend",
+                    IsNationalChampion = cit.IsNationalChampion
+                })
+                .OrderBy(c => c.LastName)
+                .ToList();
+
+            var vm = new TeamDetailsViewModel
             {
-                Id = team.TeamId,
+                TeamId = team.TeamId,
                 TeamName = team.TeamName,
-                PcsName = team.PcsName,
-                CountryNameShort = team.Country?.CountryNameShort ?? string.Empty
+                Country = team.Country?.CountryNameShort ?? "onbekend",
+                SelectedYear = selectedYear,
+                AvailableYears = team.CompetitorInTeams.Select(c => c.Year).Distinct().OrderByDescending(y => y).ToList(),
+                Competitors = competitors
             };
 
-            // Haal competitors via CompetitorInTeams
-            if (team.CompetitorInTeams != null)
-            {
-                var orderedCompetitors = team.CompetitorInTeams
-                    .Select(cit => cit.Competitor)
-                    .OrderBy(c => c.LastName);
+            //// Haal competitors via CompetitorInTeams
+            //if (team.CompetitorInTeams != null)
+            //{
+            //    var orderedCompetitors = team.CompetitorInTeams
+            //        .Select(cit => cit.Competitor)
+            //        .OrderBy(c => c.LastName);
 
-                foreach (var comp in orderedCompetitors)
-                {
-                    var compViewModel = new CompetitorViewModel
-                    {
-                        CompetitorId = comp.CompetitorId,
-                        FirstName = comp.FirstName,
-                        LastName = comp.LastName,
-                        Land = comp.Country?.CountryNameShort ?? string.Empty
-                    };
-                    competitorsList.Add(compViewModel);
-                }
+            //    foreach (var comp in orderedCompetitors)
+            //    {
+            //        var compViewModel = new CompetitorViewModel
+            //        {
+            //            CompetitorId = comp.CompetitorId,
+            //            FirstName = comp.FirstName,
+            //            LastName = comp.LastName,
+            //            Land = comp.Country?.CountryNameShort ?? string.Empty
+            //        };
+            //        competitorsList.Add(compViewModel);
+            //    }
 
-                vm.CompetitorsInTeam = team.CompetitorInTeams.Count;
-                vm.Competitors = competitorsList;
-            }
+            //    vm.CompetitorsInTeam = team.CompetitorInTeams.Count;
+            //    vm.Competitors = competitorsList;
+            //}
 
             return View(vm);
         }
