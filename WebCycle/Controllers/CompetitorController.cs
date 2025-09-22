@@ -1,4 +1,5 @@
 ﻿using CycleManager.Services.Interfaces;
+using Domain.Dto;
 using Domain.Interfaces;
 using Domain.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -16,7 +17,7 @@ namespace WebCycle.Controllers
             _competitorService = competitorService;
         }
         [HttpGet]
-        public async Task<IEnumerable<Competitor>> GetCompetitors()
+        public async Task<IEnumerable<CompetitorDto>> GetCompetitors()
         {
             var competitors = await _competitorService.GetAllCompetitors(DateTime.Now.Year);
             return competitors;

@@ -14,12 +14,12 @@ namespace Domain.Mapping
                 .ForMember(c => c.Deelnemers, d => d.MapFrom(s => s.GameCompetitorEvents));
             CreateMap<Event, EventForUserDto>();
             CreateMap<Competitor, CompetitorDto>()
-                .ForMember(c => c.TeamName, d => d.MapFrom(s => s.CompetitorInTeams.FirstOrDefault().Team.TeamName))
+                //.ForMember(c => c.TeamName, d => d.MapFrom(s => s.CompetitorInTeams.FirstOrDefault().Team.TeamName))
                 .ForMember(c => c.CountryShort, d => d.MapFrom(s => s.Country.CountryNameShort));
             
             CreateMap<CompetitorsInEvent, CompetitorDto>()
-                .ForMember(c => c.CompetitorName, d => d.MapFrom(s => s.CompetitorInTeam.Competitor.CompetitorName))
-                .ForMember(c => c.TeamName, d => d.MapFrom(s => s.CompetitorInTeam.Team.TeamName))
+                //.ForMember(c => c.CompetitorName, d => d.MapFrom(s => s.CompetitorInTeam.Competitor.CompetitorName))
+                //.ForMember(c => c.TeamName, d => d.MapFrom(s => s.CompetitorInTeam.Team.TeamName))
                 .ForMember(c => c.CountryShort, d => d.MapFrom(s => s.CompetitorInTeam.Competitor.Country.CountryNameShort));
 
             CreateMap<GameCompetitorEvent, DeelnemerDto>()
@@ -35,7 +35,8 @@ namespace Domain.Mapping
                             .ForMember(c => c.IsNationalChampion, d => d.MapFrom(s => s.CompetitorsInEvent.CompetitorInTeam.IsNationalChampion));
 
             CreateMap<GameCompetitorEventPick, CompetitorDto>()
-                .ForMember(c => c.CompetitorName, d => d.MapFrom(s => s.CompetitorsInEvent.CompetitorInTeam.Competitor.CompetitorName));
+                .ForMember(c => c.FirstName, d => d.MapFrom(s => s.CompetitorsInEvent.CompetitorInTeam.Competitor.FirstName))
+                .ForMember(c => c.LastName, d => d.MapFrom(c => c.CompetitorsInEvent.CompetitorInTeam.Competitor.LastName));
             CreateMap<Stage, StageResultDto>()
                 .ForMember(c => c.StageId, d => d.MapFrom(s => s.Id))
                 .ForMember(c => c.StageNumber, d => d.MapFrom(s => s.StageName))

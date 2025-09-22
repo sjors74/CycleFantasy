@@ -1,5 +1,6 @@
 ﻿using CycleManager.Domain.Models;
 using CycleManager.Services.Interfaces;
+using Domain.Dto;
 using Domain.Interfaces;
 using Domain.Models;
 
@@ -47,7 +48,7 @@ namespace CycleManager.Services
         /// Get all competitors
         /// </summary>
         /// <returns></returns>
-        public async Task<List<Competitor>> GetAllCompetitors(int year)
+        public async Task<List<CompetitorDto>> GetAllCompetitors(int year)
         {
             return await _competitorRepository.GetAllCompetitors(year);
         }

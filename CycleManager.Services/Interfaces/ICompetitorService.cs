@@ -1,4 +1,5 @@
 ﻿using CycleManager.Domain.Models;
+using Domain.Dto;
 using Domain.Models;
 
 namespace CycleManager.Services.Interfaces
@@ -23,7 +24,7 @@ namespace CycleManager.Services.Interfaces
         /// Get all competitors
         /// </summary>
         /// <returns></returns>
-        Task<List<Competitor>> GetAllCompetitors(int year);
+        Task<List<CompetitorDto>> GetAllCompetitors(int year);
 
         /// <summary>
         /// Create a new competitor and save it

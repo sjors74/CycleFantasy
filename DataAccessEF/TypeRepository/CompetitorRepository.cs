@@ -1,5 +1,7 @@
-﻿using CycleManager.Domain.Models;
+﻿using CycleManager.Domain.Dto;
+using CycleManager.Domain.Models;
 using Domain.Context;
+using Domain.Dto;
 using Domain.Interfaces;
 using Domain.Models;
 using Microsoft.EntityFrameworkCore;
@@ -12,14 +14,29 @@ namespace DataAccessEF.TypeRepository
         { 
         }
 
-        public async Task<List<Competitor>> GetAllCompetitors(int year)
+        public async Task<List<CompetitorDto>> GetAllCompetitors(int year)
         {
             var competitors = await context.Competitors
-                .Include(c => c.CompetitorInTeams) // <-- zo heb je de teams van de renner
-                    .ThenInclude(cit => cit.Team)   // inclusief Team
-                .Include(c => c.Country)            // land van de renner
-                .AsNoTracking()
                 .Where(c => c.CompetitorInTeams.Any(cit => cit.Year == year))
+                .Select(c => new CompetitorDto
+                {
+                    CompetitorId = c.CompetitorId,
+                    FirstName = c.FirstName,
+                    LastName = c.LastName,
+                    PcsName = c.PcsName,
+                    CountryShort = c.Country.CountryNameShort,
+                    Teams = c.CompetitorInTeams
+                        .Where(cit => cit.Year == year)
+                        .Select(cit => new CompetitorInTeamDto
+                        {
+                            TeamId = cit.TeamId,
+                            TeamName = cit.Team.TeamName,
+                            Year = cit.Year,
+                            IsNationalChampion = cit.IsNationalChampion
+                        })
+                        .ToList()
+                })
+                .AsNoTracking()
                 .ToListAsync();
 
             return competitors;

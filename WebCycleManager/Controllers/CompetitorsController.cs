@@ -1,6 +1,7 @@
 ﻿using CycleManager.Domain.Models;
 using CycleManager.Services.Interfaces;
 using DataAccessEF.Extensions;
+using Domain.Dto;
 using Domain.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -63,7 +64,7 @@ namespace WebCycleManager.Controllers
                 .OrderBy(c => c.LastName)
                 .ThenBy(c => c.FirstName);
 
-            return View(PaginatedList<Competitor>.Create(
+            return View(PaginatedList<CompetitorDto>.Create(
                 orderedList, pageNumber ?? 1, pageSize));
         }
 

@@ -120,11 +120,12 @@ namespace DataAccessEF.TypeRepository
                         return new CompetitorDto
                         {
                             CompetitorId = competitor.CompetitorId,
-                            CompetitorName = cie.CompetitorInTeam.Competitor.CompetitorName,
+                            FirstName = cie.CompetitorInTeam.Competitor.FirstName,
+                            LastName = cie.CompetitorInTeam.Competitor.LastName,
                             PcsName = competitor.PcsName,
-                            IsNationalChampion = cie.CompetitorInTeam.IsNationalChampion,
+                            //IsNationalChampion = cie.CompetitorInTeam.IsNationalChampion,
                             CountryShort = competitor.Country.CountryNameShort,
-                            TeamName = team.TeamName,
+                            //TeamName = team.TeamName,
                             InSelectie = cie.InSelectie
                         };
                     }).ToList()

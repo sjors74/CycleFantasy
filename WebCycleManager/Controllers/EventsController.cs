@@ -153,7 +153,7 @@ namespace WebCycleManager.Controllers
             var @event = await _eventService.GetEventById(id);
             if (@event != null)
             {
-                _eventService.Delete(@event);
+                await _eventService.Delete(@event);
             }
             
             return RedirectToAction(nameof(Index));

@@ -1,4 +1,4 @@
-﻿@model PaginatedList<Domain.Models.Competitor>
+﻿@model PaginatedList<Domain.Dto.CompetitorDto>
 
 @{
     ViewData["Title"] = "Index";
@@ -30,10 +30,10 @@
 <table class="table">
     <thead>
         <tr>
-            <th>
+             <th>
                 @Html.DisplayName("Voornaam")
             </th>
-            <th>
+             <th>
                 @Html.DisplayName("Achternaam")
             </th>
             <th>
@@ -52,17 +52,17 @@
             <td>
                 @Html.DisplayFor(modelItem => item.FirstName)
             </td>
-            <td>
+             <td>
                 @Html.DisplayFor(modelItem => item.LastName)
             </td>
-            <td>
+             <td>
                 @Html.DisplayFor(modelItem => item.PcsName)
             </td>
             <td>
-                    @(item.Country?.CountryNameLong ?? "onbekend")
+                    @(item.CountryShort ?? "onbekend")
             </td>
             <td>
-                @item.CompetitorInTeams.FirstOrDefault()?.Team.TeamName
+                @item.Teams.FirstOrDefault().TeamName
             </td>
             <td>
                 <a asp-action="Edit" asp-route-id="@item.CompetitorId">Wijzig</a> |

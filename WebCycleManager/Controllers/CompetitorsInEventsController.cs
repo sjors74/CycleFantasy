@@ -83,7 +83,7 @@ namespace WebCycleManager.Controllers
         public async Task<IActionResult> Create(int eventId)
         {
             var competitors = await _competitorService.GetAllCompetitors(DateTime.Now.Year);
-            var competitorsList = competitors.OrderBy(c => c.LastName).ThenBy(x => x.FirstName).ToList();
+            var competitorsList = competitors.OrderBy(c => c.CompetitorName).ToList();
             var teams = await _teamService.GetAll();
             var teamList = teams.OrderBy(c => c.TeamName).ToList();
             ViewBag.ListOfTeams = teamList;
@@ -109,8 +109,7 @@ namespace WebCycleManager.Controllers
                 return RedirectToAction("Index", new { eventId } );
             }
             var competitors = (await _competitorService.GetAllCompetitors(DateTime.Now.Year))
-                .OrderBy(c => c.LastName)
-                .ThenBy(c => c.FirstName)
+                .OrderBy(c => c.CompetitorName)
                 .ToList();
 
             ViewData["CompetitorId"] = new SelectList(competitors, "CompetitorId", "CompetitorName");
@@ -136,8 +135,7 @@ namespace WebCycleManager.Controllers
             var team = competitor?.CompetitorInTeams.FirstOrDefault()?.Team;
             vm.TeamId = team?.TeamId ?? 0;
             var competitors = (await _competitorService.GetAllCompetitors(DateTime.Now.Year))
-                .OrderBy(c => c.LastName)
-                .ThenBy(c => c.FirstName)
+                .OrderBy(c => c.CompetitorName)
                 .ToList();
             ViewData["CompetitorId"] = new SelectList(competitors, "CompetitorId", "FirstName", competitorsInEvent.CompetitorInTeamId);
             ViewData["EventId"] = new SelectList(await _eventService.GetAllEvents(), "EventId", "EventName", competitorsInEvent.EventId);

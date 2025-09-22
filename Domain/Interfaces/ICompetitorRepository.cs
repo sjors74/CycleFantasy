@@ -1,11 +1,12 @@
 ﻿using CycleManager.Domain.Models;
+using Domain.Dto;
 using Domain.Models;
 
 namespace Domain.Interfaces
 {
     public interface ICompetitorRepository : IGenericRepository<Competitor> 
     {
-        Task<List<Competitor>> GetAllCompetitors(int year);
+        Task<List<CompetitorDto>> GetAllCompetitors(int year);
         Task<Competitor> GetById(int competitorId);
         Task<IEnumerable<Competitor>> GetByTeamId(int teamId);
         Task<int> GetCompetitorsByCountry(int countryId);

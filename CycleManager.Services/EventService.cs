@@ -50,9 +50,9 @@ namespace CycleManager.Services
             return _eventRepository.GetAllEvents();
         }
 
-        public Task<Event> GetEventById(int id)
+        public async Task<Event> GetEventById(int id)
         {
-            return _eventRepository.GetEventById(id);
+            return await _eventRepository.GetEventById(id);
         }
 
         public async Task Update(Event entity)
@@ -107,12 +107,13 @@ namespace CycleManager.Services
                         renners.Add(new CompetitorDto
                         {
                             CompetitorId = renner.CompetitorsInEvent.CompetitorInTeamId,
-                            CompetitorName = renner.CompetitorsInEvent.CompetitorInTeam.Competitor.CompetitorName,
+                            FirstName = renner.CompetitorsInEvent.CompetitorInTeam.Competitor.FirstName,
+                            LastName = renner.CompetitorsInEvent.CompetitorInTeam.Competitor.LastName,
                             CountryShort = renner.CompetitorsInEvent.CompetitorInTeam.Competitor.Country.CountryNameShort,
                             EventNumber = renner.CompetitorsInEvent.EventNumber.ToString(),
                             PcsName = renner.CompetitorsInEvent.CompetitorInTeam.Competitor.PcsName,
-                            IsNationalChampion = renner.CompetitorsInEvent.CompetitorInTeam.IsNationalChampion,
-                            TeamName = renner.CompetitorsInEvent.CompetitorInTeam.Team.TeamName,
+                            //IsNationalChampion = renner.CompetitorsInEvent.CompetitorInTeam.IsNationalChampion,
+                            //TeamName = renner.CompetitorsInEvent.CompetitorInTeam.Team.TeamName,
                             Punten = punten
                         });
                     }
