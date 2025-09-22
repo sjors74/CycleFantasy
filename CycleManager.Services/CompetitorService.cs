@@ -1,4 +1,5 @@
-﻿using CycleManager.Domain.Models;
+﻿using CycleManager.Domain.Dto;
+using CycleManager.Domain.Models;
 using CycleManager.Services.Interfaces;
 using Domain.Dto;
 using Domain.Interfaces;
@@ -63,7 +64,7 @@ namespace CycleManager.Services
         /// </summary>
         /// <param name="teamId"></param>
         /// <returns></returns>
-        public async Task<IEnumerable<Competitor>> GetByTeamId(int teamId)
+        public async Task<IEnumerable<CompetitorInTeamDto>> GetByTeamId(int teamId)
         {
             return await _competitorRepository.GetByTeamId(teamId);
         }

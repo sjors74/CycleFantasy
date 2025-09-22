@@ -1,4 +1,5 @@
-﻿using CycleManager.Domain.Models;
+﻿using CycleManager.Domain.Dto;
+using CycleManager.Domain.Models;
 using Domain.Dto;
 using Domain.Models;
 
@@ -58,7 +59,7 @@ namespace CycleManager.Services.Interfaces
         /// </summary>
         /// <param name="teamId"></param>
         /// <returns></returns>
-        Task<IEnumerable<Competitor>> GetByTeamId(int teamId);
+        Task<IEnumerable<CompetitorInTeamDto>> GetByTeamId(int teamId);
         Task<List<int>> GetAvailableYears();
 
         Task<Competitor?> GetCompetitorByName(string firstName, string lastName, int countryId);

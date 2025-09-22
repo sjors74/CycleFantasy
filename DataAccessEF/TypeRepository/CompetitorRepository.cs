@@ -53,13 +53,21 @@ namespace DataAccessEF.TypeRepository
             return competitor;
         }
 
-        public async Task<IEnumerable<Competitor>> GetByTeamId(int teamId)
+        public async Task<IEnumerable<CompetitorInTeamDto>> GetByTeamId(int teamId)
         {
-            var competitors = await context.Competitors
-                .Include(c => c.Country)
-                .Include(c => c.CompetitorInTeams)
-                    .ThenInclude(cit => cit.Team)
-                .Where(c => c.CompetitorInTeams.Any(cit => cit.TeamId == teamId))
+            var competitors = await context.CompetitorInTeams
+                .Include(cit => cit.Competitor)
+                    .ThenInclude(c => c.Country)
+                .Include(cit => cit.Team)
+                .Where(cit => cit.TeamId == teamId)
+                .Select(cit => new CompetitorInTeamDto
+                {
+
+                    CompetitorInTeamId = cit.Id,                  // dit gebruik je in de <option value="">
+                    CompetitorName = cit.Competitor.FirstName + " " + cit.Competitor.LastName,
+                    Country = cit.Competitor.Country.CountryNameShort,
+                    TeamName = cit.Team.TeamName
+                })
                 .ToListAsync();
 
             return competitors;

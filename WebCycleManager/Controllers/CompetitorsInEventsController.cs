@@ -222,11 +222,23 @@ namespace WebCycleManager.Controllers
           return (_competitorInEventService.GetCompetitorById(id) != null);
         }
 
-        public async Task<JsonResult> GetCompetitorForEvent(int teamId)
+        [HttpGet]
+        public async Task<IActionResult> GetCompetitorForEvent(int teamId)
         {
             var competitors = await _competitorService.GetByTeamId(teamId);
-            return Json(new SelectList(competitors.OrderBy(c => c.LastName).ThenBy(c => c.FirstName), "CompetitorId", "CompetitorName"));
+            var result = competitors.Select(c => new
+            {
+                value = c.CompetitorInTeamId,
+                text = $"{c.CompetitorName} ({c.Country})"
+            });
+            return Json(result);
         }
+
+        //public async Task<JsonResult> GetCompetitorForEvent(int teamId)
+        //{
+        //    var competitors = await _competitorService.GetByTeamId(teamId);
+        //    return Json(new SelectList(competitors.OrderBy(c => c.LastName).ThenBy(c => c.FirstName), "CompetitorId", "CompetitorName"));
+        //}
 
         private CompetitorInEventViewModel GetViewModel(CompetitorsInEvent competitorsInEvent)
         {
