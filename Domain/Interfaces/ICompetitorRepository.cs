@@ -10,5 +10,8 @@ namespace Domain.Interfaces
         Task<IEnumerable<Competitor>> GetByTeamId(int teamId);
         Task<int> GetCompetitorsByCountry(int countryId);
         Task<List<int>> GetAvailableYears();
+
+        Task<Competitor?> GetCompetitorByName(string firstName, string lastName, int countryId);
+        IQueryable<Competitor> GetCompetitorsByTerm(string term);
     }
 }

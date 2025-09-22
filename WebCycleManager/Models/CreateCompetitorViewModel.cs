@@ -1,17 +1,16 @@
 ﻿using System.ComponentModel;
-using System.ComponentModel.DataAnnotations;
 
 namespace WebCycleManager.Models
 {
     public class CreateCompetitorViewModel
     {
-        [Required]
-        public string FirstName { get; set; } = string.Empty;
+        public int CompetitorId { get; set; }
 
-        [Required]
-        public string LastName { get; set; } = string.Empty;
+        public string? FirstName { get; set; }
 
-        public string PcsName { get; set; } = string.Empty;
+        public string? LastName { get; set; }
+
+        public string? PcsName { get; set; }
 
         [DisplayName("Land")]
         public int CountryId { get; set; }

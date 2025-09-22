@@ -5,5 +5,6 @@ namespace Domain.Interfaces
 {
     public interface ICompetitorInTeamRepository : IGenericRepository<CompetitorInTeam> 
     {
+        Task<bool> CheckCompetitorInTeam(int competitorId, int teamId, int year);
     }
 }

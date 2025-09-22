@@ -59,5 +59,9 @@ namespace CycleManager.Services.Interfaces
         /// <returns></returns>
         Task<IEnumerable<Competitor>> GetByTeamId(int teamId);
         Task<List<int>> GetAvailableYears();
+
+        Task<Competitor?> GetCompetitorByName(string firstName, string lastName, int countryId);
+        Task<bool> CheckCompetitorInTeam(int competitorId, int teamId, int year);
+        IQueryable<Competitor> GetCompetitorsByTerm(string term);
     }
 }

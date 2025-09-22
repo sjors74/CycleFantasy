@@ -87,6 +87,7 @@ namespace WebCycleManager.Controllers
         // GET: Competitors/Create
         public async Task<IActionResult> Create()
         {
+            ViewBag.Competitors = await GetCompetitorSelectListAsync();
             ViewData["TeamId"] = new SelectList((await _teamService.GetAll()).OrderBy(t => t.TeamName), "TeamId", "TeamName");
             ViewData["CountryId"] = new SelectList(await CountrySelectListHelper.GetOrderedCountries(_countryService), "CountryId", "CountryNameLong");
             return View(new CreateCompetitorViewModel());
@@ -101,41 +102,67 @@ namespace WebCycleManager.Controllers
         {
             if (!ModelState.IsValid)
             {
+                ViewBag.Competitors = await GetCompetitorSelectListAsync();
                 ViewData["TeamId"] = new SelectList((await _teamService.GetAll()).OrderBy(t => t.TeamName), "TeamId", "TeamName");
                 ViewData["CountryId"] = new SelectList(await CountrySelectListHelper.GetOrderedCountries(_countryService), "CountryId", "CountryNameLong");
                 return View(model);
             }
 
-            var competitor = new Competitor
+            Competitor competitor;
+            if (model.CompetitorId > 0)
             {
-                FirstName = model.FirstName,
-                LastName = model.LastName,
-                PcsName = model.PcsName,
-                CountryId = model.CountryId
-            };
-            await _competitorService.Create(competitor);
-
-            var competitorInTeam = new CompetitorInTeam
+                competitor = await _competitorService.GetCompetitorById(model.CompetitorId);
+                if (competitor == null)
+                {
+                    ModelState.AddModelError("", "Geselecteerde renner bestaat niet.");
+                    return View(model);
+                }
+            }
+            else
             {
-                CompetitorId = competitor.CompetitorId,
-                TeamId = model.TeamId,
-                Year = model.Year,
-                IsNationalChampion = model.IsNationalChampion
-            };
+                if (model.CompetitorId == 0) // nieuwe renner
+                {
+                    if (string.IsNullOrEmpty(model.FirstName) || string.IsNullOrEmpty(model.LastName))
+                    {
+                        ModelState.AddModelError("", "Vul naam in voor nieuwe renner.");
+                        return View(model);
+                    }
+                }
 
-            await _competitorService.CreateCompetitorInTeam(competitorInTeam);
+                competitor = await _competitorService.GetCompetitorByName(model.FirstName, model.LastName, model.CountryId);
+
+                if (competitor == null)
+                {
+                    competitor = new Competitor
+                    {
+                        FirstName = model.FirstName,
+                        LastName = model.LastName,
+                        PcsName = model.PcsName,
+                        CountryId = model.CountryId
+                    };
+                    await _competitorService.Create(competitor);
+                }
+            }
+            bool alreadyExists = await _competitorService.CheckCompetitorInTeam(model.CompetitorId, model.TeamId, model.Year);
+            if (!alreadyExists)
+            {
+                var competitorInTeam = new CompetitorInTeam
+                {
+                    CompetitorId = competitor.CompetitorId,
+                    TeamId = model.TeamId,
+                    Year = model.Year,
+                    IsNationalChampion = model.IsNationalChampion
+                };
+
+                await _competitorService.CreateCompetitorInTeam(competitorInTeam);
+            }
+            else
+            {
+                ModelState.AddModelError("", "Deze renner zit al in dit team voor dit jaar.");
+                return View(model);
+            }
 
             return RedirectToAction(nameof(Index));
-
-
-            //var allTeams = (await _teamService.GetAll()).OrderBy(t => t.TeamName);
-
-            //// Kies het eerste team van de competitor (of filter op een specifiek jaar)
-            //var selectedTeamId = competitor.CompetitorInTeams.FirstOrDefault()?.TeamId ?? 0;
-
-            //ViewData["TeamId"] = new SelectList(allTeams, "TeamId", "TeamName", selectedTeamId);
-            //ViewData["CountryId"] = new SelectList(await CountrySelectListHelper.GetOrderedCountries(_countryService), "CountryId", "CountryNameLong", competitor.CountryId);
-            //return View(competitor);
         }
 
         // GET: Competitors/Edit/5
@@ -231,9 +258,54 @@ namespace WebCycleManager.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+        [HttpGet]
+        public async Task<IActionResult> SearchCompetitors(string term)
+        {
+            var competitors = await _competitorService.GetCompetitorsByTerm(term)
+                .Select(c => new
+                {
+                    id = c.CompetitorId,
+                    label = c.FirstName + " " + c.LastName,
+                    value = c.FirstName + " " + c.LastName
+                })
+                .ToListAsync();
+
+            return Json(competitors);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetCompetitorInfo(int id, int year)
+        {
+            var competitor = await _competitorService.GetCompetitorById(id);
+            if (competitor == null) return NotFound();
+
+            var team = competitor.CompetitorInTeams
+                .FirstOrDefault(cit => cit.Year == year)?.Team;
+
+            return Json(new
+            {
+                TeamName = team?.TeamName ?? "Onbekend",
+                Country = competitor.Country?.CountryNameLong ?? "Onbekend",
+                PcsName = competitor.PcsName ?? ""
+            });
+        }
+
         private bool CompetitorExists(int id)
         {
           return _competitorService.GetCompetitorById(id) != null;
+        }
+
+        private async Task<List<SelectListItem>> GetCompetitorSelectListAsync()
+        {
+            var competitors = await _competitorService.GetAllCompetitors(DateTime.Now.Year);
+            var selectList = competitors.Select(c => new SelectListItem
+            {
+                Value = c.CompetitorId.ToString(),
+                Text = $"{c.FirstName} {c.LastName}"
+            }).ToList();
+
+            selectList.Insert(0, new SelectListItem { Value = "0", Text = "-- Nieuwe renner --" });
+            return selectList;
         }
     }
 }

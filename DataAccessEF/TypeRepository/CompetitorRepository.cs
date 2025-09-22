@@ -64,5 +64,25 @@ namespace DataAccessEF.TypeRepository
                 .OrderByDescending(y => y)
                 .ToListAsync();
         }
+
+        public async Task<Competitor?> GetCompetitorByName(string firstName, string lastName, int countryId)
+        {
+            var competitors = await context.Competitors
+                .FirstOrDefaultAsync(c =>
+                    c.FirstName == firstName &&
+                    c.LastName == lastName &&
+                    c.CountryId == countryId);
+
+            return competitors;
+        }
+
+        public IQueryable<Competitor> GetCompetitorsByTerm(string term)
+        {
+            var competitors = context.Competitors
+                .Where(c => c.FirstName.Contains(term) || c.LastName.Contains(term))
+                .OrderBy(c => c.LastName)
+                .Take(20); // limiteren voor performance
+            return competitors;
+        }
     }
 }

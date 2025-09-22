@@ -98,5 +98,20 @@ namespace CycleManager.Services
             _competitorRepository.Update(entity);
             await _competitorRepository.SaveChangesAsync();
         }
+
+        public async Task<Competitor?> GetCompetitorByName(string firstName, string lastName, int countryId )
+        {
+            return await _competitorRepository.GetCompetitorByName(firstName, lastName, countryId);
+        }
+
+        public async Task<bool> CheckCompetitorInTeam(int competitorId, int teamId, int year)
+        {
+            return await _competitorInTeamRepository.CheckCompetitorInTeam(competitorId, teamId, year);
+        }
+
+        public IQueryable<Competitor> GetCompetitorsByTerm(string term)
+        {
+            return _competitorRepository.GetCompetitorsByTerm(term);
+        }
     }
 }
