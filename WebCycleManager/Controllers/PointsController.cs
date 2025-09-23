@@ -1,5 +1,6 @@
 ﻿using Domain.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using WebCycleManager.Models;
 
 namespace WebCycleManager.Controllers
@@ -16,15 +17,35 @@ namespace WebCycleManager.Controllers
         {
             var vm = new List<PointsCompetitorInEventViewModel>();
             var results = await _resultRepository.GetResultsByEventId(eventId);
-            var groupedList = results.GroupBy(g => g.CompetitorInEventId).Select(c => new PointsCompetitorInEventViewModel
-            {
-                FirstName = c.First().CompetitorInEvent.CompetitorInTeam.Competitor.FirstName,
-                LastName = c.First().CompetitorInEvent.CompetitorInTeam.Competitor.LastName,
-                EventId = c.First().Stage.EventId,
-                CompetitorEventId = c.First().CompetitorInEventId,
-                Points = c.Sum(a => a.ConfigurationItem.Score)
-            }).OrderByDescending(c => c.Points).ThenBy(c => c.CompetitorName);
-            
+            var groupedList = results
+                .Where(r => r.Stage.EventId == eventId)
+                .Select(r => new
+                {
+                    CompetitorEventId = r.CompetitorInEventId,
+                    Score = r.ConfigurationItem == null ? 0 : r.ConfigurationItem.Score,
+                    FirstName = r.CompetitorInEvent.CompetitorInTeam.Competitor.FirstName,
+                    LastName = r.CompetitorInEvent.CompetitorInTeam.Competitor.LastName,
+                    EventId = r.Stage.EventId
+                })
+                .GroupBy(x => new {
+                    x.CompetitorEventId,
+                    x.FirstName,
+                    x.LastName,
+                    x.EventId
+                })
+                .Select(g => new PointsCompetitorInEventViewModel
+                {
+                    FirstName = g.Key.FirstName,
+                    LastName = g.Key.LastName,
+                    EventId = g.Key.EventId,
+                    CompetitorEventId = g.Key.CompetitorEventId,
+                    Points = g.Sum(x => x.Score)
+                    //CompetitorName = g.Key.LastName + " " + g.Key.FirstName // optioneel
+                })
+                .OrderByDescending(x => x.Points)
+                .ThenBy(x => x.LastName).ThenBy(x => x.FirstName)
+                .ToList();
+
             List<IGrouping<int, PointsCompetitorInEventViewModel>> orderedCompetitors = 
                 groupedList.GroupBy(g => g.Points).OrderByDescending(g => g.Key).ToList();
 

@@ -62,6 +62,7 @@ namespace WebCycleManager.Controllers
             .ToList();
 
             var teams = await _teamService.GetAll();
+            var teamList = teams.OrderBy(c => c.TeamName).ToList();
 
             var vm = new CompetitorsInEventViewModel(
                 deelnemersViewModel,
@@ -69,7 +70,7 @@ namespace WebCycleManager.Controllers
                 currentEvent.EventYear,
                 currentEvent.EventId)
             {
-                Teams = teams.Select(t => new SelectListItem()
+                Teams = teamList.Select(t => new SelectListItem()
                 {
                     Value = t.TeamId.ToString(),
                     Text = t.TeamName
