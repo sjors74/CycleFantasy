@@ -1,52 +1,51 @@
-﻿@model Domain.Models.Competitor
+﻿@using WebCycleManager.Models.ViewModel
+@model CompetitorEditViewModel
 
-@{
-    ViewData["Title"] = "Edit";
-}
-
-<h1>Wijzig</h1>
-
-<h4>Renner</h4>
+<h1>Bewerk renner</h1>
 <hr />
 <div class="row">
     <div class="col-md-4">
         <form asp-action="Edit">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <input type="hidden" asp-for="CompetitorId" />
             <div class="form-group">
                 <label asp-for="FirstName" class="control-label"></label>
                 <input asp-for="FirstName" class="form-control" />
-                <span asp-validation-for="FirstName" class="text-danger"></span>
             </div>
             <div class="form-group">
                 <label asp-for="LastName" class="control-label"></label>
                 <input asp-for="LastName" class="form-control" />
-                <span asp-validation-for="LastName" class="text-danger"></span>
-            </div>
-            <div class="form-group">
+             </div>
+ 
+             <div class="form-group">
                 <label asp-for="PcsName" class="control-label"></label>
                 <input asp-for="PcsName" class="form-control" />
-                <span asp-validation-for="PcsName" class="text-danger"></span>
-            </div>
-@*             <div class="form-group">
-                <input asp-for="IsNationalChampion" class="form-check-input" />
-                <label asp-for="IsNationalChampion" class="form-check-label"></label>
-                <span asp-validation-for="IsNationalChampion" class="text-danger"></span>
-            </div> 
-            <div class="form-group">
-                <label asp-for="TeamId" class="control-label"></label>
-                <select asp-for="TeamId" class="form-control" asp-items="ViewBag.TeamId"></select>
-                <span asp-validation-for="TeamId" class="text-danger"></span>
-            </div>
-           *@ <div class="form-group">
-                <label asp-for="CountryId" class="control-label"></label>
-                <select asp-for="CountryId" class="form-control" asp-items="ViewBag.CountryId"></select>
-                <span asp-validation-for="CountryId" class="text-danger"></span>
             </div>
 
             <div class="form-group">
-                <input type="submit" value="Opslaan" class="btn btn-primary" />
+                <label asp-for="CountryId" class="control-label"></label>
+                <select asp-for="CountryId" class="form-control" asp-items="Model.Countries"></select>
             </div>
+
+            <hr />
+            <h4>Teamgegevens</h4>
+
+            <div class="form-group">
+                <label asp-for="SelectedYear">Jaar</label>
+                <select asp-for="SelectedYear" asp-items="Model.AvailableYears" class="form-control"
+                 onchange="location.href='@Url.Action("Edit", new {id = Model.CompetitorId })&year=' + this.value"></select>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="SelectedTeamId">Team</label>
+                <select asp-for="SelectedTeamId" asp-items="Model.Teams" class="form-control"></select>
+            </div>
+
+            <div class="form-group">
+                <input asp-for="IsNationalChampion" class="form-check-input" />
+                <label asp-for="IsNationalChampion" class="form-check-label"></label>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Opslaan</button>
         </form>
     </div>
 </div>

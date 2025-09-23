@@ -109,5 +109,17 @@ namespace DataAccessEF.TypeRepository
                 .Take(20); // limiteren voor performance
             return competitors;
         }
+
+        public Task UpdateCompetitorWithTeam(CompetitorEditDto dto)
+        {
+            throw new NotImplementedException();
+        }
+
+        public async Task<Competitor?> GetByIdWithTeamsAsync(int id)
+        {
+            return await context.Competitors
+                    .Include(c => c.CompetitorInTeams)
+                    .FirstOrDefaultAsync(c => c.CompetitorId == id);
+        }
     }
 }

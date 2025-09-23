@@ -25,6 +25,7 @@ namespace Domain.Mapping
             CreateMap<GameCompetitorEvent, DeelnemerDto>()
                 .ForMember(c => c.DeelnemerNaam, d => d.MapFrom(s => s.User.FirstName + " " + s.User.LastName))
                 .ForMember(c => c.PoolNaam, d => d.MapFrom(s => s.TeamName));
+            CreateMap<GameCompetitorEvent, DeelnemerCreateDto>().ReverseMap();
             CreateMap<GameCompetitorEventPick, ResultDto>()
                             .ForMember(c => c.CompetitorName, d => d.MapFrom(s => s.CompetitorsInEvent.CompetitorInTeam.Competitor.CompetitorName))
                             .ForMember(c => c.CompetitorTeam, d => d.MapFrom(s => s.CompetitorsInEvent.CompetitorInTeam.Team.TeamName))

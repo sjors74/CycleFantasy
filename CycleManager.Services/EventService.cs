@@ -164,7 +164,7 @@ namespace CycleManager.Services
 
         public async Task<DeelnemerDto> CreatePoolAsync(DeelnemerDto deelnemerDto)
         {
-            var gameCompetitorEvent = new GameCompetitorEvent
+            var gameCompetitorEvent = new DeelnemerCreateDto
             {
                 TeamName = deelnemerDto.PoolNaam,
                 UserId = deelnemerDto.UserId,

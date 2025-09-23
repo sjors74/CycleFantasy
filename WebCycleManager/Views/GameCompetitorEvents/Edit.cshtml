@@ -1,33 +1,27 @@
-﻿@model Domain.Models.GameCompetitorEvent
+﻿@model CycleManager.Domain.Dto.DeelnemerEditDto
 
-@{
-    ViewData["Title"] = "Edit";
-}
+<h1>Wijzig deelnemer</h1>
 
-<h1>Wijzig</h1>
-
-<h4>Deelnemer</h4>
 <hr />
 <div class="row">
     <div class="col-md-4">
-        <form asp-action="Edit">
+        <form asp-action="Edit" method="post">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <input type="hidden" asp-for="Id" />
+            <input type="hidden" asp-for="EventId" />
             <div class="form-group">
+
                 <label asp-for="TeamName" class="control-label"></label>
                 <input asp-for="TeamName" class="form-control" />
                 <span asp-validation-for="TeamName" class="text-danger"></span>
             </div>
+
             <div class="form-group">
                 <label asp-for="UserId" class="control-label"></label>
                 <select asp-for="UserId" class="form-control" asp-items="ViewBag.UserId"></select>
                 <span asp-validation-for="UserId" class="text-danger"></span>
             </div>
-            <div class="form-group">
-                <label asp-for="EventId" class="control-label"></label>
-                <select asp-for="EventId" class="form-control" asp-items="ViewBag.EventId"></select>
-                <span asp-validation-for="EventId" class="text-danger"></span>
-            </div>
+
             <div class="form-group">
                 <input type="submit" value="Bewaar" class="btn btn-primary" />
             </div>
@@ -36,7 +30,7 @@
 </div>
 
 <div>
-    <a asp-action="Index" asp-route-eventId="@ViewBag.GameEventId">Terug naar de lijst</a>
+    <a asp-action="Index" asp-route-eventId="@Model.EventId">Terug naar de lijst</a>
 </div>
 
 @section Scripts {

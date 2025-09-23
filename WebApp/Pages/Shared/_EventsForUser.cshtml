@@ -87,7 +87,7 @@
                                                                                            class="text-dark text-decoration-none">
                                                                                             @renner.FirstName @renner.LastName
                                                                                         </a>
-                                                                                        @if(renner.IsNationalChampion)
+                                                                                        @if (renner.Teams.FirstOrDefault().IsNationalChampion)
                                                                                         {
                                                                                             <span class="nc-badge">NC</span>
                                                                                         }
@@ -95,7 +95,7 @@
                                                                                     else
                                                                                     {
                                                                                         @renner.FirstName @renner.LastName
-                                                                                        @if (renner.IsNationalChampion)
+                                                                                        @if (renner.Teams.FirstOrDefault().IsNationalChampion)
                                                                                         {
                                                                                             <span class="nc-label">NC</span>
                                                                                         }

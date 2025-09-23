@@ -1,6 +1,7 @@
 ﻿using CycleManager.Services.Interfaces;
 using Domain.Interfaces;
 using Domain.Models;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace CycleManager.Services
 {
@@ -31,6 +32,17 @@ namespace CycleManager.Services
         public async Task<Team> GetTeamById(int id)
         {
             return await _teamRepository.GetTeamById(id);
+        }
+
+        public async Task<IEnumerable<SelectListItem>> GetTeamsAsSelectList(int selectedId = 0)
+        {
+            var teams = await _teamRepository.GetAll();
+            return teams.Select(t => new SelectListItem
+            {
+                Value = t.TeamId.ToString(),
+                Text = t.TeamName,
+                Selected = (t.TeamId == selectedId)
+            });
         }
     }
 }

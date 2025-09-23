@@ -1,4 +1,5 @@
 ﻿using Domain.Models;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace CycleManager.Services.Interfaces
 {
@@ -9,5 +10,6 @@ namespace CycleManager.Services.Interfaces
         Task Create(Country entity);
         Task Update(Country entity);
         Task Delete(Country entity);
+        Task<IEnumerable<SelectListItem>> GetCountriesAsSelectList(int selectedId = 0);
     }
 }

@@ -1,30 +1,26 @@
-﻿@model Domain.Models.GameCompetitorEvent
+﻿@using CycleManager.Domain.Dto
+@model DeelnemerCreateDto
 
-@{
-    ViewData["Title"] = "Create";
-}
-
-<h1>Maak</h1>
-
-<h4>Deelnemer</h4>
+<h1>Nieuwe deelnemer</h1>
 <hr />
 <div class="row">
     <div class="col-md-4">
-        <form asp-action="Create">
+        <form asp-action="Create" method="post">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="EventId" />
+
             <div class="form-group">
                 <label asp-for="TeamName" class="control-label"></label>
                 <input asp-for="TeamName" class="form-control" />
                 <span asp-validation-for="TeamName" class="text-danger"></span>
             </div>
+
             <div class="form-group">
-                <label asp-for="UserId" class="control-label"></label>
-                <select asp-for="UserId" class ="form-control" asp-items="ViewBag.UserId"></select>
+                <label asp-for="UserId" class="control-label">Gebruiker</label>
+                <select asp-for="UserId" class ="form-control" asp-items="@(ViewData["Users"] as List<SelectListItem>)"></select>
+                <span asp-validation-for="UserId" class="text-danger"></span>
             </div>
-            <div class="form-group">
-                <label asp-for="EventId" class="control-label"></label>
-                <select asp-for="EventId" class ="form-control" asp-items="ViewBag.EventId"></select>
-            </div>
+
             <div class="form-group">
                 <input type="submit" value="Maak" class="btn btn-primary" />
             </div>
@@ -33,7 +29,7 @@
 </div>
 
 <div>
-    <a asp-action="Index">Terug naar de lijst</a>
+    <a asp-action="Index" asp-route-eventId="@Model.EventId">Terug naar de lijst</a>
 </div>
 
 @section Scripts {

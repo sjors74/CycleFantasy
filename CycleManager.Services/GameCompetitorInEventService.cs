@@ -1,4 +1,5 @@
-﻿using CycleManager.Domain.Interfaces;
+﻿using CycleManager.Domain.Dto;
+using CycleManager.Domain.Interfaces;
 using CycleManager.Services.Interfaces;
 using Domain.Interfaces;
 using Domain.Models;
@@ -56,9 +57,9 @@ namespace CycleManager.Services
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
-        public async Task<GameCompetitorEvent> GetCompetitorEventById(int id)
+        public async Task<GameCompetitorEvent?> GetGameCompetitorEventById(int id)
         {
-            return await _repo.GetById(id);
+            return await _repo.GetGameCompetitorInEventById(id);
         }
 
 
@@ -100,9 +101,14 @@ namespace CycleManager.Services
         /// </summary>
         /// <param name="entity"></param>
         /// <returns></returns>
-        public async Task Update(GameCompetitorEvent entity)
+        public async Task UpdateAsync(DeelnemerEditDto dto)
         {
-            _repo.Update(entity);
+            var entity = await _repo.GetById(dto.Id);
+            if (entity == null) throw new Exception("Deelnemer niet gevonden.");
+
+            entity.TeamName = dto.TeamName;
+            entity.UserId = dto.UserId;
+
             await _repo.SaveChangesAsync();
         }
 
@@ -129,5 +135,9 @@ namespace CycleManager.Services
             return await _competitorRepo.GetById(id);
         }
 
+        public async Task<GameCompetitorEvent> CreateGameCompetitorEventAsync(DeelnemerCreateDto dto)
+        {
+            return await _repo.CreateGameCompetitorEventAsync(dto);
+        }
     }
 }

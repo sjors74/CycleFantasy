@@ -1,4 +1,5 @@
-﻿using CycleManager.Services;
+﻿using CycleManager.Domain.Dto;
+using CycleManager.Services;
 using Domain.Context;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -55,17 +56,17 @@ namespace WebCycleManager.Controllers
             return RedirectToAction("Details", "Events", new { id = eventId });
         }
 
-        [HttpGet]
-        public async Task<IActionResult> ScrapeCompetitors(int teamId, int year)
+        [HttpPost]
+        public async Task<IActionResult> ScrapeCompetitors([FromBody] ScrapeRequestDto dto)
         {
             var team = await _db.Teams
-                .FirstOrDefaultAsync(t => t.TeamId == teamId);
+                .FirstOrDefaultAsync(t => t.TeamId == dto.TeamId);
             if (team == null)
                 throw new Exception("Team not found while trying to scrape competitors.");
 
-            await _scraperService.RunCompetitorsAsync(teamId, year);
+            await _scraperService.RunCompetitorsAsync(dto.TeamId, dto.Year);
             TempData["Success"] = "Scrape voltooid.";
-            return RedirectToAction("Index", "Teams", new { id = teamId });
+            return Ok();
         }
     }
 }

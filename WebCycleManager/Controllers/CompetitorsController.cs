@@ -1,4 +1,5 @@
-﻿using CycleManager.Domain.Models;
+﻿using CycleManager.Domain.Dto;
+using CycleManager.Domain.Models;
 using CycleManager.Services.Interfaces;
 using DataAccessEF.Extensions;
 using Domain.Dto;
@@ -8,6 +9,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using WebCycleManager.Helpers;
 using WebCycleManager.Models;
+using WebCycleManager.Models.ViewModel;
 
 namespace WebCycleManager.Controllers
 {
@@ -52,7 +54,7 @@ namespace WebCycleManager.Controllers
                 competitors = competitors
                         .Where(s => s.LastName.Contains(searchString, StringComparison.OrdinalIgnoreCase) ||
                                     s.FirstName.Contains(searchString, StringComparison.OrdinalIgnoreCase))
-                        .ToList(); // materialiseer direct naar List
+                        .ToList();
 
                 if (!competitors.Any())
                 {
@@ -167,67 +169,53 @@ namespace WebCycleManager.Controllers
         }
 
         // GET: Competitors/Edit/5
-        public async Task<IActionResult> Edit(int? id)
+        public async Task<IActionResult> Edit(int id)
         {
-            if (id == null)
+            var dto = await _competitorService.GetCompetitorForEdit(id);
+            if (dto == null) return NotFound();
+
+            var input = new CompetitorEditInputModel
             {
-                return NotFound();
-            }
-
-            var competitor = await _competitorService.GetCompetitorById((int)id);
-            if (competitor == null)
-            {
-                return NotFound();
-            }
-            var allTeams = (await _teamService.GetAll()).OrderBy(t => t.TeamName);
-
-            // Kies het eerste team van de competitor (of filter op een specifiek jaar)
-            var selectedTeamId = competitor.CompetitorInTeams.FirstOrDefault()?.TeamId ?? 0;
-
-            ViewData["TeamId"] = new SelectList(allTeams, "TeamId", "TeamName", selectedTeamId);
-            ViewData["CountryId"] = new SelectList(await CountrySelectListHelper.GetOrderedCountries(_countryService), "CountryId", "CountryNameLong", competitor.CountryId);
-            return View(competitor);
+                CompetitorId = dto.CompetitorId,
+                FirstName = dto.FirstName,
+                LastName = dto.LastName,
+                PcsName = dto.PcsName,
+                CountryId = dto.CountryId,
+                SelectedTeamId = dto.SelectedTeamId,
+                SelectedYear = dto.SelectedYear,
+                IsNationalChampion = dto.IsNationalChampion,
+            };
+            var vm = MapInputToViewModel(input, dto);
+            return View(vm);
         }
 
         // POST: Competitors/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("CompetitorId,FirstName,LastName,PcsName,IsNationalChampion,TeamId,CountryId")] Competitor competitor)
+        public async Task<IActionResult> Edit(CompetitorEditInputModel input)
         {
-            if (id != competitor.CompetitorId)
+            if (!ModelState.IsValid)
             {
-                return NotFound();
+                var dto = await _competitorService.GetCompetitorForEdit(input.CompetitorId);
+                var vm = MapInputToViewModel(input, dto);
+                return View(vm);
             }
 
-            if (ModelState.IsValid)
+            var dtoUpdate = new CompetitorEditDto
             {
-                try
-                {
-                    await _competitorService.Update(competitor);
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!CompetitorExists(competitor.CompetitorId))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
-            }
-            var allTeams = (await _teamService.GetAll()).OrderBy(t => t.TeamName);
+                CompetitorId = input.CompetitorId,
+                FirstName = input.FirstName,
+                LastName = input.LastName,
+                PcsName = input.PcsName,
+                CountryId = input.CountryId,
+                SelectedTeamId = input.SelectedTeamId,
+                SelectedYear = input.SelectedYear,
+                IsNationalChampion = input.IsNationalChampion
+            };
 
-            // Kies het eerste team van de competitor (of filter op een specifiek jaar)
-            var selectedTeamId = competitor.CompetitorInTeams.FirstOrDefault()?.TeamId ?? 0;
+            await _competitorService.UpdateCompetitorWithTeam(dtoUpdate);
 
-            ViewData["TeamId"] = new SelectList(allTeams, "TeamId", "TeamName", selectedTeamId);
-            ViewData["CountryId"] = new SelectList(await CountrySelectListHelper.GetOrderedCountries(_countryService), "CountryId", "CountryNameLong", competitor.CountryId);
-            return View(competitor);
+            return RedirectToAction(nameof(Index));
         }
 
         // GET: Competitors/Delete/5
@@ -307,6 +295,51 @@ namespace WebCycleManager.Controllers
 
             selectList.Insert(0, new SelectListItem { Value = "0", Text = "-- Nieuwe renner --" });
             return selectList;
+        }
+        private Task<IEnumerable<SelectListItem>> GetAvailableYears(int selectedYear)
+        {
+            var currentYear = DateTime.Now.Year;
+            var years = Enumerable.Range(currentYear - 3, 7); // range -3 tot +3
+            return Task.FromResult(years.Select(y => new SelectListItem
+            {
+                Value = y.ToString(),
+                Text = y.ToString(),
+                Selected = (y == selectedYear)
+            }));
+        }
+        private CompetitorEditViewModel MapInputToViewModel(CompetitorEditInputModel input, CompetitorEditDto dto)
+        {
+            return new CompetitorEditViewModel
+            {
+                CompetitorId = input.CompetitorId,
+                FirstName = input.FirstName,
+                LastName = input.LastName,
+                CountryId = input.CountryId,
+                SelectedTeamId = input.SelectedTeamId,
+                SelectedYear = input.SelectedYear,
+                PcsName = input.PcsName,
+
+                Countries = dto.Countries.Select(c => new SelectListItem
+                {
+                    Value = c.Id.ToString(),
+                    Text = c.CountryNameLong,
+                    Selected = (c.Id == input.CountryId)
+                }),
+
+                Teams = dto.Teams.Select(t => new SelectListItem
+                {
+                    Value = t.Id.ToString(),
+                    Text = t.Naam,
+                    Selected = (t.Id == input.SelectedTeamId)
+                }),
+
+                AvailableYears = dto.AvailableYears.Select(y => new SelectListItem
+                {
+                    Value = y.ToString(),
+                    Text = y.ToString(),
+                    Selected = (y == input.SelectedYear)
+                })
+            };
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using Domain.Interfaces;
+﻿using CycleManager.Domain.Dto;
+using Domain.Interfaces;
 using Domain.Models;
 
 namespace CycleManager.Domain.Interfaces
@@ -7,7 +8,8 @@ namespace CycleManager.Domain.Interfaces
     {
         Task<IEnumerable<GameCompetitorEvent>> GetAllGameCompetitorsInEventByEventId(int eventId);
         Task<List<Event>> GetEventsByUserId(string userId);
-        Task<GameCompetitorEvent> CreateGameCompetitorEventAsync(GameCompetitorEvent gameCompetitorEvent);
+        Task<GameCompetitorEvent> CreateGameCompetitorEventAsync(DeelnemerCreateDto dto);
         Task<GameCompetitorEvent> GetyCompetitorWithPicksById(int id);
+        Task<GameCompetitorEvent?> GetGameCompetitorInEventById(int id);
     }
 }

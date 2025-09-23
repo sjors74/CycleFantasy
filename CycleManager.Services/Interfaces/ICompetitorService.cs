@@ -65,5 +65,7 @@ namespace CycleManager.Services.Interfaces
         Task<Competitor?> GetCompetitorByName(string firstName, string lastName, int countryId);
         Task<bool> CheckCompetitorInTeam(int competitorId, int teamId, int year);
         IQueryable<Competitor> GetCompetitorsByTerm(string term);
+        Task UpdateCompetitorWithTeam(CompetitorEditDto dto);
+        Task<CompetitorEditDto> GetCompetitorForEdit(int competitorId);
     }
 }

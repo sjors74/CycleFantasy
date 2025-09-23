@@ -44,3 +44,11 @@ body {
     .autocomplete-item:hover {
         background-color: #f8f8f8;
     }
+
+.btn.disabled, .btn:disabled {
+    background-color: #6c757d !important; /* Bootstrap secondary grey */
+    border-color: #6c757d !important;
+    color: #fff !important;
+    opacity: 1 !important; /* voorkomt dat het te licht wordt */
+    pointer-events: none; /* niet klikbaar */
+}

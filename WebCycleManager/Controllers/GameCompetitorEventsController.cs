@@ -1,4 +1,5 @@
-﻿using CycleManager.Services;
+﻿using CycleManager.Domain.Dto;
+using CycleManager.Services;
 using CycleManager.Services.Interfaces;
 using Domain.Context;
 using Domain.Models;
@@ -91,8 +92,8 @@ namespace WebCycleManager.Controllers
                     model.Add(gamecompetitor);
                 }
             }
-
-             return View(model);
+            ViewData["EventId"] = eventId;
+            return View(model);
         }
 
         [HttpPost]
@@ -195,11 +196,28 @@ namespace WebCycleManager.Controllers
 
         }
         // GET: GameCompetitorEvents/Create
-        public async Task<IActionResult> Create()
+        public async Task<IActionResult> Create(int eventId)
         {
-            ViewData["EventId"] = new SelectList(await _eventService.GetAllEvents(), "EventId", "EventName");
-            ViewData["UserId"] = new SelectList(await _userService.GetAllUsers(), "Id", "FirstName");
-            return View();
+            var users = await _userService.GetAllUsers();
+            var userList = users.Select(u => new SelectListItem
+            {
+                Value = u.Id,
+                Text = $"{u.FirstName} {u.LastName} ({u.Email})"
+            }).ToList();
+
+            userList.Insert(0, new SelectListItem
+            {
+                Value = "",
+                Text = "Selecteer..."
+            });
+
+            ViewData["Users"] = userList;
+
+            var dto = new DeelnemerCreateDto
+            {
+                EventId = eventId
+            };
+            return View(dto);
         }
 
         // POST: GameCompetitorEvents/Create
@@ -207,105 +225,93 @@ namespace WebCycleManager.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,TeamName,UserId,EventId")] GameCompetitorEvent gameCompetitorEvent)
+        public async Task<IActionResult> Create(DeelnemerCreateDto dto)
         {
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
-                await _gameCompetitorEventService.Create(gameCompetitorEvent);
-                return RedirectToAction(nameof(Index), new { eventId = gameCompetitorEvent.EventId });
+                var users = await _userService.GetAllUsers();
+                ViewData["Users"] = users.Select(u => new SelectListItem
+                {
+                    Value = u.Id,
+                    Text = $"{u.FirstName} {u.LastName} ({u.Email})"
+                }).ToList();
+
+                return View(dto);
             }
-            ViewData["EventId"] = new SelectList(await _eventService.GetAllEvents(), "EventId", "EventName", gameCompetitorEvent.EventId);
-            ViewData["UserId"] = new SelectList(await _userService.GetAllUsers(), "Id", "FirstName", gameCompetitorEvent.UserId);
-            return View(gameCompetitorEvent);
+            await _gameCompetitorEventService.CreateGameCompetitorEventAsync(dto);
+            return RedirectToAction(nameof(Index), new { eventId = dto.EventId});
         }
 
         // GET: GameCompetitorEvents/Edit/5
-        public async Task<IActionResult> Edit(int? id)
+        public async Task<IActionResult> Edit(int id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            var entity = await _gameCompetitorEventService.GetGameCompetitorEventById(id);
+            if (entity == null) return NotFound();
 
-            var gameCompetitorEvent = await _gameCompetitorEventService.GetCompetitorEventById((int)id);
-            if (gameCompetitorEvent == null)
+            var dto = new DeelnemerEditDto
             {
-                return NotFound();
-            }
-            ViewData["EventId"] = new SelectList(await _eventService.GetAllEvents(), "EventId", "EventName", gameCompetitorEvent.EventId);
-            ViewData["UserId"] = new SelectList(await _userService.GetAllUsers(), "Id", "FirstName", gameCompetitorEvent.UserId);
-            ViewBag.GameEventId = gameCompetitorEvent.EventId;
-            return View(gameCompetitorEvent);
+                Id = entity.Id,
+                TeamName = entity.TeamName,
+                UserId = entity.UserId,
+                EventId = entity.EventId
+            };
+
+            await PopulateDropDowns();
+
+            return View(dto);
         }
 
         // POST: GameCompetitorEvents/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,TeamName,UserId,EventId")] GameCompetitorEvent gameCompetitorEvent)
+        public async Task<IActionResult> Edit(DeelnemerEditDto dto)
         {
-            if (id != gameCompetitorEvent.Id)
+            if (!ModelState.IsValid)
             {
-                return NotFound();
+                await PopulateDropDowns();
+                return View(dto);
             }
 
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    await _gameCompetitorEventService.Update(gameCompetitorEvent);
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!GameCompetitorEventExists(gameCompetitorEvent.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Details), new { id, eventId = gameCompetitorEvent.EventId});
-            }
-            ViewData["EventId"] = new SelectList(await _eventService.GetAllEvents(), "EventId", "EventName", gameCompetitorEvent.EventId);
-            ViewData["UserId"] = new SelectList(await _userService.GetAllUsers(), "Id", "FirstName", gameCompetitorEvent.UserId);
-            return RedirectToAction(nameof(Details), new { eventId = gameCompetitorEvent.EventId });
+            await _gameCompetitorEventService.UpdateAsync(dto);
+            return RedirectToAction("Index", new { eventId = dto.EventId});
         }
 
         // GET: GameCompetitorEvents/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
-            return View();
+            if (id == null) return NotFound();
 
+            var entity = await _gameCompetitorEventService.GetGameCompetitorEventById(id.Value);
+            if (entity == null) return NotFound();
+
+            var dto = new DeelnemerDeleteDto
+            {
+                Id = entity.Id,
+                TeamName = entity.TeamName,
+                UserName = $"{entity?.User?.FirstName} {entity?.User?.LastName}",
+                EventName = entity.Event.EventName,
+                EventId = entity.EventId
+            };
+            return View(dto);
         }
 
         // POST: GameCompetitorEvents/Delete/5
-        [HttpPost, ActionName("Delete")]
+        [HttpPost, ActionName("DeleteConfirmed")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
+        public async Task<IActionResult> DeleteConfirmed(DeelnemerDeleteDto dto)
         {
-            if (_context.GameCompetitorsEvent == null)
+            var entity = await _gameCompetitorEventService.GetGameCompetitorEventById(dto.Id);
+            if (entity != null)
             {
-                return Problem("Entity set 'ApplicationDbContext.GameCompetitorsEvent'  is null.");
-            }
-            var gameCompetitorEvent = await _context.GameCompetitorsEvent.FindAsync(id);
-            int eventId = 0;
-            if (gameCompetitorEvent != null)
-            {
-                eventId = gameCompetitorEvent.EventId;
-                var picks = _context.GameCompetitorEventPicks.Where(g => g.GameCompetitorEvent.Equals(gameCompetitorEvent));
+                var picks = _context.GameCompetitorEventPicks
+                    .Where(g => g.GameCompetitorEventId == entity.Id);
                 _context.GameCompetitorEventPicks.RemoveRange(picks);
-                _context.GameCompetitorsEvent.Remove(gameCompetitorEvent);
+                _context.GameCompetitorsEvent.Remove(entity);
+
+                await _context.SaveChangesAsync();
             }
-            
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index), new { eventId });
+
+            return RedirectToAction("Index", new { eventId = dto.EventId });
         }
 
         private bool GameCompetitorEventExists(int id)
@@ -392,6 +398,33 @@ namespace WebCycleManager.Controllers
             // and make sure there are no duplicates in a + c
             // return to detailview for the gamecompetitorevent with picks (a) and suggested picks (c)
             return RedirectToAction("Details", new { id, eventId });
+        }
+
+        /// <summary>
+        /// vul dropdowns voor view
+        /// </summary>
+        /// <returns></returns>
+        private async Task PopulateDropDowns()
+        {
+            // Users dropdown
+            var users = await _userService.GetAllUsers();
+            ViewBag.UserId = users
+                .Select(u => new SelectListItem
+                {
+                    Value = u.Id,
+                    Text = $"{u.FirstName} {u.LastName} ({u.Email})"
+                })
+                .ToList();
+
+            // Event dropdown (als je die nog nodig hebt)
+            var events = await _eventService.GetAllEvents();
+            ViewBag.EventId = events
+                .Select(e => new SelectListItem
+                {
+                    Value = e.EventId.ToString(),
+                    Text = e.EventName
+                })
+                .ToList();
         }
     }   
 }

@@ -11,10 +11,16 @@ namespace CycleManager.Services
     {
         private readonly ICompetitorRepository _competitorRepository;
         private readonly ICompetitorInTeamRepository _competitorInTeamRepository;
-        public CompetitorService(ICompetitorRepository competitorRepository, ICompetitorInTeamRepository competitorInTeamRepository)
+        private readonly ITeamRepository _teamRepository;
+        private readonly ICountryRepository _countryRepository;
+        public CompetitorService(ICompetitorRepository competitorRepository, 
+                ICompetitorInTeamRepository competitorInTeamRepository, 
+                ITeamRepository teamRepository, ICountryRepository countryRepository)
         {
             _competitorRepository = competitorRepository;
             _competitorInTeamRepository = competitorInTeamRepository;
+            _teamRepository = teamRepository;
+            _countryRepository = countryRepository;
         }
 
         /// <summary>
@@ -114,6 +120,62 @@ namespace CycleManager.Services
         public IQueryable<Competitor> GetCompetitorsByTerm(string term)
         {
             return _competitorRepository.GetCompetitorsByTerm(term);
+        }
+
+        public async Task UpdateCompetitorWithTeam(CompetitorEditDto dto)
+        {
+            //TODO: nieuwe methode met Teams?
+            var competitor = await _competitorRepository.GetById(dto.CompetitorId);
+            if (competitor == null) throw new Exception("Competitor not found");
+
+            competitor.FirstName = dto.FirstName;
+            competitor.LastName = dto.LastName;
+            competitor.PcsName = dto.PcsName;
+            competitor.CountryId = dto.CountryId;
+
+            var competitorInTeam = competitor.CompetitorInTeams
+                .FirstOrDefault(cit => cit.TeamId == dto.SelectedTeamId && cit.Year == dto.SelectedYear);
+
+            if(competitorInTeam == null)
+            {
+                competitorInTeam = new CompetitorInTeam
+                {
+                    CompetitorId = competitor.CompetitorId,
+                    TeamId = dto.SelectedTeamId,
+                    Year = dto.SelectedYear
+                };
+                competitor.CompetitorInTeams.Add(competitorInTeam);
+            }
+            competitorInTeam.IsNationalChampion = dto.IsNationalChampion;
+
+            _competitorRepository.Update(competitor);
+            await _competitorRepository.SaveChangesAsync();
+        }
+
+        public async Task<CompetitorEditDto> GetCompetitorForEdit(int competitorId)
+        {
+            var competitor = await _competitorRepository.GetById(competitorId);
+            if (competitor == null) return null;
+
+            var teams = await _teamRepository.GetAll();
+            var countries =  await _countryRepository.GetAll();
+
+            var years = Enumerable.Range(DateTime.Now.Year - 3, 7);
+
+            return new CompetitorEditDto
+            {
+                CompetitorId = competitor.CompetitorId,
+                FirstName = competitor.FirstName,
+                LastName = competitor.LastName,
+                PcsName = competitor.PcsName,
+                CountryId = competitor.CountryId,
+                SelectedTeamId = competitor.CompetitorInTeams.FirstOrDefault()?.TeamId ?? 0,
+                SelectedYear = competitor.CompetitorInTeams?.FirstOrDefault()?.Year ?? DateTime.Now.Year,
+                IsNationalChampion = competitor.CompetitorInTeams.FirstOrDefault().IsNationalChampion,
+                AvailableYears = years,
+                Teams = teams.Select(t => new TeamDto { Id = t.TeamId, Naam = t.TeamName, Renners = new List<CompetitorDto>() }),
+                Countries = countries.Select(c => new CountryDto { Id = c.CountryId, CountryNameLong = c.CountryNameLong, CountryNameShort = c.CountryNameShort })
+            };
         }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using CycleManager.Services.Interfaces;
 using Domain.Interfaces;
 using Domain.Models;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace CycleManager.Services
 {
@@ -39,6 +40,18 @@ namespace CycleManager.Services
             _countryRepository.Update(entity);
             await _countryRepository.SaveChangesAsync();
         }
+
+        public async Task<IEnumerable<SelectListItem>> GetCountriesAsSelectList(int selectedId = 0)
+        {
+            var countries = await _countryRepository.GetAll();
+            return countries.Select(c => new SelectListItem
+            {
+                Value = c.CountryId.ToString(),
+                Text = c.CountryNameLong,
+                Selected = (c.CountryId == selectedId)
+            });
+        }
+
 
     }
 }

@@ -6,6 +6,7 @@ using CycleManager.Services.Settings;
 using DataAccessEF.TypeRepository;
 using Domain.Context;
 using Domain.Interfaces;
+using Domain.Mapping;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -22,6 +23,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(x => x.UseLazyLoadingProxies
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
+builder.Services.AddAutoMapper(typeof(DomainToResponseMappingProfile));
 builder.Services.AddTransient<ICompetitorRepository, CompetitorRepository>();
 builder.Services.AddTransient<ICompetitorInTeamRepository, CompetitorInTeamRepository>();
 builder.Services.AddTransient<ICompetitorsInEventRepository, CompetitorsInEventRepository>();

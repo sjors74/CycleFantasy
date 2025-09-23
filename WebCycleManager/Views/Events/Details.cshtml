@@ -1,92 +1,91 @@
 ﻿@using CycleManager.Domain.ViewModel
 @model EventDetailsViewModel
 
-@{
-    ViewData["Title"] = "Details";
-}
+<div class="mb-4">
+    <div class="d-flex align-items-center justify-content-between">
+        <h1 class="mb-0">@Model.EventName</h1>
 
-<h1>@Model.EventName</h1>
-
-<div>
-    <hr />
-    @if (Model.StagesInEvent > 0)
-    {
-        <h5>Etappes (@Model.StagesInEvent)</h5>
-        <table class="table">
-            <thead>
+        <div class="d-flex align-items-center justify-content-between">
+            @if (Model.StagesInEvent > 0)
+            {
+                <span class="btn btn-outline-secondary me-2 disabled" title="Aantal etappes">@Model.StagesInEvent</span>
+            }
+            @if (!string.IsNullOrWhiteSpace(Model.EventCode))
+            {
+                <a class="btn btn-primary @(Model.StagesInEvent == 0 ? "disabled" : "")"
+                    title="Scrape dropouts"
+                    asp-controller="AdminScraper"
+                    asp-action="ScrapeDropouts"
+                    asp-route-eventId="@Model.EventId"
+                    asp-route-eventName="@Model.EventCode"
+                    asp-route-year="@Model.StartDate.Value.Year">
+                    <i class="bi bi-person-x"></i>
+                </a>
+             }
+        </div>
+    </div>
+</div>
+@if(Model.StagesInEvent > 0)
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Etappe</th>
+                <th>Van</th>
+                <th>Naar</th>
+                <th></th>
+                <th></th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.Stages)
+            {
                 <tr>
-                    <th>
-                        @Html.DisplayName("Etappe")
-                    </th>
-                    <th>
-                        @Html.DisplayName("Van")
-                    </th>
-                    <th>
-                        @Html.DisplayName("Naar")
-                    </th>
-                    <th></th>
-                    <th></th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var item in Model.Stages)
-                {
-                    <tr>
-                        <td>
-                            @Html.DisplayFor(modelItem => item.StageName)
-                        </td>
-                        <td>
-                            @Html.DisplayFor(modelItem => item.StartLocation)
-                        </td>
-                        <td>
-                            @Html.DisplayFor(modelItem => item.FinishLocation)
-                        </td>
-                        <td>
-                            <a asp-controller="Stages" asp-action="Edit" asp-route-id="@item.StageId">Wijzig</a> |
-                            <a asp-controller="Stages" asp-action="Details" asp-route-id="@item.StageId">Details</a> |
-                            <a asp-controller="Stages" asp-action="Delete" asp-route-id="@item.StageId">Verwijder</a>
+                    <td>@Html.DisplayFor(modelItem => item.StageName)</td>
+                    <td>@Html.DisplayFor(modelItem => item.StartLocation)</td>
+                    <td>@Html.DisplayFor(modelItem => item.FinishLocation)</td>
+                    <td>
+                        <a asp-controller="Stages" asp-action="Edit" asp-route-id="@item.StageId">Wijzig</a> |
+                        <a asp-controller="Stages" asp-action="Details" asp-route-id="@item.StageId">Details</a> |
+                        <a asp-controller="Stages" asp-action="Delete" asp-route-id="@item.StageId">Verwijder</a>
 
-                        </td>
-                        <td>
-                            <a class="text-danger"  asp-controller="Results" asp-action="Index" asp-route-stageId="@item.StageId">Uitslag</a> |
-                            @item.AantalPosities
-                        </td>
-                        <td>
-                            @if(!string.IsNullOrWhiteSpace(Model.EventCode) && !item.NoScore)
-                            {
-                                <a class="text-primary"
+                    </td>
+                    <td>
+                        <a asp-controller="Results" asp-action="Index" asp-route-stageId="@item.StageId">
+                            Uitslag</a> |
+                        @item.AantalPosities
+                    </td>
+                    <td>
+                        @if(!string.IsNullOrWhiteSpace(Model.EventCode))
+                        {
+                            <a class="btn btn-primary @(item.NoScore ? "disabled" : "")"
+                                title="Scrape resultaten"
                                 asp-controller="AdminScraper"
                                 asp-action="ScrapeAndPair"
-                                asp-route-stageId="@item.StageId" asp-route-eventId="@Model.EventId" asp-route-eventName="@Model.EventCode" asp-route-year="@Model.StartDate.Value.Year">
-                                    Scrape resultaten
-                                </a>
-                            }
-                        </td>
-                        <td>
-                            @if (!string.IsNullOrWhiteSpace(Model.EventCode))
-                            {
-                                <a class="text-primary"
-                                   asp-controller="AdminScraper"
-                                   asp-action="ScrapeDropouts"
-                                   asp-route-eventId="@Model.EventId" asp-route-eventName="@Model.EventCode" asp-route-year="@Model.StartDate.Value.Year">
-                                    Scrape dropouts
-                                </a>
-                            }
-                        </td>
-
-                    </tr>
-                }
-            </tbody>
-        </table>
-    }
-    else
-    {
-        <div class="gap-md-5">
-            <p>Geen etappes gedefinieerd.</p>
+                                asp-route-stageId="@item.StageId"
+                                asp-route-eventId="@Model.EventId"
+                                asp-route-eventName="@Model.EventCode"
+                                asp-route-year="@Model.StartDate.Value.Year">
+                                <i class="bi bi-cloud-arrow-down"></i>
+                            </a>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <div class="card border-0 shadow-sm my-4">
+        <div class="card-body text-center text-muted">
+            <i class="bi bi-flag-fill display-6 d-block mb-2"></i>
+            <p class="mb-0">Er zijn nog geen etappes toegevoegd aan dit evenement.</p>
         </div>
-    }
-</div>
+    </div>
+}
+
 <div>
     <a asp-action="Edit" asp-route-id="@Model?.EventId">Bewerk</a> |
     <a asp-action="Index">Terug naar de lijst</a>

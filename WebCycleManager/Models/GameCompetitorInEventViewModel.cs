@@ -1,5 +1,4 @@
-﻿using DataAccessEF.Migrations;
-using Domain.Models;
+﻿using Domain.Models;
 using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace WebCycleManager.Models

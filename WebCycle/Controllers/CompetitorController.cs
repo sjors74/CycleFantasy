@@ -1,4 +1,5 @@
-﻿using CycleManager.Services.Interfaces;
+﻿using CycleManager.Domain.Dto;
+using CycleManager.Services.Interfaces;
 using Domain.Dto;
 using Domain.Interfaces;
 using Domain.Models;
@@ -30,7 +31,7 @@ namespace WebCycle.Controllers
         }
 
         [HttpGet("{id}/team", Name = "GetCompetitorsByTeamId")]
-        public async Task<IEnumerable<Competitor>> GetByTeamId(int id)
+        public async Task<IEnumerable<CompetitorInTeamDto>> GetByTeamId(int id)
         {
             return await _competitorService.GetByTeamId(id);
         }

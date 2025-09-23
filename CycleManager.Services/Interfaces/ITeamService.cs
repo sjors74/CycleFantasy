@@ -1,4 +1,5 @@
 ﻿using Domain.Models;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace CycleManager.Services.Interfaces
 {
@@ -16,5 +17,7 @@ namespace CycleManager.Services.Interfaces
         /// </summary>
         /// <returns></returns>
         Task<IEnumerable<Team>> GetAll();
+
+        Task<IEnumerable<SelectListItem>> GetTeamsAsSelectList(int selectedId = 0);
     }
 }
