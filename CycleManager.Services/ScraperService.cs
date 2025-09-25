@@ -1,6 +1,5 @@
 ﻿using CycleManager.Domain.Models;
 using CycleManager.Services.Settings;
-using DataAccessEF.Migrations;
 using Domain.Context;
 using Domain.Models;
 using Microsoft.EntityFrameworkCore;
@@ -159,9 +158,95 @@ namespace CycleManager.Services
             var competitors = await _pcsScraper.ScrapeCompetitorsAsync(url, teamId, year);
 
             _db.ScrapedCompetitors.AddRange(competitors);
+            await _db.SaveChangesAsync();            
+        }
+
+        public async Task ImportScrapedCompetitorsAsync()
+        {
+            //TODO: een propertyToevoegen: inserted?
+            var scraped = await _db.ScrapedCompetitors.ToListAsync();
+
+            // Cache bestaande competitors (in memory dictionary)
+            var competitors = await _db.Competitors.ToListAsync();
+            var competitorLookup = competitors
+                .ToDictionary(c => (c.FirstName.ToLower(), c.LastName.ToLower()));
+
+            // Cache bestaande CompetitorInTeams (hashset)
+            var competitorInTeams = await _db.CompetitorInTeams
+                .Select(cit => new { cit.CompetitorId, cit.TeamId, cit.Year })
+                .ToListAsync();
+            var competitorInTeamSet = new HashSet<(int CompetitorId, int TeamId, int Year)>(
+                competitorInTeams.Select(cit => (cit.CompetitorId, cit.TeamId, cit.Year)));
+
+            var countries = await _db.Country.ToListAsync();
+            var countryLookup = countries.ToDictionary(c => c.CountryNameShort, StringComparer.OrdinalIgnoreCase);
+
+            var newCompetitors = new List<Competitor>();
+            var newCompetitorInTeams = new List<CompetitorInTeam>();
+            var newCountries = new List<Country>();
+
+            foreach (var sc in scraped)
+            {
+                Country country = null;
+                if (!string.IsNullOrEmpty(sc.CountryShortName))
+                {
+                    if (!countryLookup.TryGetValue(sc.CountryShortName, out country))
+                    {
+                        country = new Country
+                        {
+                            CountryNameShort = sc.CountryShortName,
+                            CountryNameLong = sc.CountryShortName // evt. mapping naar volledige naam
+                        };
+                        newCountries.Add(country);
+                        countryLookup[sc.CountryShortName] = country;
+                    }
+                }
+                // Naam splitsen (simpel: eerste stuk = LastName, tweede stuk = FirstName)
+                var parts = sc.RiderName.Split(' ', 2, StringSplitOptions.RemoveEmptyEntries);
+                var lastName = parts.Length > 0 ? parts[0] : "";
+                var firstName = parts.Length > 1 ? parts[1] : "";
+
+                // Zoek bestaande competitor (case-insensitive)
+                if (!competitorLookup.TryGetValue((firstName.ToLower(), lastName.ToLower()), out var competitor))
+                {
+                    competitor = new Competitor
+                    {
+                        FirstName = firstName,
+                        LastName = lastName,
+                        Country = country
+                    };
+                    newCompetitors.Add(competitor);
+
+                    competitorLookup[(firstName.ToLower(), lastName.ToLower())] = competitor;
+                }
+
+                // CompetitorId is nog 0 voor nieuwe competitors → tijdelijk opslaan
+                // Later, na SaveChanges, vult EF de ID's automatisch
+                if (!competitorInTeamSet.Contains((competitor.CompetitorId, sc.TeamId, sc.Year)))
+                {
+                    var cit = new CompetitorInTeam
+                    {
+                        Competitor = competitor, // EF koppelt ID automatisch
+                        TeamId = sc.TeamId,
+                        Year = sc.Year
+                    };
+                    newCompetitorInTeams.Add(cit);
+
+                    // toevoegen aan set voorkomt duplicaten binnen deze batch
+                    competitorInTeamSet.Add((competitor.CompetitorId, sc.TeamId, sc.Year));
+                }
+            }
+
+            // Batch inserts
+            if (newCountries.Any())
+                await _db.Country.AddRangeAsync(newCountries);
+            if (newCompetitors.Any())
+                await _db.Competitors.AddRangeAsync(newCompetitors);
+
+            if (newCompetitorInTeams.Any())
+                await _db.CompetitorInTeams.AddRangeAsync(newCompetitorInTeams);
+
             await _db.SaveChangesAsync();
-            //Console.WriteLine($"{c.RiderName} - {team.TeamName} (id {c.TeamId}) imported at {c.ImportedAt})");
-            
         }
 
         private Task<List<ScrapedStageResult>> ScrapeStageResultsAsync(string url, int topN, int eventId)

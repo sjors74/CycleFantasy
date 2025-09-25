@@ -142,20 +142,36 @@ namespace CycleManager.Services
 
             if (nameTab == null) return new List<ScrapedCompetitor>();
 
-            var riderLinks = nameTab.SelectNodes(".//ul/li//div[@class='w80']//a");
+            var riderLinks = nameTab.SelectNodes(".//ul/li//div[@class='w80']");
 
             if (riderLinks == null) return new List<ScrapedCompetitor>();
 
-            var competitors = riderLinks.Select((node, Index) => new ScrapedCompetitor
+            var competitors = riderLinks.Select(node => 
             {
-                RiderName = node.InnerText.Trim(),
-                TeamId = teamId,
-                Year = year,
-                ImportedAt = DateTime.UtcNow
+                // Rider naam
+                var aTag = node.SelectSingleNode(".//a");
+                var riderName = aTag != null ? aTag.InnerText.Trim() : "";
+
+                // Landcode
+                var countryCodeNode = node.SelectSingleNode(".//span[contains(@class,'flag')]");
+                var countryCode = "";
+                if (countryCodeNode != null)
+                {
+                    var classes = countryCodeNode.GetAttributeValue("class", "").Split(' ');
+                    countryCode = classes.FirstOrDefault(c => c != "flag");
+                }
+
+                return new ScrapedCompetitor
+                {
+                    RiderName = node.InnerText.Trim(),
+                    TeamId = teamId,
+                    Year = year,
+                    CountryShortName = countryCode,
+                    ImportedAt = DateTime.UtcNow
+                };
             }).ToList();
 
             return competitors;
         }
-
     }
 }

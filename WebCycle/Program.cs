@@ -50,6 +50,8 @@ builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
 builder.Services.AddTransient<ITeamRepository, TeamRepository>();
 builder.Services.AddTransient<ICompetitorRepository, CompetitorRepository>();
 builder.Services.AddTransient<ICompetitorsInEventRepository, CompetitorsInEventRepository>();
+builder.Services.AddScoped<ICompetitorInTeamRepository,CompetitorInTeamRepository>();
+builder.Services.AddScoped<ICountryRepository, CountryRepository>();
 builder.Services.AddTransient<IEventRepository, EventRepository>();
 builder.Services.AddTransient<IResultsRepository, ResultsRepository>();
 builder.Services.AddTransient<IScoreRepository, ScoreRepository>();
@@ -59,7 +61,7 @@ builder.Services.AddScoped<IGameCompetitorInEventService, GameCompetitorInEventS
 builder.Services.AddTransient<IGameCompetitorEventPickRepository, GameCompetitorEventPickRepository>();
 builder.Services.AddTransient<IResultService, ResultService>();
 builder.Services.AddTransient<IEventService, EventService>();
-builder.Services.AddTransient<ICompetitorService, CompetitorService>();
+builder.Services.AddScoped<ICompetitorService, CompetitorService>();
 builder.Services.AddTransient<ICompetitorInEventService, CompetitorInEventService>();
 builder.Services.AddTransient<ITeamService, TeamService>();
 builder.Services.AddScoped<ITokenService, TokenService>();

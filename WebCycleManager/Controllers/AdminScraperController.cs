@@ -54,7 +54,7 @@ namespace WebCycleManager.Controllers
         {
             await _scraperService.RunDropoutsAsync(eventId, eventName, year);
             return RedirectToAction("Details", "Events", new { id = eventId });
-        }
+        }               
 
         [HttpPost]
         public async Task<IActionResult> ScrapeCompetitors([FromBody] ScrapeRequestDto dto)
@@ -65,7 +65,14 @@ namespace WebCycleManager.Controllers
                 throw new Exception("Team not found while trying to scrape competitors.");
 
             await _scraperService.RunCompetitorsAsync(dto.TeamId, dto.Year);
-            TempData["Success"] = "Scrape voltooid.";
+
+            return Ok();
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ImportScrapedCompetitors()
+        {
+            await _scraperService.ImportScrapedCompetitorsAsync();
             return Ok();
         }
     }
