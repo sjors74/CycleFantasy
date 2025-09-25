@@ -124,32 +124,38 @@ namespace CycleManager.Services
 
         public async Task UpdateCompetitorWithTeam(CompetitorEditDto dto)
         {
-            //TODO: nieuwe methode met Teams?
             var competitor = await _competitorRepository.GetById(dto.CompetitorId);
             if (competitor == null) throw new Exception("Competitor not found");
 
             competitor.FirstName = dto.FirstName;
             competitor.LastName = dto.LastName;
-            competitor.PcsName = dto.PcsName;
+            competitor.PcsName = dto.PcsName ?? string.Empty;
             competitor.CountryId = dto.CountryId;
 
-            var competitorInTeam = competitor.CompetitorInTeams
-                .FirstOrDefault(cit => cit.TeamId == dto.SelectedTeamId && cit.Year == dto.SelectedYear);
-
-            if(competitorInTeam == null)
+            foreach (var dtoCit in dto.CompetitorInTeams)
             {
-                competitorInTeam = new CompetitorInTeam
-                {
-                    CompetitorId = competitor.CompetitorId,
-                    TeamId = dto.SelectedTeamId,
-                    Year = dto.SelectedYear
-                };
-                competitor.CompetitorInTeams.Add(competitorInTeam);
-            }
-            competitorInTeam.IsNationalChampion = dto.IsNationalChampion;
+                var existingCit = competitor.CompetitorInTeams
+                .FirstOrDefault(cit => cit.Id == dtoCit.CompetitorInTeamId);
 
-            _competitorRepository.Update(competitor);
-            await _competitorRepository.SaveChangesAsync();
+                if (existingCit != null)
+                {
+                    existingCit.IsNationalChampion = dtoCit.IsNationalChampion;
+                    existingCit.TeamId = dtoCit.TeamId;
+                    existingCit.Year = dtoCit.Year;
+                }
+                else
+                {
+                    competitor.CompetitorInTeams.Add(new CompetitorInTeam
+                    {
+                        TeamId = dtoCit.TeamId,
+                        Year = dtoCit.Year,
+                        IsNationalChampion = dtoCit.IsNationalChampion
+                    });
+                }
+            }
+
+            await _competitorRepository.UpdateCompetitorAsync(competitor);
+
         }
 
         public async Task<CompetitorEditDto> GetCompetitorForEdit(int competitorId)
@@ -171,10 +177,20 @@ namespace CycleManager.Services
                 CountryId = competitor.CountryId,
                 SelectedTeamId = competitor.CompetitorInTeams.FirstOrDefault()?.TeamId ?? 0,
                 SelectedYear = competitor.CompetitorInTeams?.FirstOrDefault()?.Year ?? DateTime.Now.Year,
-                IsNationalChampion = competitor.CompetitorInTeams.FirstOrDefault().IsNationalChampion,
+                
                 AvailableYears = years,
                 Teams = teams.Select(t => new TeamDto { Id = t.TeamId, Naam = t.TeamName, Renners = new List<CompetitorDto>() }),
-                Countries = countries.Select(c => new CountryDto { Id = c.CountryId, CountryNameLong = c.CountryNameLong, CountryNameShort = c.CountryNameShort })
+                Countries = countries.Select(c => new CountryDto { Id = c.CountryId, CountryNameLong = c.CountryNameLong, CountryNameShort = c.CountryNameShort }),
+                CompetitorInTeams = competitor.CompetitorInTeams
+                .Select(cit => new CompetitorInTeamDto
+                {
+                    CompetitorInTeamId = cit.Id,
+                    TeamId = cit.TeamId,
+                    TeamName = cit.Team.TeamName,
+                    Year = cit.Year,
+                    IsNationalChampion = cit.IsNationalChampion
+                })
+                .ToList()
             };
         }
     }

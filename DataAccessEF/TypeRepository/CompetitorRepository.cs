@@ -30,7 +30,7 @@ namespace DataAccessEF.TypeRepository
                         .Select(cit => new CompetitorInTeamDto
                         {
                             TeamId = cit.TeamId,
-                            TeamName = cit.Team.TeamName,
+                            //TeamName = cit.Team.TeamName,
                             Year = cit.Year,
                             IsNationalChampion = cit.IsNationalChampion
                         })
@@ -48,6 +48,7 @@ namespace DataAccessEF.TypeRepository
                 .Include(c => c.Country)
                 .Include(c => c.CompetitorInTeams)
                     .ThenInclude(cit => cit.Team)
+                .Include(c => c.CompetitorInTeams)
                 .FirstOrDefaultAsync(c => c.CompetitorId == competitorId);
 
             return competitor;
@@ -63,10 +64,10 @@ namespace DataAccessEF.TypeRepository
                 .Select(cit => new CompetitorInTeamDto
                 {
 
-                    CompetitorInTeamId = cit.Id,                  // dit gebruik je in de <option value="">
-                    CompetitorName = cit.Competitor.FirstName + " " + cit.Competitor.LastName,
-                    Country = cit.Competitor.Country.CountryNameShort,
-                    TeamName = cit.Team.TeamName
+                    CompetitorInTeamId = cit.Id,
+                    TeamName = cit.Team.TeamName,
+                    TeamId = cit.TeamId,
+                    Year = cit.Year
                 })
                 .ToListAsync();
 
@@ -120,6 +121,32 @@ namespace DataAccessEF.TypeRepository
             return await context.Competitors
                     .Include(c => c.CompetitorInTeams)
                     .FirstOrDefaultAsync(c => c.CompetitorId == id);
+        }
+
+        public async Task UpdateCompetitorAsync(Competitor competitor)
+        {
+            var existingCompetitor = await context.Competitors
+                .Include(c => c.CompetitorInTeams)
+                .FirstOrDefaultAsync(c => c.CompetitorId == competitor.CompetitorId);
+
+            if (existingCompetitor != null)
+            {
+                foreach (var updatedCit in competitor.CompetitorInTeams)
+                {
+                    var existingCit = existingCompetitor.CompetitorInTeams
+                        .FirstOrDefault(c => c.Id == updatedCit.Id);
+
+                    if (existingCit == null)
+                    {
+                        existingCompetitor.CompetitorInTeams.Add(updatedCit);
+                    }
+                    else
+                    {
+                        context.Entry(existingCit).CurrentValues.SetValues(updatedCit);
+                    }
+                }
+            }
+            await context.SaveChangesAsync();
         }
     }
 }

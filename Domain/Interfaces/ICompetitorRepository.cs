@@ -17,5 +17,6 @@ namespace Domain.Interfaces
         IQueryable<Competitor> GetCompetitorsByTerm(string term);
         Task UpdateCompetitorWithTeam(CompetitorEditDto dto);
         Task<Competitor?> GetByIdWithTeamsAsync(int id);
+        Task UpdateCompetitorAsync(Competitor competitor);
     }
 }

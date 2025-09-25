@@ -230,7 +230,7 @@ namespace WebCycleManager.Controllers
             var result = competitors.Select(c => new
             {
                 value = c.CompetitorInTeamId,
-                text = $"{c.CompetitorName} ({c.Country})"
+                text = $"{c.CompetitorInTeamId}" //({c.Country})"
             });
             return Json(result);
         }

@@ -62,8 +62,8 @@
                     @(item.CountryShort ?? "onbekend")
             </td>
             <td>
-                @item.Teams.FirstOrDefault().TeamName
-            </td>
+                 @item.Teams.FirstOrDefault().TeamName
+             </td>
             <td>
                 <a asp-action="Edit" asp-route-id="@item.CompetitorId">Wijzig</a> |
                 <a asp-action="Details" asp-route-id="@item.CompetitorId">Details</a> |

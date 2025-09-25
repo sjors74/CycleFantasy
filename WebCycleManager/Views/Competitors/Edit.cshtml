@@ -4,52 +4,110 @@
 <h1>Bewerk renner</h1>
 <hr />
 <div class="row">
-    <div class="col-md-4">
+    <div class="col-md-6">
         <form asp-action="Edit">
             <input type="hidden" asp-for="CompetitorId" />
-            <div class="form-group">
-                <label asp-for="FirstName" class="control-label"></label>
-                <input asp-for="FirstName" class="form-control" />
-            </div>
-            <div class="form-group">
-                <label asp-for="LastName" class="control-label"></label>
-                <input asp-for="LastName" class="form-control" />
-             </div>
- 
-             <div class="form-group">
-                <label asp-for="PcsName" class="control-label"></label>
-                <input asp-for="PcsName" class="form-control" />
-            </div>
-
-            <div class="form-group">
-                <label asp-for="CountryId" class="control-label"></label>
-                <select asp-for="CountryId" class="form-control" asp-items="Model.Countries"></select>
-            </div>
-
-            <hr />
-            <h4>Teamgegevens</h4>
-
-            <div class="form-group">
-                <label asp-for="SelectedYear">Jaar</label>
-                <select asp-for="SelectedYear" asp-items="Model.AvailableYears" class="form-control"
-                 onchange="location.href='@Url.Action("Edit", new {id = Model.CompetitorId })&year=' + this.value"></select>
+            <!-- master -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="form-group">
+                        <label asp-for="FirstName" class="control-label"></label>
+                        <input asp-for="FirstName" class="form-control" />
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="LastName" class="control-label"></label>
+                        <input asp-for="LastName" class="form-control" />
+                     </div>
+                     <div class="form-group">
+                        <label asp-for="PcsName" class="control-label"></label>
+                        <input asp-for="PcsName" class="form-control" />
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="CountryId" class="control-label"></label>
+                        <select asp-for="CountryId" class="form-control" asp-items="Model.Countries"></select>
+                    </div>
+                </div>
             </div>
 
-            <div class="form-group">
-                <label asp-for="SelectedTeamId">Team</label>
-                <select asp-for="SelectedTeamId" asp-items="Model.Teams" class="form-control"></select>
-            </div>
+            @{
+                var currentYear = DateTime.Now.Year;
+                var years = Model.AvailableYears
+                .Select(y => int.Parse(y.Value))
+                .Where(y => y >= 2025)
+                .OrderBy(y => y)
+                .Take(4)
+                .ToList();
+            }
+          
+            <h4 class="mb-3">Per jaar</h4>
+            <ul class="nav nav-tabs" id="yearTabs" role="tablist">
 
-            <div class="form-group">
-                <input asp-for="IsNationalChampion" class="form-check-input" />
-                <label asp-for="IsNationalChampion" class="form-check-label"></label>
-            </div>
+                @for(int i = 0; i < years.Count; i++)
+                {
+                    var year = years[i];
+                    var competitors = Model.CompetitorInTeams.Where(c => c.Year == year).ToList();
+                    var hasData = competitors.Any();
 
-            <button type="submit" class="btn btn-primary">Opslaan</button>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link @(year == currentYear && hasData ? "active" : "") @(hasData ? "": "disabled")" 
+                                id="tab-@year" 
+                                data-bs-toggle="tab" 
+                                data-bs-target="#year-@year" 
+                                type="button" 
+                                role="tab"
+                                @(hasData ? "" : "tabindex='-1' aria-disabled='true'")>
+                            @year
+                        </button>
+                    </li>
+                }
+            </ul>
+
+            <div class="tab-content mt-3">
+                @{
+                    var globalIndex = 0;
+                }
+
+                @for (int i = 0; i < years.Count; i++)
+                {
+                    var year = years[i];
+                    var competitors = Model.CompetitorInTeams.Where(c => c.Year == year).ToList();
+
+                    if (competitors.Any())
+                    {
+                        <div class="tab-pane fade @(year == currentYear ? "show active" : "")" id="year-@year" role="tabpanel">
+                            @foreach (var cit in competitors)
+                            {
+                                <div class="card mb-3 shadow-sm">
+                                    <div class="card-body">
+                                        <input type="hidden" name="CompetitorInTeams[@globalIndex].CompetitorInTeamId" value="@cit.CompetitorInTeamId" />
+                                        <input type="hidden" name="CompetitorInTeams[@globalIndex].Year" value="@cit.Year" />
+                                        <input type="hidden" name="CompetitorInTeams[@globalIndex].TeamId" value="@cit.TeamId" />
+
+                                        <input type="checkbox" class="form-check-input"
+                                               name="CompetitorInTeams[@globalIndex].IsNationalChampion"
+                                               value="true" @(cit.IsNationalChampion ? "checked" : "") />
+                                        <input type="hidden" name="CompetitorInTeams[@globalIndex].IsNationalChampion" value="false" />
+
+                                        <label class="form-label">
+                                            <i class="bi bi-trophy-fill text-warning"></i> Nationaal kampioen
+                                        </label>
+
+                                        <div>
+                                            <i class="bi bi-people-fill text-primary"></i>
+                                            <strong>@cit.TeamName</strong>
+                                        </div>
+                                    </div>
+                                </div>
+                                globalIndex++;
+                            }
+                        </div>
+                    }
+                }
+            </div>
+            <button type="submit" class="btn btn-primary mt-3">Opslaan</button>
         </form>
     </div>
 </div>
-
 <div>
     <a asp-action="Index">Terug naar de lijst</a>
 </div>

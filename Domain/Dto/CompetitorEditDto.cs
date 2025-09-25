@@ -9,10 +9,11 @@
         public int CountryId { get; set; }
         public int SelectedTeamId { get; set; }
         public int SelectedYear { get; set; }
-        public bool IsNationalChampion { get; set; }
 
-        public IEnumerable<int> AvailableYears { get; set; }
-        public IEnumerable<TeamDto> Teams { get; set; }
-        public IEnumerable<CountryDto> Countries { get; set; }
+        public IEnumerable<int> AvailableYears { get; set; } = new List<int>();
+        public IEnumerable<TeamDto> Teams { get; set; } = new List<TeamDto>();
+        public IEnumerable<CountryDto> Countries { get; set; } = new List<CountryDto>();
+
+        public List<CompetitorInTeamDto> CompetitorInTeams { get; set; } = new();
     }
 }

@@ -55,11 +55,6 @@ namespace WebCycleManager.Controllers
                         .Where(s => s.LastName.Contains(searchString, StringComparison.OrdinalIgnoreCase) ||
                                     s.FirstName.Contains(searchString, StringComparison.OrdinalIgnoreCase))
                         .ToList();
-
-                if (!competitors.Any())
-                {
-                    return NotFound();
-                }
             }
 
             var orderedList = competitors
@@ -174,7 +169,7 @@ namespace WebCycleManager.Controllers
             var dto = await _competitorService.GetCompetitorForEdit(id);
             if (dto == null) return NotFound();
 
-            var input = new CompetitorEditInputModel
+            var vm = new CompetitorEditViewModel
             {
                 CompetitorId = dto.CompetitorId,
                 FirstName = dto.FirstName,
@@ -183,9 +178,38 @@ namespace WebCycleManager.Controllers
                 CountryId = dto.CountryId,
                 SelectedTeamId = dto.SelectedTeamId,
                 SelectedYear = dto.SelectedYear,
-                IsNationalChampion = dto.IsNationalChampion,
+                
+                Countries = dto.Countries.Select(c => new SelectListItem
+                {
+                    Value = c.Id.ToString(),
+                    Text = c.CountryNameLong,
+                    Selected = (c.Id == dto.CountryId)
+                }),
+
+                Teams = dto.Teams.Select(t => new SelectListItem
+                {
+                    Value = t.Id.ToString(),
+                    Text = t.Naam,
+                    Selected = (t.Id == dto.SelectedTeamId)
+                }),
+
+                AvailableYears = dto.AvailableYears.Select(y => new SelectListItem
+                {
+                    Value = y.ToString(),
+                    Text = y.ToString(),
+                    Selected = (y == dto.SelectedYear)
+                }),
+
+                CompetitorInTeams = dto.CompetitorInTeams.Select(cit => new CompetitorInTeamEditModel
+                {
+                    CompetitorInTeamId = cit.CompetitorInTeamId,
+                    TeamName = cit.TeamName,
+                    Year = cit.Year,
+                    IsNationalChampion = cit.IsNationalChampion,
+                    TeamId = cit.TeamId   // belangrijk voor POST
+                }).ToList()
             };
-            var vm = MapInputToViewModel(input, dto);
+
             return View(vm);
         }
 
@@ -194,13 +218,27 @@ namespace WebCycleManager.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(CompetitorEditInputModel input)
         {
+            //foreach (var key in Request.Form.Keys)
+            //{
+            //    var vals = Request.Form[key]; // Microsoft.Extensions.Primitives.StringValues
+            //    Console.WriteLine("{Key} = [{Vals}]", key, string.Join(",", vals));
+            //}
+
             if (!ModelState.IsValid)
             {
                 var dto = await _competitorService.GetCompetitorForEdit(input.CompetitorId);
-                var vm = MapInputToViewModel(input, dto);
+                var vm = MapDtoToViewModel(dto);
+                foreach (var cit in vm.CompetitorInTeams)
+                {
+                    var matchingInput = input.CompetitorInTeams.FirstOrDefault(c => c.CompetitorInTeamId == cit.CompetitorInTeamId);
+                    if (matchingInput != null)
+                    {
+                        cit.IsNationalChampion = matchingInput.IsNationalChampion;
+                    }
+                }
+
                 return View(vm);
             }
-
             var dtoUpdate = new CompetitorEditDto
             {
                 CompetitorId = input.CompetitorId,
@@ -208,9 +246,13 @@ namespace WebCycleManager.Controllers
                 LastName = input.LastName,
                 PcsName = input.PcsName,
                 CountryId = input.CountryId,
-                SelectedTeamId = input.SelectedTeamId,
-                SelectedYear = input.SelectedYear,
-                IsNationalChampion = input.IsNationalChampion
+                CompetitorInTeams = input.CompetitorInTeams.Select(c => new CompetitorInTeamDto
+                {
+                    CompetitorInTeamId = c.CompetitorInTeamId,
+                    Year = c.Year,
+                    IsNationalChampion = c.IsNationalChampion,
+                    TeamId = c.TeamId
+                }).ToList()
             };
 
             await _competitorService.UpdateCompetitorWithTeam(dtoUpdate);
@@ -307,39 +349,65 @@ namespace WebCycleManager.Controllers
                 Selected = (y == selectedYear)
             }));
         }
-        private CompetitorEditViewModel MapInputToViewModel(CompetitorEditInputModel input, CompetitorEditDto dto)
+        private CompetitorEditViewModel MapDtoToViewModel(CompetitorEditDto dto)
         {
             return new CompetitorEditViewModel
             {
-                CompetitorId = input.CompetitorId,
-                FirstName = input.FirstName,
-                LastName = input.LastName,
-                CountryId = input.CountryId,
-                SelectedTeamId = input.SelectedTeamId,
-                SelectedYear = input.SelectedYear,
-                PcsName = input.PcsName,
+                CompetitorId = dto.CompetitorId,
+                FirstName = dto.FirstName,
+                LastName = dto.LastName,
+                PcsName = dto.PcsName,
+                CountryId = dto.CountryId,
+                SelectedTeamId = dto.SelectedTeamId,
+                SelectedYear = dto.SelectedYear,
 
                 Countries = dto.Countries.Select(c => new SelectListItem
                 {
                     Value = c.Id.ToString(),
-                    Text = c.CountryNameLong,
-                    Selected = (c.Id == input.CountryId)
+                    Text = c.CountryNameLong
                 }),
 
                 Teams = dto.Teams.Select(t => new SelectListItem
                 {
                     Value = t.Id.ToString(),
-                    Text = t.Naam,
-                    Selected = (t.Id == input.SelectedTeamId)
+                    Text = t.Naam
                 }),
 
                 AvailableYears = dto.AvailableYears.Select(y => new SelectListItem
                 {
                     Value = y.ToString(),
-                    Text = y.ToString(),
-                    Selected = (y == input.SelectedYear)
-                })
+                    Text = y.ToString()
+                }),
+
+                CompetitorInTeams = dto.CompetitorInTeams.Select(cit => new CompetitorInTeamEditModel
+                {
+                    CompetitorInTeamId = cit.CompetitorInTeamId,
+                    TeamName = cit.TeamName,
+                    Year = cit.Year,
+                    IsNationalChampion = cit.IsNationalChampion,
+                    TeamId = cit.TeamId
+                }).ToList()
             };
         }
+
+        private CompetitorEditInputModel MapViewModelToInputModel(CompetitorEditViewModel vm)
+        {
+            return new CompetitorEditInputModel
+            {
+                CompetitorId = vm.CompetitorId,
+                FirstName = vm.FirstName,
+                LastName = vm.LastName,
+                PcsName = vm.PcsName,
+                CountryId = vm.CountryId,
+                CompetitorInTeams = vm.CompetitorInTeams.Select(cit => new CompetitorInTeamInputModel
+                {
+                    CompetitorInTeamId = cit.CompetitorInTeamId,
+                    Year = cit.Year,
+                    IsNationalChampion = cit.IsNationalChampion,
+                    TeamId = cit.TeamId
+                }).ToList()
+            };
+        }
+
     }
 }
