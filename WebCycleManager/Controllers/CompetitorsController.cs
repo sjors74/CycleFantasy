@@ -175,6 +175,7 @@ namespace WebCycleManager.Controllers
                 FirstName = dto.FirstName,
                 LastName = dto.LastName,
                 PcsName = dto.PcsName,
+                ScraperName = dto.ScraperName,
                 CountryId = dto.CountryId,
                 SelectedTeamId = dto.SelectedTeamId,
                 SelectedYear = dto.SelectedYear,
@@ -218,12 +219,6 @@ namespace WebCycleManager.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(CompetitorEditInputModel input)
         {
-            //foreach (var key in Request.Form.Keys)
-            //{
-            //    var vals = Request.Form[key]; // Microsoft.Extensions.Primitives.StringValues
-            //    Console.WriteLine("{Key} = [{Vals}]", key, string.Join(",", vals));
-            //}
-
             if (!ModelState.IsValid)
             {
                 var dto = await _competitorService.GetCompetitorForEdit(input.CompetitorId);
@@ -245,6 +240,7 @@ namespace WebCycleManager.Controllers
                 FirstName = input.FirstName,
                 LastName = input.LastName,
                 PcsName = input.PcsName,
+                ScraperName = input.ScraperName,
                 CountryId = input.CountryId,
                 CompetitorInTeams = input.CompetitorInTeams.Select(c => new CompetitorInTeamDto
                 {
@@ -357,6 +353,7 @@ namespace WebCycleManager.Controllers
                 FirstName = dto.FirstName,
                 LastName = dto.LastName,
                 PcsName = dto.PcsName,
+                ScraperName = dto.ScraperName,
                 CountryId = dto.CountryId,
                 SelectedTeamId = dto.SelectedTeamId,
                 SelectedYear = dto.SelectedYear,
@@ -398,6 +395,7 @@ namespace WebCycleManager.Controllers
                 FirstName = vm.FirstName,
                 LastName = vm.LastName,
                 PcsName = vm.PcsName,
+                ScraperName = vm.ScraperName,
                 CountryId = vm.CountryId,
                 CompetitorInTeams = vm.CompetitorInTeams.Select(cit => new CompetitorInTeamInputModel
                 {

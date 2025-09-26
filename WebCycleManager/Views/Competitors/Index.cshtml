@@ -1,90 +1,127 @@
 ﻿@model PaginatedList<Domain.Dto.CompetitorDto>
 
 @{
-    ViewData["Title"] = "Index";
+    var availableYears = (List<int>)ViewData["AvailableYears"];
+    var selectedYear = (int)ViewData["SelectedYear"];
+    var half = (int)Math.Ceiling(Model.Count / 2.0);
+    var leftItems = Model.Take(half).ToList();
+    var rightItems = Model.Skip(half).ToList();
 }
 
-<h1>Renners</h1>
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="mb-0">Renners</h1>
 
-<p>
-    <a asp-action="Create">Maak nieuw</a>
-</p>
+    <!-- Jaar Tabs rechts van de titel -->
+    <ul class="nav nav-tabs">
+        @foreach (var year in availableYears)
+        {
+            <li class="nav-item">
+                <a class="nav-link @(year == selectedYear ? "active" : "")"
+                   asp-action="Index"
+                   asp-route-year="@year"
+                   asp-route-SearchString="@ViewData["CurrentFilter"]">
+                    @year
+                </a>
+            </li>
+        }
+    </ul>
+</div>
 
-<form asp-action="Index" method="get">
-    <div class="form-actions no-color">
-        <p>
-            Zoek op naam: <input type="text" name="SearchString" value="@ViewData["CurrentFilter"]" />
-            <select name="year" onchange="this.form.submit()">
-                @foreach (var year in (List<int>)ViewData["AvailableYears"])
-                {
-                    <option value="@year" selected="@(year == (int)ViewData["SelectedYear"])">
-                        @year
-                    </option>
-                }
-            </select>
-            <input type="submit" value="Zoek" class="btn btn-default" /> |
-            <a asp-action="Index">Terug naar de volledige lijst</a>
-        </p>
-    </div>
+<!-- Compact zoekformulier -->
+<form asp-action="Index" method="get" class="d-flex align-items-center mb-3">
+    <label class="me-2 mb-0">Zoek op naam:</label>
+    <input type="text" name="SearchString" value="@ViewData["CurrentFilter"]"
+           class="form-control form-control-sm me-2" style="width:150px;" />
+    <input type="submit" value="Zoek" class="btn btn-secondary btn-sm me-2" />
+    <a asp-action="Index" class="btn btn-link btn-sm mb-0">Terug naar volledige lijst</a>
 </form>
-<table class="table">
-    <thead>
-        <tr>
-             <th>
-                @Html.DisplayName("Voornaam")
-            </th>
-             <th>
-                @Html.DisplayName("Achternaam")
-            </th>
-            <th>
-                @Html.DisplayName("Pcs-naam")
-            </th>
-            <th>
-                @Html.DisplayName("Land")
-            </th>
-            <th></th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.FirstName)
-            </td>
-             <td>
-                @Html.DisplayFor(modelItem => item.LastName)
-            </td>
-             <td>
-                @Html.DisplayFor(modelItem => item.PcsName)
-            </td>
-            <td>
-                    @(item.CountryShort ?? "onbekend")
-            </td>
-            <td>
-                 @item.Teams.FirstOrDefault().TeamName
-             </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.CompetitorId">Wijzig</a> |
-                <a asp-action="Details" asp-route-id="@item.CompetitorId">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.CompetitorId">Verwijder</a>
-            </td>
-        </tr>
-}
-    </tbody>
-</table>
-@{
-    var prevDisabled = !Model.HasPreviousPage ? "disabled" : "";
-    var nextDisabled = !Model.HasNextPage ? "disabled" : "";
-}
 
-<a asp-action="Index"
-   asp-route-pageNumber="@(Model.PageIndex - 1)"
-   class="btn btn-default @prevDisabled">
-    Vorige
-</a>
-<a asp-action="Index"
-   asp-route-pageNumber="@(Model.PageIndex + 1)"
-   class="btn btn-default @nextDisabled">
-    Volgende
-</a>
+<div class="row">
+    <div class="col-md-6">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Voornaam</th>
+                    <th>Achternaam</th>
+                    <th>Land</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var item in leftItems)
+            {
+                <tr>
+                    <td>@item.FirstName</td>
+                    <td>@item.LastName</td>
+                    <td style="width:80px;">@(item.CountryShort ?? "onbekend")</td>
+                    <td class="text-end">
+                      <!-- subtiel potloodje -->
+                        <a asp-action="Edit" asp-route-id="@item.CompetitorId"
+                           class="text-muted me-2" title="Bewerken" style="text-decoration:none;">
+                               <i class="bi bi-pencil"></i>
+                        </a>
+                        <a asp-action="Details" asp-route-id="@item.CompetitorId"
+                            class="text-muted me-2" title="Details" style="text-decoration:none;">
+                                <i class="bi bi-eye"></i>
+                        </a>
+                        <a asp-action="Delete" asp-route-id="@item.CompetitorId"
+                            class="text-muted" title="Verwijderen" style="text-decoration:none;">
+                                <i class="bi bi-trash"></i>
+                        </a>
+                    </td>
+                </tr>
+             }
+        </tbody>
+    </table>
+</div>
+<div class="col-md-6">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Voornaam</th>
+                <th>Achternaam</th>
+                <th>Land</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in rightItems)
+            {
+                <tr>
+                    <td>@item.FirstName</td>
+                    <td>@item.LastName</td>
+                    <td style="width:80px;">@(item.CountryShort ?? "onbekend")</td>
+                    <td class="text-end">
+                        <!-- subtiel potloodje -->
+                        <a asp-action="Edit" asp-route-id="@item.CompetitorId"
+                            class="text-muted me-2" title="Bewerken" style="text-decoration:none;">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                        <a asp-action="Details" asp-route-id="@item.CompetitorId"
+                            class="text-muted me-2" title="Details" style="text-decoration:none;">
+                            <i class="bi bi-eye"></i>
+                        </a>
+                        <a asp-action="Delete" asp-route-id="@item.CompetitorId"
+                            class="text-muted" title="Verwijderen" style="text-decoration:none;">
+                            <i class="bi bi-trash"></i>
+                        </a>
+                    </td>
+                </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+<!-- Paginate -->
+<div class="d-flex justify-content-between mt-3">
+    <a asp-action="Index"
+       asp-route-pageNumber="@(Model.PageIndex - 1)"
+       class="btn btn-outline-secondary btn-sm @(Model.HasPreviousPage ? "" : "disabled")">
+        Vorige
+    </a>
+    <a asp-action="Index"
+       asp-route-pageNumber="@(Model.PageIndex + 1)"
+       class="btn btn-outline-secondary btn-sm @(Model.HasNextPage ? "" : "disabled")">
+        Volgende
+    </a>
+</div>

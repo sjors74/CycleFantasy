@@ -8,6 +8,7 @@ namespace Domain.Dto
         public string FirstName { get; set; } = string.Empty;
         public string LastName { get; set; } = string.Empty;
         public string PcsName { get; set; } = string.Empty;
+        public string? ScraperName { get; set; }
         public string CountryShort { get; set; } = string.Empty;
         public string EventNumber { get; set; } = string.Empty;
         public int Punten { get; set; }

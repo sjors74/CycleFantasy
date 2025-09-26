@@ -1,4 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc.Rendering;
+using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 
 namespace WebCycleManager.Models.ViewModel
 {
@@ -8,6 +10,7 @@ namespace WebCycleManager.Models.ViewModel
         public string FirstName { get; set; } = string.Empty;
         public string LastName { get; set; } = string.Empty;
         public string? PcsName { get; set; }
+        public string? ScraperName { get; set; }
         public int CountryId { get; set; }
 
         public List<CompetitorInTeamInputModel> CompetitorInTeams { get; set; } = new();
@@ -23,9 +26,13 @@ namespace WebCycleManager.Models.ViewModel
     public class CompetitorEditViewModel
     {
         public int CompetitorId { get; set; }
+        [DisplayName("Voornaam")]
         public string FirstName { get; set; } = string.Empty;
+        [DisplayName("Achternaam")]
         public string LastName { get; set; } = string.Empty;
         public string? PcsName { get; set; }
+        public string? ScraperName { get; set; }
+        [DisplayName("Land")]
         public int CountryId { get; set; }
         public int SelectedTeamId { get; set; }
         public int SelectedYear { get; set; }

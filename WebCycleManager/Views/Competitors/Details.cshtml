@@ -28,19 +28,13 @@
         <dd class="col-sm-10">
             @Html.DisplayFor(model => model.PcsName)
         </dd>
-@*         <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.IsNationalChampion)
+         <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.ScraperName)
         </dt>
         <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.IsNationalChampion)
+            @Html.DisplayFor(model => model.ScraperName)
         </dd>
-         <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.CompetitorInTeams.FirstOrDefault()?.Team.TeamName)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.CompetitorInTeams.FirstOrDefault()?.Team.TeamName)
-        </dd>
- *@   </dl>
+   </dl>
 </div>
 <div>
     <a asp-action="Edit" asp-route-id="@Model?.CompetitorId">Wijzig</a> |

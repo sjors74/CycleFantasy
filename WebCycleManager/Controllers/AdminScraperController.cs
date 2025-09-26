@@ -69,11 +69,11 @@ namespace WebCycleManager.Controllers
             return Ok();
         }
 
-        [HttpGet]
+        [HttpPost]
         public async Task<IActionResult> ImportScrapedCompetitors()
         {
             await _scraperService.ImportScrapedCompetitorsAsync();
-            return Ok();
+            return RedirectToAction("Index", "Teams");
         }
     }
 }

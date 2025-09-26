@@ -130,6 +130,7 @@ namespace CycleManager.Services
             competitor.FirstName = dto.FirstName;
             competitor.LastName = dto.LastName;
             competitor.PcsName = dto.PcsName ?? string.Empty;
+            competitor.ScraperName = dto.ScraperName ?? string.Empty;
             competitor.CountryId = dto.CountryId;
 
             foreach (var dtoCit in dto.CompetitorInTeams)
@@ -174,6 +175,7 @@ namespace CycleManager.Services
                 FirstName = competitor.FirstName,
                 LastName = competitor.LastName,
                 PcsName = competitor.PcsName,
+                ScraperName = competitor.ScraperName,
                 CountryId = competitor.CountryId,
                 SelectedTeamId = competitor.CompetitorInTeams.FirstOrDefault()?.TeamId ?? 0,
                 SelectedYear = competitor.CompetitorInTeams?.FirstOrDefault()?.Year ?? DateTime.Now.Year,

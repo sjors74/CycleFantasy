@@ -1,18 +1,15 @@
 ﻿@using CycleManager.Domain.ViewModel
 @model IEnumerable<TeamViewModel>
 
-<h1>UCI World- & Proteams</h1>
-
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="mb-0">UCI World- & Proteams</h1>
+    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#confirmImportModal">
+        <i class="bi bi-person-x"></i> Update renners
+    </button>
+</div>
 <p>
     <a asp-action="Create">Maak team aan</a>
 </p>
-<a class="btn btn-primary"
-   title="Import scraped renners"
-   asp-controller="AdminScraper"
-   asp-action="ImportScrapedCompetitors">
-    <i class="bi bi-person-x"></i>
-</a>
-
 <table class="table table-striped">
     <thead>
         <tr>
@@ -87,7 +84,31 @@
         </div>
     </div>
 </div>
-
+<div class="modal fade" id="confirmImportModal" tabindex="-1" aria-labelledby="confirmImportModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="importForm">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="importModalLabel">Renners updaten</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    Weet je zeker dat je de renners wilt updaten?
+                    <div id="importLoader" class="text-center my-3" style="display:none;">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Updaten bezig...</span>
+                        </div>
+                        <p class="mt-2">Updaten bezig...</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuleren</button>
+                    <button type="submit" class="btn btn-primary">Ja, update de renners</button>
+               </div>
+            </form>
+        </div>
+    </div>
+</div>
 <!-- toast -->
 <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1055">
     <div id="scrapeToast" class="toast align-items-center text-bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
@@ -99,7 +120,16 @@
         </div>
     </div>
 </div>
-
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1055">
+    <div id="importToast" class="toast align-items-center text-bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body">
+                Renners succesvol geüpdatet!
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+</div>
 @section Scripts {
     <script>
         document.addEventListener("DOMContentLoaded", function () {
@@ -168,8 +198,12 @@
                         modal.hide();
 
                         //toast tonen
+                        loader.style.display = "none";
                         toast.show();
-
+                        toastEl.addEventListener('shown.bs.toast', () => {
+                            const modal = bootstrap.Modal.getInstance(scrapeModal);
+                            modal.hide();
+                        });
                         setTimeout(() => location.reload(), 1500);
                     } else {
                         alert("Scrapen mislukt: " + response.statusText);
@@ -181,6 +215,53 @@
                     loader.style.display = "none";
                 }
             });
+        });
+    </script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // Elements
+            const importModal = document.getElementById('confirmImportModal');
+            const importForm = document.getElementById('importForm');
+            const importLoader = document.getElementById('importLoader');
+            const importToastEl = document.getElementById('importToast');
+            const importToast = new bootstrap.Toast(importToastEl);
+
+            if (importForm) {
+                importForm.addEventListener("submit", async function (e) {
+                    e.preventDefault();
+                    importLoader.style.display = "block";
+
+                    try {
+                        const response = await fetch('@Url.Action("ImportScrapedCompetitors", "AdminScraper")', {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" }
+                        });
+
+                        if (response.ok) {
+                            // modal sluiten
+                            const modal = bootstrap.Modal.getInstance(importModal);
+                            if (modal) {
+                                modal.hide();
+                            }
+                            // toast tonen
+                            importLoader.style.display = "none";
+                            importToast.show();
+                            importToastEl.addEventListener('shown.bs.toast', () => {
+                                const modal = bootstrap.Modal.getInstance(importModal);
+                                modal.hide();
+                            });
+                            setTimeout(() => location.reload(), 1500);
+                        } else {
+                            alert("Updaten mislukt: " + response.statusText);
+                        }
+                    } catch (err) {
+                        console.error(err);
+                        alert("Er ging iets mis tijdens het updaten.");
+                    } finally {
+                        importLoader.style.display = "none";
+                    }
+                });
+            }
         });
     </script>
 }

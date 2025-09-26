@@ -1,33 +1,55 @@
 ﻿@using WebCycleManager.Models.ViewModel
 @model CompetitorEditViewModel
 
-<h1>Bewerk renner</h1>
+<h3 class="mb-3">Bewerk renner</h3>
 <hr />
-<div class="row">
-    <div class="col-md-6">
-        <form asp-action="Edit">
-            <input type="hidden" asp-for="CompetitorId" />
-            <!-- master -->
+
+<form asp-action="Edit">
+    <input type="hidden" asp-for="CompetitorId" />
+
+    <div class="row">
+        <!-- Linker kolom: Rennergegevens -->
+        <div class="col-md-6">
+            <h4 class="mb-3">Gegevens renner</h4>
             <div class="card mb-4">
                 <div class="card-body">
-                    <div class="form-group">
-                        <label asp-for="FirstName" class="control-label"></label>
-                        <input asp-for="FirstName" class="form-control" />
+                    <div class="row mb-3 align-items-center">
+                        <label asp-for="FirstName" class="col-sm-4 col-form-label">Voornaam</label>
+                        <div class="col-sm-8">
+                            <input asp-for="FirstName" class="form-control" />
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label asp-for="LastName" class="control-label"></label>
-                        <input asp-for="LastName" class="form-control" />
-                     </div>
-                     <div class="form-group">
-                        <label asp-for="PcsName" class="control-label"></label>
-                        <input asp-for="PcsName" class="form-control" />
+                    <div class="row mb-3 align-items-center">
+                        <label asp-for="LastName" class="col-sm-4 col-form-label">Achternaam</label>
+                        <div class="col-sm-8">
+                            <input asp-for="LastName" class="form-control" />
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label asp-for="CountryId" class="control-label"></label>
-                        <select asp-for="CountryId" class="form-control" asp-items="Model.Countries"></select>
+                    <div class="row mb-3 align-items-center">
+                        <label asp-for="PcsName" class="col-sm-4 col-form-label">PCS naam</label>
+                        <div class="col-sm-8">
+                            <input asp-for="PcsName" class="form-control" />
+                        </div>
+                    </div>
+                    <div class="row mb-3 align-items-center">
+                        <label asp-for="ScraperName" class="col-sm-4 col-form-label">Scraper naam</label>
+                        <div class="col-sm-8">
+                            <input asp-for="ScraperName" class="form-control" />
+                        </div>
+                    </div>
+                    <div class="row mb-3 align-items-center">
+                        <label asp-for="CountryId" class="col-sm-4 col-form-label">Land</label>
+                        <div class="col-sm-8">
+                            <select asp-for="CountryId" class="form-control" asp-items="@(Model.Countries.OrderBy(c => c.Text))"></select>
+                        </div>
                     </div>
                 </div>
             </div>
+        </div>
+
+        <!-- Rechter kolom: Tabs per jaar -->
+        <div class="col-md-6">
+            <h4 class="mb-3">Per jaar</h4>
 
             @{
                 var currentYear = DateTime.Now.Year;
@@ -38,22 +60,20 @@
                 .Take(4)
                 .ToList();
             }
-          
-            <h4 class="mb-3">Per jaar</h4>
-            <ul class="nav nav-tabs" id="yearTabs" role="tablist">
 
-                @for(int i = 0; i < years.Count; i++)
+            <ul class="nav nav-tabs" id="yearTabs" role="tablist">
+                @for (int i = 0; i < years.Count; i++)
                 {
                     var year = years[i];
                     var competitors = Model.CompetitorInTeams.Where(c => c.Year == year).ToList();
                     var hasData = competitors.Any();
 
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link @(year == currentYear && hasData ? "active" : "") @(hasData ? "": "disabled")" 
-                                id="tab-@year" 
-                                data-bs-toggle="tab" 
-                                data-bs-target="#year-@year" 
-                                type="button" 
+                        <button class="nav-link @(year == currentYear && hasData ? "active" : "") @(hasData ? "" : "disabled")"
+                                id="tab-@year"
+                                data-bs-toggle="tab"
+                                data-bs-target="#year-@year"
+                                type="button"
                                 role="tab"
                                 @(hasData ? "" : "tabindex='-1' aria-disabled='true'")>
                             @year
@@ -83,15 +103,15 @@
                                         <input type="hidden" name="CompetitorInTeams[@globalIndex].Year" value="@cit.Year" />
                                         <input type="hidden" name="CompetitorInTeams[@globalIndex].TeamId" value="@cit.TeamId" />
 
-                                        <input type="checkbox" class="form-check-input"
-                                               name="CompetitorInTeams[@globalIndex].IsNationalChampion"
-                                               value="true" @(cit.IsNationalChampion ? "checked" : "") />
-                                        <input type="hidden" name="CompetitorInTeams[@globalIndex].IsNationalChampion" value="false" />
-
-                                        <label class="form-label">
-                                            <i class="bi bi-trophy-fill text-warning"></i> Nationaal kampioen
-                                        </label>
-
+                                        <div class="form-check mb-2">
+                                            <input type="checkbox" class="form-check-input"
+                                                   name="CompetitorInTeams[@globalIndex].IsNationalChampion"
+                                                   value="true" @(cit.IsNationalChampion ? "checked" : "") />
+                                            <input type="hidden" name="CompetitorInTeams[@globalIndex].IsNationalChampion" value="false" />
+                                            <label class="form-check-label">
+                                                <i class="bi bi-trophy-fill text-warning"></i> Nationaal kampioen
+                                            </label>
+                                        </div>
                                         <div>
                                             <i class="bi bi-people-fill text-primary"></i>
                                             <strong>@cit.TeamName</strong>
@@ -104,14 +124,18 @@
                     }
                 }
             </div>
-            <button type="submit" class="btn btn-primary mt-3">Opslaan</button>
-        </form>
+        </div>
     </div>
-</div>
-<div>
-    <a asp-action="Index">Terug naar de lijst</a>
-</div>
+
+    <!-- Onderste regel: Terug + Opslaan -->
+    <div class="d-flex justify-content-between align-items-center mt-3">
+        <a asp-action="Index">Terug naar de lijst</a>
+        <button type="submit" class="btn btn-primary">Opslaan</button>
+    </div>
+</form>
 
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
 }

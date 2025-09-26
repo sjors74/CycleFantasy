@@ -1,4 +1,5 @@
 ﻿using CycleManager.Domain.Models;
+using CycleManager.Services.Helpers;
 using CycleManager.Services.Settings;
 using Domain.Context;
 using Domain.Models;
@@ -163,8 +164,9 @@ namespace CycleManager.Services
 
         public async Task ImportScrapedCompetitorsAsync()
         {
-            //TODO: een propertyToevoegen: inserted?
-            var scraped = await _db.ScrapedCompetitors.ToListAsync();
+            var scraped = await _db.ScrapedCompetitors
+                .Where(sc => sc.ProcessedAt == null)
+                .ToListAsync();
 
             // Cache bestaande competitors (in memory dictionary)
             var competitors = await _db.Competitors.ToListAsync();
@@ -195,49 +197,55 @@ namespace CycleManager.Services
                         country = new Country
                         {
                             CountryNameShort = sc.CountryShortName,
-                            CountryNameLong = sc.CountryShortName // evt. mapping naar volledige naam
+                            CountryNameLong = sc.CountryShortName //TODO: evt met flags de naam ophalen?
                         };
                         newCountries.Add(country);
                         countryLookup[sc.CountryShortName] = country;
                     }
                 }
-                // Naam splitsen (simpel: eerste stuk = LastName, tweede stuk = FirstName)
-                var parts = sc.RiderName.Split(' ', 2, StringSplitOptions.RemoveEmptyEntries);
-                var lastName = parts.Length > 0 ? parts[0] : "";
-                var firstName = parts.Length > 1 ? parts[1] : "";
 
-                // Zoek bestaande competitor (case-insensitive)
-                if (!competitorLookup.TryGetValue((firstName.ToLower(), lastName.ToLower()), out var competitor))
+                Competitor competitor = null;
+                competitor = competitors.FirstOrDefault(c =>
+                    string.Equals(c.ScraperName, sc.RiderName, StringComparison.OrdinalIgnoreCase));
+
+                if (competitor == null)
                 {
-                    competitor = new Competitor
-                    {
-                        FirstName = firstName,
-                        LastName = lastName,
-                        Country = country
-                    };
-                    newCompetitors.Add(competitor);
 
-                    competitorLookup[(firstName.ToLower(), lastName.ToLower())] = competitor;
+                    var (firstName, lastName) = SplitNamesHelper.SplitName(sc.RiderName);
+
+                    // Zoek bestaande competitor (case-insensitive)
+                    if (!competitorLookup.TryGetValue((firstName.ToLower(), lastName.ToLower()), out competitor))
+                    {
+                        competitor = new Competitor
+                        {
+                            FirstName = firstName,
+                            LastName = lastName,
+                            Country = country,
+                            ScraperName = sc.RiderName
+                        };
+                        newCompetitors.Add(competitor);
+                        competitorLookup[(firstName.ToLower(), lastName.ToLower())] = competitor;
+                    }
+                    else
+                    {
+                        competitor.ScraperName = sc.RiderName;
+                    }
                 }
 
-                // CompetitorId is nog 0 voor nieuwe competitors → tijdelijk opslaan
-                // Later, na SaveChanges, vult EF de ID's automatisch
                 if (!competitorInTeamSet.Contains((competitor.CompetitorId, sc.TeamId, sc.Year)))
                 {
                     var cit = new CompetitorInTeam
                     {
-                        Competitor = competitor, // EF koppelt ID automatisch
+                        Competitor = competitor,
                         TeamId = sc.TeamId,
                         Year = sc.Year
                     };
                     newCompetitorInTeams.Add(cit);
-
-                    // toevoegen aan set voorkomt duplicaten binnen deze batch
                     competitorInTeamSet.Add((competitor.CompetitorId, sc.TeamId, sc.Year));
                 }
+                sc.ProcessedAt = DateTime.UtcNow;
             }
 
-            // Batch inserts
             if (newCountries.Any())
                 await _db.Country.AddRangeAsync(newCountries);
             if (newCompetitors.Any())

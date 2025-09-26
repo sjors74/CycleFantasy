@@ -15,7 +15,7 @@ namespace Domain.Models
         [DisplayName("Achternaam")]
         public string LastName { get; set; } = string.Empty;
         public string PcsName { get; set; } = string.Empty;
-
+        public string? ScraperName { get; set; }
         [DisplayName("Land")]
         public int CountryId { get; set; }
         [DisplayName("Land")]

@@ -6,6 +6,7 @@
         public string FirstName { get; set; } = string.Empty;
         public string LastName { get; set; }= string.Empty;
         public string? PcsName { get; set; }
+        public string? ScraperName { get; set; }
         public int CountryId { get; set; }
         public int SelectedTeamId { get; set; }
         public int SelectedYear { get; set; }
