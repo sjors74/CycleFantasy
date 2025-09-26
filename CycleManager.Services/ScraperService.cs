@@ -197,7 +197,7 @@ namespace CycleManager.Services
                         country = new Country
                         {
                             CountryNameShort = sc.CountryShortName,
-                            CountryNameLong = sc.CountryShortName //TODO: evt met flags de naam ophalen?
+                            CountryNameLong = CountryHelper.GetName(sc.CountryShortName),
                         };
                         newCountries.Add(country);
                         countryLookup[sc.CountryShortName] = country;
