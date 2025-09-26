@@ -86,14 +86,12 @@ namespace WebCycleManager.Controllers
         public async Task<IActionResult> Create()
         {
             ViewBag.Competitors = await GetCompetitorSelectListAsync();
-            ViewData["TeamId"] = new SelectList((await _teamService.GetAll()).OrderBy(t => t.TeamName), "TeamId", "TeamName");
+            ViewData["TeamId"] = new SelectList((await _teamService.GetAll()).OrderBy(t => t.CurrentTeamName), "TeamId", "TeamName");
             ViewData["CountryId"] = new SelectList(await CountrySelectListHelper.GetOrderedCountries(_countryService), "CountryId", "CountryNameLong");
             return View(new CreateCompetitorViewModel());
         }
 
         // POST: Competitors/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(CreateCompetitorViewModel model)
@@ -101,7 +99,7 @@ namespace WebCycleManager.Controllers
             if (!ModelState.IsValid)
             {
                 ViewBag.Competitors = await GetCompetitorSelectListAsync();
-                ViewData["TeamId"] = new SelectList((await _teamService.GetAll()).OrderBy(t => t.TeamName), "TeamId", "TeamName");
+                ViewData["TeamId"] = new SelectList((await _teamService.GetAll()).OrderBy(t => t.CurrentTeamName), "TeamId", "TeamName");
                 ViewData["CountryId"] = new SelectList(await CountrySelectListHelper.GetOrderedCountries(_countryService), "CountryId", "CountryNameLong");
                 return View(model);
             }
@@ -311,7 +309,7 @@ namespace WebCycleManager.Controllers
 
             return Json(new
             {
-                TeamName = team?.TeamName ?? "Onbekend",
+                TeamName = team?.CompetitorInTeams.FirstOrDefault()?.Team.CurrentTeamName ?? "Onbekend",
                 Country = competitor.Country?.CountryNameLong ?? "Onbekend",
                 PcsName = competitor.PcsName ?? ""
             });

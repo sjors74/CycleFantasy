@@ -13,9 +13,10 @@ namespace DataAccessEF.TypeRepository
         {
             var teams = await context.Teams
                 .Include(ct => ct.Country)
-                .Include(t => t.CompetitorInTeams) // koppelingen tussen team en competitors
-                    .ThenInclude(cit => cit.Competitor) // de competitors zelf
-                        .ThenInclude(c => c.Country) // optioneel: land van de competitor
+                .Include(t => t.CompetitorInTeams)
+                    .ThenInclude(cit => cit.Competitor)
+                        .ThenInclude(c => c.Country)
+                .Include(t => t.TeamYears)
                 .ToListAsync();
 
             return teams;
@@ -24,10 +25,11 @@ namespace DataAccessEF.TypeRepository
         public async Task<Team> GetTeamById(int id)
         {
             var team = await context.Teams
-                .Include(t => t.Country) // land van het team
-                .Include(t => t.CompetitorInTeams) // koppelingen tussen team en competitors
-                    .ThenInclude(cit => cit.Competitor) // de competitors zelf
-                        .ThenInclude(c => c.Country) // optioneel: land van de competitor
+                .Include(t => t.Country)
+                .Include(t => t.CompetitorInTeams)
+                    .ThenInclude(cit => cit.Competitor)
+                        .ThenInclude(c => c.Country)
+                .Include(t => t.TeamYears)
                 .FirstOrDefaultAsync(t => t.TeamId == id);
 
             return team;

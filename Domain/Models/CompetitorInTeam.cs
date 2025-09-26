@@ -11,6 +11,9 @@ namespace CycleManager.Domain.Models
         public Competitor Competitor { get; set; } = null!;
         public int TeamId { get; set; }
         public Team Team { get; set; } = null!;
+        public int? TeamYearId { get; set; }
+        public TeamYear TeamYear { get; set; } = null!;
+
         public int Year { get; set; }
         public bool IsNationalChampion { get; set; }
     }

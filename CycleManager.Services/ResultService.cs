@@ -37,7 +37,7 @@ namespace CycleManager.Services
                         EventId = first?.Stage?.EventId ?? 0,
                         CompetitorInEventId = first?.CompetitorInEventId ?? 0,
                         Points = c.Sum(a => a.ConfigurationItem?.Score ?? 0),
-                        CompetitorTeam = team?.TeamName ?? "onbekend"
+                        CompetitorTeam = team?.CurrentTeamName ?? "onbekend"
                     };
             })
                 .OrderByDescending(c => c.Points)

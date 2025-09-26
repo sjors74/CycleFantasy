@@ -66,7 +66,7 @@ namespace DataAccessEF.TypeRepository
                 {
 
                     CompetitorInTeamId = cit.Id,
-                    TeamName = cit.Team.TeamName,
+                    TeamName = cit.Team.CurrentTeamName,
                     TeamId = cit.TeamId,
                     Year = cit.Year
                 })

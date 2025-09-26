@@ -1,8 +1,8 @@
 ﻿using CycleManager.Services.Interfaces;
-using Domain.Interfaces;
 using Domain.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
 using WebCycleManager.Helpers;
 using WebCycleManager.Models;
 
@@ -10,11 +10,11 @@ namespace WebCycleManager.Controllers
 {
     public class TeamsController : Controller
     {
-        private readonly ITeamRepository _teamRepository;
+        private readonly ITeamService _teamService;
         private readonly ICountryService _countryService;
-        public TeamsController(ITeamRepository teamRepository, ICountryRepository countryRepository, ICountryService countryService)
+        public TeamsController(ITeamService teamService, ICountryService countryService)
         {
-            _teamRepository = teamRepository;
+            _teamService = teamService;
             _countryService = countryService;
         }
 
@@ -22,14 +22,14 @@ namespace WebCycleManager.Controllers
         public async Task<IActionResult> Index()
         {
             var _teamViewModels = new List<TeamViewModel>();
-            var teams = await _teamRepository.GetAll();
+            var teams = await _teamService.GetAll();
 
-            foreach (var team in teams.OrderBy(t => t.TeamName))
+            foreach (var team in teams.OrderBy(t => t.CurrentTeamName))
             {
                 _teamViewModels.Add(new TeamViewModel
                 {
                     Id = team.TeamId,
-                    TeamName = team.TeamName,
+                    TeamName = team.CurrentTeamName,
                     PcsName = team.PcsName,
                     CountryNameShort = team.Country?.CountryNameShort ?? string.Empty,
                     CompetitorsInTeam = team.CompetitorInTeams?.Count ?? 0, // telt via CompetitorInTeams
@@ -42,7 +42,7 @@ namespace WebCycleManager.Controllers
         // GET: Teams/Details/5
         public async Task<IActionResult> Details(int id, int? year)
         {
-            var team = await _teamRepository.GetTeamById(id);
+            var team = await _teamService.GetTeamById(id);
 
             if (team == null)
             {
@@ -66,43 +66,18 @@ namespace WebCycleManager.Controllers
             var vm = new TeamDetailsViewModel
             {
                 TeamId = team.TeamId,
-                TeamName = team.TeamName,
+                TeamName = team.CurrentTeamName,
                 Country = team.Country?.CountryNameShort ?? "onbekend",
                 SelectedYear = selectedYear,
                 AvailableYears = team.CompetitorInTeams.Select(c => c.Year).Distinct().OrderByDescending(y => y).ToList(),
                 Competitors = competitors
             };
-
-            //// Haal competitors via CompetitorInTeams
-            //if (team.CompetitorInTeams != null)
-            //{
-            //    var orderedCompetitors = team.CompetitorInTeams
-            //        .Select(cit => cit.Competitor)
-            //        .OrderBy(c => c.LastName);
-
-            //    foreach (var comp in orderedCompetitors)
-            //    {
-            //        var compViewModel = new CompetitorViewModel
-            //        {
-            //            CompetitorId = comp.CompetitorId,
-            //            FirstName = comp.FirstName,
-            //            LastName = comp.LastName,
-            //            Land = comp.Country?.CountryNameShort ?? string.Empty
-            //        };
-            //        competitorsList.Add(compViewModel);
-            //    }
-
-            //    vm.CompetitorsInTeam = team.CompetitorInTeams.Count;
-            //    vm.Competitors = competitorsList;
-            //}
-
             return View(vm);
         }
 
         // GET: Teams/Create
         public async Task<IActionResult> Create()
         {
-           
             ViewData["CountryId"] = new SelectList(await CountrySelectListHelper.GetOrderedCountries(_countryService), "CountryId", "CountryNameLong");
             return View();
         }
@@ -116,64 +91,87 @@ namespace WebCycleManager.Controllers
         {
             if (ModelState.IsValid)
             {
-                _teamRepository.Add(team);
-                await _teamRepository.SaveChangesAsync();
+                _teamService.Update(team);
+                //await _teamService.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
             return View(team);
         }
 
         // GET: Teams/Edit/5
-        public async Task<IActionResult> Edit(int? id)
+        public async Task<IActionResult> Edit(int id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            var team = await _teamService.GetTeamById(id);
+            if (team == null)  return NotFound();
 
-            var team = await _teamRepository.GetById((int)id);
-            if (team == null)
+            var availableYears = Enumerable.Range(2025, 6).ToList();
+            var model = new TeamEditViewModel
             {
-                return NotFound();
-            }
-            ViewData["CountryId"] = new SelectList(await CountrySelectListHelper.GetOrderedCountries(_countryService), "CountryId", "CountryNameLong");
+                TeamId = team.TeamId,
+                CurrentTeamName = team.CurrentTeamName,
+                CountryId = team.CountryId,
+                PcsName = team.PcsName,
+                Countries = _countryService.GetAll().Result
+                .OrderBy(c => c.CountryNameLong)
+                .Select(c => new SelectListItem
+                {
+                    Value = c.CountryId.ToString(),
+                    Text = c.CountryNameLong
+                })
+                .ToList(),
+                AvailableYears = availableYears,
+                TeamYears = team.TeamYears
+                            .OrderBy(ty => ty.Year)
+                            .Select(ty => new TeamYearViewModel
+                            {
+                                TeamYearId = ty.TeamYearId,
+                                Year = ty.Year,
+                                Name = ty.Name
+                            }).ToList()
+            };
 
-            return View(team);
+            return View(model);
         }
 
         // POST: Teams/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("TeamId,TeamName,PcsName,CountryId")] Team team)
+        public async Task<IActionResult> Edit(int id, TeamEditViewModel model)
         {
-            if (id != team.TeamId)
+            if (id != model.TeamId) return NotFound();
+
+            if (!ModelState.IsValid)
             {
-                return NotFound();
+                model.Countries = _countryService.GetAll().Result
+                .OrderBy(c => c.CountryNameLong)
+                .Select(c => new SelectListItem
+                {
+                    Value = c.CountryId.ToString(),
+                    Text = c.CountryNameLong
+                })
+                .ToList();
+                return View(model);
             }
 
-            if (ModelState.IsValid)
+            var team = await _teamService.GetTeamById(id);
+            if (team == null) return NotFound();
+
+            team.CurrentTeamName = model.CurrentTeamName;
+            team.PcsName = model.PcsName;
+            team.CountryId = model.CountryId;
+
+            try
             {
-                try
-                {
-                    _teamRepository.Update(team);
-                    await _teamRepository.SaveChangesAsync();
-                }
-                catch
-                {
-                    if (!TeamExists(team.TeamId))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
+                await _teamService.Update(team);
             }
-            return View(team);
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!TeamExists(team.TeamId))
+                    return NotFound();
+                else
+                    throw;
+            }
+            return RedirectToAction(nameof(Index));
         }
 
         // GET: Teams/Delete/5
@@ -184,7 +182,7 @@ namespace WebCycleManager.Controllers
                 return NotFound();
             }
 
-            var team = await _teamRepository.GetById((int)id);
+            var team = await _teamService.GetTeamById((int)id);
             if (team == null)
             {
                 return NotFound();
@@ -198,21 +196,19 @@ namespace WebCycleManager.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var team = await _teamRepository.GetById((int)id);
+            var team = await _teamService.GetTeamById(id);
             if (team != null)
             {
-                _teamRepository.Remove(team);
+                await _teamService.Delete(team);
             }
             
-            await _teamRepository.SaveChangesAsync();
+            //await _teamRepository.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
         private bool TeamExists(int id)
         {
-            return (_teamRepository.GetById(id) != null);
+            return (_teamService.GetTeamById(id) != null);
         }
-
-
     }
 }

@@ -1,4 +1,5 @@
 ﻿using CycleManager.Services.Interfaces;
+using DataAccessEF.TypeRepository;
 using Domain.Interfaces;
 using Domain.Models;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -11,6 +12,12 @@ namespace CycleManager.Services
         public TeamService(ITeamRepository teamRepository) 
         {
             _teamRepository = teamRepository;
+        }
+
+        public async Task Delete(Team entity)
+        {
+            _teamRepository.Remove(entity);
+            await _teamRepository.SaveChangesAsync();
         }
 
         /// <summary>
@@ -40,9 +47,15 @@ namespace CycleManager.Services
             return teams.Select(t => new SelectListItem
             {
                 Value = t.TeamId.ToString(),
-                Text = t.TeamName,
+                Text = t.CurrentTeamName,
                 Selected = (t.TeamId == selectedId)
             });
+        }
+
+        public async Task Update(Team entity)
+        {
+            _teamRepository.Update(entity);
+            await _teamRepository.SaveChangesAsync();
         }
     }
 }

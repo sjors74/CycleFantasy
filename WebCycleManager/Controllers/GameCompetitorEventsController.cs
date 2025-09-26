@@ -335,7 +335,7 @@ namespace WebCycleManager.Controllers
                 .ToList();
 
             var groupedCompetitors = competitorsDb
-                .GroupBy(x => x.CompetitorInTeam?.Team?.TeamName ?? "Onbekend");
+                .GroupBy(x => x.CompetitorInTeam?.Team?.CurrentTeamName ?? "Onbekend");
             
             foreach (var group in groupedCompetitors)
             {

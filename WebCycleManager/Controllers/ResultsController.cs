@@ -308,7 +308,7 @@ namespace WebCycleManager.Controllers
             var competitorsDb = _context.CompetitorsInEvent.OrderBy(c => c.EventNumber).ThenBy(c => c.CompetitorInTeam.Competitor.LastName).ThenBy(c => c.CompetitorInTeam.Competitor.FirstName).Where(c => c.EventId.Equals(eventId) && c.OutOfCompetition == false).ToList();
             var groupedCompetitors = competitorsDb
                 .GroupBy(x => x.CompetitorInTeam.Competitor.CompetitorInTeams
-                    .FirstOrDefault()?.Team?.TeamName ?? "Onbekend");
+                    .FirstOrDefault()?.Team?.CurrentTeamName ?? "Onbekend");
 
             foreach (var group in groupedCompetitors)
             {

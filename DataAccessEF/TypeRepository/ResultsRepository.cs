@@ -131,7 +131,7 @@ namespace DataAccessEF.TypeRepository
                 {
                     Positie = ci.Position,
                     CompetitorName = $"{competitor.FirstName} {competitor.LastName}",
-                    TeamName = team?.TeamName,
+                    TeamName = team?.CurrentTeamName,
                     Score = ci.Score
                 };
             })

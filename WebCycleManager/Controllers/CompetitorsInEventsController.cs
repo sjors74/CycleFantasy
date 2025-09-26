@@ -47,7 +47,7 @@ namespace WebCycleManager.Controllers
                     EventNumber = d.EventNumber,
                     FirstName = competitor?.FirstName ?? "",
                     LastName = competitor?.LastName ?? "",
-                    TeamName = team?.TeamName ?? "onbekend",
+                    TeamName = team?.CurrentTeamName ?? "onbekend",
                     CompetitorInEventId = d.Id,
                     EventId = d.EventId,
                     EventName = currentEvent.EventName,
@@ -62,7 +62,7 @@ namespace WebCycleManager.Controllers
             .ToList();
 
             var teams = await _teamService.GetAll();
-            var teamList = teams.OrderBy(c => c.TeamName).ToList();
+            var teamList = teams.OrderBy(c => c.CurrentTeamName).ToList();
 
             var vm = new CompetitorsInEventViewModel(
                 deelnemersViewModel,
@@ -73,7 +73,7 @@ namespace WebCycleManager.Controllers
                 Teams = teamList.Select(t => new SelectListItem()
                 {
                     Value = t.TeamId.ToString(),
-                    Text = t.TeamName
+                    Text = t.CurrentTeamName
                 }),
                 FilterTeam = FilterTeam ?? 0
             };
@@ -86,7 +86,7 @@ namespace WebCycleManager.Controllers
             var competitors = await _competitorService.GetAllCompetitors(DateTime.Now.Year);
             var competitorsList = competitors.OrderBy(c => c.CompetitorName).ToList();
             var teams = await _teamService.GetAll();
-            var teamList = teams.OrderBy(c => c.TeamName).ToList();
+            var teamList = teams.OrderBy(c => c.CurrentTeamName).ToList();
             ViewBag.ListOfTeams = teamList;
             ViewBag.ListOfCompetitors = competitorsList;
             ViewBag.EventId = eventId;
@@ -253,7 +253,7 @@ namespace WebCycleManager.Controllers
                 CompetitorId = competitorsInEvent.CompetitorInTeamId,
                 CompetitorInEventId = competitorsInEvent.Id,
                 EventId = competitorsInEvent.EventId,
-                TeamName = team?.TeamName ?? string.Empty,
+                TeamName = team?.CurrentTeamName ?? string.Empty,
                 EventNumber = competitorsInEvent.EventNumber,
                 FirstName = competitor?.FirstName ?? string.Empty,
                 LastName = competitor?.LastName ?? string.Empty,

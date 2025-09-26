@@ -101,13 +101,13 @@ namespace DataAccessEF.TypeRepository
             var eventTeams = await context.EventTeam
                 .Where(et => et.EventId == id)
                 .Include(et => et.Team)
-                .OrderBy(et => et.Team.TeamName)
+                .OrderBy(et => et.Team.CurrentTeamName)
                 .ToListAsync();
 
             var teams = eventTeams.Select(et => new TeamDto
             { 
                    Id = et.Team.TeamId,
-                   Naam = et.Team.TeamName,
+                   Naam = et.Team.CurrentTeamName,
                    Renners = competitorsInEvent
                     .Where(cie => cie.CompetitorInTeam.TeamId == et.Team.TeamId)
                     .OrderByDescending(cie => cie.InSelectie)

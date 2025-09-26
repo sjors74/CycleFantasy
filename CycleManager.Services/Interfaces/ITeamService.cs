@@ -19,5 +19,9 @@ namespace CycleManager.Services.Interfaces
         Task<IEnumerable<Team>> GetAll();
 
         Task<IEnumerable<SelectListItem>> GetTeamsAsSelectList(int selectedId = 0);
+
+        Task Delete(Team entity);
+
+        Task Update(Team entity);
     }
 }

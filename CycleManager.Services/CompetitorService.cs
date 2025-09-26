@@ -181,14 +181,14 @@ namespace CycleManager.Services
                 SelectedYear = competitor.CompetitorInTeams?.FirstOrDefault()?.Year ?? DateTime.Now.Year,
                 
                 AvailableYears = years,
-                Teams = teams.Select(t => new TeamDto { Id = t.TeamId, Naam = t.TeamName, Renners = new List<CompetitorDto>() }),
+                Teams = teams.Select(t => new TeamDto { Id = t.TeamId, Naam = t.CurrentTeamName, Renners = new List<CompetitorDto>() }),
                 Countries = countries.Select(c => new CountryDto { Id = c.CountryId, CountryNameLong = c.CountryNameLong, CountryNameShort = c.CountryNameShort }),
                 CompetitorInTeams = competitor.CompetitorInTeams
                 .Select(cit => new CompetitorInTeamDto
                 {
                     CompetitorInTeamId = cit.Id,
                     TeamId = cit.TeamId,
-                    TeamName = cit.Team.TeamName,
+                    TeamName = cit.Team.CurrentTeamName,
                     Year = cit.Year,
                     IsNationalChampion = cit.IsNationalChampion
                 })
