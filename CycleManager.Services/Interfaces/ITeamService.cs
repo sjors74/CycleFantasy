@@ -23,5 +23,7 @@ namespace CycleManager.Services.Interfaces
         Task Delete(Team entity);
 
         Task Update(Team entity);
+
+        Task Add(Team entity);
     }
 }

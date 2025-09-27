@@ -1,5 +1,4 @@
 ﻿using CycleManager.Services.Interfaces;
-using DataAccessEF.TypeRepository;
 using Domain.Interfaces;
 using Domain.Models;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -12,6 +11,12 @@ namespace CycleManager.Services
         public TeamService(ITeamRepository teamRepository) 
         {
             _teamRepository = teamRepository;
+        }
+
+        public async Task Add(Team entity)
+        {
+            _teamRepository.Add(entity);
+            await _teamRepository.SaveChangesAsync();
         }
 
         public async Task Delete(Team entity)

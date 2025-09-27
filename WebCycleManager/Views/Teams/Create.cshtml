@@ -1,41 +1,33 @@
-﻿@model Domain.Models.Team
+﻿@model TeamCreateViewModel
 
-@{
-    ViewData["Title"] = "Create";
-}
-
-<h1>Maak</h1>
-
-<h4>Team</h4>
+<h3>Maak een team</h3>
 <hr />
 <div class="row">
-    <div class="col-md-4">
+    <div class="col-md-6">
         <form asp-action="Create">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="form-group">
+            <div class="form-group mb-2">
                 <label asp-for="CurrentTeamName" class="control-label"></label>
                 <input asp-for="CurrentTeamName" class="form-control" />
                 <span asp-validation-for="CurrentTeamName" class="text-danger"></span>
             </div>
-            <div class="form-group">
+            <div class="form-group mb-2">
                 <label asp-for="CountryId" class="control-label"></label>
-                <select asp-for="CountryId" class="form-control" asp-items="ViewBag.CountryId"></select>
+                <select asp-for="CountryId" class="form-control" asp-items="Model.Countries"></select>
             </div>
-            <div class="form-group">
+            <div class="form-group mb-2">
                 <label asp-for="PcsName" class="control-label"></label>
                 <input asp-for="PcsName" class="form-control" />
                 <span asp-validation-for="PcsName" class="text-danger"></span>
             </div>
-            <div class="form-group">
+            <div class="form-group mt-3">
                 <input type="submit" value="Maak" class="btn btn-primary" />
+                <a asp-action="Index" class="btn btn-link">Terug naar de lijst</a>
             </div>
         </form>
     </div>
 </div>
 
-<div>
-    <a asp-action="Index">Terug naar de lijst</a>
-</div>
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}

@@ -53,16 +53,30 @@
                             {
                                 <input type="hidden" name="TeamYears[@i].TeamYearId" value="@teamYear.TeamYearId" />
                                 <input type="hidden" name="TeamYears[@i].Year" value="@teamYear.Year" />
-                                <div class="form-group">
+
+                                <div class="form-group mt-2">
                                     <label>Teamnaam</label>
-                                    <input type="text" class="form-control" name="TeamYears[@i].TeamName" value="@teamYear.Name" />
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" style="max-width: 300px;" name="TeamYears[@i].Name" value="@teamYear.Name" />
+                                        <button type="button"
+                                                class="btn btn-outline-danger"
+                                                onclick="removeTeamYear(@year, @i)">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
                                 </div>
                             }
                             else
                             {
-                                <div class="no-teamyear">
-                                    <em>Geen TeamYear aanwezig voor @year</em>
-                                    <button type="button" class="btn btn-sm btn-outline-primary mt-2" onclick="createTeamYear(@year)">Maak TeamYear aan</button>
+                                <div class="form-group mt-2">
+                                    <label>Teamnaam</label>
+                                    <div class="input-group" style="max-width: 300px;">
+                                        <input type="text" class="form-control" value="Geen team aanwezig voor @year" readonly />
+                                        <button type="button" class="btn btn-outline-primary"
+                                                onclick="createTeamYear(@year, @i)">
+                                            <i class="bi bi-plus"></i>
+                                        </button>
+                                    </div>                     
                                 </div>
                             }
                         </div>
@@ -82,13 +96,30 @@
     @{ await Html.RenderPartialAsync("_ValidationScriptsPartial");}
 
     <script>
-        function createTeamYear(year) {
+        function createTeamYear(year, index) {
             var container = document.getElementById('teamyear-container-' + year);
             container.innerHTML = `
-                <input type="hidden" name="TeamYears[${year}].Year" value="${year}" />
+                <input type="hidden" name="TeamYears[${index}].Year" value="${year}" />
                 <div class="form-group">
                     <label>Teamnaam</label>
-                    <input type="text" class="form-control" name="TeamYears[${year}].TeamName" value="" />
+                    <input type="text" class="form-control" name="TeamYears[${index}].Name" value="" />
+                </div>
+            `;
+        }
+    </script>
+    <script>
+        function removeTeamYear(year, index) {
+            var container = document.getElementById('teamyear-container-' + year);
+            container.innerHTML = `
+                <div class="form-group mt-2">
+                    <label>Teamnaam</label>
+                    <div class="input-group" style="max-width: 300px;">
+                        <input type="text" class="form-control" value="Geen team aanwezig voor ${year}" readonly />
+                        <button type="button" class="btn btn-outline-primary"
+                            onclick="createTeamYear(${year}, ${index})">
+                            <i class="bi bi-plus"></i>
+                        </button>
+                    </div>
                 </div>
             `;
         }

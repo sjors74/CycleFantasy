@@ -52,3 +52,19 @@ body {
     opacity: 1 !important; /* voorkomt dat het te licht wordt */
     pointer-events: none; /* niet klikbaar */
 }
+
+/* Geen grijze achtergrond bij readonly, geen schaduw */
+.input-group .form-control[readonly] {
+    background-color: transparent; /* of white als je expliciet wit wilt */
+    box-shadow: none;
+}
+
+/* Zorg dat de input in de input-group kan krimpen zodat de knop naast blijft */
+.input-group .form-control {
+    min-width: 0; /* cruciaal voor flexbox overflow/linebreak issues */
+}
+
+/* Optioneel: knop niet laten schalen */
+.input-group .btn {
+    flex: 0 0 auto;
+}
