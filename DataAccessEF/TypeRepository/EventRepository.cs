@@ -52,6 +52,8 @@ namespace DataAccessEF.TypeRepository
         public async Task<Event> GetEventById(int id)
         {
             var e = await context.Events
+                    .Include(e => e.EventTeams)
+                        .ThenInclude(et => et.Team)
                     .FirstOrDefaultAsync(e => e.EventId == id);
             return e;
         }
@@ -123,9 +125,7 @@ namespace DataAccessEF.TypeRepository
                             FirstName = cie.CompetitorInTeam.Competitor.FirstName,
                             LastName = cie.CompetitorInTeam.Competitor.LastName,
                             PcsName = competitor.PcsName,
-                            //IsNationalChampion = cie.CompetitorInTeam.IsNationalChampion,
                             CountryShort = competitor.Country.CountryNameShort,
-                            //TeamName = team.TeamName,
                             InSelectie = cie.InSelectie
                         };
                     }).ToList()

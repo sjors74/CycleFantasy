@@ -1,0 +1,32 @@
+﻿@using WebCycleManager.Models
+@model EventTeamsViewModel
+
+<h2>Teams in @Model.EventName</h2>
+
+<form asp-action="ManageTeams" method="post">
+    <input type="hidden" asp-for="EventId" />
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Team</th>
+                <th>Toevoegen?</th>
+            </tr>
+        </thead>
+        <tbody>
+            @for (int i = 0; i < Model.Teams.Count; i++)
+            {
+                <tr>
+                    <td>@Model.Teams[i].TeamName</td>
+                    <td>
+                        <input asp-for="Teams[i].IsSelected" />
+                        <input type="hidden" asp-for="Teams[i].TeamId" />
+                        <input type="hidden" asp-for="Teams[i].TeamName" />
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <button type="submit" class="btn btn-primary">Opslaan</button>
+</form>

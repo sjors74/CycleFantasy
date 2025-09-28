@@ -11,7 +11,7 @@ namespace DataAccessEF
         protected readonly ApplicationDbContext context;
         public GenericRepository(ApplicationDbContext context)
         {
-            this.context = context;
+            this.context = context ?? throw new ArgumentNullException(nameof(context));
         }
 
         public void Add(T entity)

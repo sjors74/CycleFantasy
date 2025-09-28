@@ -1,4 +1,5 @@
-﻿using CycleManager.Services;
+﻿using CycleManager.Domain.Models;
+using CycleManager.Services;
 using CycleManager.Services.Interfaces;
 using Domain.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -11,14 +12,17 @@ namespace WebCycleManager.Controllers
     public class EventsController : Controller
     {
         private IEventService _eventService;
+        private ITeamService _teamService;
         private IStageService _stageService;
         private IResultService _resultService;
         private IConfigurationService _configurationService;
 
-        public EventsController(IEventService eventService, IStageService stageService, IResultService resultService, 
+        public EventsController(IEventService eventService, ITeamService teamService,
+            IStageService stageService, IResultService resultService, 
             IConfigurationService configurationService)
         {
             _eventService = eventService;
+            _teamService = teamService;
             _stageService = stageService;
             _resultService = resultService;
             _configurationService = configurationService;
@@ -157,6 +161,54 @@ namespace WebCycleManager.Controllers
             }
             
             return RedirectToAction(nameof(Index));
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ManageTeams(int id)
+        {
+            var eventEntity = await _eventService.GetEventById(id);
+            if(eventEntity == null) return NotFound();
+
+            var allTeams = await _teamService.GetAll();
+
+            var vm = new EventTeamsViewModel
+            {
+                EventId = eventEntity.EventId,
+                EventName = eventEntity.EventName,
+                Teams = allTeams.Select(t => new TeamSelection
+                {
+                    TeamId = t.TeamId,
+                    TeamName = t.CurrentTeamName,
+                    IsSelected = eventEntity.EventTeams.Any(et => et.TeamId == t.TeamId)
+                }).ToList()
+            };
+
+            return View(vm);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ManageTeams(EventTeamsViewModel vm)
+        {
+            var eventEntity = await _eventService.GetEventById(vm.EventId);
+
+            if (eventEntity == null) return NotFound();
+
+            // Huidige koppelingen verwijderen
+            eventEntity.EventTeams.Clear();
+
+            // Nieuwe koppelingen toevoegen
+            foreach (var team in vm.Teams.Where(t => t.IsSelected))
+            {
+                eventEntity.EventTeams.Add(new EventTeam
+                {
+                    EventId = vm.EventId,
+                    TeamId = team.TeamId
+                });
+            }
+
+            await _eventService.Update(eventEntity);
+
+            return RedirectToAction("Details", new { id = vm.EventId });
         }
 
         public EventItemViewModel CreateViewModel(Event @event)

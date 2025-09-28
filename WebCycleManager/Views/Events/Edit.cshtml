@@ -75,6 +75,9 @@
 <div>
     <a asp-action="Index">Terug naar de lijst</a>
 </div>
+<a asp-action="ManageTeams" asp-route-id="@Model.Id" class="btn btn-secondary">
+    Teams beheren
+</a>
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
