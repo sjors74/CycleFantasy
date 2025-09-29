@@ -1,84 +1,136 @@
 ﻿@model EventItemViewModel
 
-@{
-    ViewData["Title"] = "Edit";
-}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="mb-0">@Model.EventNameDescription</h3>
+    <a href="#"
+       class="btn btn-secondary position-relative"
+       data-bs-toggle="modal"
+       data-bs-target="#manageTeamsModal"
+       data-url="@Url.Action("ManageTeams", "Events", new { id = Model.Id })">
+        Teams beheren
+        <span class="badge bg-light text-dark ms-2">@Model.SelectedTeamsCount</span>
+    </a>
+</div>
+<form asp-action="Edit">
+    <input type="hidden" asp-for="Id" />
+    <div class="card mb-3 shadow-sm">
+        <div class="card-header fw-bold">Algemene gegevens</div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label asp-for="Name" class="form-label"></label>
+                    <input asp-for="Name" class="form-control" />
+                    <span asp-validation-for="Name" class="text-danger"></span>
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="Year" class="form-label"></label>
+                    <input asp-for="Year" class="form-control" />
+                    <span asp-validation-for="Year" class="text-danger"></span>
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="Code" class="form-label"></label>
+                    <input asp-for="Code" class="form-control" />
+                    <span asp-validation-for="Code" class="text-danger"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="StartDate" class="form-label"></label>
+                    <input asp-for="StartDate" class="form-control" />
+                    <span asp-validation-for="StartDate" class="text-danger"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="EndDate" class="form-label"></label>
+                    <input asp-for="EndDate" class="form-control" />
+                    <span asp-validation-for="EndDate" class="text-danger"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="ConfigurationId" class="form-label"></label>
+                    <select asp-for="ConfigurationId" class="form-select" asp-items="ViewBag.ConfigurationId"></select>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="card mb-3 shadow-sm">
+        <div class="card-header fw-bold">Visuele instellingen</div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label asp-for="Slogan" class="form-label"></label>
+                    <input asp-for="Slogan" class="form-control" />
+                    <span asp-validation-for="Slogan" class="text-danger"></span>
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="CountryCode" class="form-label"></label>
+                    <input asp-for="CountryCode" class="form-control" />
+                    <span asp-validation-for="CountryCode" class="text-danger"></span>
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="ColorName" class="form-label"></label>
+                    <input asp-for="ColorName" class="form-control" />
+                    <span asp-validation-for="ColorName" class="text-danger"></span>
+                </div>
+                <div class="col-md-6 form-check mt-3">
+                    <input type="checkbox" asp-for="IsActive" class="form-check-input" id="isActive" />
+                    <label for="isActive" class="form-check-label">@Html.DisplayNameFor(m => m.IsActive)</label>
+                </div>
+                <div class="col-md-6 form-check mt-3">
+                    <input type="checkbox" asp-for="ShowPodium" class="form-check-input" id="showPodium" />
+                    <label for="showPodium" class="form-check-label">@Html.DisplayNameFor(m => m.ShowPodium)</label>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="d-flex justify-content-between align-items-center mt-4">
+            <a asp-action="Index" class="btn btn-outline-secondary">Terug naar de lijst</a>
+            <button type="submit" class="btn btn-primary me-2">Opslaan</button>
+    </div>
+</form>
 
-<h4>@Model.EventNameDescription</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <form asp-action="Edit">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <input type="hidden" asp-for="Id" />
-            <div class="form-group">
-                <label asp-for="Name" class="control-label"></label>
-                <input asp-for="Name" class="form-control" />
-                <span asp-validation-for="Name" class="text-danger"></span>
+<div class="modal fade" id="manageTeamsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Teams beheren</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Sluiten"></button>
             </div>
-            <div class="form-group">
-                <label asp-for="Code" class="control-label"></label>
-                <input asp-for="Code" class="form-control" />
-                <span asp-validation-for="Code" class="text-danger"></span>
+            <div class="modal-body" id="manageTeamsContent">
+                <div id="teamsLoader" class="d-flex justify-content-center align-items-center" style="min-height:150px;">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Laden...</span>
+                    </div>
+                </div>
             </div>
-            <div class="form-group">
-                <label asp-for="Year" class="control-label"></label>
-                <input asp-for="Year" class="form-control" />
-                <span asp-validation-for="Year" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="StartDate" class="control-label"></label>
-                <input asp-for="StartDate" class="form-control" />
-                <span asp-validation-for="StartDate" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="EndDate" class="control-label"></label>
-                <input asp-for="EndDate" class="form-control" />
-                <span asp-validation-for="EndDate" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Slogan" class="control-label"></label>
-                <input asp-for="Slogan" class="form-control" />
-                <span asp-validation-for="Slogan" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="IsActive" class="control-label"></label>
-                <input type="checkbox" asp-for="IsActive" class="form-check" />
-                <span asp-validation-for="IsActive" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="ShowPodium" class="control-label"></label>
-                <input type="checkbox" asp-for="ShowPodium" class="form-check" />
-                <span asp-validation-for="ShowPodium" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="CountryCode" class="control-label"></label>
-                <input asp-for="CountryCode" class="form-control" />
-                <span asp-validation-for="CountryCode" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="ColorName" class="control-label"></label>
-                <input asp-for="ColorName" class="form-control" />
-                <span asp-validation-for="ColorName" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="ConfigurationId" class="control-label"></label>
-                <select asp-for="ConfigurationId" class="form-control" asp-items="ViewBag.ConfigurationId"></select>
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Opslaan" class="btn btn-primary" />
-            </div>
-        </form>
+        </div>
     </div>
 </div>
 
-<div>
-    <a asp-action="Index">Terug naar de lijst</a>
-</div>
-<a asp-action="ManageTeams" asp-route-id="@Model.Id" class="btn btn-secondary">
-    Teams beheren
-</a>
-
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            var modal = document.getElementById('manageTeamsModal');
+            modal.addEventListener('show.bs.modal', function (event) {
+                var button = event.relatedTarget;
+                var url = button.getAttribute('data-url');
+
+                // Toon eerst de loader
+                document.getElementById('manageTeamsContent').innerHTML = `
+                    <div id="teamsLoader" class="d-flex justify-content-center align-items-center" style="min-height:150px;">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Laden...</span>
+                        </div>
+                    </div>
+                `;
+                // Partial ophalen via AJAX
+                fetch(url)
+                    .then(response => response.text())
+                    .then(html => {
+                        document.getElementById('manageTeamsContent').innerHTML = html;
+                    })
+                    .catch(() => {
+                    document.getElementById('manageTeamsContent').innerHTML =
+                        "<div class='text-danger'>Fout bij laden van teams.</div>";
+                    });
+            });
+        });
+    </script>
 }

@@ -171,7 +171,7 @@ namespace WebCycleManager.Controllers
 
             var allTeams = await _teamService.GetAll();
 
-            var vm = new EventTeamsViewModel
+            var model = new EventTeamsViewModel
             {
                 EventId = eventEntity.EventId,
                 EventName = eventEntity.EventName,
@@ -180,35 +180,42 @@ namespace WebCycleManager.Controllers
                     TeamId = t.TeamId,
                     TeamName = t.CurrentTeamName,
                     IsSelected = eventEntity.EventTeams.Any(et => et.TeamId == t.TeamId)
-                }).ToList()
+                })
+                .OrderByDescending(t => t.IsSelected)
+                .ThenBy(t => t.TeamName)
+                .ToList()
             };
 
-            return View(vm);
+            return PartialView("_ManageTeamsPartial",model);
         }
 
         [HttpPost]
         public async Task<IActionResult> ManageTeams(EventTeamsViewModel vm)
         {
-            var eventEntity = await _eventService.GetEventById(vm.EventId);
-
-            if (eventEntity == null) return NotFound();
-
-            // Huidige koppelingen verwijderen
-            eventEntity.EventTeams.Clear();
-
-            // Nieuwe koppelingen toevoegen
-            foreach (var team in vm.Teams.Where(t => t.IsSelected))
+            if (ModelState.IsValid)
             {
-                eventEntity.EventTeams.Add(new EventTeam
+                var eventEntity = await _eventService.GetEventById(vm.EventId);
+
+                if (eventEntity == null) return NotFound();
+
+                // Huidige koppelingen verwijderen
+                eventEntity.EventTeams?.Clear();
+
+                // Nieuwe koppelingen toevoegen
+                foreach (var team in vm.Teams.Where(t => t.IsSelected))
                 {
-                    EventId = vm.EventId,
-                    TeamId = team.TeamId
-                });
+                    eventEntity.EventTeams?.Add(new EventTeam
+                    {
+                        EventId = vm.EventId,
+                        TeamId = team.TeamId
+                    });
+                }
+
+                await _eventService.Update(eventEntity);
+
+                return RedirectToAction("Edit", new { id = vm.EventId });
             }
-
-            await _eventService.Update(eventEntity);
-
-            return RedirectToAction("Details", new { id = vm.EventId });
+            return PartialView("_ManageTeamsPartial", vm);
         }
 
         public EventItemViewModel CreateViewModel(Event @event)
@@ -226,7 +233,8 @@ namespace WebCycleManager.Controllers
                 CountryCode = @event.CountryCode,
                 IsActive = @event.IsActive,
                 ShowPodium = @event.ShowPodium,
-                ConfigurationId = @event.ConfigurationId
+                ConfigurationId = @event.ConfigurationId,
+                SelectedTeamsCount = @event.EventTeams?.Count ?? 0
             };
             return vm;
         }
