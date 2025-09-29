@@ -252,6 +252,58 @@ namespace WebCycleManager.Controllers
             return View(stage);
         }
 
+        [HttpGet]
+        public async Task<IActionResult> EditStage(int id)
+        {
+            var stage = await _stageService.GetStageById(id);
+
+            if (stage == null)
+                return NotFound();
+
+            var vm = new StageViewModel
+            {
+                StageId = stage.Id,
+                EventId = stage.EventId,
+                StageName = stage.StageName,
+                StageOrder = stage.StageOrder,
+                StageDate = DateOnly.FromDateTime(stage.StageDate),
+                StartLocation = stage.StartLocation,
+                FinishLocation = stage.FinishLocation
+            };
+            return PartialView("_EditStageModal", vm);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditAjax(StageViewModel model)
+        {
+            if (!ModelState.IsValid)
+                return PartialView("_EditStageModal", model);
+
+            var stage = await _stageService.GetStageById(model.StageId);
+            if (stage == null) return NotFound();
+
+            stage.StageName = model.StageName;
+            stage.StageOrder = model.StageOrder;
+            stage.StageDate = model.StageDate.ToDateTime(TimeOnly.MinValue);
+            stage.StartLocation = model.StartLocation;
+            stage.FinishLocation = model.FinishLocation;
+
+            await _stageService.UpdateStage(stage);
+
+            return Json(new { 
+                success = true,
+                stage = new
+                {
+                    id = stage.Id,
+                    date = stage.StageDate.ToString("dd-MM-yyyy"),
+                    name = stage.StageName,
+                    start = stage.StartLocation,
+                    finish = stage.FinishLocation
+                }
+            });
+        }
+
         // GET: Stages/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
@@ -288,6 +340,14 @@ namespace WebCycleManager.Controllers
             
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteAjax(int id)
+        {
+            bool deleted = await _stageService.DeleteStage(id);
+            return Json(new { success = deleted });
         }
 
         private bool StageExists(int id)

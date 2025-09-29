@@ -75,7 +75,7 @@
                 </div>
                 <div class="col-md-3">
                     <label asp-for="ColorName" class="form-label"></label>
-                    <input asp-for="ColorName" class="form-control" />
+                    <input type="color" asp-for="ColorName" class="form-control" />
                     <span asp-validation-for="ColorName" class="text-danger"></span>
                 </div>
                 <div class="col-md-6 form-check mt-3">
@@ -126,6 +126,19 @@
                         <span class="visually-hidden">Laden...</span>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="editStageModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Stage bewerken</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="editStageModalContent">
+                <!-- hier komt de partial via AJAX -->
             </div>
         </div>
     </div>
@@ -197,6 +210,120 @@
                         }
                     });
             });
+        });
+    </script>
+    <script>
+        document.getElementById("manageStagesModal").addEventListener("click", function(e) {
+            // Controleer of het geklikte element de delete-knop is
+            const btn = e.target.closest(".delete-stage-btn");
+            if (!btn) return;
+
+            const stageId = btn.dataset.stageId;
+
+            // SweetAlert2 confirm
+            Swal.fire({
+                title: 'Weet je het zeker?',
+                text: "Deze etappe wordt permanent verwijderd!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Ja, verwijderen',
+                cancelButtonText: 'Annuleren'
+            }).then((result) => {
+                if(result.isConfirmed) {
+                    fetch(`/Stages/DeleteAjax/${stageId}`, {
+                        method: 'POST',
+                        headers: {
+                            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if(data.success) {
+                            // Verwijder de row direct
+                            const row = document.getElementById(`stage-${stageId}`);
+                            if(row) row.remove();
+
+                            Swal.fire(
+                                'Verwijderd!',
+                                'De etappe is verwijderd.',
+                                'success'
+                            );
+                        } else {
+                            Swal.fire('Fout', 'Kon de etappe niet verwijderen', 'error');
+                        }
+                    })
+                    .catch(err => console.error(err));
+                }
+            });
+        });
+
+    </script>
+    <script>
+        document.getElementById('manageStagesContent').addEventListener('click', function(e) {
+            var editBtn = e.target.closest('.edit-stage-btn');
+            if (!editBtn) return;
+
+            e.preventDefault();
+            var url = editBtn.dataset.url;
+
+            // Load edit partial in modal
+            fetch(url)
+                .then(res => res.text())
+                .then(html => {
+                    const editModalContent = document.getElementById('editStageModalContent');
+                    editModalContent.innerHTML = html;
+
+                    const editModalEl = document.getElementById('editStageModal');
+                    const editModal = new bootstrap.Modal(editModalEl);
+                    editModal.show();
+
+                    const form = document.getElementById('editStageForm');
+
+                    // Remove any existing submit listeners
+                    form.replaceWith(form.cloneNode(true));
+                    const newForm = document.getElementById('editStageForm');
+
+                    newForm.addEventListener('submit', function(ev) {
+                        ev.preventDefault();
+                        const formData = new FormData(newForm);
+
+                        fetch(newForm.action || url, {
+                            method: "POST",
+                            body: formData
+                        })
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.success) {
+                                const row = document.getElementById('stage-' + data.stage.id);
+                                if (row) {
+                                    row.innerHTML = `
+                                        <td>${data.stage.date}</td>
+                                        <td>${data.stage.name}</td>
+                                        <td>${data.stage.start} → ${data.stage.finish}</td>
+                                        <td class="text-end">
+                                           <button class="btn btn-sm btn-outline-primary edit-stage-btn" data-url="/Stages/Edit/${data.stage.id}"> 
+                                                <i class="bi bi-pencil"></i>
+                                           </button>
+                                           <button type="button" class="btn btn-danger btn-sm delete-stage-btn" data-stage-id="${data.stage.id}">
+                                              <i class="bi bi-trash"></i>
+                                            </button>                                            
+                                        </td>
+                                    `;
+                                }
+
+                                editModal.hide();
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Stage bijgewerkt!'
+                                });
+                            } else {
+                                editModalContent.innerHTML = data.html; // validation errors
+                            }
+                        });
+                    });
+                });
         });
     </script>
 }

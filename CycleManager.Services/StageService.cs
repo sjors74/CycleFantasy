@@ -42,5 +42,28 @@ namespace CycleManager.Services
             _stageRepository.Add(stage);
             await _stageRepository.SaveChangesAsync();
         }
+
+        public async Task<bool> DeleteStage(int id)
+        {
+            var entity = await _stageRepository.GetById(id);
+            if (entity != null)
+            {
+                _stageRepository.Remove(entity);
+                await _stageRepository.SaveChangesAsync();
+                return true;
+            }
+            return false;
+        }
+
+        public Task<Stage> GetStageById(int id)
+        {
+            return _stageRepository.GetById(id);
+        }
+
+        public async Task UpdateStage(Stage stage)
+        {
+            _stageRepository.Update(stage);
+            await _stageRepository.SaveChangesAsync();
+        }
     }
 }
