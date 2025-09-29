@@ -218,6 +218,26 @@ namespace WebCycleManager.Controllers
             return PartialView("_ManageTeamsPartial", vm);
         }
 
+        [HttpGet]
+        public async Task<IActionResult> ManageStages(int eventId)
+        {
+            var eventEntity = await _eventService.GetEventById(eventId);
+            if (eventEntity == null) return NotFound();
+
+            var stages = await _stageService.GetStagesByEventId(eventId);
+
+            var model = new EventStagesViewModel
+            {
+                EventId = eventId,
+                EventName = eventEntity.EventName,
+                EventStartDate = eventEntity.StartDate ?? DateTime.Today,
+                EventEndDate = eventEntity.EndDate ?? DateTime.Today.AddDays(1),
+                Stages = stages
+            };
+
+            return PartialView("_ManageStagesPartial", model);
+        }
+
         public EventItemViewModel CreateViewModel(Event @event)
         {
             var vm = new EventItemViewModel
@@ -234,6 +254,7 @@ namespace WebCycleManager.Controllers
                 IsActive = @event.IsActive,
                 ShowPodium = @event.ShowPodium,
                 ConfigurationId = @event.ConfigurationId,
+                StagesInEvent = @event.Stages?.Count ?? 0,
                 SelectedTeamsCount = @event.EventTeams?.Count ?? 0
             };
             return vm;

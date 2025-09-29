@@ -5,6 +5,7 @@ using CycleManager.Services.Interfaces;
 using Domain.Dto;
 using Domain.Interfaces;
 using Domain.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace CycleManager.Services
 {
@@ -45,9 +46,12 @@ namespace CycleManager.Services
             await _eventRepository.SaveChangesAsync();
         }
 
-        public Task<IEnumerable<Event>> GetAllEvents()
+        public async Task<IEnumerable<Event>> GetAllEvents()
         {
-            return _eventRepository.GetAllEvents();
+            return await _eventRepository.GetAllEvents()
+                .OrderByDescending(e => e.EventYear)
+                .ThenBy(e => e.StartDate)
+                .ToListAsync();
         }
 
         public async Task<Event> GetEventById(int id)
@@ -112,8 +116,6 @@ namespace CycleManager.Services
                             CountryShort = renner.CompetitorsInEvent.CompetitorInTeam.Competitor.Country.CountryNameShort,
                             EventNumber = renner.CompetitorsInEvent.EventNumber.ToString(),
                             PcsName = renner.CompetitorsInEvent.CompetitorInTeam.Competitor.PcsName,
-                            //IsNationalChampion = renner.CompetitorsInEvent.CompetitorInTeam.IsNationalChampion,
-                            //TeamName = renner.CompetitorsInEvent.CompetitorInTeam.Team.TeamName,
                             Punten = punten
                         });
                     }

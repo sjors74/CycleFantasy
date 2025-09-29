@@ -2,14 +2,24 @@
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h3 class="mb-0">@Model.EventNameDescription</h3>
-    <a href="#"
-       class="btn btn-secondary position-relative"
-       data-bs-toggle="modal"
-       data-bs-target="#manageTeamsModal"
-       data-url="@Url.Action("ManageTeams", "Events", new { id = Model.Id })">
-        Teams beheren
-        <span class="badge bg-light text-dark ms-2">@Model.SelectedTeamsCount</span>
-    </a>
+    <div class="d-flex gap-2">
+        <a href="#"
+           class="btn btn-secondary position-relative"
+           data-bs-toggle="modal"
+           data-bs-target="#manageTeamsModal"
+           data-url="@Url.Action("ManageTeams", "Events", new { id = Model.Id })">
+            Teams beheren
+            <span class="badge bg-light text-dark ms-2">@Model.SelectedTeamsCount</span>
+        </a>
+        <a href="#"
+           class="btn btn-secondary position-relative"
+           data-bs-toggle="modal"
+           data-bs-target="#manageStagesModal"
+           data-url="@Url.Action("ManageStages", "Events", new { eventId = Model.Id })">
+            Stages
+            <span class="badge bg-light text-dark ms-2">@Model.StagesInEvent</span>
+        </a>
+    </div>
 </div>
 <form asp-action="Edit">
     <input type="hidden" asp-for="Id" />
@@ -84,7 +94,7 @@
             <button type="submit" class="btn btn-primary me-2">Opslaan</button>
     </div>
 </form>
-
+<!-- Modal for teams -->
 <div class="modal fade" id="manageTeamsModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -102,7 +112,24 @@
         </div>
     </div>
 </div>
-
+<!-- Modal for stages -->
+<div class="modal fade" id="manageStagesModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Etappes beheren</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Sluiten"></button>
+            </div>
+            <div class="modal-body" id="manageStagesContent">
+                <div id="stagesLoader" class="d-flex justify-content-center align-items-center" style="min-height:150px;">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Laden...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
     <script>
@@ -129,6 +156,45 @@
                     .catch(() => {
                     document.getElementById('manageTeamsContent').innerHTML =
                         "<div class='text-danger'>Fout bij laden van teams.</div>";
+                    });
+            });
+        });
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var manageStagesModal = document.getElementById('manageStagesModal');
+
+            // Wanneer de modal wordt geopend
+            manageStagesModal.addEventListener('show.bs.modal', function(event) {
+                var url = event.relatedTarget.getAttribute('data-url');
+                fetch(url)
+                    .then(response => response.text())
+                    .then(html => {
+                        document.getElementById('manageStagesContent').innerHTML = html;
+
+                        // Form submission via AJAX
+                        var form = document.querySelector('#addStageForm');
+                        if(form) {
+                            form.addEventListener('submit', function(e){
+                                e.preventDefault();
+                                const data = new FormData(form);
+
+                                fetch(form.action, {
+                                    method: 'POST',
+                                    body: data,
+                                })
+                                .then(res => res.json())
+                                .then(response => {
+                                    if(response.success) {
+                                        window.location.href = response.redirectUrl; // terug naar event edit
+                                    } else {
+                                        // toon fouten in modal
+                                        document.getElementById('manageStagesContent').innerHTML = response.html;
+                                    }
+                                })
+                                .catch(() => alert('Er is iets misgegaan bij het opslaan.'));
+                            });
+                        }
                     });
             });
         });

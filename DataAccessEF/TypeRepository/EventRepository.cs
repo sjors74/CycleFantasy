@@ -36,24 +36,21 @@ namespace DataAccessEF.TypeRepository
             return eventList;   
         }
 
-        public async Task<IEnumerable<Event>> GetAllEvents()
+        public IQueryable<Event> GetAllEvents()
         {
-            var eventList = 
-                await context.Events
+            return
+                context.Events
                 .Include(e => e.Configuration)
                 .Include(s => s.Stages)
-                .OrderByDescending(e => e.EventYear)
-                .ThenBy(e => e.StartDate)
-                .AsNoTracking()
-                .ToListAsync();
-            return eventList;
-        }
+                .AsNoTracking();
+         }
 
         public async Task<Event> GetEventById(int id)
         {
             var e = await context.Events
                     .Include(e => e.EventTeams)
                         .ThenInclude(et => et.Team)
+                    .Include(s => s.Stages)
                     .FirstOrDefaultAsync(e => e.EventId == id);
             return e;
         }

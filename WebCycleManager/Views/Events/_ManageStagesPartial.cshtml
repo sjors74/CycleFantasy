@@ -1,0 +1,67 @@
+﻿@model EventStagesViewModel
+
+<!-- Toevoegen-formulier bovenin -->
+<form id="addStageForm" class="mb-3 row g-2" method="post" action="/Stages/CreateAjax">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="EventId" value="@Model.EventId" />
+
+    <div class="col-md-3">
+        <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-calendar-date"></i></span>
+            <input type="date" 
+                id="StageDate" 
+                name="StageDate" 
+                class="form-control" 
+                placeholder="Datum"
+                min="@Model.EventStartDate.ToString("yyyy-MM-dd")"
+                max="@Model.EventEndDate.ToString("yyyy-MM-dd")"
+                required />
+        </div>            
+    </div>
+    <div class="col-md-1">
+        <input type="text" name="StageName" class="form-control" placeholder="#" />
+    </div>
+    <div class="col-md-2">
+        <input type="text" name="StageOrder" class="form-control" placeholder="Volgorde" />
+    </div>
+    <div class="col-md-3">
+        <input type="text" name="StartLocation" class="form-control" placeholder="Van" />
+    </div>
+    <div class="col-md-3">
+        <input type="text" name="FinishLocation" class="form-control" placeholder="Naar" />
+    </div>
+</form>
+<div class="mt-2">
+    <button type="submit" class="btn btn-primary w-100" form="addStageForm">Opslaan</button>
+</div>
+
+
+<!-- Lijst van stages -->
+<table class="table table-sm">
+    <thead>
+        <tr>
+            <th>Datum</th>
+            <th>Etappe</th>
+            <th>Van → Naar</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+    @foreach(var stage in Model.Stages)
+    {
+        <tr>
+            <td>@stage.StageDate.ToString("dd-MM-yyyy")</td>
+            <td>@stage.StageName</td>
+            <td>@stage.StartLocation → @stage.FinishLocation</td>
+            <td class="text-end">
+                <a href="@Url.Action("Edit", "Stages", new { id = stage.Id })" class="text-primary me-2">
+                    <i class="bi bi-pencil-square"></i>
+                </a>
+                <a href="@Url.Action("Delete", "Stages", new { id = stage.Id })" class="text-danger">
+                    <i class="bi bi-trash"></i>
+                </a>
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>

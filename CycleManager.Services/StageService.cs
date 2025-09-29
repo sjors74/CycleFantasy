@@ -36,5 +36,11 @@ namespace CycleManager.Services
         {
             return _stageRepository.GetStage(stageNumber, eventId);
         }
+
+        public async Task AddStage(Stage stage)
+        {
+            _stageRepository.Add(stage);
+            await _stageRepository.SaveChangesAsync();
+        }
     }
 }

@@ -1,62 +1,62 @@
-﻿@model StageViewModel
+﻿@model StageCreateViewModel
 
-@{
-    ViewData["Title"] = "Create";
-}
+<h4>Nieuwe Etappe toevoegen</h4>
 
-<h1>Maak</h1>
+<form asp-action="Create" method="post">
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+    
+    <input type="hidden" asp-for="StageId" />
 
-<h4>Etappe</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <form asp-action="Create">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="form-group">
-                <label asp-for="StageDate" class="control-label"></label>
-                <input asp-for="StageDate" class="form-control" />
-                <span asp-validation-for="StageDate" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="StageName" class="control-label"></label>
-                <input asp-for="StageName" class="form-control" />
-                <span asp-validation-for="StageName" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="StageOrder" class="control-label"></label>
-                <input asp-for="StageOrder" class="form-control" />
-                <span asp-validation-for="StageOrder" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="StartLocation" class="control-label"></label>
-                <input asp-for="StartLocation" class="form-control" />
-                <span asp-validation-for="StartLocation" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="FinishLocation" class="control-label"></label>
-                <input asp-for="FinishLocation" class="form-control" />
-                <span asp-validation-for="FinishLocation" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="NoScore" class="control-label"></label>
-                <input asp-for="NoScore" class="form-control" />
-                <span asp-validation-for="NoScore" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="NoScoreDescription" class="control-label"></label>
-                <input asp-for="NoScoreDescription" class="form-control" />
-                <span asp-validation-for="NoScoreDescription" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="EventId" class="control-label"></label>
-                <select asp-for="EventId" class ="form-control" asp-items="ViewBag.EventId"></select>
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Maak" class="btn btn-primary" />
-            </div>
-        </form>
+    <div class="row g-2 mb-2">
+        <div class="col-md-3">
+            <label asp-for="StageDate"></label>
+            <input asp-for="StageDate" class="form-control" />
+            <span asp-validation-for="StageDate" class="text-danger"></span>
+        </div>
+        <div class="col-md-3">
+            <label asp-for="StageName"></label>
+            <input asp-for="StageName" class="form-control" />
+            <span asp-validation-for="StageName" class="text-danger"></span>
+        </div>
+        <div class="col-md-3">
+            <label asp-for="StageOrder"></label>
+            <input asp-for="StageOrder" class="form-control" />
+            <span asp-validation-for="StageOrder" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-2">
+            <label asp-for="StartLocation"></label>
+            <input asp-for="StartLocation" class="form-control" />
+            <span asp-validation-for="StartLocation" class="text-danger"></span>
+        </div>
+        <div class="col-md-2">
+            <label asp-for="FinishLocation"></label>
+            <input asp-for="FinishLocation" class="form-control" />
+            <span asp-validation-for="FinishLocation" class="text-danger"></span>
+        </div>
+        <div class="col-md-2 d-flex align-items-end">
+            <button type="submit" class="btn btn-primary w-100">Opslaan</button>
+        </div>
     </div>
-</div>
+
+    <div class="row g-2 mb-2">
+        <div class="col-md-3">
+            <label asp-for="EventId">Evenement</label>
+            <select asp-for="EventId" class="form-control" asp-items="Model.Events"></select>
+        </div>
+        <div class="col-md-2 d-flex align-items-end">
+            <div class="form-check">
+                <input asp-for="NoScore" class="form-check-input" />
+                <label asp-for="NoScore" class="form-check-label">Geen score</label>
+            </div>
+        </div>
+        <div class="col-md-7">
+            <label asp-for="NoScoreDescription">Omschrijving</label>
+            <input asp-for="NoScoreDescription" class="form-control" />
+        </div>
+    </div>
+</form>
+
 
 <div>
     <a asp-action="Index">Terug naar lijst</a>

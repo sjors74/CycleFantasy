@@ -1,8 +1,13 @@
-﻿using Domain.Context;
+﻿using CycleManager.Services;
+using CycleManager.Services.Interfaces;
+using DataAccessEF.Migrations;
+using Domain.Context;
 using Domain.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using System.Linq;
 using WebCycleManager.Models;
 
 namespace WebCycleManager.Controllers
@@ -10,10 +15,14 @@ namespace WebCycleManager.Controllers
     public class StagesController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly IStageService _stageService;
+        private readonly IEventService _eventService;
 
-        public StagesController(ApplicationDbContext context)
+        public StagesController(ApplicationDbContext context, IStageService stageService, IEventService eventService)
         {
             _context = context;
+            _stageService = stageService;
+            _eventService = eventService;
         }
 
         // GET: Stages
@@ -72,49 +81,100 @@ namespace WebCycleManager.Controllers
         }
 
         // GET: Stages/Create
-        public IActionResult Create()
-        {
-            ViewData["EventId"] = new SelectList(
-                _context.Events
-                    .Select(e => new {
-                        e.EventId,
-                        Text = e.EventName + " (" + e.EventYear + ")"
-                    })
-                    .ToList(),
-                "EventId",
-                "Text"
-            );
+        //public IActionResult Create()
+        //{
+        //    ViewData["EventId"] = new SelectList(
+        //        _context.Events
+        //            .Select(e => new {
+        //                e.EventId,
+        //                Text = e.EventName + " (" + e.EventYear + ")"
+        //            })
+        //            .ToList(),
+        //        "EventId",
+        //        "Text"
+        //    );
 
-            return View();
+        //    return View();
+        //}
+
+        [HttpGet]
+        public async Task<IActionResult> Create()
+        {
+            var model = new StageCreateViewModel
+            {
+                Events = await GetEventSelectListAsync()
+            };
+                
+            return View(model);
         }
 
         // POST: Stages/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("StageId,StageDate,StageName,StageOrder,StartLocation,FinishLocation,NoScore,NoScoreDescription,EventId")] StageViewModel stage)
+        public async Task<IActionResult> Create(StageCreateViewModel stage)
         {
             if (ModelState.IsValid)
             {
-                var s = CreateFromViewModel(stage);
-                _context.Add(s);
-                await _context.SaveChangesAsync();
-                ViewData["EventId"] = new SelectList(
-                  _context.Events
-                    .Select(e => new {
-                        e.EventId,
-                        Text = e.EventName + " (" + e.EventYear + ")"
-                    })
-                    .ToList(),
-                    "EventId",
-                    "Text",
-                    stage.EventId
-                );
-                return RedirectToAction(nameof(Index));
+                var entity = new Stage
+                {
+                    StageDate = stage.StageDate,
+                    StageName = stage.StageName,
+                    StageOrder = stage.StageOrder,
+                    StartLocation = stage.StartLocation,
+                    FinishLocation = stage.FinishLocation,
+                    NoScore = stage.NoScore,
+                    NoScoreDescription = stage.NoScoreDescription,
+                    EventId = stage.EventId
+                };
+
+                await _stageService.AddStage(entity);
+                return RedirectToAction("Index", new { searchEventId = stage.EventId });
             }
+            stage.Events = await GetEventSelectListAsync();
             return View(stage);
         }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CreateAjax(StageCreateViewModel stage)
+        {
+            if (!ModelState.IsValid)
+            {
+                // Return partial met errors
+                stage.Events = await GetEventSelectListAsync();
+                return PartialView("_ManageStagesPartial", stage);
+            }
+
+            var existingEvent = await _eventService.GetEventById(stage.EventId);
+
+            if (existingEvent == null)
+            {
+                return Json(new { succes = false, message = "Evenement niet gevonden." });
+            }
+
+            var entity = new Stage
+            {
+                StageDate = stage.StageDate,
+                StageName = stage.StageName,
+                StageOrder = stage.StageOrder,
+                StartLocation = stage.StartLocation,
+                FinishLocation = stage.FinishLocation,
+                NoScore = stage.NoScore,
+                NoScoreDescription = stage.NoScoreDescription,
+                EventId = stage.EventId
+            };
+
+            _context.Add(entity);
+            await _context.SaveChangesAsync();
+
+            // Succes: return JSON
+            return Json(new 
+            { 
+                success = true, 
+                redirectUrl = Url.Action("Edit", "Events", new { id = stage.EventId })
+            });
+        }
+            
 
         // GET: Stages/Edit/5
         public async Task<IActionResult> Edit(int? id)
@@ -281,6 +341,18 @@ namespace WebCycleManager.Controllers
             {
                 throw;
             }
+        }
+        private async Task<IEnumerable<SelectListItem>> GetEventSelectListAsync()
+        {
+            return await _context.Events
+                .OrderByDescending(e => e.EventYear)
+                .ThenBy(e => e.StartDate)
+                .Select(e => new SelectListItem
+                {
+                    Value = e.EventId.ToString(),
+                    Text = e.EventName + " (" + e.EventYear + ")"
+                })
+                .ToListAsync();
         }
     }
 }
