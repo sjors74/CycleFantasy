@@ -95,6 +95,24 @@ namespace WebCycleManager.Controllers
             });
         }
 
+        //GET: Stages/Edit/5
+        public async Task<IActionResult> Edit(int? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var stage = await _stageService.GetStageById(id.Value);
+            if (stage == null)
+            {
+                return NotFound();
+            }
+            var vm = CreateViewModel(stage);
+
+            return View(vm);
+        }
+
         [HttpGet]
         public async Task<IActionResult> EditStage(int id)
         {

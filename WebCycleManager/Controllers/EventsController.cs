@@ -196,7 +196,7 @@ namespace WebCycleManager.Controllers
             {
                 var eventEntity = await _eventService.GetEventById(vm.EventId);
 
-                if (eventEntity == null) return NotFound();
+                if (eventEntity == null) return Json(new { success = false, message = "Evenement niet gevonden" });
 
                 // Huidige koppelingen verwijderen
                 eventEntity.EventTeams?.Clear();
@@ -213,9 +213,13 @@ namespace WebCycleManager.Controllers
 
                 await _eventService.Update(eventEntity);
 
-                return RedirectToAction("Edit", new { id = vm.EventId });
+                return Json(new
+                {
+                    success = true,
+                    redirectUrl = Url.Action("Edit", new { id = vm.EventId })
+                });
             }
-            return PartialView("_ManageTeamsPartial", vm);
+            return Json(new { success = false, message = "Er is een fout opgestreden." });
         }
 
         [HttpGet]
