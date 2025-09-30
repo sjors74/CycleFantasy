@@ -36,82 +36,50 @@
     <a asp-action="Index" class="btn btn-link btn-sm mb-0">Terug naar volledige lijst</a>
 </form>
 
-<div class="row">
-    <div class="col-md-6">
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Voornaam</th>
-                    <th>Achternaam</th>
-                    <th>Land</th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-            @foreach (var item in leftItems)
-            {
-                <tr>
-                    <td>@item.FirstName</td>
-                    <td>@item.LastName</td>
-                    <td style="width:80px;">@(item.CountryShort ?? "onbekend")</td>
-                    <td class="text-end">
-                      <!-- subtiel potloodje -->
-                        <a asp-action="Edit" asp-route-id="@item.CompetitorId"
-                           class="text-muted me-2" title="Bewerken" style="text-decoration:none;">
-                               <i class="bi bi-pencil"></i>
-                        </a>
-                        <a asp-action="Details" asp-route-id="@item.CompetitorId"
-                            class="text-muted me-2" title="Details" style="text-decoration:none;">
-                                <i class="bi bi-eye"></i>
-                        </a>
-                        <a asp-action="Delete" asp-route-id="@item.CompetitorId"
-                            class="text-muted" title="Verwijderen" style="text-decoration:none;">
-                                <i class="bi bi-trash"></i>
-                        </a>
-                    </td>
-                </tr>
-             }
-        </tbody>
-    </table>
+<div class="row" style="max-height: calc(100vh - 200px); overflow-y:auto;">
+   @foreach (var column in new[] { leftItems, rightItems })
+   {
+        <div class="col-md-6 mb-3">
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>Voornaam</th>
+                        <th>Achternaam</th>
+                        <th>Land</th>
+                        <th class="text-end">Acties</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in column)
+                    {
+                        <tr>
+                            <td>@item.FirstName</td>
+                            <td>@item.LastName</td>
+                            <td style="width:80px;">@(item.CountryShort ?? "onbekend")</td>
+                            <td class="text-end">
+                               <div class="btn-group" role="group">
+                                    <a asp-action="Edit" asp-route-id="@item.CompetitorId"
+                                       class="btn btn-sm btn-outline-primary" title="Bewerken">
+                                           <i class="bi bi-pencil-square"></i>
+                                    </a>
+                                    <a asp-action="Details" asp-route-id="@item.CompetitorId"
+                                        class="btn btn-sm btn-outline-secondary" title="Details">
+                                            <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a asp-action="Delete" asp-route-id="@item.CompetitorId"
+                                        class="btn btn-sm btn-outline-danger" title="Verwijderen">
+                                            <i class="bi bi-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                     }
+                </tbody>
+            </table>
+        </div>
+     }
 </div>
-<div class="col-md-6">
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Voornaam</th>
-                <th>Achternaam</th>
-                <th>Land</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var item in rightItems)
-            {
-                <tr>
-                    <td>@item.FirstName</td>
-                    <td>@item.LastName</td>
-                    <td style="width:80px;">@(item.CountryShort ?? "onbekend")</td>
-                    <td class="text-end">
-                        <!-- subtiel potloodje -->
-                        <a asp-action="Edit" asp-route-id="@item.CompetitorId"
-                            class="text-muted me-2" title="Bewerken" style="text-decoration:none;">
-                            <i class="bi bi-pencil"></i>
-                        </a>
-                        <a asp-action="Details" asp-route-id="@item.CompetitorId"
-                            class="text-muted me-2" title="Details" style="text-decoration:none;">
-                            <i class="bi bi-eye"></i>
-                        </a>
-                        <a asp-action="Delete" asp-route-id="@item.CompetitorId"
-                            class="text-muted" title="Verwijderen" style="text-decoration:none;">
-                            <i class="bi bi-trash"></i>
-                        </a>
-                    </td>
-                </tr>
-                }
-            </tbody>
-        </table>
-    </div>
-</div>
+
 <!-- Paginate -->
 <div class="d-flex justify-content-between mt-3">
     <a asp-action="Index"

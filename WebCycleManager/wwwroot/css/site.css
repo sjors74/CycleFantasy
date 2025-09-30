@@ -68,3 +68,10 @@ body {
 .input-group .btn {
     flex: 0 0 auto;
 }
+
+.table thead th {
+    position: sticky;
+    top: 0;
+    background: #f8f9fa; /* Bootstrap light background */
+    z-index: 2;
+}

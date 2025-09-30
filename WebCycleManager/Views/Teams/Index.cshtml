@@ -3,53 +3,67 @@
 
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h1 class="mb-0">UCI World- & Proteams</h1>
-    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#confirmImportModal">
-        <i class="bi bi-person-x"></i> Update renners
-    </button>
+
+    <div class="d-flex gap-2">
+        <a asp-action="Create" class="btn btn-success">
+            <i class="bi bi-plus-circle"></i> Maak team aan
+        </a>
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#confirmImportModal">
+            <i class="bi bi-person-x"></i> Update renners
+        </button>
+    </div>
 </div>
-<p>
-    <a asp-action="Create">Maak team aan</a>
-</p>
-<table class="table table-striped">
-    <thead>
-        <tr>
-            <th>Naam</th>
-            <th>Land</th>
-            <th>Aantal renners</th>
-            <th>PcsName</th>
-            <th></th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-    @foreach (var team in Model) 
-    {
-        <tr>
-            <td>@team.TeamName</td>
-            <td>@team.CountryNameShort</td>
-            <td>@team.CompetitorsInTeam</td>
-            <td>@team.PcsName</td>
-            <td>
-                     @if(!string.IsNullOrWhiteSpace(team.PcsName))
-                     {
-                     <button class="btn btn-primary btn-sm"
-                        data-bs-toggle="modal"
-                        data-bs-target="#scrapeModal"
-                        data-teamid="@team.Id"
-                        data-teamname="@team.TeamName">
-                         <i class="bi bi-cloud-download"></i> Scrape renners
-                     </button>
-                 }
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@team.Id">Wijzig</a> |
-                <a asp-action="Details" asp-route-id="@team.Id">Details</a> |
-                <a asp-action="Delete" asp-route-id="@team.Id">Verwijder</a>
-            </td>
-        </tr>
-    }
-    </tbody>
-</table>
+
+<div style="max-height: 70vh; overflow-y: auto; margin-top: 20px;">
+    <table class="table table-striped table-hover align-middle">
+        <thead class="table-light">
+            <tr>
+                <th>Naam</th>
+                <th>Land</th>
+                <th>Aantal renners</th>
+                <th>PcsName</th>
+                <th></th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var team in Model) 
+        {
+            <tr>
+                <td>@team.TeamName</td>
+                <td>@team.CountryNameShort</td>
+                <td>@team.CompetitorsInTeam</td>
+                <td>@team.PcsName</td>
+                <td>
+                         @if(!string.IsNullOrWhiteSpace(team.PcsName))
+                         {
+                         <button class="btn btn-primary btn-sm"
+                            data-bs-toggle="modal"
+                            data-bs-target="#scrapeModal"
+                            data-teamid="@team.Id"
+                            data-teamname="@team.TeamName">
+                             <i class="bi bi-cloud-download"></i> Scrape renners
+                         </button>
+                     }
+                </td>
+                    <td>
+                        <div class="btn-group" role="group">
+                            <a asp-action="Edit" asp-route-id="@team.Id" class="btn btn-sm btn-outline-primary" title="Wijzig">
+                                <i class="bi bi-pencil-square"></i>
+                            </a>
+                            <a asp-action="Details" asp-route-id="@team.Id" class="btn btn-sm btn-outline-secondary" title="Details">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                            <a asp-action="Delete" asp-route-id="@team.Id" class="btn btn-sm btn-outline-danger" title="Verwijder">
+                                <i class="bi bi-trash"></i>
+                            </a>
+                        </div>
+                    </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>
 <!-- modal -->
 <div class="modal fade" id="scrapeModal" tabindex="-1" aria-labelledby="scrapeModalLabel" aria-hidden="true">
     <div class="modal-dialog">
