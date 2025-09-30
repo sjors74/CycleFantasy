@@ -6,7 +6,9 @@ namespace WebCycleManager.Models
     { 
         public string FirstName { get; set; } = string.Empty;
         public string LastName { get; set; } = string.Empty;
+        public string CompetitorName { get; set; } = string.Empty;
         public int Score { get; set; }
+        public int Position { get; set; }
         public bool OutOfCompetition { get; set; } = false;
         public int CompetitorInEventId { get; set; }
         public int EventId { get; set; }

@@ -61,7 +61,7 @@ namespace WebCycleManager.Controllers
             .ThenBy(x => x.FirstName)
             .ToList();
 
-            var teams = await _teamService.GetAll();
+            var teams = await _teamService.GetAllTeams();
             var teamList = teams.OrderBy(c => c.CurrentTeamName).ToList();
 
             var vm = new CompetitorsInEventViewModel(
@@ -84,8 +84,8 @@ namespace WebCycleManager.Controllers
         public async Task<IActionResult> Create(int eventId)
         {
             var competitors = await _competitorService.GetAllCompetitors(DateTime.Now.Year);
-            var competitorsList = competitors.OrderBy(c => c.CompetitorName).ToList();
-            var teams = await _teamService.GetAll();
+            var competitorsList = new SelectList(competitors.OrderBy(c => c.CompetitorName), "CompetitorId", "CompetitorName");
+            var teams = await _teamService.GetAllTeams();
             var teamList = teams.OrderBy(c => c.CurrentTeamName).ToList();
             ViewBag.ListOfTeams = teamList;
             ViewBag.ListOfCompetitors = competitorsList;
@@ -114,7 +114,7 @@ namespace WebCycleManager.Controllers
                 .ToList();
 
             ViewData["CompetitorId"] = new SelectList(competitors, "CompetitorId", "CompetitorName");
-            ViewData["TeamId"] = new SelectList(await _teamService.GetAll(), "TeamId", "TeamName");
+            ViewData["TeamId"] = new SelectList(await _teamService.GetAllTeams(), "TeamId", "TeamName");
             return View();
         }
 
@@ -224,22 +224,19 @@ namespace WebCycleManager.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetCompetitorForEvent(int teamId)
+        public async Task<IActionResult> GetCompetitorForEvent(int teamId, int year)
         {
-            var competitors = await _competitorService.GetByTeamId(teamId);
-            var result = competitors.Select(c => new
+            var competitors = await _competitorService.GetByTeamId(teamId, year);
+            var result = competitors
+                .OrderBy(c => c.LastName)
+                .ThenBy(c => c.FirstName)
+                .Select(c => new
             {
                 value = c.CompetitorInTeamId,
-                text = $"{c.CompetitorInTeamId}" //({c.Country})"
+                text = $"{c.LastName}, {c.FirstName}"
             });
             return Json(result);
         }
-
-        //public async Task<JsonResult> GetCompetitorForEvent(int teamId)
-        //{
-        //    var competitors = await _competitorService.GetByTeamId(teamId);
-        //    return Json(new SelectList(competitors.OrderBy(c => c.LastName).ThenBy(c => c.FirstName), "CompetitorId", "CompetitorName"));
-        //}
 
         private CompetitorInEventViewModel GetViewModel(CompetitorsInEvent competitorsInEvent)
         {

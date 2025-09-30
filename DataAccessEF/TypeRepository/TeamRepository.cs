@@ -9,7 +9,7 @@ namespace DataAccessEF.TypeRepository
     {
         public TeamRepository(ApplicationDbContext context) : base(context) { }
 
-        public async Task<IEnumerable<Team>> GetAll()
+        public async Task<IEnumerable<Team>> GetAllTeams()
         {
             var teams = await context.Teams
                 .Include(ct => ct.Country)

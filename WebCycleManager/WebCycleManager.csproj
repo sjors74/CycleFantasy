@@ -33,10 +33,6 @@
   <ItemGroup>
     <_ContentIncludedByDefault Remove="Views\Results\test.cshtml" />
   </ItemGroup>
-
-  <ItemGroup>
-    <None Include="Views\Points\test.cshtml" />
-  </ItemGroup>
   <Target Name="RemoveDevelopmentSettingsFromPublish" AfterTargets="Publish">
     <ItemGroup>
       <FilesForPublishing Remove="appsettings.Development.json" />

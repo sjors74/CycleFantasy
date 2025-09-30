@@ -35,63 +35,39 @@ namespace WebCycleManager.Controllers
         // GET: GameCompetitorEvents
         public async Task<IActionResult> Index(int eventId)
         {
-            var model = new List<GameCompetitorInEventViewModel>();
-            var teamsForEvent = await _gameCompetitorEventService.GetAllCompetitorsInEvent(eventId);
-            var competitorsInEventPicks = _gameCompetitorEventService.GetPicks(eventId);
-            var competitorsInEventResults = await _resultService.GetResultsByEventId(eventId);
-            var groupedGameCompetitors = competitorsInEventPicks.GroupBy(c => c.GameCompetitorEvent.Id).Select(g => new GameCompetitorInEventViewModel
-            {
-                GameCompetitorInEventId = g.Key,
-                TeamName = g.First().GameCompetitorEvent.TeamName
-            });
+            var resultDtos = (await _resultService.GetResultsByEventId(eventId)).ToList();
 
+            var pointsByCompetitor = resultDtos
+                .ToDictionary(r => r.CompetitorInEventId, r => r.Points);
 
-            _resultLines = competitorsInEventResults.GroupBy(g => g.CompetitorInEventId)
-                .Select(cl => new ResultLineViewModel
+            var picks = _gameCompetitorEventService.GetPicks(eventId).ToList();
+
+            var model = picks
+                .GroupBy(p => p.GameCompetitorEvent.Id)
+                .Select(g =>
                 {
-                    CompetitorInEventId = cl.First().CompetitorInEventId,
-                    Score = cl.Sum(c => c.ConfigurationItems.First().Score), //todo : gaat dit goed???
-                }).ToList();
+                    var gameCompetitor = g.First().GameCompetitorEvent;
 
-            foreach(var team in teamsForEvent)
-            {
-                var teamId = team.Id;
-                var teamName = team.TeamName;
-                var gamecompetitor = groupedGameCompetitors.Where(c => c.GameCompetitorInEventId.Equals(teamId)).FirstOrDefault();
-                if (gamecompetitor != null)
-                {
-                    var resultList = new List<ResultLineViewModel>();
-                    var filteredPicks = competitorsInEventPicks.Where(c => c.GameCompetitorEvent.Id.Equals(gamecompetitor.GameCompetitorInEventId));
-                    foreach (var competitorInEventPick in filteredPicks)
+                    // alle CompetitorInEventId's die dit team gekozen heeft
+                    var competitorIds = g.Select(p => p.CompetitorsInEventId).Distinct();
+
+                    // sommeer scores van deze renners
+                    var totalScore = competitorIds.Sum(cid =>
+                        pointsByCompetitor.TryGetValue(cid, out var score) ? score : 0);
+
+                    return new GameCompetitorInEventViewModel
                     {
-                        resultList.Add(
-                        new ResultLineViewModel
-                        {
-                            CompetitorInEventId = competitorInEventPick.CompetitorsInEvent.Id,
-                            FirstName = competitorInEventPick.CompetitorsInEvent.CompetitorInTeam.Competitor.FirstName,
-                            LastName = competitorInEventPick.CompetitorsInEvent.CompetitorInTeam.Competitor.LastName,
-                            Score = GetScoreFromResultList(competitorInEventPick.CompetitorsInEvent.Id),
-                            OutOfCompetition = competitorInEventPick.CompetitorsInEvent.OutOfCompetition,
-                            EventId = (int)eventId,
+                        GameCompetitorInEventId = g.Key,
+                        TeamName = gameCompetitor.TeamName,
+                        GameCompetitorName = $"{gameCompetitor?.User?.FirstName} {gameCompetitor?.User?.LastName}",
+                        Score = totalScore,
+                        EventId = gameCompetitor?.EventId ?? 0,
+                        Id = g.Key
+                    };
+                })
+                .OrderByDescending(m => m.Score)
+                .ToList();
 
-                        });
-                    }
-                    gamecompetitor.CompetitorsInEvent = resultList;
-                    gamecompetitor.Id = gamecompetitor.GameCompetitorInEventId;
-                    gamecompetitor.EventId = eventId;
-                    gamecompetitor.Score = resultList.Sum(c => c.Score);
-                    model.Add(gamecompetitor);
-                }
-                else
-                {
-                    gamecompetitor = new GameCompetitorInEventViewModel();
-                    gamecompetitor.Id = teamId;
-                    gamecompetitor.EventId = eventId;
-                    gamecompetitor.TeamName = teamName;
-                    gamecompetitor.Score = 0;
-                    model.Add(gamecompetitor);
-                }
-            }
             ViewData["EventId"] = eventId;
             return View(model);
         }
@@ -128,70 +104,45 @@ namespace WebCycleManager.Controllers
         // GET: GameCompetitorEvents/Details/5
         public async Task<IActionResult> Details(int? id, int? eventId)
         {
-
-            _resultLines = null;
             var model = new GameCompetitorInEventViewModel();
-            model.EventId = (int)eventId;
-            model.GameCompetitorInEventId = (int)id;
-            model.NumberOfPicks = await _gameCompetitorEventService.GetNumberOfPicks((int)eventId, (int)id);
-            model.DropdownList = GetDropdownList((int)eventId);
-            //todo get data from servie (teamname)
-            if (TempData["suggestedCompetitors"] != null)
-            {
-                var competitorIds = TempData["suggestedCompetitors"] as IEnumerable<int>;
-                model.SuggestedCompetitors = new List<CompetitorsInEvent>();
-                foreach(var competitorId in competitorIds)
+            model.Id = id.Value;
+            model.EventId = eventId.Value;
+
+           
+            var resultDtos = (await _resultService.GetResultsByEventId(eventId.Value)).ToList();
+
+            var pointsByCompetitor = resultDtos
+                .ToDictionary(r => r.CompetitorInEventId, r => r.Points);
+
+            var teamPicks = _gameCompetitorEventService
+                .GetPicks(eventId.Value)
+                .Where(p => p.GameCompetitorEventId == id)
+                .ToList();
+
+            model.TeamName = teamPicks?.FirstOrDefault()?.GameCompetitorEvent?.TeamName ?? "onbekend";
+
+            var picks = teamPicks
+                .Select(p =>
                 {
-                    var competitorInEvent = await _competitorInEventService.GetCompetitorsInEventByIds(model.EventId, competitorId);
-                    if (competitorInEvent != null)
+                    var competitorId = p.CompetitorsInEventId;
+                    var score = pointsByCompetitor.TryGetValue(competitorId, out var s) ? s : 0;
+
+                    return new PickDetailViewModel
                     {
-                        model.SuggestedCompetitors.Add(competitorInEvent);
-                    }
-                }
-            }
-
-            var competitorsInEventPicks = await _gameCompetitorEventService.GetAllPicks((int)id);
-            if (competitorsInEventPicks != null && competitorsInEventPicks.Count() > 0)
-            {
-                model.TeamName = competitorsInEventPicks.First().GameCompetitorEvent.TeamName;
-            }
-            var competitorsInEventResults = await _resultService.GetResultsByEventId((int)eventId);
-
-            if (competitorsInEventResults != null)
-            {
-                _resultLines = competitorsInEventResults.GroupBy(g => g.CompetitorInEventId)
-                    .Select(cl => new ResultLineViewModel
-                    {
-                        CompetitorInEventId = cl.First().CompetitorInEventId,
-                        Score = cl.Sum(c => c.ConfigurationItems.First().Score), //TODO : gaat dit goed?
-                    }).ToList();
-            }
-
-            var resultList = new List<ResultLineViewModel>();
-            if (competitorsInEventPicks != null)
-            {
-
-
-                foreach (var competitorInEventPick in competitorsInEventPicks)
-                {
-                    resultList.Add(
-                    new ResultLineViewModel
-                    {
-                        CompetitorInEventId = competitorInEventPick.CompetitorsInEvent.Id,
-                        FirstName = competitorInEventPick.CompetitorsInEvent.CompetitorInTeam.Competitor.FirstName,
-                        LastName = competitorInEventPick.CompetitorsInEvent.CompetitorInTeam.Competitor.LastName,
-                        Score = GetScoreFromResultList(competitorInEventPick.CompetitorsInEvent.Id),
-                        OutOfCompetition = competitorInEventPick.CompetitorsInEvent.OutOfCompetition,
-                        DropdownList = GetDropdownList((int)eventId),
-                        SelectedCompetitorId = competitorInEventPick.CompetitorsInEvent.Id,
-                        EventId = (int)eventId,
-                    });;
-                }
-                model.Score = resultList.Sum(c => c.Score);
-                var orderedList = resultList.OrderByDescending(c => c.Score).ThenBy(c => c.LastName).ToList();
-                model.CompetitorsInEvent = orderedList;
-            }
-                
+                        CompetitorInEventId = competitorId,
+                        FirstName = p.CompetitorsInEvent.CompetitorInTeam.Competitor.FirstName ?? "onbekend",
+                        LastName = p.CompetitorsInEvent.CompetitorInTeam.Competitor.LastName ?? "onbekend",
+                        CompetitorName = p.CompetitorsInEvent.CompetitorInTeam.Competitor.CompetitorName ?? "onbekend",
+                        IsOutOfCompetition = p.CompetitorsInEvent.OutOfCompetition,
+                        Score = score
+                    };
+                })
+                .OrderByDescending(m => m.Score)
+                .ToList();
+            model.CompetitorsInEvent = picks;
+            model.NumberOfPicks = picks.Count;
+            var totalScore = picks.Sum(x => x.Score);
+            model.Score = totalScore;
             return View(model);
 
         }

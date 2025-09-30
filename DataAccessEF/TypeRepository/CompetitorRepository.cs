@@ -1,5 +1,4 @@
 ﻿using CycleManager.Domain.Dto;
-using CycleManager.Domain.Models;
 using Domain.Context;
 using Domain.Dto;
 using Domain.Interfaces;
@@ -17,6 +16,8 @@ namespace DataAccessEF.TypeRepository
         public async Task<List<CompetitorDto>> GetAllCompetitors(int year)
         {
             var competitors = await context.Competitors
+                .Include(c => c.CompetitorInTeams)
+                    .ThenInclude(t => t.Team)
                 .Where(c => c.CompetitorInTeams.Any(cit => cit.Year == year))
                 .Select(c => new CompetitorDto
                 {
@@ -30,8 +31,9 @@ namespace DataAccessEF.TypeRepository
                         .Where(cit => cit.Year == year)
                         .Select(cit => new CompetitorInTeamDto
                         {
+                            CompetitorInTeamId = cit.Id,
                             TeamId = cit.TeamId,
-                            //TeamName = cit.Team.TeamName,
+                            TeamName = cit.Team.CurrentTeamName,
                             Year = cit.Year,
                             IsNationalChampion = cit.IsNationalChampion
                         })
@@ -55,17 +57,20 @@ namespace DataAccessEF.TypeRepository
             return competitor;
         }
 
-        public async Task<IEnumerable<CompetitorInTeamDto>> GetByTeamId(int teamId)
+        public async Task<IEnumerable<CompetitorInTeamDto>> GetByTeamId(int teamId, int year)
         {
             var competitors = await context.CompetitorInTeams
                 .Include(cit => cit.Competitor)
                     .ThenInclude(c => c.Country)
                 .Include(cit => cit.Team)
-                .Where(cit => cit.TeamId == teamId)
+                .Where(cit => cit.TeamId == teamId && cit.Year == year)
                 .Select(cit => new CompetitorInTeamDto
                 {
 
                     CompetitorInTeamId = cit.Id,
+                    FirstName = cit.Competitor.FirstName,
+                    LastName = cit.Competitor.LastName,
+                    CompetitorName = cit.Competitor.CompetitorName,
                     TeamName = cit.Team.CurrentTeamName,
                     TeamId = cit.TeamId,
                     Year = cit.Year

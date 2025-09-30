@@ -27,73 +27,65 @@
                 for(int i=0; i < Model.NumberOfPicks; i++)
                 {
                     <tr>
-                        <td>
-                            @Html.DisplayFor(modelItem => Model.CompetitorsInEvent[i].FirstName)
-                        </td>
-                        <td>
-                            @Html.DisplayFor(modelItem => Model.CompetitorsInEvent[i].LastName)
-                        </td>
-                        <td>
-                            @Html.DisplayFor(modelItem => Model.CompetitorsInEvent[i].Score)
-                        </td>
-                        <td>
-                            @(Model.CompetitorsInEvent[i].OutOfCompetition ? "ja" : "")
-                        </td>
+                        <td>@Html.DisplayFor(modelItem => Model.CompetitorsInEvent[i].FirstName)</td>
+                        <td>@Html.DisplayFor(modelItem => Model.CompetitorsInEvent[i].LastName)</td>
+                        <td>@Html.DisplayFor(modelItem => Model.CompetitorsInEvent[i].Score)</td>
+                        <td>@(Model.CompetitorsInEvent[i].IsOutOfCompetition ? "ja" : "")</td>
+                    </tr>
+                }
+                var toPick = 15 - Model.NumberOfPicks;
+                if (Model.SuggestedCompetitors == null && Model.SuggestedCompetitors.Count == 0)
+                {
+                    for (int j = 0; j < toPick; j++)
+                    {
+                        <tr>
+                            <td>
+                                @(j + 1)
+                            </td>
+                            <td>
+                                @Html.DropDownList($"Model.CompetitorsInEvent[{j}].SelectedCompetitorId",Model.DropdownList, "-- selecteer --", "Value")
+                            </td>
+                            <td></td>
+                            <td></td>
                         </tr>
                     }
-                    var toPick = 15 - Model.NumberOfPicks;
-                    if (Model.SuggestedCompetitors == null && Model.SuggestedCompetitors.Count == 0)
+                }
+                else
+                {
+                    for (int i = 0; i < Model.SuggestedCompetitors.Count; i++)
                     {
-                        for (int j = 0; j < toPick; j++)
-                        {
-                            <tr>
-                                <td>
-                                    @(j + 1)
-                                </td>
-                                <td>
-                                    @Html.DropDownList($"Model.CompetitorsInEvent[{j}].SelectedCompetitorId",Model.DropdownList, "-- selecteer --", "Value")
-                                </td>
-                                <td></td>
-                                <td></td>
-                            </tr>
-                        }
-                    }
-                    else
-                    {
-                        for (int i = 0; i < Model.SuggestedCompetitors.Count; i++)
-                        {
-                            <tr>
-                                <td>
-                                    @Html.DisplayFor(modelItem => Model.SuggestedCompetitors[i].CompetitorInTeam.Competitor.FirstName)
-                                </td>
-                                <td>
-                                    @Html.DisplayFor(modelItem => Model.SuggestedCompetitors[i].CompetitorInTeam.Competitor.LastName)
-                                </td>
-                                <td>
-                                    <button type="button" onclick="AddCompetitor(@Model.SuggestedCompetitors[i].CompetitorInTeamId)">voeg toe</button> |
-                                    <button type="button" onclick="RemoveCompetitor(@Model.SuggestedCompetitors[i].CompetitorInTeamId)">verwijder</button>
-                                </td>
-                                <td>
+                        <tr>
+                            <td>
+                                @Html.DisplayFor(modelItem => Model.SuggestedCompetitors[i].CompetitorInTeam.Competitor.FirstName)
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => Model.SuggestedCompetitors[i].CompetitorInTeam.Competitor.LastName)
+                            </td>
+                            <td>
+                                <button type="button" onclick="AddCompetitor(@Model.SuggestedCompetitors[i].CompetitorInTeamId)">voeg toe</button> |
+                                <button type="button" onclick="RemoveCompetitor(@Model.SuggestedCompetitors[i].CompetitorInTeamId)">verwijder</button>
+                            </td>
+                            <td>
                                     
-                                </td>
-                            </tr>
-                        }
-                        var aantal = 15 - Model.NumberOfPicks - Model.SuggestedCompetitors.Count;
-                        for(int j = 0; j < aantal; j++)
-                        {
-                            <tr>
-                                <td>
-                                    @(j + 1)
-                                </td>
-                                <td>
-                                    @Html.DropDownList($"Model.CompetitorsInEvent[{j}].SelectedCompetitorId",Model.DropdownList, "-- selecteer --", "Value")
-                                </td>
-                                <td></td>
-                                <td></td>
-                            </tr>
-
-                        }
+                            </td>
+                        </tr>
                     }
+                    var aantal = 15 - Model.NumberOfPicks - Model.SuggestedCompetitors.Count;
+                    for(int j = 0; j < aantal; j++)
+                    {
+                        <tr>
+                            <td>
+                                @(j + 1)
+                            </td>
+                            <td>
+                                @Html.DropDownList($"Model.CompetitorsInEvent[{j}].SelectedCompetitorId",Model.DropdownList, "-- selecteer --", "Value")
+                            </td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+
+                    }
+                }
             }
         </tbody>
     </table>

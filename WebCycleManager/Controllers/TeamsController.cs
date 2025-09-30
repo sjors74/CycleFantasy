@@ -21,7 +21,7 @@ namespace WebCycleManager.Controllers
         public async Task<IActionResult> Index()
         {
             var _teamViewModels = new List<TeamViewModel>();
-            var teams = await _teamService.GetAll();
+            var teams = await _teamService.GetAllTeams();
 
             foreach (var team in teams.OrderBy(t => t.CurrentTeamName))
             {

@@ -169,7 +169,7 @@ namespace WebCycleManager.Controllers
             var eventEntity = await _eventService.GetEventById(id);
             if(eventEntity == null) return NotFound();
 
-            var allTeams = await _teamService.GetAll();
+            var allTeams = await _teamService.GetAllTeams();
 
             var model = new EventTeamsViewModel
             {

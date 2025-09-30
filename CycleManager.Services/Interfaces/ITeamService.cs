@@ -16,7 +16,7 @@ namespace CycleManager.Services.Interfaces
         /// Get all teams
         /// </summary>
         /// <returns></returns>
-        Task<IEnumerable<Team>> GetAll();
+        Task<IEnumerable<Team>> GetAllTeams();
 
         Task<IEnumerable<SelectListItem>> GetTeamsAsSelectList(int selectedId = 0);
 

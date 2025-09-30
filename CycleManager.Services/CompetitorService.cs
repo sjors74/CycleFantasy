@@ -70,9 +70,9 @@ namespace CycleManager.Services
         /// </summary>
         /// <param name="teamId"></param>
         /// <returns></returns>
-        public async Task<IEnumerable<CompetitorInTeamDto>> GetByTeamId(int teamId)
+        public async Task<IEnumerable<CompetitorInTeamDto>> GetByTeamId(int teamId, int year)
         {
-            return await _competitorRepository.GetByTeamId(teamId);
+            return await _competitorRepository.GetByTeamId(teamId, year);
         }
 
         /// <summary>

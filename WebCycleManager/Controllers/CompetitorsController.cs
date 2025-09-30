@@ -86,7 +86,7 @@ namespace WebCycleManager.Controllers
         public async Task<IActionResult> Create()
         {
             ViewBag.Competitors = await GetCompetitorSelectListAsync();
-            ViewData["TeamId"] = new SelectList((await _teamService.GetAll()).OrderBy(t => t.CurrentTeamName), "TeamId", "TeamName");
+            ViewData["TeamId"] = new SelectList((await _teamService.GetAllTeams()).OrderBy(t => t.CurrentTeamName), "TeamId", "TeamName");
             ViewData["CountryId"] = new SelectList(await CountrySelectListHelper.GetOrderedCountries(_countryService), "CountryId", "CountryNameLong");
             return View(new CreateCompetitorViewModel());
         }
@@ -99,7 +99,7 @@ namespace WebCycleManager.Controllers
             if (!ModelState.IsValid)
             {
                 ViewBag.Competitors = await GetCompetitorSelectListAsync();
-                ViewData["TeamId"] = new SelectList((await _teamService.GetAll()).OrderBy(t => t.CurrentTeamName), "TeamId", "TeamName");
+                ViewData["TeamId"] = new SelectList((await _teamService.GetAllTeams()).OrderBy(t => t.CurrentTeamName), "TeamId", "TeamName");
                 ViewData["CountryId"] = new SelectList(await CountrySelectListHelper.GetOrderedCountries(_countryService), "CountryId", "CountryNameLong");
                 return View(model);
             }
