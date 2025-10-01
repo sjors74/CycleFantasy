@@ -85,7 +85,7 @@ namespace CycleManager.Services
         /// <returns></returns>
         public Task<Configuration> GetConfigurationById(int id)
         {
-            return _configurationRepository.GetById(id);
+            return _configurationRepository.GetConfigurationById(id);
         }
 
         /// <summary>

@@ -1,13 +1,9 @@
 ﻿@model CompetitorInEventViewModel
 
-@{
-    ViewData["Title"] = "Edit";
-}
-
-<h1>@Model.CompetitorName</h1>
+<h3>@Model.CompetitorName</h3>
 
 <h4>@Model.EventName</h4>
-<hr />
+
 <div class="row">
     <div class="col-md-4">
         <form asp-action="Edit">
@@ -36,9 +32,11 @@
         </form>
     </div>
 </div>
-
-<div>
-    <a asp-route-eventId="@Model.EventId" asp-route-FilterTeam="@Model.TeamId.ToString()" asp-action="Index">Terug naar de lijst</a>
+    
+<div class="mt-3 d-flex gap-2">
+    <a asp-action="Index" asp-route-eventId="@Model.EventId" asp-route-FilterTeam="@Model.TeamId.ToString()" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Terug naar de lijst
+    </a>
 </div>
 
 @section Scripts {

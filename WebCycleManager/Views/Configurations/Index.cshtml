@@ -1,19 +1,14 @@
 ﻿@model IEnumerable<ConfigurationViewModel>
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3>Configuraties</h3>
+    <a asp-action="Create" class="btn btn-primary">Maak nieuwe Configuratie</a>
+</div>
 
-@{
-    ViewData["Title"] = "Index";
-}
-
-<h1>Configuraties</h1>
-
-<p>
-    <a asp-action="Create">Maak nieuwe Configuratie</a>
-</p>
 <table class="table">
     <thead>
         <tr>
             <th>
-                @Html.DisplayName("Configuratie")
+                Naam
             </th>
             <th></th>
         </tr>
@@ -25,9 +20,20 @@
                 @Html.DisplayFor(modelItem => item.ConfigurationName)
             </td>
             <td>
-                <a asp-action="Edit" asp-route-id="@item.Id">Wijzig</a> |
-                <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.Id">Verwijder</a>
+                <div class="btn-group" role="group">
+                    <a asp-action="Edit" asp-route-id="@item.Id"
+                        class="btn btn-sm btn-outline-primary" title="Wijzig">
+                        <i class="bi bi-pencil-square"></i>
+                    </a>
+                    <a asp-action="Details" asp-route-id="@item.Id"
+                        class="btn btn-sm btn-outline-secondary" title="Details">
+                        <i class="bi bi-eye"></i>
+                    </a>
+                    <a asp-action="Delete" asp-route-id="@item.Id"
+                        class="btn btn-sm btn-outline-danger" title="Verwijder">
+                        <i class="bi bi-trash"></i>
+                    </a>
+                </div>
             </td>
         </tr>
     }

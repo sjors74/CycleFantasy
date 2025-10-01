@@ -1,14 +1,10 @@
 ﻿@model List<GameCompetitorInEventViewModel>
 
-@{
-    ViewData["Title"] = "Index";
-}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3>Stand</h3>
+    <a asp-action="Create" asp-route-eventId="@ViewData["EventId"]" class="btn btn-primary">Maak nieuw</a>
+</div>
 
-<h1>Stand</h1>
-
-<p>
-    <a asp-action="Create" asp-route-eventId="@ViewData["EventId"]">Maak nieuw</a>
-</p>
 <table class="table">
     <thead>
         <tr>
@@ -36,10 +32,21 @@
         <td>
             @Html.DisplayFor(modelItem => item.Score)
         </td>
-        <td>
-            <a asp-action="Edit" asp-route-id="@item.Id">Wijzig</a> |
-            <a asp-action="Details" asp-route-id="@item.Id" asp-route-eventId="@item.EventId">Team</a> |
-            <a asp-action="Delete" asp-route-id="@item.Id">Verwijder</a> |
+        <td class="text-end">
+            <div class="btn-group" role="group">
+                <a asp-action="Edit" asp-route-id="@item.Id"
+                    class="btn btn-sm btn-outline-primary" title="Wijzig">
+                    <i class="bi bi-pencil-square"></i>
+                </a>
+                <a asp-action="Details" asp-route-id="@item.Id" asp-route-eventId="@item.EventId"
+                    class="btn btn-sm btn-outline-secondary" title="Details">
+                    <i class="bi bi-eye"></i>
+                </a>
+                <a asp-action="Delete" asp-route-id="@item.Id"
+                    class="btn btn-sm btn-outline-danger" title="Verwijder">
+                    <i class="bi bi-trash"></i>
+                </a>
+            </div>
         </td>
     </tr>
 }
