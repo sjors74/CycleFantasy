@@ -61,7 +61,7 @@ namespace WebCycleManager.Controllers
             .ThenBy(x => x.FirstName)
             .ToList();
 
-            var teams = await _teamService.GetAllTeams();
+            var teams = await _teamService.GetTeamsForEvent(eventId);
             var teamList = teams.OrderBy(c => c.CurrentTeamName).ToList();
 
             var vm = new CompetitorsInEventViewModel(
@@ -85,7 +85,7 @@ namespace WebCycleManager.Controllers
         {
             var competitors = await _competitorService.GetAllCompetitors(DateTime.Now.Year);
             var competitorsList = new SelectList(competitors.OrderBy(c => c.CompetitorName), "CompetitorId", "CompetitorName");
-            var teams = await _teamService.GetAllTeams();
+            var teams = await _teamService.GetTeamsForEvent(eventId);
             var teamList = teams.OrderBy(c => c.CurrentTeamName).ToList();
             ViewBag.ListOfTeams = teamList;
             ViewBag.ListOfCompetitors = competitorsList;
@@ -114,7 +114,7 @@ namespace WebCycleManager.Controllers
                 .ToList();
 
             ViewData["CompetitorId"] = new SelectList(competitors, "CompetitorId", "CompetitorName");
-            ViewData["TeamId"] = new SelectList(await _teamService.GetAllTeams(), "TeamId", "TeamName");
+            ViewData["TeamId"] = new SelectList(await _teamService.GetTeamsForEvent(eventId), "TeamId", "TeamName");
             return View();
         }
 

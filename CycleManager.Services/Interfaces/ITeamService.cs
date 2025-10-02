@@ -25,5 +25,7 @@ namespace CycleManager.Services.Interfaces
         Task Update(Team entity);
 
         Task Add(Team entity);
+
+        Task<IEnumerable<Team>> GetTeamsForEvent(int eventId);
     }
 }

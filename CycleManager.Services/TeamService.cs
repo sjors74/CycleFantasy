@@ -57,6 +57,11 @@ namespace CycleManager.Services
             });
         }
 
+        public async Task<IEnumerable<Team>> GetTeamsForEvent(int eventId)
+        {
+            return await _teamRepository.GetTeamsForEvent(eventId);
+        }
+
         public async Task Update(Team entity)
         {
             _teamRepository.Update(entity);

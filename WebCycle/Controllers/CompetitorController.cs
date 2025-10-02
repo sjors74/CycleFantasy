@@ -31,9 +31,9 @@ namespace WebCycle.Controllers
         }
 
         [HttpGet("{id}/team", Name = "GetCompetitorsByTeamId")]
-        public async Task<IEnumerable<CompetitorInTeamDto>> GetByTeamId(int id)
+        public async Task<IEnumerable<CompetitorInTeamDto>> GetByTeamId(int id, int year)
         {
-            return await _competitorService.GetByTeamId(id);
+            return await _competitorService.GetByTeamId(id, year);
         }
 
     }

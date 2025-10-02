@@ -34,5 +34,16 @@ namespace DataAccessEF.TypeRepository
 
             return team;
         }
+
+        public async Task<IEnumerable<Team>> GetTeamsForEvent(int eventId)
+        {
+            var teams = await context.Teams
+                .Include(t => t.EventTeams)
+                .Where(t => t.EventTeams.Any(t => t.EventId == eventId))
+                .ToListAsync();
+
+            return teams;
+        }
+
     }
 }
