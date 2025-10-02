@@ -1,41 +1,23 @@
 ﻿@model EventItemViewModel
-@{
-    ViewData["Title"] = "Delete";
-}
-
-<h3>Weet je zeker dat je dit evenement wilt verwijderen?</h3>
-<div>
-    <hr />
-    <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Name)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Name)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Year)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Year)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.StartDate)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.StartDate)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.EndDate)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.EndDate)
-        </dd>
+<h1>Verwijder</h1>
+<div class="alert alert-warning">
+    <h4 class="alert-heading">Weet je het zeker?</h4>
+    <p>
+        Je staat op het punt om het volgende evenement definitief te verwijderen:
+    </p>
+    <hr>
+    <dl class="row mb-0">
+        <dt class="col-sm-3">Naam evenement</dt>
+        <dd class="col-sm-9">@Model.Name (@Model.Year)</dd>
     </dl>
-    
-    <form asp-action="Delete">
-        <input type="hidden" asp-for="Id" />
-        <input type="submit" value="Verwijder" class="btn btn-danger" /> |
-        <a asp-action="Index">Terug naar de lijst</a>
-    </form>
 </div>
+<form asp-action="Delete" method="post" class="mt-3">
+    <input type="hidden" asp-for="Id" />
+
+    <div class="d-flex justify-content-between">
+        <a asp-action="Index" class="btn btn-outline-secondary">Annuleren</a>
+        <button type="submit" class="btn btn-danger">
+            <i class="bi bi-trash"></i> Verwijder
+        </button>
+    </div>
+</form>

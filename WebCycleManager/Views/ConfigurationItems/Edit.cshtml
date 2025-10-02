@@ -1,10 +1,6 @@
 ﻿@model ConfigurationItemViewModel
 
-@{
-    ViewData["Title"] = "Edit";
-}
-
-<h1>Wijzig configuratie-item</h1>
+<h3>Wijzig configuratie-item</h3>
 <hr />
 <div class="row">
     <div class="col-md-4">
@@ -26,15 +22,12 @@
                 <select asp-for="ConfigurationId" class="form-control" asp-items="ViewBag.ConfigurationId"></select>
                 <span asp-validation-for="ConfigurationId" class="text-danger"></span>
             </div>
-            <div class="form-group">
-                <input type="submit" value="Opslaan" class="btn btn-primary" />
+            <div class="mt-3 d-flex justify-content-between">
+                <a asp-controller="Configurations" asp-action="Details" asp-route-id="@Model.ConfigurationId" class="btn btn-outline-secondary">Terug naar de lijst</a>
+                <button type="submit" class="btn btn-primary">Opslaan</button>
             </div>
         </form>
     </div>
-</div>
-
-<div>
-    <a  asp-controller="Configurations" asp-action="Details" asp-route-id="@Model.ConfigurationId">Terug naar de lijst</a>
 </div>
 
 @section Scripts {

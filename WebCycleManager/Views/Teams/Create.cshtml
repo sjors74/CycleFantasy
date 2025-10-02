@@ -1,7 +1,6 @@
 ﻿@model TeamCreateViewModel
 
 <h3>Maak een team</h3>
-<hr />
 <div class="row">
     <div class="col-md-6">
         <form asp-action="Create">
@@ -13,16 +12,18 @@
             </div>
             <div class="form-group mb-2">
                 <label asp-for="CountryId" class="control-label"></label>
-                <select asp-for="CountryId" class="form-control" asp-items="Model.Countries"></select>
+                <select asp-for="CountryId" class="form-control" asp-items="Model.Countries">
+                    <option value="">-- Selecteer een land --</option>
+                </select>
             </div>
             <div class="form-group mb-2">
                 <label asp-for="PcsName" class="control-label"></label>
                 <input asp-for="PcsName" class="form-control" />
                 <span asp-validation-for="PcsName" class="text-danger"></span>
             </div>
-            <div class="form-group mt-3">
-                <input type="submit" value="Maak" class="btn btn-primary" />
-                <a asp-action="Index" class="btn btn-link">Terug naar de lijst</a>
+            <div class="mt-3 d-flex justify-content-between gap-2">
+                <a asp-action="Index" class="btn btn-outline-secondary">Terug naar de lijst</a>
+                <button type="submit" class="btn btn-primary">Maak</button>
             </div>
         </form>
     </div>
