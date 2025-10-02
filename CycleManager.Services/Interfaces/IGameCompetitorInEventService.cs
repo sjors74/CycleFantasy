@@ -64,5 +64,7 @@ namespace CycleManager.Services.Interfaces
         Task<IEnumerable<int>> GetAllPicksAsCompetitorIds(int id);
 
         Task<GameCompetitorEvent> CreateGameCompetitorEventAsync(DeelnemerCreateDto dto);
+
+        Task RemovePickFromEvent(int id);
     }
 }

@@ -75,3 +75,13 @@ body {
     background: #f8f9fa; /* Bootstrap light background */
     z-index: 2;
 }
+
+.form-check-lg .form-check-input {
+    width: 1.5rem;
+    height: 1.5rem;
+}
+
+.form-check-lg .form-check-label {
+    font-size: 1.25rem;
+    margin-left: 0.5rem;
+}

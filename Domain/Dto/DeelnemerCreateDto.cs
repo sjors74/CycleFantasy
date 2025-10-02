@@ -5,6 +5,7 @@ namespace CycleManager.Domain.Dto
     public class DeelnemerCreateDto
     {
         [Required]
+        [Display(Name = "Teamnaam")]
         public string TeamName { get; set; } = string.Empty;
 
         [Required]

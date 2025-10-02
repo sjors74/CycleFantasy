@@ -16,8 +16,6 @@ namespace DataAccessEF.TypeRepository
         public async Task<List<CompetitorDto>> GetAllCompetitors(int year)
         {
             var competitors = await context.Competitors
-                .Include(c => c.CompetitorInTeams)
-                    .ThenInclude(t => t.Team)
                 .Where(c => c.CompetitorInTeams.Any(cit => cit.Year == year))
                 .Select(c => new CompetitorDto
                 {
@@ -37,7 +35,7 @@ namespace DataAccessEF.TypeRepository
                             Year = cit.Year,
                             IsNationalChampion = cit.IsNationalChampion
                         })
-                        .ToList()
+                        .ToList() // mag blijven voor materialisatie
                 })
                 .AsNoTracking()
                 .ToListAsync();

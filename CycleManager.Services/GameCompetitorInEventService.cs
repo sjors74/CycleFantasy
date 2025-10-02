@@ -139,5 +139,11 @@ namespace CycleManager.Services
         {
             return await _repo.CreateGameCompetitorEventAsync(dto);
         }
+
+        public async Task RemovePickFromEvent(int id)
+        {
+            await _pickRepository.RemovePickFromEvent(id);
+            await _pickRepository.SaveChangesAsync();
+        }
     }
 }

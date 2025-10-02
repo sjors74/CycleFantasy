@@ -86,14 +86,23 @@ namespace DataAccessEF.TypeRepository
             // Pas wijzigingen toe
             context.GameCompetitorEventPicks.RemoveRange(toDelete);
             await context.GameCompetitorEventPicks.AddRangeAsync(newPicks);
-            
+
             try
             {
                 var changes = await context.SaveChangesAsync();
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Console.WriteLine($"Er is een fout opgetreden: {ex.Message}");
+            }
+        }
+
+        public async Task RemovePickFromEvent(int id)
+        {
+            var pick = await context.GameCompetitorEventPicks.Where(p => p.Id == id).FirstOrDefaultAsync();
+            if (pick != null)
+            {
+                context.GameCompetitorEventPicks.Remove(pick);
             }
         }
     }

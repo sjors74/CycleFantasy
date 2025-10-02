@@ -81,14 +81,27 @@ namespace WebCycleManager.Controllers
         }
 
         // GET: CompetitorsInEvents/Create
-        public async Task<IActionResult> Create(int eventId)
+        public async Task<IActionResult> Create(int eventId, int? filterTeam)
         {
             var competitors = await _competitorService.GetAllCompetitors(DateTime.Now.Year);
-            var competitorsList = new SelectList(competitors.OrderBy(c => c.CompetitorName), "CompetitorId", "CompetitorName");
+            if(filterTeam.HasValue && filterTeam.Value > 0)
+            {
+                competitors = competitors.Where(c => c.Teams.Any(t => t.TeamId == filterTeam.Value)).ToList();
+            }
+
+            var competitorsList = competitors
+                .SelectMany(c => c.Teams.Select(t => new
+                {
+                    CompetitorId = t.CompetitorInTeamId,
+                    CompetitorName = c.CompetitorName
+                }))
+                .OrderBy(x => x.CompetitorName)
+                .ToList();
+
+            ViewBag.ListOfCompetitors = new SelectList(competitorsList, "CompetitorId", "CompetitorName");
             var teams = await _teamService.GetTeamsForEvent(eventId);
             var teamList = teams.OrderBy(c => c.CurrentTeamName).ToList();
             ViewBag.ListOfTeams = teamList;
-            ViewBag.ListOfCompetitors = competitorsList;
             ViewBag.EventId = eventId;
             return View();
         }
@@ -96,7 +109,7 @@ namespace WebCycleManager.Controllers
         // POST: CompetitorsInEvents/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(int eventId, IFormCollection formCollection)
+        public async Task<IActionResult> Create(int eventId, int? filterTeam, IFormCollection formCollection)
         {
             if (ModelState.IsValid)
             {
@@ -107,11 +120,16 @@ namespace WebCycleManager.Controllers
                     listOfCompetitorsInEvent.Add(new CompetitorsInEvent { CompetitorInTeamId = competitorId, EventId = eventId });
                 }
                 await _competitorInEventService.Create(listOfCompetitorsInEvent);
-                return RedirectToAction("Index", new { eventId } );
+                return RedirectToAction("Index", new { eventId, filterTeam } );
             }
             var competitors = (await _competitorService.GetAllCompetitors(DateTime.Now.Year))
                 .OrderBy(c => c.CompetitorName)
                 .ToList();
+
+            if (filterTeam.HasValue && filterTeam.Value > 0)
+            {
+                competitors = competitors.Where(c => c.Teams.Any(t => t.TeamId == filterTeam.Value)).ToList();
+            }
 
             ViewData["CompetitorId"] = new SelectList(competitors, "CompetitorId", "CompetitorName");
             ViewData["TeamId"] = new SelectList(await _teamService.GetTeamsForEvent(eventId), "TeamId", "TeamName");
@@ -135,20 +153,14 @@ namespace WebCycleManager.Controllers
             var vm = GetViewModel(competitorsInEvent);
             var team = competitor?.CompetitorInTeams.FirstOrDefault()?.Team;
             vm.TeamId = team?.TeamId ?? 0;
-            var competitors = (await _competitorService.GetAllCompetitors(DateTime.Now.Year))
-                .OrderBy(c => c.CompetitorName)
-                .ToList();
-            ViewData["CompetitorId"] = new SelectList(competitors, "CompetitorId", "FirstName", competitorsInEvent.CompetitorInTeamId);
             ViewData["EventId"] = new SelectList(await _eventService.GetAllEvents(), "EventId", "EventName", competitorsInEvent.EventId);
             return View(vm);
         }
 
         // POST: CompetitorsInEvents/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("EventNumber", "CompetitorInEventId", "InSelection", "OutOfCompetition","EventId", "TeamId")] CompetitorInEventViewModel vm)
+        public async Task<IActionResult> Edit(int id, int?filterTeam, CompetitorInEventViewModel vm)
         {
             if (id != vm.CompetitorInEventId)
             {
@@ -180,7 +192,7 @@ namespace WebCycleManager.Controllers
                         throw;
                     }
                 }
-                return RedirectToAction(nameof(Index), new { eventId = vm.EventId, FilterTeam = vm.TeamId.ToString() });
+                return RedirectToAction(nameof(Index), new { eventId = vm.EventId, FilterTeam = filterTeam });
             }
             return View(vm);
         }
@@ -206,13 +218,13 @@ namespace WebCycleManager.Controllers
         // POST: CompetitorsInEvents/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
+        public async Task<IActionResult> DeleteConfirmed(int id, int? filterTeam)
         {
             var competitorsInEvent = await _competitorInEventService.GetCompetitorById((int)id);
             if (competitorsInEvent != null)
             {
                 await _competitorInEventService.Delete(competitorsInEvent);
-                return RedirectToAction(nameof(Index), new { eventId = competitorsInEvent.EventId });
+                return RedirectToAction(nameof(Index), new { eventId = competitorsInEvent.EventId, filterTeam });
             }
             
             return NotFound();
