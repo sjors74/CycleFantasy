@@ -78,76 +78,77 @@ namespace WebCycleManager.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Details(GameCompetitorInEventViewModel model)
+        public async Task<IActionResult> Details(GameCompetitorInEventViewModel model)
         {
             if (!ModelState.IsValid)
             {
-                // Herlaad dropdowns, anders renderen ze leeg
                 foreach (var pick in model.CompetitorsInEvent)
                 {
-                    //pick.Competitors = GetCompetitorSelectList();
+                    var competitors = await _competitorInEventService.GetCompetitors(model.EventId);
+
+                    pick.Competitors = competitors
+                        .OrderBy(c => c.CompetitorInTeam.Competitor.LastName)
+                        .Select(c => new SelectListItem
+                        {
+                            Value = c.Id.ToString(),
+                            Text = $"{c.CompetitorInTeam.Competitor.FirstName} {c.CompetitorInTeam.Competitor.LastName}"
+                        })
+                        .ToList();
                 }
                 return View(model);
             }
 
-            foreach (var pick in model.CompetitorsInEvent)
+
+            var newPicks = model.CompetitorsInEvent
+                    .Where(p => p.PickId == 0 && p.SelectedCompetitorId.HasValue)
+                    .Select(p => new GameCompetitorEventPick
+                    {
+                        GameCompetitorEventId = model.Id,
+                        CompetitorsInEventId = p.SelectedCompetitorId.Value
+                    })
+                    .ToList();
+
+            if (newPicks.Any())
             {
-                // verwerk pick.SelectedCompetitorId
+                await _gameCompetitorEventService.AddPicks(newPicks);
             }
 
             // Redirect of terug naar view
-            return RedirectToAction("Details", new { eventId = model.EventId, gameCompetitorInEventId = model.GameCompetitorInEventId });
+            return RedirectToAction("Details", new { eventId = model.EventId});
         }
-        //    var resultList = new List<GameCompetitorEventPick>();
-        //    foreach (var key in formCollection.Keys)
-        //    {
-        //        if (key.Contains("SelectedCompetitorId"))
-        //        {
-        //            var value = formCollection[key];
-        //            int.TryParse(value, out var competitorId);
-        //            if (competitorId > 0)
-        //            {
-        //                var gameCompetitor = _context.GameCompetitorsEvent.FirstOrDefault(g => g.Id.Equals(gameCompetitorInEventId));
-        //                var competitor = _context.CompetitorsInEvent.FirstOrDefault(c => c.Id == competitorId);
-        //                if (gameCompetitor != null && competitor != null)
-        //                {
-        //                    resultList.Add(new GameCompetitorEventPick { CompetitorsInEvent = competitor, GameCompetitorEvent = gameCompetitor});
-        //                }
-        //            }
-        //        }
-        //    }
-
-        //    _context.GameCompetitorEventPicks.AddRange(resultList);
-        //    _context.SaveChanges();
-        //    return RedirectToAction("Details", "GameCompetitorEvents", new { eventId });
-        //}
-
 
         // GET: GameCompetitorEvents/Details/5
         public async Task<IActionResult> Details(int? id, int? eventId)
         {
-            var model = new GameCompetitorInEventViewModel();
-            model.Id = id.Value;
-            model.EventId = eventId.Value;
+            if (id == null || eventId == null)
+            {
+                return NotFound();
+            }
 
-           
+            var model = new GameCompetitorInEventViewModel
+            {
+                Id = id.Value,
+                EventId = eventId.Value
+            };
+
+            // Resultaten ophalen
             var resultDtos = (await _resultService.GetResultsByEventId(eventId.Value)).ToList();
+            var pointsByCompetitor = resultDtos.ToDictionary(r => r.CompetitorInEventId, r => r.Points);
 
-            var pointsByCompetitor = resultDtos
-                .ToDictionary(r => r.CompetitorInEventId, r => r.Points);
-
+            // Team picks ophalen
             var teamPicks = _gameCompetitorEventService
                 .GetPicks(eventId.Value)
                 .Where(p => p.GameCompetitorEventId == id)
                 .ToList();
 
+            // Alle mogelijke competitors voor de dropdown
             var competitors = await _competitorInEventService.GetCompetitors(eventId.Value);
-                ;
+
             var dropdownList = competitors
                 .OrderBy(c => c.CompetitorInTeam.Competitor.LastName)
                 .Select(c => new SelectListItem
                 {
-                    Value = c.CompetitorInTeam.CompetitorId.ToString(),
+                    Value = c.Id.ToString(), // dit is competitorInEvent.Id
                     Text = $"{c.CompetitorInTeam.Competitor.FirstName} {c.CompetitorInTeam.Competitor.LastName}"
                 })
                 .ToList();
@@ -155,6 +156,7 @@ namespace WebCycleManager.Controllers
             model.DropdownList = dropdownList;
             model.TeamName = teamPicks?.FirstOrDefault()?.GameCompetitorEvent?.TeamName ?? "onbekend";
 
+            // Bestaande picks omzetten
             var picks = teamPicks
                 .Select(p =>
                 {
@@ -170,32 +172,28 @@ namespace WebCycleManager.Controllers
                         IsOutOfCompetition = p.CompetitorsInEvent.OutOfCompetition,
                         Score = score,
                         PickId = p.Id,
-                        SelectedCompetitorId = 0,
-                        Competitors = _context.CompetitorsInEvent.Select(c => new SelectListItem { Text = c.CompetitorInTeam.Competitor.CompetitorName, Value = c.CompetitorInTeam.CompetitorId.ToString()}) 
+                        SelectedCompetitorId = competitorId,   // dit zorgt dat de juiste waarde in de dropdown geselecteerd is
+                        Competitors = dropdownList             // dropdown altijd vullen
                     };
                 })
                 .OrderByDescending(m => m.Score)
                 .ToList();
-            if(model.CompetitorsInEvent == null)
+
+            // Als er nog lege plekken zijn → vullen met lege picks
+            var existingCount = picks.Count;
+            for (int i = existingCount; i < 15; i++)
             {
-                model.CompetitorsInEvent = new List<PickDetailViewModel>();
+                picks.Add(new PickDetailViewModel
+                {
+                    Competitors = dropdownList
+                });
             }
 
             model.CompetitorsInEvent = picks;
-            var existingCount = model.CompetitorsInEvent.Count;
-            
-            model.NumberOfPicks = picks.Count;
-            for(int i = existingCount; i < 15; i++)
-            {
-                model.CompetitorsInEvent.Add(new PickDetailViewModel
-                {
-                    Competitors = model.DropdownList
-                });
-            }
-            var totalScore = picks.Sum(x => x.Score);
-            model.Score = totalScore;
-            return View(model);
+            model.NumberOfPicks = picks.Count(p => p.PickId > 0);
+            model.Score = picks.Sum(x => x.Score);
 
+            return View(model);
         }
         // GET: GameCompetitorEvents/Create
         public async Task<IActionResult> Create(int eventId)
@@ -318,13 +316,11 @@ namespace WebCycleManager.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeletePick(int pickId, int gameEventId, int id)
+        public async Task<IActionResult> DeletePick(int pickId)
         {
             // Verwijder de pick uit de database
             await _gameCompetitorEventService.RemovePickFromEvent(pickId);
-
-            // Redirect terug naar de Edit pagina van de game event
-            return RedirectToAction( "Details", "GameCompetitorEvents", new { id, eventId = gameEventId });
+            return Ok();
         }
 
         private bool GameCompetitorEventExists(int id)

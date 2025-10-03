@@ -1,5 +1,6 @@
 ﻿using Domain.Models;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace WebCycleManager.Models
 {
@@ -12,7 +13,8 @@ namespace WebCycleManager.Models
         public List<PickDetailViewModel> CompetitorsInEvent { get; set; } = new List<PickDetailViewModel>();
         public int GameCompetitorInEventId { get; set; }
         public int Score { get; set; } = 0;
-        public IEnumerable<SelectListItem> DropdownList { get; set; }
+        [NotMapped]
+        public IEnumerable<SelectListItem> DropdownList { get; set; } = new List<SelectListItem>();
         public int NumberOfPicks { get; set; } = 0;
 
         public List<CompetitorsInEvent> SuggestedCompetitors { get; set; } = new List<CompetitorsInEvent>();

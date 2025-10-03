@@ -129,7 +129,6 @@ namespace CycleManager.Services
             return competitorPicks;
         }
 
-
         public async Task<CompetitorsInEvent> GetCompetitorInEventById(int id)
         {
             return await _competitorRepo.GetById(id);
@@ -143,6 +142,12 @@ namespace CycleManager.Services
         public async Task RemovePickFromEvent(int id)
         {
             await _pickRepository.RemovePickFromEvent(id);
+            await _pickRepository.SaveChangesAsync();
+        }
+
+        public async Task AddPicks(List<GameCompetitorEventPick> picks)
+        {
+            _pickRepository.AddRange(picks);
             await _pickRepository.SaveChangesAsync();
         }
     }

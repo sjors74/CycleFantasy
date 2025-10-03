@@ -1,0 +1,19 @@
+﻿@model DeletePickModalViewModel
+
+<div class="modal fade" id="deletePickModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Voorspelling verwijderen</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Sluiten"></button>
+            </div>
+            <div class="modal-body">
+                @Model.Message
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuleren</button>
+                <button type="button" id="confirmDeletePick" class="btn btn-danger" data-pickid="@Model.PickId">Verwijderen</button>
+            </div>
+        </div>
+    </div>
+</div>

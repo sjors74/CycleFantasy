@@ -16,53 +16,53 @@
                 </tr>
             </thead>
             <tbody>
-                @* Bestaande picks *@
                 @for (int i = 0; i < Model.CompetitorsInEvent.Count; i++)
                 {
                     var pick = Model.CompetitorsInEvent[i];
-
-                    <tr>
-                        <td>@pick.FirstName</td>
-                        <td>@pick.LastName</td>
-                        <td>@pick.Score</td>
-                        <td>
-                            @if (pick.IsOutOfCompetition)
+                    <input type="hidden" asp-for="CompetitorsInEvent[@i].PickId" />
+                    <tr id="pickRow_@pick.PickId">
+                        <td>@if(pick.PickId > 0)
                             {
-                                <i class="bi bi-x-circle text-danger" title="Uitgevallen"></i>
+                                @pick.FirstName
+                                 <input type="hidden" asp-for="CompetitorsInEvent[@i].SelectedCompetitorId" />
                             }
                             else
                             {
-                                <i class="bi bi-check-circle text-success" title="Actief"></i>
+                                <select asp-for="CompetitorsInEvent[@i].SelectedCompetitorId"
+                                        class="form-select"
+                                        asp-items="pick.Competitors">
+                                    <option value="">-- Selecteer --</option>
+                                </select>
+                            }
+                        </td>
+                        <td>@(pick.PickId > 0 ? pick.LastName : "")</td>
+                        <td>@(pick.PickId > 0 ? pick.Score.ToString() : "")</td>
+                        <td>
+                            @if (pick.PickId > 0)
+                            {
+                                if (pick.IsOutOfCompetition)
+                                {
+                                    <i class="bi bi-x-circle text-danger" title="Uitgevallen"></i>
+                                }
+                                else
+                                {
+                                    <i class="bi bi-check-circle text-success" title="Actief"></i>
+                                }
                             }
                         </td>
                         <td>
                             @if (pick.PickId > 0) // Alleen bestaande picks kunnen verwijderd worden
                             {
-                                <form asp-controller="GameCompetitorEvents" asp-action="DeletePick" method="post" class="mb-0">
-                                    <input type="hidden" name="pickId" value="@pick.PickId" />
-                                    <input type="hidden" name="gameEventId" value="@Model.EventId" />
-                                    <input type="hidden" name="id" value="@Model.GameCompetitorInEventId" />
-                                    <button type="submit" class="btn btn-sm btn-outline-danger">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
-                                </form>
+                                <button type="button" class="btn btn-sm btn-outline-danger deletePickBtn"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#deletePickModal"
+                                    data-pickid="@pick.PickId"
+                                >
+                                    <i class="bi bi-trash"></i>
+                                </button>
                             }
                         </td>
                     </tr>
-
-                    @* Dropdowns voor lege slots *@
-                    @if (string.IsNullOrEmpty(pick.FirstName) && string.IsNullOrEmpty(pick.LastName))
-                    {
-                        <tr>
-                            <td colspan="2">
-                                <select asp-for="CompetitorsInEvent[@i].SelectedCompetitorId"
-                                        asp-items="Model.CompetitorsInEvent[i].Competitors"
-                                        class="form-select">
-                                    <option value="">-- Selecteer --</option>
-                                </select>
-                            </td>
-                        </tr>
-                    }
                 }
             </tbody>
         </table>
@@ -83,3 +83,38 @@
         </div>
     </div>
 </form>
+@await Html.PartialAsync("_DeletePickModal", new DeletePickModalViewModel())
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+        $(document).ready(function () {
+
+        var pickIdToDelete;
+        // Wanneer iemand op de prullenbak klikt
+        $('.deletePickBtn').click(function () {
+            pickIdToDelete = $(this).data('pickid');
+            $('#confirmDeletePick').data('pickid', pickIdToDelete);
+        });
+
+        // Bevestig verwijderen
+        $('#confirmDeletePick').click(function () {
+            var id = $(this).data('pickid');
+            var token = $('input[name="__RequestVerificationToken"]').val();
+
+            $.ajax({
+                url: '/GameCompetitorEvents/DeletePick',
+                type: 'POST',
+                data: { 
+                    __RequestVerificationToken: token,
+                    pickId: id 
+                },
+                success: function () {
+                    $('#deletePickModal').modal('hide');
+                    $('#pickRow_' + id).fadeOut(300, function () { $(this).remove(); });
+                },
+                error: function () {
+                    alert('Er is iets misgegaan bij het verwijderen.');
+                }
+            });
+        });
+    });
+</script>
