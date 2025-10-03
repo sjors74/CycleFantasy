@@ -127,11 +127,13 @@ namespace WebCycleManager.Controllers
                 EventId = stage.EventId,
                 StageName = stage.StageName,
                 StageOrder = stage.StageOrder,
+                NoScore = stage.NoScore,
+                NoScoreDescription = stage.NoScoreDescription,
                 StageDate = DateOnly.FromDateTime(stage.StageDate),
                 StartLocation = stage.StartLocation,
                 FinishLocation = stage.FinishLocation
             };
-            return PartialView("_EditStageModal", vm);
+            return PartialView("_EditStagePartial", vm);
         }
 
         [HttpPost]
@@ -139,7 +141,7 @@ namespace WebCycleManager.Controllers
         public async Task<IActionResult> EditAjax(StageViewModel model)
         {
             if (!ModelState.IsValid)
-                return PartialView("_EditStageModal", model);
+                return PartialView("_EditStagePartial", model);
 
             var stage = await _stageService.GetStageById(model.StageId);
             if (stage == null) return NotFound();
@@ -149,6 +151,8 @@ namespace WebCycleManager.Controllers
             stage.StageDate = model.StageDate.ToDateTime(TimeOnly.MinValue);
             stage.StartLocation = model.StartLocation;
             stage.FinishLocation = model.FinishLocation;
+            stage.NoScore = model.NoScore;
+            stage.NoScoreDescription = model.NoScoreDescription;
 
             await _stageService.UpdateStage(stage);
 
@@ -160,7 +164,9 @@ namespace WebCycleManager.Controllers
                     date = stage.StageDate.ToString("dd-MM-yyyy"),
                     name = stage.StageName,
                     start = stage.StartLocation,
-                    finish = stage.FinishLocation
+                    finish = stage.FinishLocation,
+                    noscore = stage.NoScore,
+                    noscoredescription = stage.NoScoreDescription
                 }
             });
         }
