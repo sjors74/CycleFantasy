@@ -46,19 +46,20 @@
                     <td>@item.FinishLocation</td>
                     <td>
                         <div class="d-flex gap-2">
-                            <a asp-controller="Stages" asp-action="Edit" asp-route-id="@item.StageId" title="Wijzig">
+                            <a href="#"
+                               data-bs-toggle="modal"
+                               data-bs-target="#editStageModal"
+                               data-url="@Url.Action("EditStage", "Stages", new { id = item.StageId })">
                                 <i class="bi bi-pencil"></i>
                             </a>
-                            <a asp-controller="Stages" asp-action="Details" asp-route-id="@item.StageId" title="Details">
-                                <i class="bi bi-eye"></i>
-                            </a>
+
                             <a asp-controller="Stages" asp-action="Delete" asp-route-id="@item.StageId" title="Verwijder">
                                 <i class="bi bi-trash"></i>
                             </a>
                         </div>
                     </td>
                     <td>
-                        <a asp-controller="Results" asp-action="Index" asp-route-stageId="@item.StageId" title="Uitslag">
+                        <a asp-controller="Results" asp-action="Index" asp-route-stageId="@item.StageId" title="Uitslag" class="text-decoration-none">
                             <i class="bi bi-card-list"></i>
                         </a>
                         <span title="Aantal posities">@item.AantalPosities</span>
@@ -101,3 +102,16 @@ else
         <i class="bi bi-pencil"></i> Bewerk
     </a>
 </div>
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+<script src="~/js/modals.js"></script>
+
+<script>
+    // Setup modals
+    document.addEventListener("DOMContentLoaded", function() {
+        ModalHelper.setupModal('editStageModal', 'editStageModalContent');
+    });
+</script>
+}

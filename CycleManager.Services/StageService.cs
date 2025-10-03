@@ -57,7 +57,7 @@ namespace CycleManager.Services
 
         public Task<Stage> GetStageById(int id)
         {
-            return _stageRepository.GetById(id);
+            return _stageRepository.GetStageById(id);
         }
 
         public async Task UpdateStage(Stage stage)

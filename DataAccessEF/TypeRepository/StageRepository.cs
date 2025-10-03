@@ -2,7 +2,6 @@
 using Domain.Interfaces;
 using Domain.Models;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Identity.Client;
 
 namespace DataAccessEF.TypeRepository
 {
@@ -67,6 +66,21 @@ namespace DataAccessEF.TypeRepository
             var stage = await context.Stages
                 .Where(s => s.EventId.Equals(eventId) && s.StageName.Equals(stageNumber.ToString()))
                 .FirstOrDefaultAsync();
+            if (stage != null)
+            {
+                return stage;
+            }
+            else
+            {
+                return new Stage();
+            }
+        }
+
+        public async Task<Stage> GetStageById(int stageId)
+        {
+            var stage = await context.Stages
+                .Include(s => s.Event)
+                .FirstOrDefaultAsync(s => s.Id == stageId);
             if (stage != null)
             {
                 return stage;

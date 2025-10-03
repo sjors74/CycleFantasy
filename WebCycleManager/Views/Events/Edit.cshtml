@@ -4,7 +4,7 @@
     <h3 class="mb-0">@Model.EventNameDescription</h3>
     <div class="d-flex gap-2">
         <a href="#"
-           class="btn btn-secondary position-relative"
+           class="btn btn-outline-secondary"
            data-bs-toggle="modal"
            data-bs-target="#manageTeamsModal"
            data-url="@Url.Action("ManageTeams", "Events", new { id = Model.Id })">
@@ -12,12 +12,12 @@
             <span class="badge bg-light text-dark ms-2">@Model.SelectedTeamsCount</span>
         </a>
         <a href="#"
-           class="btn btn-secondary position-relative"
+           class="btn btn-outline-primary"
            data-bs-toggle="modal"
            data-bs-target="#manageStagesModal"
-           data-url="@Url.Action("ManageStages", "Events", new { eventId = Model.Id })">
-            Stages
-            <span class="badge bg-light text-dark ms-2">@Model.StagesInEvent</span>
+           data-url="@Url.Action("ManageStages", "Events", new { eventid = Model.Id })">
+            Etappes beheren
+            <span class="badge bg-light text-dark ms-2">#</span>
         </a>
     </div>
 </div>
@@ -94,193 +94,20 @@
             <button type="submit" class="btn btn-primary me-2">Opslaan</button>
     </div>
 </form>
-@await Html.PartialAsync("_ManageTeamsModal", Model)
-@await Html.PartialAsync("_ManageStagesModal", Model)
-@await Html.PartialAsync("_EditStageModal")
+
 
 @section Scripts {
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
+    <script src="~/js/modals.js"></script>
 
     <script>
-        document.addEventListener("DOMContentLoaded", function () {
-
-            /*** Generieke functie: modal content via AJAX laden ***/
-            function setupModal(modalId, contentId) {
-                const modalEl = document.getElementById(modalId);
-                if (!modalEl) return;
-
-                modalEl.addEventListener('show.bs.modal', function(event) {
-                    const button = event.relatedTarget;
-                    const url = button?.dataset.url;
-                    if (!url) return;
-
-                    const contentEl = document.getElementById(contentId);
-                    if (!contentEl) return;
-
-                    // Loader tonen
-                    contentEl.innerHTML = `
-                        <div class="d-flex justify-content-center align-items-center" style="min-height:150px;">
-                            <div class="spinner-border text-primary" role="status">
-                                <span class="visually-hidden">Laden...</span>
-                            </div>
-                        </div>
-                    `;
-
-                    fetch(url)
-                        .then(res => res.text())
-                        .then(html => {
-                            contentEl.innerHTML = html;
-                            initStageModalControls(contentId);
-                        })
-                    });
-            }
-
-            /*** AJAX formulier submit in modal ***/
-            function setupAjaxForm(modalContentId) {
-                document.getElementById(modalContentId)?.addEventListener('submit', function(e) {
-                    const form = e.target.closest('form');
-                    if (!form) return;
-
-                    e.preventDefault();
-                    const formData = new FormData(form);
-
-                    fetch(form.action, { method: 'POST', body: formData })
-                        .then(res => res.json())
-                        .then(data => {
-                            const modalContent = document.getElementById(modalContentId);
-                            const modalEl = modalContent.closest('.modal');
-                            const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
-
-                            if (data.success) {
-                                // Bijwerken van tabelrij als 'stage' aanwezig
-                                if(data.stage) {
-                                    const row = document.getElementById('stage-' + data.stage.id);
-                                    if (row) {
-                                        row.innerHTML = `
-                                            <td>${data.stage.date}</td>
-                                            <td>${data.stage.name}</td>
-                                            <td>${data.stage.start} → ${data.stage.finish}</td>
-                                            <td class="text-end">
-                                                <button class="btn btn-sm btn-outline-primary edit-stage-btn" data-url="/Stages/EditStage/${data.stage.id}">
-                                                    <i class="bi bi-pencil"></i>
-                                                </button>
-                                                <button type="button" class="btn btn-danger btn-sm delete-stage-btn" data-stage-id="${data.stage.id}">
-                                                    <i class="bi bi-trash"></i>
-                                                </button>
-                                            </td>
-                                        `;
-                                    }
-                                }
-
-                                modal.hide(); // werkt altijd betrouwbaar
-                                Swal.fire({ icon: 'success', title: 'Actie voltooid!' });
-                            } else {
-                                // Validation errors
-                                modalContent.innerHTML = data.html;
-                                initStageModalControls(modalContentId);
-                            }
-                        })
-                        .catch(() => alert('Er is iets misgegaan bij het opslaan.'));
-                }, { capture: true });
-            }
-
-            /*** Delete actie via SweetAlert2 ***/
-            document.addEventListener('click', function(e) {
-                const btn = e.target.closest('.delete-stage-btn');
-                if (!btn) return;
-
-                const stageId = btn.dataset.stageId;
-
-                Swal.fire({
-                    title: 'Weet je het zeker?',
-                    text: "Deze etappe wordt permanent verwijderd!",
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#d33',
-                    cancelButtonColor: '#3085d6',
-                    confirmButtonText: 'Ja, verwijderen',
-                    cancelButtonText: 'Annuleren'
-                }).then((result) => {
-                    if(result.isConfirmed) {
-                        fetch(`/Stages/DeleteAjax/${stageId}`, {
-                            method: 'POST',
-                            headers: { 'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value }
-                        })
-                        .then(res => res.json())
-                        .then(data => {
-                            if(data.success) {
-                                const row = document.getElementById(`stage-${stageId}`);
-                                if(row) row.remove();
-                                Swal.fire('Verwijderd!', 'De etappe is verwijderd.', 'success');
-                            } else {
-                                Swal.fire('Fout', 'Kon de etappe niet verwijderen', 'error');
-                            }
-                        });
-                    }
-                });
-            });
-
-            /*** Edit stage buttons in modal ***/
-            document.getElementById('manageStagesContent')?.addEventListener('click', function(e) {
-                const editBtn = e.target.closest('.edit-stage-btn');
-                if (!editBtn) return;
-
-                e.preventDefault();
-                const url = editBtn.dataset.url;
-
-                fetch(url)
-                    .then(res => res.text())
-                    .then(html => {
-                        const editModalContent = document.getElementById('editStageModalContent');
-                        editModalContent.innerHTML = html;
-                        initStageModalControls('editStageModalContent');
-
-                        const editModal = bootstrap.Modal.getOrCreateInstance(document.getElementById('editStageModal'));
-                        editModal.show();
-
-                        // Bind AJAX form in deze modal
-                        setupAjaxForm('editStageModalContent');
-                    });
-            });
-
-            /*** Setup modals ***/
-            setupModal('manageTeamsModal', 'manageTeamsContent');
-            setupModal('manageStagesModal', 'manageStagesContent');
-
-            /*** Bind forms in hoofdmodals ***/
-            setupAjaxForm('manageStagesContent');
-            setupAjaxForm('manageTeamsContent');
-
+        // Setup modals
+        document.addEventListener("DOMContentLoaded", function() {
+            ModalHelper.setupModal('manageTeamsModal', 'manageTeamsContent');
+            ModalHelper.setupModal('manageStagesModal', 'manageStagesContent');
+            ModalHelper.setupModal('editStageModal', 'editStageModalContent');
         });
-    </script>
-    <script>
-        function initStageModalControls(modalContentId) {
-            const container = document.getElementById(modalContentId);
-            if (!container) return;
-
-            const check = container.querySelector('#noScoreCheck');
-            const wrapper = container.querySelector('#noScoreDescriptionWrapper');
-
-            if (!check || !wrapper) return;
-
-            // functie die show/hide doet
-            const toggleDescription = () => {
-                wrapper.style.display = check.checked ? 'block' : 'none';
-            };
-
-            // initialiseren
-            toggleDescription();
-
-            // oude listener verwijderen
-            if (check._toggleListener) {
-                check.removeEventListener('change', check._toggleListener);
-            }
-
-            // listener binden
-            check._toggleListener = toggleDescription;
-            check.addEventListener('change', toggleDescription);
-        }    
     </script>
 }

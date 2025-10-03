@@ -50,10 +50,12 @@
             <td>@stage.StageName</td>
             <td>@stage.StartLocation → @stage.FinishLocation</td>
             <td class="text-end">
-                <button class="btn btn-sm btn-outline-primary edit-stage-btn" 
-                    data-url="@Url.Action("EditStage", "Stages", new { id = stage.Id })">
-                    <i class="bi bi-pencil"></i>
-                </button>
+                <button class="btn btn-sm btn-outline-primary edit-stage-btn"
+                            data-bs-toggle="modal"
+                            data-bs-target="#editStageModal"
+                            data-url="@Url.Action("EditStage", "Stages", new { id = stage.Id })">
+                        <i class="bi bi-pencil"></i>
+                </button>                
                 <button type="button"
                         class="btn btn-danger btn-sm delete-stage-btn"
                         data-stage-id="@stage.Id">

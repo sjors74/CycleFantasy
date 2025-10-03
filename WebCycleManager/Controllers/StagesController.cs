@@ -1,6 +1,5 @@
 ﻿using CycleManager.Services;
 using CycleManager.Services.Interfaces;
-using Domain.Context;
 using Domain.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -95,8 +94,8 @@ namespace WebCycleManager.Controllers
             });
         }
 
-        //GET: Stages/Edit/5
-        public async Task<IActionResult> Edit(int? id)
+        [HttpGet]
+        public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
             {
@@ -104,13 +103,27 @@ namespace WebCycleManager.Controllers
             }
 
             var stage = await _stageService.GetStageById(id.Value);
-            if (stage == null)
+            if (stage == null) return NotFound();
+
+            var vm = new StageDeleteViewModel
             {
-                return NotFound();
-            }
-            var vm = CreateViewModel(stage);
+                StageId = stage.Id,
+                StageName = stage.StageName,
+                StageDescription = $"{stage.StartLocation}->{stage.FinishLocation}",
+                EventId = stage.EventId
+            };
 
             return View(vm);
+        }
+
+        // POST: Stages/Delete/5
+        [HttpPost, ActionName("Delete")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteConfirmed(int id, int eventId)
+        {                
+            await _stageService.DeleteStage(id);
+
+            return RedirectToAction("Details", "Events", new { id = eventId });
         }
 
         [HttpGet]
@@ -131,7 +144,13 @@ namespace WebCycleManager.Controllers
                 NoScoreDescription = stage.NoScoreDescription,
                 StageDate = DateOnly.FromDateTime(stage.StageDate),
                 StartLocation = stage.StartLocation,
-                FinishLocation = stage.FinishLocation
+                FinishLocation = stage.FinishLocation,
+                EventStartDate = stage.Event.StartDate.HasValue
+                    ? DateOnly.FromDateTime(stage.Event.StartDate.Value)
+                    : DateOnly.MinValue,
+                EventEndDate = stage.Event.EndDate.HasValue
+                    ? DateOnly.FromDateTime(stage.Event.EndDate.Value)
+                    : DateOnly.MaxValue
             };
             return PartialView("_EditStagePartial", vm);
         }
