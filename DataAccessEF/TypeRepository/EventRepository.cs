@@ -118,7 +118,7 @@ namespace DataAccessEF.TypeRepository
                         var team = cie.CompetitorInTeam.Team;
                         return new CompetitorDto
                         {
-                            CompetitorId = competitor.CompetitorId,
+                            CompetitorInTeamId = cie.CompetitorInTeamId,
                             FirstName = cie.CompetitorInTeam.Competitor.FirstName,
                             LastName = cie.CompetitorInTeam.Competitor.LastName,
                             PcsName = competitor.PcsName,

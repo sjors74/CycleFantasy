@@ -185,14 +185,12 @@ namespace WebCycle.Controllers
             // Haal competitors via CompetitorInTeams
             var competitors = team.CompetitorInTeams
                 .Where(cit => cit.Year == year)
-                .Select(cit => cit.Competitor)
-                .Distinct()
-                .Select(c => new CompetitorInSelectieDto
+                .Select(cit => new CompetitorInSelectieDto
                 {
-                    CompetitorId = c.CompetitorId,
-                    FirstName = c.FirstName,
-                    LastName = c.LastName,
-                    PcsName = c.PcsName
+                    CompetitorInTeamId = cit.Id,
+                    FirstName = cit.Competitor.FirstName,
+                    LastName = cit.Competitor.LastName,
+                    PcsName = cit.Competitor.PcsName
                 }).ToList();
 
             return Ok(competitors);

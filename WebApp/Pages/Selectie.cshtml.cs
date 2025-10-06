@@ -69,7 +69,7 @@ namespace WebApp.Pages
                     currentSelection.Add(id);
             }
 
-            var visibleRiderIds = VisibleTeams.SelectMany(t => t.Renners.Select(r => r.CompetitorId)).ToList();
+            var visibleRiderIds = VisibleTeams.SelectMany(t => t.Renners.Select(r => r.CompetitorInTeamId)).ToList();
             currentSelection.RemoveAll(id => visibleRiderIds.Contains(id) && !SelectedRiders.Contains(id));
 
             SaveSelectedRidersToSession(currentSelection);
@@ -217,7 +217,7 @@ namespace WebApp.Pages
             }
 
             var filteredCompetitors = competitors
-                .Where(dto => !alreadyLoadedIds.Contains(dto.CompetitorId))
+                .Where(dto => !alreadyLoadedIds.Contains(dto.CompetitorInTeamId))
                 .ToList();
            
             return new JsonResult(filteredCompetitors);

@@ -110,7 +110,6 @@ namespace CycleManager.Services
                         var punten = results != null ? results.TotalScore : 0;
                         renners.Add(new CompetitorDto
                         {
-                            CompetitorId = renner.CompetitorsInEvent.CompetitorInTeamId,
                             FirstName = renner.CompetitorsInEvent.CompetitorInTeam.Competitor.FirstName,
                             LastName = renner.CompetitorsInEvent.CompetitorInTeam.Competitor.LastName,
                             CountryShort = renner.CompetitorsInEvent.CompetitorInTeam.Competitor.Country.CountryNameShort,
@@ -118,7 +117,8 @@ namespace CycleManager.Services
                             PcsName = renner.CompetitorsInEvent.CompetitorInTeam.Competitor.PcsName,
                             Punten = punten,
                             CurrentTeamName = renner.CompetitorsInEvent.CompetitorInTeam.Team.CurrentTeamName,
-                            IsNationalChampion = renner.CompetitorsInEvent.CompetitorInTeam.IsNationalChampion
+                            IsNationalChampion = renner.CompetitorsInEvent.CompetitorInTeam.IsNationalChampion,
+                            CompetitorInTeamId = renner.CompetitorsInEvent.CompetitorInTeam.Id
                         });
                     }
                     deelnemers.Add(new DeelnemerDto

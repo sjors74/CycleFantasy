@@ -107,10 +107,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 const input = document.createElement('input');
                 input.type = 'checkbox';
                 input.className = 'form-check-input renner-checkbox';
-                input.value = renner.competitorId;
-                input.checked = selected.includes(renner.competitorId);
+                input.value = renner.competitorInTeamId;
+                input.checked = selected.includes(renner.competitorInTeamId);
 
-                if (currentSelectedCount >= MAX_SELECTED && !selected.includes(renner.competitorId)) {
+                if (currentSelectedCount >= MAX_SELECTED && !selected.includes(renner.competitorInTeamId)) {
                     input.disabled = true;
                 }
                 const label = document.createElement('label');
@@ -141,7 +141,7 @@ export async function voegWillekeurigeRennersToe(eventId) {
         );
 
         const toeTeVoegen = extra.slice(0, nogNodig);
-        const nieuweIds = toeTeVoegen.map(r => r.competitorId);
+        const nieuweIds = toeTeVoegen.map(r => r.competitorInTeamId);
         selected = [...selected, ...nieuweIds];
 
         updateUI();
