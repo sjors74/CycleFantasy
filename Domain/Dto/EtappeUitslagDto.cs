@@ -6,5 +6,7 @@
         public string CompetitorName { get; set; } = string.Empty;
         public string TeamName { get; set; } = string.Empty;
         public int Score { get;set ; }
+        public bool NoScore { get; set; }
+        public string NoScoreDescription { get; set; } = string.Empty;
     }
 }

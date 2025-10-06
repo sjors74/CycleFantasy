@@ -104,6 +104,16 @@ namespace DataAccessEF.TypeRepository
                 return null;
             };
 
+            if(stage.NoScore)
+            {
+                var emptyListOfResults = new List<EtappeUitslagDto>();
+                var noResultsItem = new EtappeUitslagDto();
+                noResultsItem.NoScoreDescription = stage.NoScoreDescription;
+                noResultsItem.NoScore = true;
+                emptyListOfResults.Add(noResultsItem);
+                return emptyListOfResults;
+            }
+
             var configItems = await context.ConfigurationItems
                 .AsNoTracking()
                 .Where(ci => ci.ConfigurationId == stage.Event.ConfigurationId)

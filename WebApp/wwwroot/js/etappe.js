@@ -176,6 +176,12 @@ async function laadEtappeData(stageId) {
             return;
         }
 
+        if (data.length === 1 && data[0].noScore === true) {
+            const description = data[0].noScoreDescription || "Geen uitslag voor deze etappe";
+            lijst.innerHTML = `<tr><td colspan="4">${description}</td></tr>`;
+            return;
+        }
+
         data.forEach(item => {
             const tr = document.createElement("tr");
             tr.innerHTML = `
