@@ -1,4 +1,5 @@
 ﻿using CycleManager.Domain.Dto;
+using DataAccessEF.Migrations;
 using Domain.Context;
 using Domain.Interfaces;
 using Domain.Models;
@@ -20,14 +21,25 @@ namespace DataAccessEF.TypeRepository
                 .ToListAsync();
         }
 
-        public async Task<List<DeelnemerDto>> GetPoolRankingForStage(int eventId, string stageNumber)
+        public async Task<List<DeelnemerDto>> GetPoolRankingForStage(int eventId, int stageId)
         {
-            if (!int.TryParse(stageNumber, out int targetStageNumber))
-            {
-                throw new ArgumentException("StageNumber is geen geldig getal", nameof(stageNumber));
-            }
+            var stage = await context.Stages
+                .AsNoTracking()
+                .Where(s => s.Id == stageId && s.EventId == eventId)
+                .Select(s => new { s.StageOrder })
+                .FirstOrDefaultAsync();
+
+            if (stage == null)
+                throw new ArgumentException($"Stage met id {stageId} bestaat niet voor event {eventId}");
+
+            var targetStageOrder = stage.StageOrder;
+
+
             var result = await context.DeelnemerScores
-                .Where(ds => Convert.ToInt32(ds.Stage.StageName) <= targetStageNumber &&  ds.Stage.EventId == eventId)
+                .AsNoTracking()
+                .Where(ds => 
+                    ds.Stage.StageOrder <= targetStageOrder &&  
+                    ds.Stage.EventId == eventId)
                 .GroupBy(ds => new
                 {
                     ds.GameCompetitorEventId,
@@ -35,8 +47,6 @@ namespace DataAccessEF.TypeRepository
                     LastName = ds.GameCompetitorEvent.User != null ? ds.GameCompetitorEvent.User.LastName : "",
                     GameCompetitorName = ds.GameCompetitorEvent.TeamName
                 })
-                //TODO: laatste score?
-                //TODO: renners?
                 .Select(g => new DeelnemerDto
                 {
                     DeelnemerNaam = g.Key.FirstName + " " + g.Key.LastName,

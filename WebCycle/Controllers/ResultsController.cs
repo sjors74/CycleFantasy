@@ -36,10 +36,10 @@ namespace WebCycle.Controllers
             return Ok(top15);
         }
 
-        [HttpGet("{eventId}/event/{stagenumber}/stage")]
-        public async Task<IActionResult> GetResultsByEventAndStageNumber(int eventId, string stagenumber)
+        [HttpGet("{eventId}/event/{stageId}/stage")]
+        public async Task<IActionResult> GetResultsByEventAndStageNumber(int eventId, int stageId)
         {
-            var results = await _resultService.GetPoolRankingForStage(eventId, stagenumber);
+            var results = await _resultService.GetPoolRankingForStage(eventId, stageId);
             return Ok(results);
         }
     }

@@ -116,9 +116,9 @@ namespace CycleManager.Services
             return _resultsRepository.GetEtappeUitslag(stageId);
         }
 
-        public Task<List<DeelnemerDto>> GetPoolRankingForStage(int eventId, string stageNumber)
+        public Task<List<DeelnemerDto>> GetPoolRankingForStage(int eventId, int stageId)
         {
-            return _scoreRepository.GetPoolRankingForStage(eventId, stageNumber);
+            return _scoreRepository.GetPoolRankingForStage(eventId, stageId);
         }
     }
 }

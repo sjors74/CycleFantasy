@@ -7,6 +7,6 @@ namespace Domain.Interfaces
     {
         Task<List<DeelnemerScore>> GetScoresByEventIdAsync(int eventId);
 
-        Task<List<DeelnemerDto>> GetPoolRankingForStage(int eventId, string stageNumber);
+        Task<List<DeelnemerDto>> GetPoolRankingForStage(int eventId, int stageId);
     }
 }

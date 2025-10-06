@@ -114,8 +114,10 @@ namespace DataAccessEF.TypeRepository
                 .AsNoTracking()
                 .Where(r => r.StageId == stageId)
                 .Include(r => r.CompetitorInEvent)
-                    .ThenInclude(c => c.CompetitorInTeam)
-                    .ThenInclude(cit => cit.Team)
+                    .ThenInclude(cie => cie.CompetitorInTeam)
+                        .ThenInclude(cit => cit.Team)
+                .Include(r => r.CompetitorInEvent)
+                    .ThenInclude(cie => cie.CompetitorInTeam.Competitor) // één pad
                 .Include(r => r.ConfigurationItem)
                 .ToListAsync();
 

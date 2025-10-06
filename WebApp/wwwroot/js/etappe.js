@@ -1,4 +1,4 @@
-﻿let currentEtappeNummer = null;
+﻿let currentEtappeId = null;
 let currentTab = 'tab1';
 let stages = [];
 
@@ -11,8 +11,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const params = new URLSearchParams(window.location.search);
     const startNummer = parseInt(params.get("nummer"));
+    const etappeId = parseInt(params.get("stageId"));
 
-    navigateToEtappe(startNummer, { replaceHistory: true });
+    navigateToEtappe(etappeId, { replaceHistory: true });
 });
 function initTabSwitching() {
     const tabHeaders = document.querySelectorAll(".tab-header li");
@@ -24,12 +25,12 @@ function initTabSwitching() {
             currentTab = newTab;
             setActiveTabUI(currentTab);
 
-            window.history.pushState({ etappeNummer: currentEtappeNummer, tab: currentTab }, "", buildUrl(currentEtappeNummer, currentTab));
+            window.history.pushState({ etappeNummer: currentEtappeId, tab: currentTab }, "", buildUrl(currentEtappeId, currentTab));
 
             if (currentTab === "tab1") {
-                laadEtappeData(currentEtappeNummer);
+                laadEtappeData(currentEtappeId);
             } else {
-                laadTussenstandData(currentEtappeNummer);
+                laadTussenstandData(currentEtappeId);
             }
 
             setupNavigation();
@@ -53,14 +54,14 @@ async function navigateToEtappe(nummer, opts = { replaceHistory: false }) {
     if (!nummer || Number.isNaN(Number(nummer))) {
         await ensureStagesLoaded();
         if (stages.length) {
-            nummer = stages[0].stageNumber;
+            nummer = stages[0].stageId;
         } else {
             console.error("Geen etappes gevonden om te tonen.");
             return;
         }
     }
     nummer = parseInt(nummer, 10);
-    currentEtappeNummer = nummer;
+    currentEtappeId = nummer;
 
     if (opts.replaceHistory) {
         window.history.replaceState({ etappeNummer: nummer, tab: currentTab }, "", buildUrl(nummer, currentTab));
@@ -91,16 +92,21 @@ function setupNavigation() {
     const containers = document.querySelectorAll(".etappe-knop-groep");
     containers.forEach(c => c.innerHTML = "");
 
-    if (!stages || !stages.length || !currentEtappeNummer) return;
+    if (!stages || !stages.length || !currentEtappeId) return;
 
-    const prevNummer = currentEtappeNummer - 1;
-    const nextNummer = currentEtappeNummer + 1;
+    // Huidige stage bepalen
+    const currentStage = stages.find(s => s.stageId === currentEtappeId);
+    if (!currentStage) return;
 
-    const hasPrev = stages.some(s => s.stageNumber === prevNummer);
-    const hasNext = stages.some(s => s.stageNumber === nextNummer);
+    const orderedStages = [...stages].sort((a, b) => a.stageOrder - b.stageOrder);
 
-    if (hasPrev) createNavButton("← Vorige", prevNummer, containers);
-    if (hasNext) createNavButton("Volgende →", nextNummer, containers);
+    const currentIndex = orderedStages.findIndex(s => s.stageId === currentEtappeId);
+
+    const prevStage = orderedStages[currentIndex - 1];
+    const nextStage = orderedStages[currentIndex + 1];
+
+    if (prevStage) createNavButton(`← ${prevStage.stageName ?? "Vorige"}`, prevStage.stageId, containers);
+    if (nextStage) createNavButton(`${nextStage.stageName ?? "Volgende"} →`, nextStage.stageId, containers);
 }
 
 function createNavButton(text, nummer, containers) {
@@ -140,19 +146,19 @@ async function ensureStagesLoaded() {
     }
 }
 
-async function laadEtappeData(nummer) {
-    if (!nummer) return;
+async function laadEtappeData(stageId) {
+    if (!stageId) return;
     toggleGlobalLoader && toggleGlobalLoader(true);
     try {
-        const stage = stages.find(s => s.stageNumber === nummer);
+        const stage = stages.find(s => s.stageId === stageId);
         if (!stage) {
-            console.error("Stage niet gevonden:", nummer);
-            document.getElementById("etappe-title").textContent = `Etappe ${nummer}`;
+            console.error("Stage niet gevonden:", stageId);
+            document.getElementById("etappe-title").textContent = `Etappe ${stage.stageNumber}`;
             return;
         }
 
         document.getElementById("etappe-datum").textContent = stage.vanNaar ?? "";
-        document.getElementById("etappe-title").textContent = `Etappe ${nummer} – Resultaten`;
+        document.getElementById("etappe-title").textContent = `Etappe ${stage.stageNumber} – Resultaten`;
 
         const lijst = document.getElementById("renner-lijst");
         lijst.innerHTML = `<tr><td colspan="4">Bezig met laden...</td></tr>`;
@@ -187,10 +193,16 @@ async function laadEtappeData(nummer) {
     }
 }
 
-async function laadTussenstandData(nummer) {
-    if (!nummer) return;
+async function laadTussenstandData(stageId) {
+    if (!stageId) return;
 
-    document.getElementById("tussenstand-title").textContent = `Tussenstand pool na etappe ${nummer}`;
+    const stage = stages.find(s => s.stageId === stageId);
+    if (!stage) {
+        console.error("Stage niet gevonden:", stageId);
+        return;
+    }
+
+    document.getElementById("tussenstand-title").textContent = `Tussenstand pool na etappe ${stage.stageNumber}`;
 
     const tussenlijst = document.getElementById("tussenstand-lijst");
     tussenlijst.innerHTML = `<tr><td colspan="4">Bezig met laden...</td></tr>`;
@@ -202,7 +214,7 @@ async function laadTussenstandData(nummer) {
             return;
         }
 
-        const response = await fetch(`${API_BASE_URL}/api/results/${eventId}/event/${nummer}/stage`);
+        const response = await fetch(`${API_BASE_URL}/api/results/${eventId}/event/${stageId}/stage`);
         if (!response.ok) {
             console.error("API error:", response.status);
             tussenlijst.innerHTML = `<tr><td colspan="4">Fout bij laden tussenstand</td></tr>`;
