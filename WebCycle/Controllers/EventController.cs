@@ -174,7 +174,8 @@ namespace WebCycle.Controllers
         [HttpGet("team/{teamId}/teams-with-more-renners")]
         public async Task<ActionResult<IEnumerable<CompetitorDto>>> GetTeamsWithRennersFromTeam(int teamId)
         {
-            var team = await _teamService.GetTeamById(teamId);
+            var year = DateTime.Now.Year;
+            var team = await _teamService.GetTeamForCurrentYear(teamId, year);
 
             if (team == null)
             {
@@ -183,8 +184,16 @@ namespace WebCycle.Controllers
 
             // Haal competitors via CompetitorInTeams
             var competitors = team.CompetitorInTeams
+                .Where(cit => cit.Year == year)
                 .Select(cit => cit.Competitor)
-                .ToList();
+                .Distinct()
+                .Select(c => new CompetitorInSelectieDto
+                {
+                    CompetitorId = c.CompetitorId,
+                    FirstName = c.FirstName,
+                    LastName = c.LastName,
+                    PcsName = c.PcsName
+                }).ToList();
 
             return Ok(competitors);
         }

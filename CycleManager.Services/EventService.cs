@@ -82,11 +82,11 @@ namespace CycleManager.Services
                 var result = await _resultRepository.GetResultsByStageId(stage.Id);
                 if (result == 0)
                 {
-                    resultList.Add(new StageResultDto { StageNumber = int.Parse(stage.StageName), HasResult = false });
+                    resultList.Add(new StageResultDto { StageNumber = stage.StageName, HasResult = false });
                 }
                 else
                 {
-                    resultList.Add(new StageResultDto { StageNumber = int.Parse(stage.StageName), HasResult = true });
+                    resultList.Add(new StageResultDto { StageNumber = stage.StageName, HasResult = true });
                 }
             }
             return resultList;
@@ -116,7 +116,9 @@ namespace CycleManager.Services
                             CountryShort = renner.CompetitorsInEvent.CompetitorInTeam.Competitor.Country.CountryNameShort,
                             EventNumber = renner.CompetitorsInEvent.EventNumber.ToString(),
                             PcsName = renner.CompetitorsInEvent.CompetitorInTeam.Competitor.PcsName,
-                            Punten = punten
+                            Punten = punten,
+                            CurrentTeamName = renner.CompetitorsInEvent.CompetitorInTeam.Team.CurrentTeamName,
+                            IsNationalChampion = renner.CompetitorsInEvent.CompetitorInTeam.IsNationalChampion
                         });
                     }
                     deelnemers.Add(new DeelnemerDto

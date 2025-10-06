@@ -27,5 +27,7 @@ namespace CycleManager.Services.Interfaces
         Task Add(Team entity);
 
         Task<IEnumerable<Team>> GetTeamsForEvent(int eventId);
+
+        Task<Team> GetTeamForCurrentYear(int id, int year);
     }
 }

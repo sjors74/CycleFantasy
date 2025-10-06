@@ -67,18 +67,27 @@
                                     @foreach (var renner in getoondeGeselecteerdDoorTeam)
                                     {
                                         <div class="form-check mb-1">
-                                            <input type="checkbox" class="form-check-input renner-checkbox" value="@renner.CompetitorId" 
-                                                @(Model.SelectedRiders.Contains(renner.CompetitorId) ? "checked" : "") />
+                                            <input type="checkbox" 
+                                                class="form-check-input renner-checkbox" 
+                                                value="@renner.CompetitorId"
+                                                   @if (Model.SelectedRiders.Contains(renner.CompetitorId))
+                                                   {
+                                                       <text>checked</text>
+                                                   } />
+            
                                             <label class="form-check-label">
                                                 @if (!string.IsNullOrEmpty(renner.PcsName))
                                                 {
-                                                    <a href="https://www.procyclingstats.com/rider/@renner.PcsName" target="_blank" rel="noopener noreferrer">
-                                                        @renner.FirstName @renner.LastName
+                                                    var pcsUrl = $"https://www.procyclingstats.com/rider/{renner.PcsName}";
+                                                    <a href="@pcsUrl"
+                                                       target="_blank"
+                                                       rel="noopener noreferrer">
+                                                        @(renner.FirstName + " " + renner.LastName)
                                                     </a>
                                                 }
                                                 else
                                                 {
-                                                    @renner.FirstName @renner.LastName
+                                                    @($"{renner.FirstName} {renner.LastName}")
                                                 }
                                             </label>
                                         </div>

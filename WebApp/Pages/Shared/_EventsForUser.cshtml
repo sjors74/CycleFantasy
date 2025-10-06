@@ -85,17 +85,17 @@
                                                                                         <a href="https://procyclingstats.com/rider/@renner.PcsName"
                                                                                            target="_blank" rel="noopener noreferrer"
                                                                                            class="text-dark text-decoration-none">
-                                                                                            @renner.FirstName @renner.LastName
+                                                                                            @($"{renner.FirstName} {renner.LastName} ")
                                                                                         </a>
-                                                                                        @if (renner.Teams.FirstOrDefault().IsNationalChampion)
+                                                                                        @if (renner.IsNationalChampion)
                                                                                         {
                                                                                             <span class="nc-badge">NC</span>
                                                                                         }
                                                                                     }
                                                                                     else
                                                                                     {
-                                                                                        @renner.FirstName @renner.LastName
-                                                                                        @if (renner.Teams.FirstOrDefault().IsNationalChampion)
+                                                                                        @($"{renner.FirstName} {renner.LastName} ")
+                                                                                        @if (renner.IsNationalChampion)
                                                                                         {
                                                                                             <span class="nc-label">NC</span>
                                                                                         }

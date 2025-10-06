@@ -35,6 +35,21 @@ namespace DataAccessEF.TypeRepository
             return team;
         }
 
+        public async Task<Team> GetTeamForCurrentYear(int id, int year)
+        {
+            var team = await context.Teams
+                .Include(t => t.Country)
+                .Include(t => t.CompetitorInTeams)
+                    .ThenInclude(cit => cit.Competitor)
+                        .ThenInclude(c => c.Country)
+                .Include(t => t.TeamYears)
+                .FirstOrDefaultAsync(t => 
+                    t.TeamId == id &&
+                    t.TeamYears.Any(ty => ty.Year == year));
+            return team;
+            
+        }
+
         public async Task<IEnumerable<Team>> GetTeamsForEvent(int eventId)
         {
             var teams = await context.Teams

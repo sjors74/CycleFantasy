@@ -46,6 +46,11 @@ namespace CycleManager.Services
             return await _teamRepository.GetTeamById(id);
         }
 
+        public async Task<Team> GetTeamForCurrentYear(int id, int year)
+        {
+            return await _teamRepository.GetTeamForCurrentYear(id, year);
+        }
+
         public async Task<IEnumerable<SelectListItem>> GetTeamsAsSelectList(int selectedId = 0)
         {
             var teams = await _teamRepository.GetAll();

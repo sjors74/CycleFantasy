@@ -41,7 +41,7 @@ namespace WebCycleManager.Controllers
         // GET: Teams/Details/5
         public async Task<IActionResult> Details(int id, int? year)
         {
-            var team = await _teamService.GetTeamById(id);
+            var team = await _teamService.GetTeamForCurrentYear(id, year.Value);
 
             if (team == null)
             {
