@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using CycleManager.Domain.Dto;
+using CycleManager.Domain.Models;
 using CycleManager.Services;
 using CycleManager.Services.Interfaces;
 using Domain.Models;
@@ -488,5 +489,268 @@ namespace CycleManager.Tests.Unit
                 _controller.GetListOfCompetitorsPicksForDeelnemer(id, eventId));
         }
 
+        [Fact]
+        public async Task GetDeelnemersMetPicks_ReturnsOk_WithMappedDeelnemersEnPicks()
+        {
+            // Arrange
+            int eventId = 1;
+
+            var eventObj = new Event
+            {
+                EventId = eventId,
+                GameCompetitorEvents = new List<GameCompetitorEvent>
+                {
+                    new GameCompetitorEvent
+                    {
+                        Id = 10,
+                        UserId = "user1",
+                        TeamName = "Team A",
+                        User = new ApplicationUser { FirstName = "Remco", LastName = "Evenepoel" }
+                    }
+                }
+            };
+
+            var picks = new List<GameCompetitorEventPick>
+            {
+                new GameCompetitorEventPick { CompetitorsInEvent = new CompetitorsInEvent { Id = 100 } }
+            };
+
+            var mappedPicks = new List<ResultDto>
+            {
+                new ResultDto { CompetitorInEventId = 100 }
+            };
+
+            _mockEventService.Setup(s => s.GetEventById(eventId)).ReturnsAsync(eventObj);
+            _mockDeelnemerService.Setup(s => s.GetAllPicks(10)).ReturnsAsync(picks);
+            _mockMapper.Setup(m => m.Map<List<ResultDto>>(picks)).Returns(mappedPicks);
+            _mockResultService.Setup(s => s.GetCompetitorResultsByEventId(eventId, 100))
+                              .ReturnsAsync(new CompetitorScoreDto { TotalScore = 25 });
+
+            // Act
+            var result = await _controller.GetDeelnemersMetPicks(eventId);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var data = Assert.IsAssignableFrom<List<DeelnemerMetPicksDto>>(okResult.Value);
+
+            Assert.Single(data);
+            var deelnemer = data[0];
+            Assert.Equal("Remco Evenepoel", deelnemer.DeelnemerNaam);
+            Assert.Equal("Team A", deelnemer.PoolNaam);
+            Assert.Single(deelnemer.Picks);
+            Assert.Equal(25, deelnemer.Picks[0].Points);
+        }
+
+        [Fact]
+        public async Task GetDeelnemersMetPicks_ReturnsEmptyList_WhenNoEventFound()
+        {
+            // Arrange
+            int eventId = 99;
+            _mockEventService.Setup(s => s.GetEventById(eventId)).ReturnsAsync((Event)null);
+
+            // Act
+            var result = await _controller.GetDeelnemersMetPicks(eventId);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var data = Assert.IsAssignableFrom<List<DeelnemerMetPicksDto>>(okResult.Value);
+            Assert.Empty(data);
+        }
+
+        [Fact]
+        public async Task GetDeelnemersMetPicks_ReturnsOk_WhenNoPicks()
+        {
+            // Arrange
+            int eventId = 1;
+
+            var eventObj = new Event
+            {
+                EventId = eventId,
+                GameCompetitorEvents = new List<GameCompetitorEvent>
+                {
+                    new GameCompetitorEvent
+                    {
+                        Id = 22,
+                        UserId = "userX",
+                        TeamName = "No Picks Team",
+                        User = new ApplicationUser { FirstName = "Jan", LastName = "Jansen" }
+                    }
+                }
+            };
+
+            _mockEventService.Setup(s => s.GetEventById(eventId)).ReturnsAsync(eventObj);
+            _mockDeelnemerService.Setup(s => s.GetAllPicks(22))
+                                 .ReturnsAsync((List<GameCompetitorEventPick>)null);
+            _mockMapper.Setup(m => m.Map<List<ResultDto>>(It.IsAny<List<GameCompetitorEventPick>>()))
+                       .Returns(new List<ResultDto>());
+
+            // Act
+            var result = await _controller.GetDeelnemersMetPicks(eventId);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var data = Assert.IsAssignableFrom<List<DeelnemerMetPicksDto>>(okResult.Value);
+            Assert.Single(data);
+            Assert.Empty(data[0].Picks);
+        }
+
+        [Fact]
+        public async Task GetDeelnemersMetPuntenVoorEvent_ReturnsOk_WithPunten()
+        {
+            // Arrange
+            int eventId = 10;
+            var eventObj = new Event
+            {
+                EventId = eventId,
+                GameCompetitorEvents = new List<GameCompetitorEvent>
+                {
+                    new GameCompetitorEvent { Id = 1, User = new ApplicationUser { FirstName = "Jan", LastName = "Jansen" } },
+                    new GameCompetitorEvent { Id = 2, User = new ApplicationUser { FirstName = "Piet", LastName = "Pietersen" } }
+                }
+            };
+
+            _mockEventService.Setup(s => s.GetEventById(eventId)).ReturnsAsync(eventObj);
+
+            _mockDeelnemerService.Setup(s => s.GetAllPicks(It.IsAny<int>()))
+                .ReturnsAsync((int id) => new List<GameCompetitorEventPick>
+                {
+                    new GameCompetitorEventPick { CompetitorsInEventId = id } // 1 pick per deelnemer
+                });
+
+            _mockResultService.Setup(s => s.GetCompetitorResultsByEventId(eventId, 1))
+                .ReturnsAsync(new CompetitorScoreDto { TotalScore = 10 });
+            _mockResultService.Setup(s => s.GetCompetitorResultsByEventId(eventId, 2))
+                .ReturnsAsync(new CompetitorScoreDto { TotalScore = 20 });
+
+            _mockMapper.Setup(m => m.Map<DeelnemerDto>(It.IsAny<GameCompetitorEvent>()))
+                .Returns((GameCompetitorEvent e) => new DeelnemerDto { Id = e.Id, DeelnemerNaam = e.User.FirstName });
+
+            // Act
+            var result = await _controller.GetDeelnemersMetPuntenVoorEvent(eventId);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var data = Assert.IsAssignableFrom<List<DeelnemerDto>>(okResult.Value);
+
+            Assert.Equal(2, data.Count);
+            Assert.Equal(10, data[0].Punten);
+            Assert.Equal(20, data[1].Punten);
+        }
+
+        [Fact]
+        public async Task GetDeelnemersMetPuntenVoorEvent_ReturnsEmptyList_WhenNoEventFound()
+        {
+            // Arrange
+            int eventId = 99;
+            _mockEventService.Setup(s => s.GetEventById(eventId)).ReturnsAsync((Event)null);
+
+            // Act
+            var result = await _controller.GetDeelnemersMetPuntenVoorEvent(eventId);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var data = Assert.IsAssignableFrom<List<DeelnemerDto>>(okResult.Value);
+            Assert.Empty(data);
+        }
+
+        [Fact]
+        public async Task GetDeelnemersMetPuntenVoorEvent_SetsZeroPoints_WhenNoPicks()
+        {
+            // Arrange
+            int eventId = 1;
+            var eventObj = new Event
+            {
+                EventId = eventId,
+                GameCompetitorEvents = new List<GameCompetitorEvent>
+                {
+                    new GameCompetitorEvent { Id = 1, User = new ApplicationUser { FirstName = "Test", LastName = "de Tester" } }
+                }
+            };
+
+            _mockEventService.Setup(s => s.GetEventById(eventId)).ReturnsAsync(eventObj);
+            _mockDeelnemerService.Setup(s => s.GetAllPicks(1)).ReturnsAsync((List<GameCompetitorEventPick>)null);
+            _mockMapper.Setup(m => m.Map<DeelnemerDto>(It.IsAny<GameCompetitorEvent>()))
+                       .Returns(new DeelnemerDto { Id = 1, DeelnemerNaam = "Test" });
+
+            // Act
+            var result = await _controller.GetDeelnemersMetPuntenVoorEvent(eventId);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var data = Assert.IsAssignableFrom<List<DeelnemerDto>>(okResult.Value);
+            Assert.Single(data);
+            Assert.Equal(0, data[0].Punten);
+        }
+
+        [Fact]
+        public async Task GetPicksForDeelnemer_ReturnsOk_WithMappedIds()
+        {
+            // Arrange
+            int deelnemerId = 42;
+            var picks = new List<int> { 1, 2, 3 };
+
+            _mockDeelnemerService
+                .Setup(s => s.GetAllPicksAsCompetitorIds(deelnemerId))
+                .ReturnsAsync(picks);
+
+            _mockMapper
+                .Setup(m => m.Map<List<int>>(picks))
+                .Returns(picks);
+
+            // Act
+            var result = await _controller.GetPicksForDeelnemer(deelnemerId);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var data = Assert.IsAssignableFrom<List<int>>(okResult.Value);
+            Assert.Equal(3, data.Count);
+            Assert.Equal(new List<int> { 1, 2, 3 }, data);
+        }
+
+        [Fact]
+        public async Task GetPicksForDeelnemer_ReturnsEmptyList_WhenNoPicks()
+        {
+            // Arrange
+            int deelnemerId = 10;
+            var emptyList = new List<int>();
+
+            _mockDeelnemerService
+                .Setup(s => s.GetAllPicksAsCompetitorIds(deelnemerId))
+                .ReturnsAsync(emptyList);
+
+            _mockMapper
+                .Setup(m => m.Map<List<int>>(emptyList))
+                .Returns(emptyList);
+
+            // Act
+            var result = await _controller.GetPicksForDeelnemer(deelnemerId);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var data = Assert.IsAssignableFrom<List<int>>(okResult.Value);
+            Assert.Empty(data);
+        }
+
+        [Fact]
+        public async Task GetPicksForDeelnemer_ReturnsEmptyList_WhenServiceReturnsNull()
+        {
+            // Arrange
+            int deelnemerId = 7;
+            _mockDeelnemerService
+                .Setup(s => s.GetAllPicksAsCompetitorIds(deelnemerId))
+                .ReturnsAsync((List<int>)null);
+
+            _mockMapper
+                .Setup(m => m.Map<List<int>>(It.IsAny<List<int>>()))
+                .Returns(new List<int>()); // mapper mag nooit null teruggeven
+
+            // Act
+            var result = await _controller.GetPicksForDeelnemer(deelnemerId);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var data = Assert.IsAssignableFrom<List<int>>(okResult.Value);
+            Assert.Empty(data);
+        }
     }
 }

@@ -104,10 +104,15 @@ namespace WebCycle.Controllers
             var currentEvent = await _eventService.GetEventById(eventId);
             var result = new List<DeelnemerMetPicksDto>();
 
+            if(currentEvent?.GameCompetitorEvents == null)
+            {
+                return Ok(result);
+            }
+
             foreach (var deelnemer in currentEvent.GameCompetitorEvents)
             {
                 var picks = await deelnemerService.GetAllPicks(deelnemer.Id);
-                var picksDto = _mapper.Map<List<ResultDto>>(picks);
+                var picksDto = _mapper.Map<List<ResultDto>>(picks ?? new List<GameCompetitorEventPick>());
 
                 foreach (var pick in picksDto)
                 {
@@ -134,9 +139,12 @@ namespace WebCycle.Controllers
             var currentEvent = await _eventService.GetEventById(eventId);
             var result = new List<DeelnemerDto>();
 
+            if(currentEvent?.GameCompetitorEvents == null)
+                return Ok(result);
+
             foreach (var deelnemer in currentEvent.GameCompetitorEvents)
             {
-                var picks = await deelnemerService.GetAllPicks(deelnemer.Id);
+                var picks = await deelnemerService.GetAllPicks(deelnemer.Id) ?? new List<GameCompetitorEventPick>();
                 int totaalPunten = 0;
 
                 foreach (var pick in picks)
@@ -157,8 +165,8 @@ namespace WebCycle.Controllers
         [HttpGet("Picks/{deelnemerId}")]
         public async Task<IActionResult> GetPicksForDeelnemer(int deelnemerId)
         {
-            var picks = await deelnemerService.GetAllPicksAsCompetitorIds(deelnemerId);
-            var picksDto = _mapper.Map<List<int>>(picks);
+            var picks = await deelnemerService.GetAllPicksAsCompetitorIds(deelnemerId) ?? new List<int>();
+            var picksDto = _mapper.Map<List<int>>(picks) ?? new List<int>();
             return Ok(picksDto);
         }
     }
