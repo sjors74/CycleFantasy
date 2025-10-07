@@ -1,4 +1,5 @@
-﻿using CycleManager.Services.Interfaces;
+﻿using CycleManager.Domain.Dto;
+using CycleManager.Services.Interfaces;
 using Domain.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -39,8 +40,15 @@ namespace WebCycle.Controllers
         [HttpGet("{eventId}/event/{stageId}/stage")]
         public async Task<IActionResult> GetResultsByEventAndStageNumber(int eventId, int stageId)
         {
-            var results = await _resultService.GetPoolRankingForStage(eventId, stageId);
-            return Ok(results);
+            try
+            {
+                var results = await _resultService.GetPoolRankingForStage(eventId, stageId);
+                return Ok(results ?? new List<DeelnemerDto>());
+            }
+            catch
+            {
+                return StatusCode(500, "Fout bij ophalen van resultaten.");
+            }
         }
     }
 }

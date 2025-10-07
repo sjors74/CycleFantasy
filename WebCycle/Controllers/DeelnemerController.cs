@@ -2,6 +2,7 @@
 using CycleManager.Domain.Dto;
 using CycleManager.Services;
 using CycleManager.Services.Interfaces;
+using Domain.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Memory;
 
@@ -33,20 +34,20 @@ namespace WebCycle.Controllers
 
             if (!_cache.TryGetValue(cacheKey, out List<DeelnemerDto> deelnemerResponse))
             {
-                var deelnemers = await deelnemerService.GetAllCompetitorsInEvent(eventId);
-                deelnemerResponse = _mapper.Map<List<DeelnemerDto>>(deelnemers);
+                var deelnemers = await deelnemerService.GetAllCompetitorsInEvent(eventId) ?? new List<GameCompetitorEvent>();
+                deelnemerResponse = _mapper.Map<List<DeelnemerDto>>(deelnemers) ?? new List<DeelnemerDto>();
 
                 foreach (var deelnemer in deelnemerResponse)
                 {
                     int score = 0;
-                    var picks = await deelnemerService.GetAllPicks(deelnemer.Id);
+                    var picks = await deelnemerService.GetAllPicks(deelnemer.Id) ?? new List<GameCompetitorEventPick>();
 
                     foreach (var pick in picks)
                     {
                         var results = await resultService.GetCompetitorResultsByEventId(eventId, pick.CompetitorsInEvent.Id);
                         if (results != null)
                         {
-                        //    score += results.TotalScore;
+                          score += results.TotalScore;
                         }
                     }
 
@@ -76,6 +77,9 @@ namespace WebCycle.Controllers
         public async Task<IActionResult> GetListOfCompetitorsPicksForDeelnemer(int id, int eventId)
         {
             var picks = await deelnemerService.GetAllPicks(id);
+            if (picks == null)
+                return Ok(new List<ResultDto>());
+
             var competitorResponse = _mapper.Map<List<ResultDto>>(picks);
 
             foreach (var pick in competitorResponse)
