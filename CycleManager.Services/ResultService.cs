@@ -1,6 +1,8 @@
 ﻿using CycleManager.Domain.Dto;
 using CycleManager.Services.Interfaces;
+using DataAccessEF.TypeRepository;
 using Domain.Interfaces;
+using Domain.Models;
 
 namespace CycleManager.Services
 {
@@ -119,6 +121,11 @@ namespace CycleManager.Services
         public Task<List<DeelnemerDto>> GetPoolRankingForStage(int eventId, int stageId)
         {
             return _scoreRepository.GetPoolRankingForStage(eventId, stageId);
+        }
+
+        public async Task<List<DeelnemerScore>> GetScoresByEventIdAsync(int eventId)
+        {
+            return await _scoreRepository.GetScoresByEventIdAsync(eventId);
         }
     }
 }

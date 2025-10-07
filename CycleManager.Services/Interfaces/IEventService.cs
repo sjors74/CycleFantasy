@@ -56,5 +56,7 @@ namespace CycleManager.Services
         /// <param name="id"></param>
         /// <returns></returns>
         Task<int> GetAantalDeelnemers(int id);
+
+        Task<IEnumerable<Event>> GetActiveEvents();
     }
 }

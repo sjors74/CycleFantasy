@@ -214,5 +214,10 @@ namespace CycleManager.Services
         {
             return await _eventRepository.GetAantalDeelnemers(id);
         }
+
+        public async Task<IEnumerable<Event>> GetActiveEvents()
+        {
+            return await _eventRepository.GetActiveEvents();
+        }
     }
 }

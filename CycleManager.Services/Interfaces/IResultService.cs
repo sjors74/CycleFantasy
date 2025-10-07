@@ -49,5 +49,7 @@ namespace CycleManager.Services.Interfaces
         /// <param name="stageId"></param>
         /// <returns></returns>
         Task<List<DeelnemerDto>> GetPoolRankingForStage(int eventId, int stageId);
+
+        Task<List<DeelnemerScore>> GetScoresByEventIdAsync(int eventId);
     }
 }
