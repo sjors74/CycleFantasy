@@ -2,7 +2,6 @@
 using CycleManager.Services.Interfaces;
 using Domain.Dto;
 using Domain.Interfaces;
-using Domain.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace WebCycle.Controllers
@@ -18,22 +17,49 @@ namespace WebCycle.Controllers
             _competitorService = competitorService;
         }
         [HttpGet]
-        public async Task<IEnumerable<CompetitorDto>> GetCompetitors()
+        public async Task<IActionResult> GetCompetitors()
         {
-            var competitors = await _competitorService.GetAllCompetitors(DateTime.Now.Year);
-            return competitors;
+            try
+            {
+                var competitors = await _competitorService.GetAllCompetitors(DateTime.Now.Year) ?? new List<CompetitorDto>();
+                return Ok(competitors);
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, "Fout bij het ophalen van renners.");
+            }
         }
 
         [HttpGet("{id}", Name = "GetCompetitorById")]
-        public async Task<Competitor> GetById(int id) 
+        public async Task<IActionResult> GetById(int id) 
         {
-            return await _competitorService.GetCompetitorById(id);
+            try
+            {
+                var competitor = await _competitorService.GetCompetitorById(id);
+                if (competitor == null)
+                    return NotFound();
+
+                return Ok(competitor);
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, "Fout bij ophalen van renner.");
+            }
+            
         }
 
         [HttpGet("{id}/team", Name = "GetCompetitorsByTeamId")]
-        public async Task<IEnumerable<CompetitorInTeamDto>> GetByTeamId(int id, int year)
+        public async Task<IActionResult> GetByTeamId(int id, int year)
         {
-            return await _competitorService.GetByTeamId(id, year);
+            try
+            {
+                var competitors = await _competitorService.GetByTeamId(id, year) ?? new List<CompetitorInTeamDto>();
+                return Ok(competitors);
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, "Fout bij ophalen van renners/team.");
+            }
         }
 
     }

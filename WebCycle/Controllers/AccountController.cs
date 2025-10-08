@@ -28,6 +28,20 @@ namespace WebCycleApi.Controllers
         [HttpPost]
         public async Task<IActionResult> Register([FromBody] RegisterDto model)
         {
+            if (!ModelState.IsValid) 
+            {
+                var allErrors = ModelState.Values
+                    .SelectMany(v => v.Errors)
+                    .Select(e => e.ErrorMessage);
+                return BadRequest(new { Errors  = allErrors });
+            }
+            var blockedDomains = new[] { "example.com", "test.com", "spam.com" };
+            var emailDomain = model.Email?.Split('@').LastOrDefault()?.ToLower();
+            if (blockedDomains.Contains(emailDomain))
+            {
+                return BadRequest(new ErrorResponse { Errors = new[] { "E-mailadres niet toegestaan." } });
+            }
+
             var user = new ApplicationUser
             { 
                 UserName = model.Email, 
@@ -40,7 +54,7 @@ namespace WebCycleApi.Controllers
             if (!result.Succeeded)
             {
                 var errors = result.Errors.Select(e => e.Description);
-                return BadRequest( new { Errors = errors});
+                return BadRequest( new ErrorResponse { Errors = errors});
             }
 
             try
@@ -69,12 +83,11 @@ namespace WebCycleApi.Controllers
                     Sjors</p>
                 ";
 
-
                 await _emailSender.SendEmailAsync(model.Email, subject, body);
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { Errors = new[] { "Fout bij verzenden van bevestigingsmail.", ex.Message } });
+                return StatusCode(500, new ErrorResponse  { Errors = new[] { "Fout bij verzenden van bevestigingsmail.", ex.Message } });
             }
 
             return Ok("Registratie succesvol! Bevestig je e-mail.");
@@ -103,6 +116,9 @@ namespace WebCycleApi.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginDto model)
         {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
             var user = await _userManager.FindByEmailAsync(model.Email);
             if (user == null || !await _userManager.CheckPasswordAsync(user, model.Password))
                 return Unauthorized();
@@ -119,6 +135,9 @@ namespace WebCycleApi.Controllers
         [HttpPost("forgotpassword")]
         public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto dto)
         {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
             var user = await _userManager.FindByEmailAsync(dto.Email);
             if (user == null)
                 return Ok(); // Don't reveal user existence
@@ -145,22 +164,59 @@ namespace WebCycleApi.Controllers
                 <p>Groet,<br/>
                 Sjors</p>
             ";
-
-            await _emailSender.SendEmailAsync(dto.Email, subject, body);
-
+            try
+            {
+                await _emailSender.SendEmailAsync(dto.Email, subject, body);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new ErrorResponse
+                {
+                    Errors = new[] { "Fout bij verzenden van de resetmail.", ex.Message }
+                });
+            }
             return Ok();
         }
 
         [HttpPost("resetpassword")]
         public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto dto)
         {
+            if (!ModelState.IsValid)
+            {
+                var modelErrors = ModelState.Values
+                    .SelectMany(v => v.Errors)
+                    .Select(e => e.ErrorMessage)
+                    .ToArray();
+
+                return BadRequest(new ErrorResponse { Errors = modelErrors });
+            }
+
+
             var user = await _userManager.FindByEmailAsync(dto.Email);
-            if (user == null) return BadRequest("Gebruiker niet gevonden");
+            if (user == null)
+            {
+                return BadRequest(new ErrorResponse
+                {
+                    Errors = new[] { "Gebruiker niet gevonden." }
+                });
+            }
 
-            var result = await _userManager.ResetPasswordAsync(user, dto.Token, dto.Password);
-            if (result.Succeeded) return Ok();
+            try
+            {
+                var result = await _userManager.ResetPasswordAsync(user, dto.Token, dto.Password);
+                if (result.Succeeded) 
+                    return Ok();
 
-            return BadRequest(result.Errors);
+                var errors = result.Errors.Select(e => e.Description).ToArray();
+                return BadRequest(new ErrorResponse { Errors = errors });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new ErrorResponse
+                {
+                    Errors = new[] { "Er is een fout opgetreden bij het resetten van het wachtwoord.", ex.Message }
+                });
+            }
         }
 
     }

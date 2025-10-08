@@ -49,5 +49,7 @@ namespace CycleManager.Services.Interfaces
         Task<CompetitorsInEvent> GetCompetitorsInEventByIds(int eventId, int competitorId);
 
         Task<CompetitorsInEvent> FindOrCreate(int eventId, int competitorId);
+
+        Task<IEnumerable<CompetitorsInEvent>> GetRandomNumberofCompetitors(int eventId, int number);
     }
 }

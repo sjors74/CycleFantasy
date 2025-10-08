@@ -97,5 +97,10 @@ namespace CycleManager.Services
                 return cie;
             }
         }
+
+        public async Task<IEnumerable<CompetitorsInEvent>> GetRandomNumberofCompetitors(int eventId, int number)
+        {
+            return await _competitorsInEventRepository.GetRandomNumberofCompetitors(eventId, number);
+        }
     }
 }
