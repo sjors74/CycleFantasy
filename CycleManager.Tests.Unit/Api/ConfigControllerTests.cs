@@ -2,7 +2,7 @@
 using Microsoft.Extensions.Configuration;
 using WebCycle.Controllers;
 
-namespace CycleManager.Tests.Unit
+namespace CycleManager.Tests.Unit.Api
 {
     public class ConfigControllerTests
     {

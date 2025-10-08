@@ -7,8 +7,11 @@ namespace DataAccessEF.TypeRepository
 {
     public class CompetitorsInEventRepository: GenericRepository<CompetitorsInEvent>, ICompetitorsInEventRepository
     {
-        public CompetitorsInEventRepository(ApplicationDbContext context) : base(context)
+        private readonly Func<IEnumerable<CompetitorsInEvent>, IEnumerable<CompetitorsInEvent>> _randomizer;
+        public CompetitorsInEventRepository(ApplicationDbContext context, 
+            Func<IEnumerable<CompetitorsInEvent>, IEnumerable<CompetitorsInEvent>>? randomizer = null) : base(context)
         {
+            _randomizer = randomizer ?? (list => list.OrderBy(x => Guid.NewGuid()));
         }
 
         public async Task<CompetitorsInEvent> GetById(int id)
@@ -38,16 +41,14 @@ namespace DataAccessEF.TypeRepository
         {
             var competitorsInEvent = context.CompetitorsInEvent
                 .Include(cie => cie.CompetitorInTeam)
-                    .ThenInclude(t=> t.Team)
+                    .ThenInclude(t => t.Team)
                         .ThenInclude(c => c.Country)
                 .Include(c => c.CompetitorInTeam)
                         .ThenInclude(cit => cit.Team)
-                .Where(cie => cie.EventId == eventId)
-                .Select(cie => cie);
-            var randomCompetitorsList = new List<CompetitorsInEvent>();
-            randomCompetitorsList = GetRandomElements(competitorsInEvent, number);
-            return randomCompetitorsList; 
-           
+                .Where(cie => cie.EventId == eventId);
+
+            var randomCompetitorsList = _randomizer(competitorsInEvent).Take(number).ToList();
+            return await Task.FromResult(randomCompetitorsList);          
         }
 
         public static List<t> GetRandomElements<t>(IEnumerable<t> list, int elementsCount)

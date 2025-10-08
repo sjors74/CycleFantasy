@@ -1,4 +1,5 @@
 ﻿using CycleManager.Domain.Dto;
+using CycleManager.Domain.Models;
 using Domain.Context;
 using Domain.Dto;
 using Domain.Interfaces;
@@ -115,9 +116,50 @@ namespace DataAccessEF.TypeRepository
             return competitors;
         }
 
-        public Task UpdateCompetitorWithTeam(CompetitorEditDto dto)
+        public async Task UpdateCompetitorWithTeam(CompetitorEditDto dto)
         {
-            throw new NotImplementedException();
+            try
+            {
+                var competitor = await context.Competitors
+                    .Include(c => c.CompetitorInTeams)
+                    .FirstOrDefaultAsync(c => c.CompetitorId == dto.CompetitorId);
+
+                if (competitor == null)
+                    throw new KeyNotFoundException($"Competitor met ID {dto.CompetitorId} niet gevonden.");
+
+                competitor.FirstName = dto.FirstName;
+                competitor.LastName = dto.LastName;
+                competitor.PcsName = dto.PcsName;
+                competitor.ScraperName = dto.ScraperName;
+                competitor.CountryId = dto.CountryId;
+
+                var existingCit = competitor.CompetitorInTeams
+                    .FirstOrDefault(cit => cit.Year == dto.SelectedYear);
+
+                if (existingCit == null)
+                {
+                    context.CompetitorInTeams.Add(new CompetitorInTeam
+                    {
+                        CompetitorId = competitor.CompetitorId,
+                        TeamId = dto.SelectedTeamId,
+                        Year = dto.SelectedYear
+                    });
+                }
+                else
+                {
+                    existingCit.TeamId = dto.SelectedTeamId;
+                }
+
+                await context.SaveChangesAsync();
+            }
+            catch (KeyNotFoundException)
+            {
+                throw; // laat de KeyNotFoundException door
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidOperationException("Fout bij updaten van renner met team.", ex);
+            }
         }
 
         public async Task<Competitor?> GetByIdWithTeamsAsync(int id)

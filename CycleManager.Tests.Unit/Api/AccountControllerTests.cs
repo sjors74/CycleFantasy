@@ -8,7 +8,7 @@ using Microsoft.Extensions.Configuration;
 using Moq;
 using WebCycleApi.Controllers;
 
-namespace CycleManager.Tests.Unit
+namespace CycleManager.Tests.Unit.Api
 {
     public class AccountControllerTests
     {

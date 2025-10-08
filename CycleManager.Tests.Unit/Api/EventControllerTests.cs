@@ -11,7 +11,7 @@ using Microsoft.AspNetCore.Mvc;
 using Moq;
 using WebCycle.Controllers;
 
-namespace CycleManager.Tests.Unit
+namespace CycleManager.Tests.Unit.Api
 {
     public class EventControllerTests
     {

@@ -5,7 +5,7 @@ using Domain.Models;
 using Moq;
 using WebCycleApi.Controllers;
 
-namespace CycleManager.Tests.Unit
+namespace CycleManager.Tests.Unit.Api
 {
     public class NewsControllerTests
     {
@@ -73,12 +73,12 @@ namespace CycleManager.Tests.Unit
             var mockMapper = new Mock<IMapper>();
 
             mockNewsService.Setup(s => s.GetAllActiveNewsItems())
-                           .ThrowsAsync(new System.Exception("Database down"));
+                           .ThrowsAsync(new Exception("Database down"));
 
             var controller = new NewsController(mockNewsService.Object, mockMapper.Object);
 
             // Act & Assert
-            await Assert.ThrowsAsync<System.Exception>(() => controller.GetAllNews());
+            await Assert.ThrowsAsync<Exception>(() => controller.GetAllNews());
         }
     }
 }

@@ -9,7 +9,7 @@ using Microsoft.Extensions.Caching.Memory;
 using Moq;
 using WebCycle.Controllers;
 
-namespace CycleManager.Tests.Unit
+namespace CycleManager.Tests.Unit.Api
 {
     public class DeelnemerControllerTests
     {

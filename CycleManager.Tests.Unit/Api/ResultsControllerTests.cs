@@ -9,7 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 using WebCycle.Controllers;
 
-namespace CycleManager.Tests.Unit
+namespace CycleManager.Tests.Unit.Api
 {
     public class ResultsControllerTests
     {
