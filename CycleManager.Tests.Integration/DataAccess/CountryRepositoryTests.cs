@@ -24,7 +24,7 @@ namespace CycleManager.Tests.Integration.DataAccess
             // Arrange
             using var context = GetInMemoryDbContext("GetByIdTest");
             var country = new Country { CountryId = 1, CountryNameLong = "Nederland" };
-            context.Country.Add(country);
+            context.Countries.Add(country);
             context.SaveChanges();
 
             var repo = new CountryRepository(context);
@@ -44,7 +44,7 @@ namespace CycleManager.Tests.Integration.DataAccess
             // Arrange
             using var context = GetInMemoryDbContext("UpdateTest");
             var country = new Country { CountryId = 1, CountryNameLong = "Nederland" };
-            context.Country.Add(country);
+            context.Countries.Add(country);
             context.SaveChanges();
 
             var repo = new CountryRepository(context);
@@ -55,7 +55,7 @@ namespace CycleManager.Tests.Integration.DataAccess
             context.SaveChanges();
 
             // Assert
-            var updated = context.Country.FirstOrDefault(c => c.CountryId == 1);
+            var updated = context.Countries.FirstOrDefault(c => c.CountryId == 1);
             Assert.NotNull(updated);
             Assert.Equal("België", updated.CountryNameLong);
         }
@@ -66,7 +66,7 @@ namespace CycleManager.Tests.Integration.DataAccess
             // Arrange
             using var context = GetInMemoryDbContext("RemoveTest");
             var country = new Country { CountryId = 1, CountryNameLong = "Nederland" };
-            context.Country.Add(country);
+            context.Countries.Add(country);
             context.SaveChanges();
 
             var repo = new CountryRepository(context);
@@ -76,7 +76,7 @@ namespace CycleManager.Tests.Integration.DataAccess
             context.SaveChanges();
 
             // Assert
-            var deleted = context.Country.FirstOrDefault(c => c.CountryId == 1);
+            var deleted = context.Countries.FirstOrDefault(c => c.CountryId == 1);
             Assert.Null(deleted);
         }
     }

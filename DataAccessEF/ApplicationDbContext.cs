@@ -16,7 +16,7 @@ namespace Domain.Context
         public DbSet<Competitor> Competitors { get; set;}
         public DbSet<Team> Teams { get; set;}
         public DbSet<CompetitorsInEvent> CompetitorsInEvent { get; set; }
-        public DbSet<Country> Country { get; set; }
+        public DbSet<Country> Countries { get; set; }
         public DbSet<Stage> Stages { get; set; }
         public DbSet<Configuration> Configurations { get; set; }
         public DbSet<ConfigurationItem> ConfigurationItems { get; set; }

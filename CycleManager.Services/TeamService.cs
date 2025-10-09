@@ -32,7 +32,7 @@ namespace CycleManager.Services
         /// <exception cref="NotImplementedException"></exception>
         public async Task<IEnumerable<Team>> GetAllTeams()
         {
-            return await _teamRepository.GetAll();
+            return await _teamRepository.GetAllTeams();
         }
 
         /// <summary>

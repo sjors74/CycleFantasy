@@ -52,7 +52,7 @@ namespace CycleManager.Tests.Integration.DataAccess
                 Country = country
             };
 
-            context.Country.Add(country);
+            context.Countries.Add(country);
             context.Teams.AddRange(team2024, team2023);
 
             context.Competitors.AddRange(remco, wout);
@@ -730,7 +730,7 @@ namespace CycleManager.Tests.Integration.DataAccess
                 }
             };
 
-            context.Country.Add(country);
+            context.Countries.Add(country);
             context.Teams.AddRange(teamA, teamB);
             context.Competitors.Add(competitor);
             context.SaveChanges();

@@ -30,7 +30,7 @@ namespace CycleManager.Tests.Integration.DataAccess
             // Arrange
             var competitor = new Competitor { CompetitorId = 1, FirstName = "John", LastName = "Doe", CountryId = 1 };
             var country = new Country { CountryId = 1, CountryNameShort = "NL" };
-            context.Country.Add(country);
+            context.Countries.Add(country);
             context.Competitors.Add(competitor);
 
             var team = new Team { TeamId = 1, CurrentTeamName = "TeamA" };
@@ -75,7 +75,7 @@ namespace CycleManager.Tests.Integration.DataAccess
 
             // Arrange
             var country = new Country { CountryId = 1, CountryNameShort = "NL" };
-            context.Country.Add(country);
+            context.Countries.Add(country);
 
             var competitor1 = new Competitor { CompetitorId = 1, FirstName = "John", LastName = "Doe", CountryId = 1, Country = country };
             var competitor2 = new Competitor { CompetitorId = 2, FirstName = "Jane", LastName = "Smith", CountryId = 1, Country = country };
@@ -124,7 +124,7 @@ namespace CycleManager.Tests.Integration.DataAccess
             using var context = GetInMemoryContext();
 
             var country = new Country { CountryId = 1, CountryNameShort = "NL" };
-            context.Country.Add(country);
+            context.Countries.Add(country);
 
             var competitor = new Competitor { CompetitorId = 1, FirstName = "John", LastName = "Doe", CountryId = 1, Country = country };
             context.Competitors.Add(competitor);

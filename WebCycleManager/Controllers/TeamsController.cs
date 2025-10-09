@@ -123,20 +123,24 @@ namespace WebCycleManager.Controllers
             if (team == null)  return NotFound();
 
             var availableYears = Enumerable.Range(2025, 4).ToList();
+            
+            var countries = _countryService.GetAll().Result
+                .OrderBy(c => c.CountryNameLong)
+                .Select(c => new SelectListItem
+                {
+                    Value = c.CountryId.ToString(),
+                    Text = c.CountryNameLong,
+                    Selected = c.CountryId == team.CountryId // hier de geselecteerde waarde instellen
+                })
+                .ToList();
+            
             var model = new TeamEditViewModel
             {
                 TeamId = team.TeamId,
                 CurrentTeamName = team.CurrentTeamName,
                 CountryId = team.CountryId,
                 PcsName = team.PcsName,
-                Countries = _countryService.GetAll().Result
-                .OrderBy(c => c.CountryNameLong)
-                .Select(c => new SelectListItem
-                {
-                    Value = c.CountryId.ToString(),
-                    Text = c.CountryNameLong
-                })
-                .ToList(),
+                Countries = countries,
                 AvailableYears = availableYears,
                 TeamYears = team.TeamYears
                             .OrderBy(ty => ty.Year)
@@ -157,10 +161,7 @@ namespace WebCycleManager.Controllers
         public async Task<IActionResult> Edit(TeamEditViewModel model)
         {
             model.AvailableYears = Enumerable.Range(2025, 4).ToList();
-
-            if (!ModelState.IsValid)
-            {
-                model.Countries = _countryService.GetAll().Result
+            model.Countries = _countryService.GetAll().Result
                 .OrderBy(c => c.CountryNameLong)
                 .Select(c => new SelectListItem
                 {
@@ -168,6 +169,9 @@ namespace WebCycleManager.Controllers
                     Text = c.CountryNameLong
                 })
                 .ToList();
+
+            if (!ModelState.IsValid)
+            {
                 return View(model);
             }
 

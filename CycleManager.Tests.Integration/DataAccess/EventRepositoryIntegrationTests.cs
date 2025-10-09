@@ -98,7 +98,7 @@ namespace CycleManager.Tests.Integration.DataAccess
                 InSelectie = true
             };
 
-            context.Country.Add(country);
+            context.Countries.Add(country);
             context.Competitors.Add(competitor);
             context.Teams.Add(team);
             context.CompetitorInTeams.Add(competitorInTeam);

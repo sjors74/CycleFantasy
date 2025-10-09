@@ -180,7 +180,7 @@ namespace CycleManager.Services
             var competitorInTeamSet = new HashSet<(int CompetitorId, int TeamId, int Year)>(
                 competitorInTeams.Select(cit => (cit.CompetitorId, cit.TeamId, cit.Year)));
 
-            var countries = await _db.Country.ToListAsync();
+            var countries = await _db.Countries.ToListAsync();
             var countryLookup = countries.ToDictionary(c => c.CountryNameShort, StringComparer.OrdinalIgnoreCase);
 
             var newCompetitors = new List<Competitor>();
@@ -247,7 +247,7 @@ namespace CycleManager.Services
             }
 
             if (newCountries.Any())
-                await _db.Country.AddRangeAsync(newCountries);
+                await _db.Countries.AddRangeAsync(newCountries);
             if (newCompetitors.Any())
                 await _db.Competitors.AddRangeAsync(newCompetitors);
 
