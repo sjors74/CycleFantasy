@@ -4,7 +4,7 @@ using Domain.Context;
 using Domain.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace CycleManager.Tests.Integration
+namespace CycleManager.Tests.Integration.DataAccess
 {
     public class EventRepositoryIntegrationTests
     {

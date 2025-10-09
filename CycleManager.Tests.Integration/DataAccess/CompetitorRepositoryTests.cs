@@ -10,7 +10,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CycleManager.Tests.Integration
+namespace CycleManager.Tests.Integration.DataAccess
 {
     public class CompetitorRepositoryTests
     {
