@@ -9,6 +9,20 @@ if (window.location.hostname === "localhost") {
     FLAGS_BASE_URL = "https://flagcdn.com";
 }
 
+async function initClientSettings() {
+    try {
+        const res = await fetch("/config/clientsettings");
+        const cfg = await res.json();
+        API_BASE_URL = cfg.apiBaseUrl;
+        FLAGS_BASE_URL = cfg.flagsBaseUrl;
+        console.log("Client settings loaded:", cfg);
+    } catch (err) {
+        console.error("Failed to load client settings", err);
+        API_BASE_URL = "https://localhost:44302"; // fallback
+        FLAGS_BASE_URL = "https://flagcdn.com";
+    }
+}
+
 async function loadConfig() {
     try {
         console.log("Fetching config from:", `${API_BASE_URL}/config`);
@@ -25,3 +39,5 @@ async function loadConfig() {
         throw error;
     }
 }
+
+initClientSettings();

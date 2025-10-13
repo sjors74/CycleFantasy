@@ -14,7 +14,9 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container. 
+// -------------------
+// Configuration
+// -------------------
 var connectionString = builder.Configuration.GetConnectionString("CycleDb");
 
 builder.Services.AddCors(options =>
@@ -30,27 +32,41 @@ builder.Services.AddCors(options =>
 builder.Services.Configure<SmtpSettings>(
     builder.Configuration.GetSection("SmtpSettings"));
 
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseLazyLoadingProxies(false)
-        .UseSqlServer(connectionString, sqlOptions =>
-        {
-            sqlOptions.EnableRetryOnFailure(
-                maxRetryCount: 5,
-                maxRetryDelay: TimeSpan.FromSeconds(10),
-                errorNumbersToAdd: null
-            );
-            sqlOptions.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
-        }));
+// -------------------
+// Database
+// -------------------
+if (builder.Environment.IsEnvironment("Test"))
+{
+    // In-memory DB voor tests
+    builder.Services.AddDbContext<ApplicationDbContext>(options =>
+        options.UseInMemoryDatabase("TestDb"));
+}
+else
+{
+    builder.Services.AddDbContext<ApplicationDbContext>(options =>
+        options.UseLazyLoadingProxies(false)
+               .UseSqlServer(connectionString, sqlOptions =>
+               {
+                   sqlOptions.EnableRetryOnFailure(5, TimeSpan.FromSeconds(10), null);
+                   sqlOptions.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
+               }));
+}
+
+// -------------------
+// Identity & DI
+// -------------------
 builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
 {
     options.SignIn.RequireConfirmedAccount = true;
     options.User.RequireUniqueEmail = true;
 })
-    .AddEntityFrameworkStores<ApplicationDbContext>();
+.AddEntityFrameworkStores<ApplicationDbContext>();
+
+// Repositories & Services
 builder.Services.AddTransient<ITeamRepository, TeamRepository>();
 builder.Services.AddTransient<ICompetitorRepository, CompetitorRepository>();
 builder.Services.AddTransient<ICompetitorsInEventRepository, CompetitorsInEventRepository>();
-builder.Services.AddScoped<ICompetitorInTeamRepository,CompetitorInTeamRepository>();
+builder.Services.AddScoped<ICompetitorInTeamRepository, CompetitorInTeamRepository>();
 builder.Services.AddScoped<ICountryRepository, CountryRepository>();
 builder.Services.AddTransient<IEventRepository, EventRepository>();
 builder.Services.AddTransient<IResultsRepository, ResultsRepository>();
@@ -67,14 +83,16 @@ builder.Services.AddTransient<ITeamService, TeamService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddTransient<INewsItemRepository, NewsItemRepository>();
 builder.Services.AddTransient<INewsService, NewsService>();
+
 builder.Services.AddControllers();
 builder.Services.AddHttpClient();
 builder.Services.AddTransient<IEmailSender, EmailSender>();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddMemoryCache();
 builder.Services.AddSwaggerGen();
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+
+// JWT Auth
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -95,15 +113,33 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
+// -------------------
+// Build app
+// -------------------
 var app = builder.Build();
 
-using(var scope = app.Services.CreateScope())
-{
+// -------------------
+// Seed & Ensure DB
+// -------------------
+
+using (var scope = app.Services.CreateScope())
+{ 
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    db.Database.Migrate();
+    if (builder.Environment.IsEnvironment("Test"))
+    {
+        db.Database.EnsureCreated();
+        WebCycle.Services.TestDataSeeder.Seed(db);
+        Console.WriteLine("[API] Test data seeded.");
+    }
+    else
+    {
+        db.Database.Migrate();
+    }
 }
 
-// Configure the HTTP request pipeline.
+// -------------------
+// Middleware
+// -------------------
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -111,13 +147,34 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseCors();
-
 app.UseHttpsRedirection();
-
 app.UseAuthorization();
-
 app.MapControllers();
 
 app.MapGet("/", () => "API draait!");
 
-app.Run();
+// Extra ping endpoint voor AppFixture
+if (app.Environment.IsEnvironment("Test"))
+{
+    app.MapGet("/test/seed-ready", (ApplicationDbContext db) =>
+    {
+        bool ready = db.Events.Any();
+        return ready ? Results.Ok() : Results.StatusCode(503);
+    });
+}
+
+// -------------------
+// Start the app
+// -------------------
+
+if (!builder.Environment.IsEnvironment("Test"))
+{
+    app.Run(); // normale run voor dev/prod
+}
+else
+{
+    Console.WriteLine("Running in Test mode");
+    await app.RunAsync(); // start de host
+    Console.WriteLine("[API] Test environment: keeping host alive...");
+
+}

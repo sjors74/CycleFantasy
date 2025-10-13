@@ -1,5 +1,16 @@
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Configuration.AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true);
+if (builder.Environment.IsEnvironment("Test"))
+{
+    var apiUrl = builder.Configuration["ClientSettings:ApiBaseUrl"];
+    if (string.IsNullOrEmpty(apiUrl) || apiUrl.Contains("7089"))
+    {
+        builder.Configuration["ClientSettings:ApiBaseUrl"] = "https://localhost:44302";
+        Console.WriteLine("Overriding ApiBaseUrl for Test environment to https://localhost:44302");
+    }
+}
+
 // Add services to the container.
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
@@ -38,6 +49,10 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
 app.UseSession();
+if (app.Environment.IsEnvironment("Test"))
+{
+    app.UseMiddleware<FakeAuthMiddleware>();
+}
 app.UseAuthentication();
 
 app.UseAuthorization();
