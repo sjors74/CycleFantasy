@@ -16,6 +16,8 @@ namespace WebCycle.Services
                     StartDate = DateTime.Now.AddDays(1),
                     EndDate = DateTime.Now.AddDays(15),
                     IsActive = true,
+                    CountryCode = "nl",
+                    Slogan = "test test test",
                     Stages = new List<Stage>
                     {
                         new Stage
@@ -35,6 +37,8 @@ namespace WebCycle.Services
                     StartDate = DateTime.Now.AddDays(3),
                     EndDate = DateTime.Now.AddDays(10),
                     IsActive = true,
+                    CountryCode = "it",
+                    Slogan = "viva italia",
                     Stages = new List<Stage>
                     {
                         new Stage
