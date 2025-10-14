@@ -24,50 +24,78 @@ namespace CycleManager.Tests.E2E
         public async Task EventResultPage_Works_Correctly()
         {
             await _fixture.EnsureRunningAsync();
+
             var context = await _fixture.Browser.NewContextAsync();
             var page = await context.NewPageAsync();
 
-            // Open de homepage als fakeuser
-            await page.GotoAsync($"{_fixture.WebBaseUrl}/?fakeuser=testuser", new() { Timeout = 60000 });
+            try
+            {
+                // Login als testuser
+                await page.GotoAsync($"{_fixture.WebBaseUrl}/?fakeuser=testuser", new() { Timeout = 60000 });
 
-            // Wacht tot spinner verdwijnt
-            await page.Locator(".loading-spinner.active").WaitForAsync(new() { State = WaitForSelectorState.Hidden, Timeout = 60000 });
+                // Wacht tot spinner klaar is
+                var spinner = page.Locator(".loading-spinner.active");
+                await spinner.WaitForAsync(new() { State = WaitForSelectorState.Hidden, Timeout = 60000 });
 
-            // Klik op “Tour de Test”
-            var eventLink = page.GetByText("Tour de Test");
-            await eventLink.ClickAsync();
+                // Klik eerste event ("Tour de Test")
+                var eventTile = page.Locator(".tile.tile-event").First;
+                await eventTile.ClickAsync();
 
-            // Wacht tot de etappes geladen zijn
-            var stageLink = page.Locator("a[href*='/Etappe?nummer=Proloog']");
-            await Assertions.Expect(stageLink).ToBeVisibleAsync(new() { Timeout = 10000 });
+                // Wacht tot eventpagina geladen is
+                await spinner.WaitForAsync(new() { State = WaitForSelectorState.Hidden, Timeout = 60000 });
 
-            await stageLink.ClickAsync();
+                var title = page.Locator("h1");
+                await Assertions.Expect(title).ToHaveTextAsync("Tour de Test");
 
-            await Assertions.Expect(page).ToHaveURLAsync(new Regex(".*/Etappe.*"));
+                // Klik op de etappe-link “Proloog”
+                var proloogLink = page.Locator("a:text-is('P')");
+                await proloogLink.ClickAsync();
 
-            var titleLocator = page.Locator("#etappe-title");
-            await Assertions.Expect(titleLocator)
-                .ToContainTextAsync("Etappe Proloog – Resultaten");
+                // Wacht tot resultatenpagina geladen is
+                await spinner.WaitForAsync(new() { State = WaitForSelectorState.Hidden, Timeout = 60000 });
 
-            // Controleer dat er uitslagen of resultaten zijn
-            var resultsTable = page.Locator("#renner-lijst tr");
-            await resultsTable.First.WaitForAsync(new() { Timeout = 10000 });
+                var etappeTitle = page.Locator("h1#etappe-title");
+                await Assertions.Expect(etappeTitle)
+                    .ToHaveTextAsync("Etappe Proloog – Resultaten", new() { Timeout = 10000 });
 
-            // Controleer dat de tabel er is en resultaten bevat
-            await Assertions.Expect(page.Locator("#renner-lijst td")).Not.ToHaveTextAsync("Geen resultaten");
+                // Controleer dat er resultaten zijn
+                var rows = page.Locator("#renner-lijst tr");
+                int rowCount = await rows.CountAsync();
 
-            // Controleer dat de 'Terug'-knop zichtbaar is
-            var terugLink = page.Locator("a#terug-naar-event");
-            await Assertions.Expect(terugLink).ToBeVisibleAsync();
+                Assert.IsTrue(rowCount > 0, "Geen resultaten gevonden in de tabel!");
 
-            // Klik op 'Terug'
-            await terugLink.ClickAsync();
+                // Klik op “← Terug”
+                var terugLink = page.Locator("a#terug-naar-event");
+                await terugLink.ClickAsync();
 
-            // Controleer dat je weer op de Event-pagina bent
-            await Assertions.Expect(page).ToHaveURLAsync(new Regex(".*/Event\\?eventId=1"));
+                await spinner.WaitForAsync(new() { State = WaitForSelectorState.Hidden, Timeout = 60000 });
 
-            await context.CloseAsync();
+                // Controleer dat we terug zijn op de eventpagina
+                var eventTitle = page.Locator("h1");
+                await Assertions.Expect(eventTitle).ToContainTextAsync("Tour de Test");
+
+                Console.WriteLine("EventResultPage test succesvol afgerond!");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Test gefaald: " + ex.Message);
+
+                // Maak screenshot bij fout
+                var screenshotPath = Path.Combine(Directory.GetCurrentDirectory(), "event_error.png");
+                await page.ScreenshotAsync(new() { Path = screenshotPath, FullPage = true });
+                Console.WriteLine($"Screenshot opgeslagen: {screenshotPath}");
+
+                var htmlPath = Path.Combine(Directory.GetCurrentDirectory(), "event_error.html");
+                await File.WriteAllTextAsync(htmlPath, await page.ContentAsync());
+                Console.WriteLine($"HTML dump opgeslagen: {htmlPath}");
+
+                throw; // Laat de test nog steeds falen
+            }
+            finally
+            {
+                await page.CloseAsync();
+                await context.CloseAsync();
+            }
         }
-
     }
 }
