@@ -1,4 +1,5 @@
-﻿using System.Security.Claims;
+﻿using Microsoft.AspNetCore.Authentication;
+using System.Security.Claims;
 
 public class FakeAuthMiddleware
 {
@@ -11,29 +12,39 @@ public class FakeAuthMiddleware
 
     public async Task InvokeAsync(HttpContext context)
     {
-        // alleen fake-authenticatie toepassen als er een ?fakeuser= query aanwezig is
+        // Alleen bij Test-omgeving
         if (!context.User.Identity?.IsAuthenticated ?? true)
         {
             var fakeUser = context.Request.Query["fakeuser"].ToString();
             if (!string.IsNullOrEmpty(fakeUser))
             {
                 var claims = new List<Claim>
-            {
-                new Claim(ClaimTypes.Name, fakeUser),
-                new Claim(ClaimTypes.Email, $"{fakeUser}@example.com"),
-                new Claim(ClaimTypes.Role, "User")
-            };
+                {
+                    new Claim(ClaimTypes.Name, fakeUser),
+                    new Claim(ClaimTypes.Email, $"{fakeUser}@example.com"),
+                    new Claim(ClaimTypes.Role, "User"),
+                    new Claim(ClaimTypes.NameIdentifier, "1")
+                };
 
-                var identity = new ClaimsIdentity(claims, "FakeAuth");
+                var identity = new ClaimsIdentity(claims, "MyCookieAuth");
                 var principal = new ClaimsPrincipal(identity);
+
+                // zet gebruiker op context
                 context.User = principal;
+
+                // maak ook cookie aan zodat authenticatie bij volgende request behouden blijft
+                await context.SignInAsync("MyCookieAuth", principal);
 
                 Console.WriteLine($"[FakeAuth] Signed in as {fakeUser}");
             }
-            else
-            {
-                Console.WriteLine($"[FakeAuth] No fakeuser provided -> request remains anonymous");
-            }
+        }
+
+        if (context.Request.Path.StartsWithSegments("/logout", StringComparison.OrdinalIgnoreCase))
+        {
+            Console.WriteLine("[FakeAuth] Signing out (via /logout)");
+            await context.SignOutAsync("MyCookieAuth");
+            context.Response.Redirect("/");
+            return;
         }
 
         await _next(context);

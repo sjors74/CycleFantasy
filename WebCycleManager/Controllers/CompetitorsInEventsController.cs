@@ -221,13 +221,19 @@ namespace WebCycleManager.Controllers
         public async Task<IActionResult> DeleteConfirmed(int id, int? filterTeam)
         {
             var competitorsInEvent = await _competitorInEventService.GetCompetitorById((int)id);
-            if (competitorsInEvent != null)
+            if (competitorsInEvent == null)
+                return NotFound();
+
+            try
             {
                 await _competitorInEventService.Delete(competitorsInEvent);
                 return RedirectToAction(nameof(Index), new { eventId = competitorsInEvent.EventId, filterTeam });
             }
-            
-            return NotFound();
+            catch (InvalidOperationException ex)
+            {
+                TempData["ErrorMessage"] = ex.Message;
+                return RedirectToAction(nameof(Index), new { eventId = competitorsInEvent.EventId, filterTeam });
+            }
         }
 
         private bool CompetitorsInEventExists(int id)

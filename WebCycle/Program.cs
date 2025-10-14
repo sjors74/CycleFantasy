@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using WebCycle.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -127,9 +128,8 @@ using (var scope = app.Services.CreateScope())
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     if (builder.Environment.IsEnvironment("Test"))
     {
-        db.Database.EnsureCreated();
-        WebCycle.Services.TestDataSeeder.Seed(db);
-        Console.WriteLine("[API] Test data seeded.");
+        var env = scope.ServiceProvider.GetRequiredService<IWebHostEnvironment>();
+        await TestDataSeeder.SeedAsync(db, env);
     }
     else
     {

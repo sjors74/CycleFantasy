@@ -62,3 +62,8 @@ app.Run();
 
 Console.WriteLine($"ENVIRONMENT: {builder.Environment.EnvironmentName}");
 
+if (app.Environment.IsEnvironment("Test"))
+{
+    app.UseExceptionHandler("/Error"); // voegt try/catch om de pipeline
+    app.UseMiddleware<FakeAuthMiddleware>();
+}

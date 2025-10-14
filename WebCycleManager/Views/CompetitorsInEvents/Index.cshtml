@@ -62,6 +62,12 @@
         </tbody>
     </table>
 </div>
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger" role="alert">
+        @TempData["ErrorMessage"]
+    </div>
+}
 <script type="text/javascript">
     function SelectedIndexChanged(searchTeam) {
         var eventId = @Model.EventId;

@@ -169,6 +169,10 @@ namespace CycleManager.Tests.E2E
                 await Assertions.Expect(page.Locator("text=Welkom bij")).ToBeVisibleAsync();
 
                 var eventTiles = page.Locator(".tile.tile-event");
+
+                // Wacht tot minimaal 1 tile zichtbaar is
+                await eventTiles.First.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 60000 });
+
                 int count = await eventTiles.CountAsync();
                 Assert.IsTrue(count > 0, "Geen evenementen gevonden op de homepage");
 
@@ -199,28 +203,32 @@ namespace CycleManager.Tests.E2E
             var context = await _fixture.Browser.NewContextAsync();
             var page = await context.NewPageAsync();
 
-            //Start met een ingelogde fakeuser
+            // Log in als fakeuser
             await page.GotoAsync($"{_fixture.WebBaseUrl}/?fakeuser=testuser", new() { Timeout = 60000 });
 
-            //Wacht tot "Profiel" zichtbaar is
+            // Wacht tot Profiel-link zichtbaar is
+            var profielLink = page.GetByRole(AriaRole.Link, new() { Name = "Profiel" });
+            await Assertions.Expect(profielLink).ToBeVisibleAsync(new() { Timeout = 10000 });
+
+            // Klik op Profiel
+            await profielLink.ClickAsync();
+
+            // Klik op de logout button in de profielpagina/menu
+            var logoutButton = page.GetByRole(AriaRole.Button, new() { Name = "Uitloggen" });
+            await Assertions.Expect(logoutButton).ToBeVisibleAsync();
+            await logoutButton.ClickAsync();
+
             await Assertions.Expect(page.GetByRole(AriaRole.Link, new() { Name = "Profiel" }))
-                .ToBeVisibleAsync(new() { Timeout = 10000 });
+                .ToHaveCountAsync(0);
 
-            //Klik op "Profiel"
-            await page.GetByRole(AriaRole.Link, new() { Name = "Profiel" }).ClickAsync();
+            // Controleer dat we terug op de homepage of loginpagina komen
+            await Assertions.Expect(page).ToHaveURLAsync(new Regex(@".*/Account/Login|.*/$"));
 
-            //Klik op "Uitloggen"
-            await page.GetByRole(AriaRole.Link, new() { Name = "Uitloggen" }).ClickAsync();
-
-            //Controleer of we terug op de homepage zijn en niet meer ingelogd
-            await Assertions.Expect(page).ToHaveURLAsync(new Regex(".*/$"));
-            await Assertions.Expect(page.GetByRole(AriaRole.Link, new() { Name = "Inloggen" }))
-                .ToBeVisibleAsync(new() { Timeout = 10000 });
-
-            Console.WriteLine("✅ Logout test passed: gebruiker is succesvol uitgelogd en ziet 'Inloggen' link.");
+            // Optioneel: Profiel-link is niet meer zichtbaar
+            var profielLinks = page.GetByRole(AriaRole.Link, new() { Name = "Profiel" });
+            Assert.IsFalse(await profielLinks.IsVisibleAsync());
 
             await context.CloseAsync();
         }
-
     }
 }

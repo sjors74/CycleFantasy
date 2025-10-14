@@ -1,6 +1,8 @@
 ﻿using CycleManager.Services.Interfaces;
 using Domain.Interfaces;
 using Domain.Models;
+using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
 
 namespace CycleManager.Services
 {
@@ -30,8 +32,19 @@ namespace CycleManager.Services
         /// <returns></returns>
         public async Task Delete(CompetitorsInEvent entity)
         {
-            _competitorsInEventRepository.Remove(entity);
-            await _competitorsInEventRepository.SaveChangesAsync();
+            try
+            {
+                _competitorsInEventRepository.Remove(entity);
+                await _competitorsInEventRepository.SaveChangesAsync();
+            }
+            catch(DbUpdateException ex)
+            {
+                if (ex.InnerException is SqlException sqlEx && sqlEx.Message.Contains("REFERENCE constraint"))
+                {
+                    throw new InvalidOperationException("Deze renner kan niet worden verwijderd omdat hij nog in gebruik is.", ex);
+                }
+                throw;
+            }
         }
 
         /// <summary>
