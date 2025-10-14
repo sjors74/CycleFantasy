@@ -18,98 +18,122 @@ namespace WebCycle.Services
             await db.Database.EnsureDeletedAsync();
             await db.Database.EnsureCreatedAsync();
 
-            // Landen
-            var nl = new Country { CountryId = 1, CountryNameLong = "Nederland", CountryNameShort = "nl" };
-            var be = new Country { CountryId = 2, CountryNameLong = "België", CountryNameShort = "be" };
-            await db.Countries.AddRangeAsync(nl, be);
-
-            // Deelnemers en teams
-            var rider1 = new Competitor { FirstName = "Jan", LastName = "Fietser", CountryId = 1 };
-            var rider2 = new Competitor { FirstName = "Piet", LastName = "Peloton", CountryId = 2 };
-            var teamYear25 = new TeamYear { TeamId = 1, TeamYearId = 1, Name = "TstTeam", Year = 2025 };
-            var cit1 = new CompetitorInTeam { Competitor = rider1, TeamYear = teamYear25 };
-            var cit2 = new CompetitorInTeam { Competitor = rider2, TeamYear = teamYear25 };
-
-            // Evenementen
-            var event1 = new Event
+            //users
+            if (!db.Users.Any(u => u.UserName == "testuser"))
             {
-                EventId = 1,
-                EventName = "Tour de Test",
-                StartDate = DateTime.Now.AddDays(1),
-                EndDate = DateTime.Now.AddDays(15),
-                IsActive = true,
-                CountryCode = "nl",
-                Slogan = "test test test",
-                Stages = new List<Stage>
+                var testUser = new ApplicationUser
                 {
-                    new Stage
-                    {
-                        Id = 3,
-                        StageDate = DateTime.UtcNow.AddDays(1),
-                        StageName = "Proloog",
-                        StageOrder = 1,
-                        StartLocation = "Startville",
-                        FinishLocation = "Finishburg"
-                    }
-                }
-            };
+                    Id = "testuser",
+                    UserName = "testuser",
+                    FirstName = "Tes",
+                    LastName = "Tuser",
+                    Email = "testuser@example.com"
+                };
+                db.Users.Add(testUser);
+                await db.SaveChangesAsync();
 
-            var event2 = new Event
-            {
-                EventId = 2,
-                EventName = "Cycle Classic",
-                StartDate = DateTime.Now.AddDays(3),
-                EndDate = DateTime.Now.AddDays(10),
-                IsActive = true,
-                CountryCode = "it",
-                Slogan = "viva italia",
-                Stages = new List<Stage>
+
+                // Landen
+                var nl = new Country { CountryId = 1, CountryNameLong = "Nederland", CountryNameShort = "nl" };
+                var be = new Country { CountryId = 2, CountryNameLong = "België", CountryNameShort = "be" };
+                await db.Countries.AddRangeAsync(nl, be);
+
+                // Deelnemers en teams
+                var rider1 = new Competitor { FirstName = "Jan", LastName = "Fietser", CountryId = 1 };
+                var rider2 = new Competitor { FirstName = "Piet", LastName = "Peloton", CountryId = 2 };
+                var teamYear25 = new TeamYear { TeamId = 1, TeamYearId = 1, Name = "TstTeam", Year = 2025 };
+                var cit1 = new CompetitorInTeam { Competitor = rider1, TeamYear = teamYear25 };
+                var cit2 = new CompetitorInTeam { Competitor = rider2, TeamYear = teamYear25 };
+
+                // Evenementen
+                var event1 = new Event
                 {
-                    new Stage
+                    EventId = 1,
+                    EventName = "Tour de Test",
+                    StartDate = DateTime.Now.AddDays(1),
+                    EndDate = DateTime.Now.AddDays(15),
+                    IsActive = true,
+                    CountryCode = "nl",
+                    Slogan = "test test test",
+                    Stages = new List<Stage>
                     {
-                        Id = 1,
-                        StageDate = DateTime.UtcNow.AddDays(1),
-                        StageName = "Proloog",
-                        StageOrder = 1,
-                        StartLocation = "Startville",
-                        FinishLocation = "Finishburg"
-                    },
-                    new Stage
-                    {
-                        Id = 2,
-                        StageDate = DateTime.UtcNow.AddDays(2),
-                        StageName = "1",
-                        StageOrder = 2,
-                        StartLocation = "Finishburg",
-                        FinishLocation = "SomewhereElst"
+                        new Stage
+                        {
+                            Id = 3,
+                            StageDate = DateTime.UtcNow.AddDays(1),
+                            StageName = "Proloog",
+                            StageOrder = 1,
+                            StartLocation = "Startville",
+                            FinishLocation = "Finishburg"
+                        }
                     }
-                }
-            };
+                };
 
-            await db.Events.AddRangeAsync(event1, event2);
+                var event2 = new Event
+                {
+                    EventId = 2,
+                    EventName = "Cycle Classic",
+                    StartDate = DateTime.Now.AddDays(3),
+                    EndDate = DateTime.Now.AddDays(10),
+                    IsActive = true,
+                    CountryCode = "it",
+                    Slogan = "viva italia",
+                    Stages = new List<Stage>
+                    {
+                        new Stage
+                        {
+                            Id = 1,
+                            StageDate = DateTime.UtcNow.AddDays(1),
+                            StageName = "Proloog",
+                            StageOrder = 1,
+                            StartLocation = "Startville",
+                            FinishLocation = "Finishburg"
+                        },
+                        new Stage
+                        {
+                            Id = 2,
+                            StageDate = DateTime.UtcNow.AddDays(2),
+                            StageName = "1",
+                            StageOrder = 2,
+                            StartLocation = "Finishburg",
+                            FinishLocation = "SomewhereElst"
+                        }
+                    }
+                };
 
-            // Competitors koppelen aan event
-            var cie1 = new CompetitorsInEvent { Event = event1, CompetitorInTeam = cit1 };
-            var cie2 = new CompetitorsInEvent { Event = event1, CompetitorInTeam = cit2 };
+                await db.Events.AddRangeAsync(event1, event2);
 
-            // Configuratie en resultaten
-            var config = new Configuration { Id = 1, ConfigurationType = "langEvent" };
-            var configItem1 = new ConfigurationItem { Id = 1, Configuration = config, Position = 1, Score = 50 };
-            var configItem2 = new ConfigurationItem { Id = 2, Configuration = config, Position = 2, Score = 30 };
+                db.GameCompetitorsEvent.Add(new GameCompetitorEvent
+                {
+                    UserId = testUser.Id,
+                    EventId = event1.EventId,
+                    TeamName = "Poolname"
+                });
+                await db.SaveChangesAsync();
 
-            var result = new Result
-            {
-                Id = 1,
-                StageId = 3,
-                ConfigurationItem = configItem1,
-                CompetitorInEvent = cie1
-            };
+                // Competitors koppelen aan event
+                var cie1 = new CompetitorsInEvent { Event = event1, CompetitorInTeam = cit1 };
+                var cie2 = new CompetitorsInEvent { Event = event1, CompetitorInTeam = cit2 };
 
-            await db.AddRangeAsync(rider1, rider2, teamYear25, cit1, cit2, cie1, cie2, config, configItem1, configItem2, result);
+                // Configuratie en resultaten
+                var config = new Configuration { Id = 1, ConfigurationType = "langEvent" };
+                var configItem1 = new ConfigurationItem { Id = 1, Configuration = config, Position = 1, Score = 50 };
+                var configItem2 = new ConfigurationItem { Id = 2, Configuration = config, Position = 2, Score = 30 };
 
-            await db.SaveChangesAsync();
+                var result = new Result
+                {
+                    Id = 1,
+                    StageId = 3,
+                    ConfigurationItem = configItem1,
+                    CompetitorInEvent = cie1
+                };
 
-            Console.WriteLine("[Seeder] Test database ready!");
+                await db.AddRangeAsync(rider1, rider2, teamYear25, cit1, cit2, cie1, cie2, config, configItem1, configItem2, result);
+
+                await db.SaveChangesAsync();
+
+                Console.WriteLine("[Seeder] Test database ready!");
+            }
         }
     }
 }

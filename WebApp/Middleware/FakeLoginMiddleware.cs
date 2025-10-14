@@ -23,7 +23,7 @@ public class FakeAuthMiddleware
                     new Claim(ClaimTypes.Name, fakeUser),
                     new Claim(ClaimTypes.Email, $"{fakeUser}@example.com"),
                     new Claim(ClaimTypes.Role, "User"),
-                    new Claim(ClaimTypes.NameIdentifier, "1")
+                    new Claim(ClaimTypes.NameIdentifier, "testuser")
                 };
 
                 var identity = new ClaimsIdentity(claims, "MyCookieAuth");
