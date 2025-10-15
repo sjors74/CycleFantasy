@@ -47,12 +47,13 @@ namespace CycleManager.Tests.E2E
             // Klik op de aangemaakte pool en controleer opties
             await createdPool.Locator(".accordion-button").ClickAsync();
 
-            var editTeamLink = futureEvent.Locator("a", new() { HasText = "Bewerk je team!" });
-            //TODO: tot hier!
-            await Assertions.Expect(editTeamLink).ToBeVisibleAsync();
-            await editTeamLink.ClickAsync();
+            //var editTeamLink = futureEvent.Locator("a", new() { HasText = "Bewerk je team!" });
+            await Page.Locator(".accordion-item:has-text('Mijn Test Pool')")
+                      .GetByRole(AriaRole.Link, new() { Name = "Bewerk je team!" })
+                      .ClickAsync();
 
-            await Assertions.Expect(Page.Locator("h2:text-is('Renners-selectie (0 van 15)')")).ToBeVisibleAsync();
+            await Assertions.Expect(Page.Locator("h2#pageTitle"))
+            .ToHaveTextAsync("Renners-selectie (0 van 15)");
         }
     }
 }
