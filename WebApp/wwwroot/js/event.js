@@ -177,13 +177,15 @@ document.addEventListener('DOMContentLoaded', function () {
         const fragment = document.createDocumentFragment();
 
         etappes.forEach((etappe) => {
+            const stage = etappe.stageNumber ?? "";
+            const formatted = stage.charAt(0).toUpperCase() + stage.charAt(1).toLowerCase();
             const step = document.createElement("div");
             step.classList.add("step");
             if (etappe.noScore) {
                 step.classList.add("noscore");
                 const link = document.createElement("a");
                 link.href = `/Etappe?nummer=${etappe.stageNumber}&stageId=${etappe.stageId}`;
-                link.textContent = etappe.stageNumber?.charAt(0).toUpperCase() ?? "";
+                link.textContent = formatted;
                 step.appendChild(link);
             }
 
@@ -192,11 +194,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 const link = document.createElement("a");
                 link.href = `/Etappe?nummer=${etappe.stageNumber}&stageId=${etappe.stageId}`;
-                link.textContent = etappe.stageNumber?.charAt(0).toUpperCase() ?? "";
+                link.textContent = formatted;
                 step.appendChild(link);
             } else {
                 if (!etappe.noScore) {
-                    step.textContent = etappe.stageNumber?.charAt(0).toUpperCase() ?? "";
+                    step.textContent = formatted;
                 }
             }
             fragment.appendChild(step);
