@@ -3,7 +3,6 @@ using CycleManager.Services.Interfaces;
 using Domain.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
 using WebCycleManager.Models;
 
 namespace WebCycleManager.Controllers
@@ -71,7 +70,7 @@ namespace WebCycleManager.Controllers
 
             if (existingEvent == null)
             {
-                return Json(new { succes = false, message = "Evenement niet gevonden." });
+                return Json(new { success = false, message = "Evenement niet gevonden." });
             }
 
             var entity = new Stage
@@ -145,10 +144,10 @@ namespace WebCycleManager.Controllers
                 StageDate = DateOnly.FromDateTime(stage.StageDate),
                 StartLocation = stage.StartLocation,
                 FinishLocation = stage.FinishLocation,
-                EventStartDate = stage.Event.StartDate.HasValue
+                EventStartDate = stage.Event?.StartDate.HasValue == true
                     ? DateOnly.FromDateTime(stage.Event.StartDate.Value)
                     : DateOnly.MinValue,
-                EventEndDate = stage.Event.EndDate.HasValue
+                EventEndDate = stage.Event?.EndDate.HasValue == true
                     ? DateOnly.FromDateTime(stage.Event.EndDate.Value)
                     : DateOnly.MaxValue
             };

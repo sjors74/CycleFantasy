@@ -18,6 +18,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\CycleManager.Services\CycleManager.Services.csproj" />
+    <ProjectReference Include="..\WebCycleManager\WebCycleManager.csproj" />
     <ProjectReference Include="..\WebCycle\WebCycleApi.csproj" />
   </ItemGroup>
 

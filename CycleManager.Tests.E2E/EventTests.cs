@@ -48,7 +48,7 @@ namespace CycleManager.Tests.E2E
                 await Assertions.Expect(title).ToHaveTextAsync("Tour de Test");
 
                 // Klik op de etappe-link “Proloog”
-                var proloogLink = page.Locator("a:text-is('P')");
+                var proloogLink = page.Locator("a:text-is('Pr')");
                 await proloogLink.ClickAsync();
 
                 // Wacht tot resultatenpagina geladen is
