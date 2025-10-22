@@ -4,6 +4,7 @@ using CycleManager.Services.Interfaces;
 using Domain.Dto;
 using Domain.Models;
 using FluentAssertions;
+using MailKit.Search;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Moq;
@@ -209,11 +210,20 @@ namespace CycleManager.Tests.Unit.Manager
                 new Competitor { CompetitorId = 2, FirstName = "Piet", LastName = "Pietersen" }
             };
 
+            var asyncCompetitors = new TestAsyncEnumerable<Competitor>(mockCompetitors);
+
             // Setup mock: maak het IAsyncEnumerable compatibel met ToListAsync()
             _competitorServiceMock
                 .Setup(s => s.GetCompetitorsByTerm(It.IsAny<string>()))
-                .Returns(mockCompetitors.AsQueryable());
-
+                .Returns((string term) =>
+                {
+                    var filtered = mockCompetitors
+                        .Where(c => $"{c.FirstName} {c.LastName}"
+                            .Contains(term, StringComparison.OrdinalIgnoreCase))
+                        .AsQueryable();
+                    return new TestAsyncEnumerable<Competitor>(filtered);
+                });
+            
             // Act
             var result = await _controller.SearchCompetitors("Ja");
 
@@ -222,7 +232,7 @@ namespace CycleManager.Tests.Unit.Manager
             var data = Assert.IsAssignableFrom<IEnumerable<object>>(jsonResult.Value);
 
             Assert.Contains(data, d => d.ToString().Contains("Jan Jansen"));
-            Assert.Contains(data, d => d.ToString().Contains("Piet Pietersen"));
+            Assert.DoesNotContain(data, d => d.ToString().Contains("Piet Pietersen"));
         }
 
         [Fact]
@@ -237,5 +247,77 @@ namespace CycleManager.Tests.Unit.Manager
             var json = Assert.IsType<JsonResult>(result);
             json.Value.Should().NotBeNull();
         }
+
+        [Fact]
+        public async Task Edit_Post_ValidModel_RedirectsToIndex()
+        {
+            // Arrange
+            var input = TestDataFactory.CreateCompetitorEditInputModel();
+
+            _competitorServiceMock
+                .Setup(s => s.UpdateCompetitorWithTeam(It.IsAny<CompetitorEditDto>()))
+                .Returns(Task.CompletedTask);
+
+            // Act
+            var result = await _controller.Edit(input);
+
+            // Assert
+            var redirect = Assert.IsType<RedirectToActionResult>(result);
+            Assert.Equal("Index", redirect.ActionName);
+            _competitorServiceMock.Verify(s => s.UpdateCompetitorWithTeam(It.IsAny<CompetitorEditDto>()), Times.Once);
+        }
+
+        [Fact]
+        public async Task Edit_Post_InvalidModel_ReturnsView()
+        {
+            // Arrange
+            _controller.ModelState.AddModelError("FirstName", "Required");
+
+            var input = new CompetitorEditInputModel
+            {
+                CompetitorId = 1,
+                FirstName = "",
+                LastName = "Test"
+            };
+
+            var dto = TestDataFactory.CreateCompetitorEditDto();
+            _competitorServiceMock.Setup(s => s.GetCompetitorForEdit(1)).ReturnsAsync(dto);
+
+            // Act
+            var result = await _controller.Edit(input);
+
+            // Assert
+            var view = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsAssignableFrom<CompetitorEditViewModel>(view.Model);
+            Assert.Equal(dto.CompetitorId, model.CompetitorId);
+        }
+
+        [Fact]
+        public async Task Delete_Get_ReturnsView_WhenCompetitorFound()
+        {
+            var competitor = TestDataFactory.CreateCompetitor();
+            _competitorServiceMock.Setup(s => s.GetCompetitorById(1))
+                                  .ReturnsAsync(competitor);
+
+            var result = await _controller.Delete(1);
+
+            var view = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<Competitor>(view.Model);
+            Assert.Equal(competitor.CompetitorId, model.CompetitorId);
+        }
+
+        [Fact]
+        public async Task Delete_Get_ReturnsNotFound_WhenIdIsNullOrNotFound()
+        {
+            var result1 = await _controller.Delete(null);
+            Assert.IsType<NotFoundResult>(result1);
+
+            _competitorServiceMock.Setup(s => s.GetCompetitorById(1))
+                                  .ReturnsAsync((Competitor)null);
+
+            var result2 = await _controller.Delete(1);
+            Assert.IsType<NotFoundResult>(result2);
+        }
+
     }
 }

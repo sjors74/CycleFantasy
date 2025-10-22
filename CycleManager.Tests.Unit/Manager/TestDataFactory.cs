@@ -4,6 +4,7 @@ using Domain.Dto;
 using Domain.Models;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using WebCycleManager.Models;
+using WebCycleManager.Models.ViewModel;
 
 namespace CycleManager.Tests.Unit.Manager
 {
@@ -258,6 +259,18 @@ namespace CycleManager.Tests.Unit.Manager
                         TeamName = "UAE Team Emirates"
                     }
                 }
+            };
+        }
+
+        public static CompetitorEditInputModel CreateCompetitorEditInputModel()
+        {
+            return new CompetitorEditInputModel
+            {
+                CompetitorId = 1,
+                FirstName = "Jan",
+                LastName = "Jansen",
+                CountryId = 1,
+                CompetitorInTeams = new List<CompetitorInTeamInputModel>(),
             };
         }
     }

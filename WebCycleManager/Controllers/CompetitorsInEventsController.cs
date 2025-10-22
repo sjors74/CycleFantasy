@@ -1,5 +1,6 @@
 ﻿using CycleManager.Services;
 using CycleManager.Services.Interfaces;
+using Domain.Dto;
 using Domain.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -122,7 +123,7 @@ namespace WebCycleManager.Controllers
                 await _competitorInEventService.Create(listOfCompetitorsInEvent);
                 return RedirectToAction("Index", new { eventId, filterTeam } );
             }
-            var competitors = (await _competitorService.GetAllCompetitors(DateTime.Now.Year))
+            var competitors = (await _competitorService.GetAllCompetitors(DateTime.Now.Year) ?? new List<CompetitorDto>())
                 .OrderBy(c => c.CompetitorName)
                 .ToList();
 
@@ -132,7 +133,7 @@ namespace WebCycleManager.Controllers
             }
 
             ViewData["CompetitorId"] = new SelectList(competitors, "CompetitorId", "CompetitorName");
-            ViewData["TeamId"] = new SelectList(await _teamService.GetTeamsForEvent(eventId), "TeamId", "TeamName");
+            ViewData["TeamId"] = new SelectList(await _teamService.GetTeamsForEvent(eventId) ?? new List<Team>(), "TeamId", "TeamName");
             return View();
         }
 
@@ -181,16 +182,14 @@ namespace WebCycleManager.Controllers
                     competitorInEvent.InSelectie = vm.InSelection;
                     await _competitorInEventService.Update(competitorInEvent);
                 }
-                catch
+                catch(Exception)
                 {
-                    if (!CompetitorsInEventExists(vm.CompetitorInEventId))
+                    if (!await CompetitorsInEventExists(vm.CompetitorInEventId))
                     {
                         return NotFound();
                     }
-                    else
-                    {
-                        throw;
-                    }
+
+                    throw;
                 }
                 return RedirectToAction(nameof(Index), new { eventId = vm.EventId, FilterTeam = filterTeam });
             }
@@ -234,11 +233,19 @@ namespace WebCycleManager.Controllers
                 TempData["ErrorMessage"] = ex.Message;
                 return RedirectToAction(nameof(Index), new { eventId = competitorsInEvent.EventId, filterTeam });
             }
+            catch(Exception)
+            {
+                if (!await CompetitorsInEventExists(id))
+                    return NotFound();
+
+                throw;
+            }
         }
 
-        private bool CompetitorsInEventExists(int id)
+        private async Task<bool> CompetitorsInEventExists(int id)
         {
-          return (_competitorInEventService.GetCompetitorById(id) != null);
+            var entity = await _competitorInEventService.GetCompetitorById(id);
+            return entity != null;
         }
 
         [HttpGet]
