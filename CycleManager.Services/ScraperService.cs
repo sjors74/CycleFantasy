@@ -1,5 +1,6 @@
 ﻿using CycleManager.Domain.Models;
 using CycleManager.Services.Helpers;
+using CycleManager.Services.Interfaces;
 using CycleManager.Services.Settings;
 using Domain.Context;
 using Domain.Models;
@@ -9,14 +10,14 @@ using Microsoft.Extensions.Options;
 
 namespace CycleManager.Services
 {
-    public class ScraperService
+    public class ScraperService : IScraperService
     {
-        private readonly PcsScraper _pcsScraper;
+        private readonly IPcsScraper _pcsScraper;
         private readonly ScraperSettings _settings;
         private readonly ApplicationDbContext _db;
         private readonly ILogger<ScraperService> _logger;
 
-        public ScraperService(ApplicationDbContext db, IOptions<ScraperSettings> options, PcsScraper pcsScraper, ILogger<ScraperService> logger)
+        public ScraperService(ApplicationDbContext db, IOptions<ScraperSettings> options, IPcsScraper pcsScraper, ILogger<ScraperService> logger)
         {
             _db = db;
             _logger = logger;

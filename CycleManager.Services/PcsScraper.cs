@@ -1,10 +1,11 @@
 ﻿using CycleManager.Domain.Models;
+using CycleManager.Services.Interfaces;
 using HtmlAgilityPack;
 using Microsoft.Extensions.Logging;
 
 namespace CycleManager.Services
 {
-    public class PcsScraper
+    public class PcsScraper : IPcsScraper
     {
         private readonly ILogger<PcsScraper> _logger;
         public PcsScraper(ILogger<PcsScraper> logger)

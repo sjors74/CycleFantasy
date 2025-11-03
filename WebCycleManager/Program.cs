@@ -49,9 +49,10 @@ builder.Services.AddTransient<ITeamService, TeamService>();
 builder.Services.AddTransient<IGameCompetitorInEventService, GameCompetitorInEventService>();
 builder.Services.AddTransient<IUserService, UserService>();
 builder.Services.AddTransient<IScoreRepository, ScoreRepository>();
-builder.Services.AddScoped<ScraperService>();
-builder.Services.AddScoped<PcsScraper>();
+builder.Services.AddTransient<IScraperService, ScraperService>();
+builder.Services.AddTransient<IPcsScraper, PcsScraper>();
 builder.Services.AddTransient<IScoreService, ScoreService>();
+builder.Services.AddScoped<IAdminScraperService, AdminScraperService>();
 builder.Services.AddControllersWithViews();
 builder.Services.Configure<ApiSettings>(
 builder.Configuration.GetSection("ApiSettings"));
