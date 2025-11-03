@@ -1,11 +1,9 @@
 ﻿using CycleManager.Domain.Dto;
 using CycleManager.Services;
 using CycleManager.Services.Interfaces;
-using Domain.Context;
 using Domain.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
 using WebCycleManager.Models;
 
 namespace WebCycleManager.Controllers
@@ -18,18 +16,16 @@ namespace WebCycleManager.Controllers
         private readonly IEventService _eventService;
         private readonly IUserService _userService;
         private List<ResultLineViewModel> _resultLines = new List<ResultLineViewModel>();
-        private readonly ApplicationDbContext _context;
 
         public GameCompetitorEventsController(IGameCompetitorInEventService gameCompetitorInEventService, 
             IResultService resultService, IEventService eventService, IUserService userService,
-            ICompetitorInEventService competitorInEventService, ApplicationDbContext context)
+            ICompetitorInEventService competitorInEventService)
         {
             _gameCompetitorEventService = gameCompetitorInEventService;
             _resultService = resultService;
             _eventService = eventService;
             _userService = userService;
             _competitorInEventService = competitorInEventService;
-            _context = context;
         }
 
         // GET: GameCompetitorEvents
@@ -221,8 +217,6 @@ namespace WebCycleManager.Controllers
         }
 
         // POST: GameCompetitorEvents/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(DeelnemerCreateDto dto)
@@ -289,7 +283,7 @@ namespace WebCycleManager.Controllers
                 Id = entity.Id,
                 TeamName = entity.TeamName,
                 UserName = $"{entity?.User?.FirstName} {entity?.User?.LastName}",
-                EventName = entity.Event.EventName,
+                EventName = entity?.Event?.EventName,
                 EventId = entity.EventId
             };
             return View(dto);
@@ -303,15 +297,11 @@ namespace WebCycleManager.Controllers
             var entity = await _gameCompetitorEventService.GetGameCompetitorEventById(id);
             if (entity != null)
             {
-                var picks = _context.GameCompetitorEventPicks
-                    .Where(g => g.GameCompetitorEventId == entity.Id);
-                _context.GameCompetitorEventPicks.RemoveRange(picks);
-                _context.GameCompetitorsEvent.Remove(entity);
-
-                await _context.SaveChangesAsync();
+                await _gameCompetitorEventService.DeleteGameCompetitorEventAsync(id);
+                return RedirectToAction("Index", new { eventId = entity.EventId });
             }
 
-            return RedirectToAction("Index", new { eventId = entity.EventId });
+            return RedirectToAction("Index");
         }
 
         [HttpPost]
@@ -323,43 +313,9 @@ namespace WebCycleManager.Controllers
             return Ok();
         }
 
-        private bool GameCompetitorEventExists(int id)
+        public async Task<IEnumerable<SelectListItem>> GetDropdownList(int eventId)
         {
-            return true;
-
-          //return (_context.GameCompetitorsEvent?.Any(e => e.Id == id)).GetValueOrDefault();
-        }
-
-        public IEnumerable<SelectListItem> GetDropdownList(int eventId)
-        {
-            var competitors = new List<SelectListItem>();
-
-            var competitorsDb = _context.CompetitorsInEvent
-                .Include(c => c.CompetitorInTeam)
-                    .ThenInclude(c => c.Competitor)
-                    .ThenInclude(c => c.CompetitorInTeams)
-                        .ThenInclude(cit => cit.Team)
-                .Where(c => c.EventId == eventId && !c.OutOfCompetition)
-                .OrderBy(c => c.CompetitorInTeam.Competitor.FirstName)
-                .ToList();
-
-            var groupedCompetitors = competitorsDb
-                .GroupBy(x => x.CompetitorInTeam?.Team?.CurrentTeamName ?? "Onbekend");
-            
-            foreach (var group in groupedCompetitors)
-            {
-                var optionGroup = new SelectListGroup() { Name = group.Key };
-                foreach (var item in group)
-                {
-                    competitors.Add(new SelectListItem()
-                    {
-                        Value = item.Id.ToString(),
-                        Text = item.CompetitorInTeam.Competitor.CompetitorName,
-                        Group = optionGroup
-                    });
-                }
-            }
-            return competitors;
+            return await _gameCompetitorEventService.GetDropdownListAsync(eventId);
         }
 
         private int GetCompetitorIdFromList(int i, IEnumerable<CompetitorsInEvent> competitors)
@@ -367,16 +323,6 @@ namespace WebCycleManager.Controllers
             var indexingCompetitors = competitors.ToList();
             var competitor = indexingCompetitors[i];
             return competitor.Id;
-        }
-
-        private string GetCompetitorFullName(int competitorId)
-        {
-            //var competitor = _context.Competitors.FirstOrDefault(c => c.CompetitorId.Equals(competitorId));
-            //if (competitor != null)
-            //{
-            //    return $"{competitor.FirstName} {competitor.LastName}";
-            //}
-            return string.Empty;
         }
 
         private int GetScoreFromResultList(int competitorInEventId)

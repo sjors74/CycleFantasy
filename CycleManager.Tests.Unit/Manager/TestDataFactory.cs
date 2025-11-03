@@ -273,5 +273,97 @@ namespace CycleManager.Tests.Unit.Manager
                 CompetitorInTeams = new List<CompetitorInTeamInputModel>(),
             };
         }
+
+        public static Event CreateEvent(
+            int id = 1,
+            string name = "Race1",
+            int teamCount = 0,
+            int stageCount = 0)
+        {
+            var e = new Event
+            {
+                EventId = id,
+                EventName = name,
+                StartDate = DateTime.Today,
+                EndDate = DateTime.Today.AddDays(1),
+                EventTeams = new List<EventTeam>(),
+                Stages = new List<Stage>()
+            };
+
+            for (int i = 1; i <= teamCount; i++)
+            {
+                e.EventTeams.Add(new EventTeam
+                {
+                    EventId = id,
+                    TeamId = i
+                });
+            }
+
+            for (int i = 1; i <= stageCount; i++)
+            {
+                e.Stages.Add(new Stage
+                {
+                    Id = i,
+                    EventId = id,
+                    StageName = $"Stage {i}"
+                });
+            }
+
+            return e;
+        }
+
+        public static EventItemViewModel CreateEventViewModel(
+            int id = 1,
+            string name = "Race1",
+            int selectedTeams = 0,
+            int stages = 0)
+        {
+            return new EventItemViewModel
+            {
+                Id = id,
+                Name = name,
+                SelectedTeamsCount = selectedTeams,
+                StagesInEvent = stages
+            };
+        }
+
+        public static List<Team> CreateTeams(int count = 3)
+        {
+            var list = new List<Team>();
+            for (int i = 1; i <= count; i++)
+            {
+                list.Add(new Team
+                {
+                    TeamId = i,
+                    CurrentTeamName = $"Team {i}"
+                });
+            }
+            return list;
+        }
+
+        public static List<Stage> CreateStages(int count = 3, int eventId = 1)
+        {
+            var list = new List<Stage>();
+            for (int i = 1; i <= count; i++)
+            {
+                list.Add(new Stage
+                {
+                    Id = i,
+                    EventId = eventId,
+                    StageName = $"Stage {i}"
+                });
+            }
+            return list;
+        }
+
+        //public static List<Event> CreateEvents(int count = 3)
+        //{
+        //    var list = new List<Event>();
+        //    for (int i = 1; i <= count; i++)
+        //    {
+        //        list.Add(CreateEvent(id: i, name: $"Event {i}"));
+        //    }
+        //    return list;
+        //}
     }
 }

@@ -1,5 +1,6 @@
 ﻿using CycleManager.Domain.Dto;
 using Domain.Models;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace CycleManager.Services.Interfaces
 {
@@ -67,5 +68,9 @@ namespace CycleManager.Services.Interfaces
 
         Task RemovePickFromEvent(int id);
         Task AddPicks(List<GameCompetitorEventPick> picks);
+
+        Task DeleteGameCompetitorEventAsync(int id);
+
+        Task<IEnumerable<SelectListItem>> GetDropdownListAsync(int eventId);
     }
 }

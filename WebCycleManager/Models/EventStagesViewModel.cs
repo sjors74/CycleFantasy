@@ -2,7 +2,7 @@
 
 namespace WebCycleManager.Models
 {
-    internal class EventStagesViewModel
+    public class EventStagesViewModel
     {
         public int EventId { get; set; }
         public string EventName { get; set; } = string.Empty;

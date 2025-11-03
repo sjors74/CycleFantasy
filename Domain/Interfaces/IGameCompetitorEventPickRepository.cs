@@ -23,5 +23,7 @@ namespace CycleManager.Domain.Interfaces
         Task CreateGamePicksAsync(List<GameCompetitorEventPick> picks);
 
         Task RemovePickFromEvent(int id);
+
+        Task DeleteGameCompetitorEventAsync(int id);
     }
 }

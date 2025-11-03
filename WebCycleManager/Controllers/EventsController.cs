@@ -116,7 +116,8 @@ namespace WebCycleManager.Controllers
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (_eventService.GetEventById(@event.Id) == null)
+                    var existingEvent = await _eventService.GetEventById(@event.Id);
+                    if (existingEvent == null)
                     {
                         return NotFound();
                     }
@@ -192,12 +193,18 @@ namespace WebCycleManager.Controllers
         [HttpPost]
         public async Task<IActionResult> ManageTeams(EventTeamsViewModel vm)
         {
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
-                var eventEntity = await _eventService.GetEventById(vm.EventId);
+                return Json(new { success = false, message = "Er is een fout opgetreden." });
+            }
+            var eventEntity = await _eventService.GetEventById(vm.EventId);
+            if (eventEntity == null)
+            {
+                return Json(new { success = false, message = "Evenement niet gevonden" });
+            }
 
-                if (eventEntity == null) return Json(new { success = false, message = "Evenement niet gevonden" });
-
+            try
+            {
                 // Huidige koppelingen verwijderen
                 eventEntity.EventTeams?.Clear();
 
@@ -219,7 +226,10 @@ namespace WebCycleManager.Controllers
                     redirectUrl = Url.Action("Edit", new { id = vm.EventId })
                 });
             }
-            return Json(new { success = false, message = "Er is een fout opgestreden." });
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Er is een fout opgetreden tijdens het opslaan." });
+            }
         }
 
         [HttpGet]

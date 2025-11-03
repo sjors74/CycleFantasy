@@ -68,5 +68,17 @@ namespace DataAccessEF.TypeRepository
 
             return competitorsInEvent;
         }
+
+        public async Task<List<CompetitorsInEvent>> GetCompetitorsInEventList(int eventId)
+        {
+            return await context.CompetitorsInEvent
+                .Include(c => c.CompetitorInTeam)
+                    .ThenInclude(c => c.Competitor)
+                        .ThenInclude(c => c.CompetitorInTeams)
+                            .ThenInclude(cit => cit.Team)
+                .Where(c => c.EventId == eventId && !c.OutOfCompetition)
+                .OrderBy(c => c.CompetitorInTeam.Competitor.FirstName)  
+                .ToListAsync();
+        }
     }
 }

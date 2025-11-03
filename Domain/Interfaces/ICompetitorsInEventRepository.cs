@@ -11,5 +11,6 @@ namespace Domain.Interfaces
         Task<CompetitorsInEvent> GetCompetitorsInEventByIds(int eventId, int competitorId);
 
         Task<CompetitorsInEvent> GetById(int competitorId);
+        Task<List<CompetitorsInEvent>> GetCompetitorsInEventList(int eventId);
     }
 }

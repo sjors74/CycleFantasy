@@ -105,5 +105,18 @@ namespace DataAccessEF.TypeRepository
                 context.GameCompetitorEventPicks.Remove(pick);
             }
         }
+
+        public async Task DeleteGameCompetitorEventAsync(int id)
+        {
+            var entity = await context.GameCompetitorsEvent
+            .Include(e => e.Renners)
+            .FirstOrDefaultAsync(e => e.Id == id);
+
+            if (entity == null)
+                return;
+
+            context.GameCompetitorEventPicks.RemoveRange(entity.Renners);
+            context.GameCompetitorsEvent.Remove(entity);
+        }
     }
 }

@@ -3,6 +3,7 @@ using CycleManager.Domain.Interfaces;
 using CycleManager.Services.Interfaces;
 using Domain.Interfaces;
 using Domain.Models;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace CycleManager.Services
 {
@@ -149,6 +150,35 @@ namespace CycleManager.Services
         {
             _pickRepository.AddRange(picks);
             await _pickRepository.SaveChangesAsync();
+        }
+
+        public async Task DeleteGameCompetitorEventAsync(int id)
+        {
+            await _pickRepository.DeleteGameCompetitorEventAsync(id);
+            await _pickRepository.SaveChangesAsync();
+        }
+
+        public async Task<IEnumerable<SelectListItem>> GetDropdownListAsync(int eventId)
+        {
+            var competitors = new List<SelectListItem>();
+            var competitorsDb = await _competitorRepo.GetCompetitorsInEventList(eventId);
+            var groupedCompetitors = competitorsDb
+                .GroupBy(x => x.CompetitorInTeam?.Team?.CurrentTeamName ?? "onbekend");
+
+            foreach (var group in groupedCompetitors)
+            {
+                var optionGroup = new SelectListGroup { Name = group.Key };
+                foreach (var item in group)
+                {
+                    competitors.Add(new SelectListItem
+                    {
+                        Value = item.Id.ToString(),
+                        Text = item.CompetitorInTeam.Competitor.CompetitorName,
+                        Group = optionGroup
+                    });
+                }
+            }
+            return competitors;
         }
     }
 }

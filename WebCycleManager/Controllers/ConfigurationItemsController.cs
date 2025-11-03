@@ -32,7 +32,7 @@ namespace WebCycleManager.Controllers
                 return NotFound();
             }
 
-            var configurationItem = _configurationService.GetConfigurationItemById((int)id);
+            var configurationItem = await _configurationService.GetConfigurationItemById((int)id);
             if (configurationItem == null)
             {
                 return NotFound();
@@ -110,7 +110,7 @@ namespace WebCycleManager.Controllers
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!ConfigurationItemExists(vm.Id))
+                    if (!await ConfigurationItemExists(vm.Id))
                     {
                         return NotFound();
                     }
@@ -157,9 +157,10 @@ namespace WebCycleManager.Controllers
             return RedirectToAction("Details", "Configurations", new { id = configurationId });
         }
 
-        private bool ConfigurationItemExists(int id)
+        private async Task<bool> ConfigurationItemExists(int id)
         {
-          return (_configurationService.GetConfigurationItemById(id) != null);
+            var item = await _configurationService.GetConfigurationItemById(id);
+            return  item != null;
         }
 
         private async Task<IEnumerable<Configuration>> GetConfigurationList()
