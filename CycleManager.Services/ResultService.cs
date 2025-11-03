@@ -1,6 +1,5 @@
 ﻿using CycleManager.Domain.Dto;
 using CycleManager.Services.Interfaces;
-using DataAccessEF.TypeRepository;
 using Domain.Interfaces;
 using Domain.Models;
 
@@ -126,6 +125,54 @@ namespace CycleManager.Services
         public async Task<List<DeelnemerScore>> GetScoresByEventIdAsync(int eventId)
         {
             return await _scoreRepository.GetScoresByEventIdAsync(eventId);
+        }
+
+
+        //Methodes voor manager
+
+        public async Task<Stage?> GetStageByIdAsync(int stageId)
+        {
+            return await _resultsRepository.GetStageByIdAsync(stageId);
+        }
+
+        public async Task<List<Result>> GetResultsByStageAsync(int stageId)
+        {
+            return await _resultsRepository.GetResultsByStageAsync(stageId);
+        }
+
+        public async Task<List<CompetitorsInEvent>> GetCompetitorsInEventAsync(int eventId)
+        {
+            return await _resultsRepository.GetCompetitorsInEventAsync(eventId);
+        }
+
+        public async Task<List<ConfigurationItem>> GetConfigurationItemsByConfigAsync(int configId)
+        {
+            return await _resultsRepository.GetConfigurationItemsByConfigAsync(configId);
+        }
+
+        public async Task AddResultsAsync(IEnumerable<Result> results)
+        {
+            await _resultsRepository.AddResultsAsync(results);
+        }
+
+        public async Task<Result?> GetResultByIdAsync(int id)
+        {
+            return await _resultsRepository.GetResultByIdAsync(id);
+        }
+
+        public async Task DeleteResultAsync(Result result)
+        {
+            await _resultsRepository.DeleteResultAsync(result);
+        }
+
+        public async Task<bool> ResultExistsAsync(int id)
+        {
+            return await _resultsRepository.ResultExistsAsync(id);
+        }
+
+        public string GetCompetitorFullName(int competitorId)
+        {
+            return _resultsRepository.GetCompetitorFullName(competitorId);
         }
     }
 }

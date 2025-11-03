@@ -51,7 +51,7 @@ builder.Services.AddTransient<IUserService, UserService>();
 builder.Services.AddTransient<IScoreRepository, ScoreRepository>();
 builder.Services.AddScoped<ScraperService>();
 builder.Services.AddScoped<PcsScraper>();
-builder.Services.AddScoped<ScoreService>();
+builder.Services.AddTransient<IScoreService, ScoreService>();
 builder.Services.AddControllersWithViews();
 builder.Services.Configure<ApiSettings>(
 builder.Configuration.GetSection("ApiSettings"));

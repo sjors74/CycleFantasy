@@ -1,10 +1,11 @@
-﻿using Domain.Context;
+﻿using CycleManager.Services.Interfaces;
+using Domain.Context;
 using Domain.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace CycleManager.Services
 {
-    public class ScoreService
+    public class ScoreService : IScoreService
     {
         private readonly ApplicationDbContext _context;
 

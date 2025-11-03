@@ -27,7 +27,7 @@ namespace CycleManager.Services.Interfaces
         /// <param name="competitorInEventId"></param>
         /// <returns></returns>
         Task<int> GetCompetitorScoreByEventAndStageIdAsync(int eventId, int competitorInEventId);
-        
+
         /// <summary>
         /// Get a list of all results for an event
         /// </summary>
@@ -51,5 +51,16 @@ namespace CycleManager.Services.Interfaces
         Task<List<DeelnemerDto>> GetPoolRankingForStage(int eventId, int stageId);
 
         Task<List<DeelnemerScore>> GetScoresByEventIdAsync(int eventId);
+
+        //methodes for manager
+        Task<Stage?> GetStageByIdAsync(int stageId);
+        Task<List<Result>> GetResultsByStageAsync(int stageId);
+        Task<List<CompetitorsInEvent>> GetCompetitorsInEventAsync(int eventId);
+        Task<List<ConfigurationItem>> GetConfigurationItemsByConfigAsync(int configId);
+        Task AddResultsAsync(IEnumerable<Result> results);
+        Task<Result?> GetResultByIdAsync(int id);
+        Task DeleteResultAsync(Result result);
+        Task<bool> ResultExistsAsync(int id);
+        string GetCompetitorFullName(int competitorId);
     }
 }

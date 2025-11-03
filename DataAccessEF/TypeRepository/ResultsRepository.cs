@@ -152,5 +152,80 @@ namespace DataAccessEF.TypeRepository
 
             return top15;
         }
+
+        //Methodes voor de Manager
+        public async Task<Stage?> GetStageByIdAsync(int stageId)
+        {
+            return await context.Stages
+                .AsNoTracking()
+                .Include(s => s.Event)
+                .ThenInclude(e => e.Configuration)
+                .FirstOrDefaultAsync(s => s.Id == stageId);
+        }
+
+        public async Task<List<Result>> GetResultsByStageAsync(int stageId)
+        {
+            return await context.Results
+                .AsNoTracking()
+                .Where(r => r.StageId == stageId)
+                .Include(r => r.CompetitorInEvent)
+                    .ThenInclude(r => r.CompetitorInTeam)
+                        .ThenInclude(cie => cie.Competitor)
+                .Include(r => r.ConfigurationItem)
+                .ToListAsync();
+        }
+
+        public async Task<List<CompetitorsInEvent>> GetCompetitorsInEventAsync(int eventId)
+        {
+            return await context.CompetitorsInEvent
+                .AsNoTracking()
+                .Where(c => c.EventId == eventId && !c.OutOfCompetition)
+                .Include(c => c.CompetitorInTeam)
+                    .ThenInclude(c => c.Competitor)
+                .ToListAsync();
+        }
+
+        public async Task<List<ConfigurationItem>> GetConfigurationItemsByConfigAsync(int configId)
+        {
+            return await context.ConfigurationItems
+                .AsNoTracking()
+                .Where(ci => ci.ConfigurationId == configId)
+                .OrderBy(ci => ci.Position)
+                .ToListAsync();
+        }
+
+        public async Task AddResultsAsync(IEnumerable<Result> results)
+        {
+            context.Results.AddRange(results);
+            await context.SaveChangesAsync();
+        }
+
+        public async Task<Result?> GetResultByIdAsync(int id)
+        {
+            return await context.Results
+                .Include(r => r.CompetitorInEvent)
+                    .ThenInclude(c => c.CompetitorInTeam)
+                        .ThenInclude(r => r.Competitor)
+                .Include(r => r.Stage)
+                .Include(r => r.ConfigurationItem)
+                .FirstOrDefaultAsync(m => m.Id == id);
+        }
+
+        public async Task DeleteResultAsync(Result result)
+        {
+            context.Results.Remove(result);
+            await context.SaveChangesAsync();
+        }
+
+        public async Task<bool> ResultExistsAsync(int id)
+        {
+            return await context.Results.AnyAsync(e => e.Id == id);
+        }
+
+        public string GetCompetitorFullName(int competitorId)
+        {
+            var competitor = context.Competitors.FirstOrDefault(c => c.CompetitorId == competitorId);
+            return competitor != null ? $"{competitor.FirstName} {competitor.LastName}" : string.Empty;
+        }
     }
 }
