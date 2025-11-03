@@ -57,6 +57,9 @@ namespace DataAccessEF.TypeRepository
 
         public async Task CreateGamePicksAsync(List<GameCompetitorEventPick> picks)
         {
+            if(picks == null || !picks.Any())
+                return;
+
             var gameCompetitorEventId = picks.First().GameCompetitorEventId;
 
             // Maak een HashSet van actuele picks (vanuit frontend)
