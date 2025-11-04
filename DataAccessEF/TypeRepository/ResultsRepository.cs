@@ -85,11 +85,8 @@ namespace DataAccessEF.TypeRepository
 
         public async Task<int> GetResultsByStageId(int stageId)
         {
-            var results = await context.Results
-                                .Include(s => s.Stage)
-                                .Where(s => s.StageId == stageId)
-                                .ToListAsync();
-            return results.Count;
+            return await context.Results
+                .CountAsync(r => r.StageId == stageId);
         }
 
         public async Task<List<EtappeUitslagDto>?> GetEtappeUitslag(int stageId)
@@ -213,8 +210,12 @@ namespace DataAccessEF.TypeRepository
 
         public async Task DeleteResultAsync(Result result)
         {
-            context.Results.Remove(result);
-            await context.SaveChangesAsync();
+            var existing = await context.Results.FindAsync(result.Id);
+            if (existing != null)
+            {
+                context.Results.Remove(result);
+                await context.SaveChangesAsync();
+            }
         }
 
         public async Task<bool> ResultExistsAsync(int id)

@@ -1,10 +1,8 @@
 ﻿using CycleManager.Domain.Dto;
-using DataAccessEF.Migrations;
 using Domain.Context;
 using Domain.Interfaces;
 using Domain.Models;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Diagnostics;
 
 namespace DataAccessEF.TypeRepository
 {
