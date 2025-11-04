@@ -41,6 +41,9 @@ namespace DataAccessEF
 
         public void Remove(T entity)
         {
+            if (entity == null || !context.Set<T>().Contains(entity))
+                return;
+
             context.Set<T>().Remove(entity);
         }
 
