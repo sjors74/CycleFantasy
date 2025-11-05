@@ -66,7 +66,7 @@ namespace CycleManager.Tests.Integration.Manager
 
             // Check expected rider names from fake scraper
             scraped.Select(sc => sc.RiderName)
-                   .Should().Contain(new[] { $"RiderOne_{year}", $"RiderTwo_{year}" });
+                   .Should().Contain(new[] { $"Rider One_{year}", $"Rider Two_{year}" });
         }
     }
 }

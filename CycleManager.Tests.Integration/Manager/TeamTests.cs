@@ -293,6 +293,9 @@ namespace CycleManager.Tests.Integration.Manager
             scrapedRiders.Should().NotBeEmpty();
             scrapedRiders.All(sc => sc.ProcessedAt == null).Should().BeTrue();
 
+            var expectedNames = new[] { "Rider One_2025", "Rider Two_2025" };
+            scrapedRiders.Select(sc => sc.RiderName).Should().Contain(expectedNames);
+
             // Act: Stap 2 - Import (zet ze om naar echte CompetitorInTeam records)
             await scraperService.ImportScrapedCompetitorsAsync();
 
@@ -301,9 +304,9 @@ namespace CycleManager.Tests.Integration.Manager
             htmlResponse.EnsureSuccessStatusCode();
             var html = await htmlResponse.Content.ReadAsStringAsync();
 
-            foreach (var rider in scrapedRiders)
+            foreach (var rider in expectedNames)
             {
-                html.Should().Contain(rider.RiderName);
+                html.Should().Contain(rider);
             }
         }
     }
