@@ -41,14 +41,13 @@ namespace WebCycleManager.Controllers
         // GET: Teams/Details/5
         public async Task<IActionResult> Details(int id, int? year)
         {
-            var team = await _teamService.GetTeamForCurrentYear(id, year.Value);
+            var selectedYear = year ?? DateTime.Now.Year;
+
+            var team = await _teamService.GetTeamForCurrentYear(id, selectedYear);
 
             if (team == null)
-            {
                 return NotFound();
-            }
 
-            var selectedYear = year ?? DateTime.Now.Year;
             var competitors = team.CompetitorInTeams
                 .Where(cit => cit.Year == selectedYear)
                 .Select(cit => new CompetitorViewModel
@@ -68,7 +67,11 @@ namespace WebCycleManager.Controllers
                 TeamName = team.CurrentTeamName,
                 Country = team.Country?.CountryNameShort ?? "onbekend",
                 SelectedYear = selectedYear,
-                AvailableYears = team.CompetitorInTeams.Select(c => c.Year).Distinct().OrderByDescending(y => y).ToList(),
+                AvailableYears = team.TeamYears
+                                    .Select(ty => ty.Year)
+                                    .Distinct()
+                                    .OrderByDescending(y => y)
+                                    .ToList(),
                 Competitors = competitors
             };
             return View(vm);

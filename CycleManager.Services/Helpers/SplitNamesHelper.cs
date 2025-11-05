@@ -11,6 +11,9 @@
 
         public static (string FirstName, string LastName) SplitName(string input)
         {
+            if (string.IsNullOrWhiteSpace(input))
+                return ("Unknown", "Unknown");
+
             var parts = input.Split(' ', StringSplitOptions.RemoveEmptyEntries).ToList();
             if (parts.Count == 0) return ("", "");
             if (parts.Count == 1) return (parts[0], "");

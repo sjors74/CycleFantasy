@@ -16,10 +16,20 @@ using WebCycleManager.Helpers;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-var connectionString = builder.Configuration.GetConnectionString("CycleDb");
-builder.Services.AddDbContext<ApplicationDbContext>(x => x.UseLazyLoadingProxies(false).UseSqlServer(connectionString, sqlOptions =>
-    sqlOptions.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery)
-));
+//if (builder.Environment.IsEnvironment("Testing"))
+//{
+//    builder.Services.AddDbContext<ApplicationDbContext>(options =>
+//        options.UseInMemoryDatabase("TestDb_" + Guid.NewGuid()));
+//}
+//else
+//{
+    var connectionString = builder.Configuration.GetConnectionString("CycleDb");
+    builder.Services.AddDbContext<ApplicationDbContext>(x => 
+        x.UseLazyLoadingProxies(false)
+         .UseSqlServer(connectionString, sqlOptions =>
+            sqlOptions.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery)
+    ));
+//}
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
