@@ -53,31 +53,33 @@ namespace CycleManager.Tests.Integration.Helpers
 
         public Task RunCompetitorsAsync(int teamId, int year)
         {
-            var competitors = new[]
+            if (year <= DateTime.Now.Year + 3)
             {
-            new ScrapedCompetitor
-            {
-                TeamId = teamId,
-                Year = year,
-                RiderName = $"Rider One_{year}",
-                ImportedAt = DateTime.UtcNow,
-                CountryShortName = "be",
-                ProcessedAt = null
-            },
-            new ScrapedCompetitor
-            {
-                TeamId = teamId,
-                Year = year,
-                RiderName = $"Rider Two_{year}",
-                ImportedAt = DateTime.UtcNow,
-                CountryShortName = "be",
-                ProcessedAt = null
+                var competitors = new[]
+                {
+                    new ScrapedCompetitor
+                    {
+                        TeamId = teamId,
+                        Year = year,
+                        RiderName = $"Rider One_{year}",
+                        ImportedAt = DateTime.UtcNow,
+                        CountryShortName = "be",
+                        ProcessedAt = null
+                    },
+                    new ScrapedCompetitor
+                    {
+                        TeamId = teamId,
+                        Year = year,
+                        RiderName = $"Rider Two_{year}",
+                        ImportedAt = DateTime.UtcNow,
+                        CountryShortName = "be",
+                        ProcessedAt = null
+                    }
+                };
+
+                _db.ScrapedCompetitors.AddRange(competitors);
+                _db.SaveChanges();
             }
-        };
-
-            _db.ScrapedCompetitors.AddRange(competitors);
-            _db.SaveChanges();
-
             return Task.CompletedTask;
         }
 

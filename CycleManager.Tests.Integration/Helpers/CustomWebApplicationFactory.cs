@@ -110,4 +110,11 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
         Console.WriteLine($"Seeded teams: {db.Teams.Count()}");
     }
 
+    public void ResetDatabase()
+    {
+        using var scope = Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        db.Database.EnsureDeleted();
+        db.Database.EnsureCreated();
+    }
 }

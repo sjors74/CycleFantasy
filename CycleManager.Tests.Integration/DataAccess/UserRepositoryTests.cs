@@ -16,9 +16,9 @@ namespace CycleManager.Tests.Integration.DataAccess
         {
             var services = new ServiceCollection();
 
-            // Gebruik InMemory EF Core database
+            // Zet im database op
             services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseInMemoryDatabase("UserRepositoryIntegrationTests"));
+                options.UseInMemoryDatabase(Guid.NewGuid().ToString()));
 
             // Voeg logging toe (voor UserManager)
             services.AddLogging();
