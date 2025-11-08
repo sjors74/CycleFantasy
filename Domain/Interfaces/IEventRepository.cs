@@ -12,5 +12,7 @@ namespace Domain.Interfaces
         Task<EventDetailsViewModel?> GetEventDetailsViewModelById(int eventId);
         Task<IEnumerable<TeamDto>> GetTeamsForEvent(int eventId);
         Task<int> GetAantalDeelnemers(int eventId);
+        Task RemoveAllTeamsFromEvent(int eventId);
+        Task AddTeamToEvent(int eventId, int teamId);
     }
 }

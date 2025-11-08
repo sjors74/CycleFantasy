@@ -66,7 +66,7 @@ namespace WebCycleManager.Controllers
         // POST: Events/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Name,Code,Year,StartDate,EndDate,Slogan,CountryCode,ColorName,ConfigurationId,IsActive,ShowPodium")] EventItemViewModel @event)
+        public async Task<IActionResult> Create(EventItemViewModel @event)
         {
             if (ModelState.IsValid)
             {
@@ -99,37 +99,35 @@ namespace WebCycleManager.Controllers
         // POST: Events/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Name,Code,Year,StartDate,EndDate,Slogan,CountryCode,ColorName,ConfigurationId,IsActive,ShowPodium")] EventItemViewModel @event)
+        public async Task<IActionResult> Edit(int? id, EventItemViewModel @event)
         {
-            if (id != @event.Id)
+            if (id == null || id <= 0)
             {
-                return NotFound();
+                ModelState.AddModelError("Id", "Ongeldig of ontbrekend ID.");
+                return View(@event ?? new EventItemViewModel());
             }
 
-            if (ModelState.IsValid)
+            if (@event == null || id != @event.Id)
             {
-                try
-                {
-                    var e = await CreateFromViewModel(@event);
+                ModelState.AddModelError("Id", "Het opgegeven ID komt niet overeen met het model.");
+                return View(@event ?? new EventItemViewModel());
+            }
 
-                    await _eventService.Update(e);
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    var existingEvent = await _eventService.GetEventById(@event.Id);
-                    if (existingEvent == null)
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
+            if (!ModelState.IsValid)
+                return View(@event);
+
+            try
+            {
+                var e = await CreateFromViewModel(@event);
+                await _eventService.Update(e);
                 return RedirectToAction(nameof(Index));
             }
-
-            return View(@event);
+            catch (DbUpdateConcurrencyException)
+            {
+                if (await _eventService.GetEventById(@event.Id) == null)
+                    return NotFound();
+                throw;
+            }
         }
 
         // GET: Events/Delete/5
@@ -206,19 +204,14 @@ namespace WebCycleManager.Controllers
             try
             {
                 // Huidige koppelingen verwijderen
-                eventEntity.EventTeams?.Clear();
+                await _eventService.RemoveAllTeamsForEvent(vm.EventId);
 
                 // Nieuwe koppelingen toevoegen
-                foreach (var team in vm.Teams.Where(t => t.IsSelected))
+                var selectedTeams = vm.Teams?.Where(t => t.IsSelected).ToList() ?? new();
+                foreach (var team in selectedTeams)
                 {
-                    eventEntity.EventTeams?.Add(new EventTeam
-                    {
-                        EventId = vm.EventId,
-                        TeamId = team.TeamId
-                    });
+                    _eventService.AddTeamToEvent(vm.EventId, team.TeamId);
                 }
-
-                await _eventService.Update(eventEntity);
 
                 return Json(new
                 {
@@ -240,13 +233,17 @@ namespace WebCycleManager.Controllers
 
             var stages = await _stageService.GetStagesByEventId(eventId);
 
-            var model = new EventStagesViewModel
+            var model = new ManageStageViewModel
             {
-                EventId = eventId,
-                EventName = eventEntity.EventName,
-                EventStartDate = eventEntity.StartDate ?? DateTime.Today,
-                EventEndDate = eventEntity.EndDate ?? DateTime.Today.AddDays(1),
-                Stages = stages
+                EventStages = new EventStagesViewModel
+                {
+                    EventId = eventId,
+                    EventName = eventEntity.EventName,
+                    EventStartDate = eventEntity.StartDate ?? DateTime.Today,
+                    EventEndDate = eventEntity.EndDate ?? DateTime.Today.AddDays(1),
+                    Stages = stages
+                },
+                NewStage = new StageCreateViewModel { EventId = eventId }
             };
 
             return PartialView("_ManageStagesPartial", model);

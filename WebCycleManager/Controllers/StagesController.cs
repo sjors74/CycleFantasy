@@ -61,9 +61,31 @@ namespace WebCycleManager.Controllers
         {
             if (!ModelState.IsValid)
             {
+                var eventEntity = await _eventService.GetEventById(stage.EventId);
+                
+                if (eventEntity == null)
+                    return Json(new { success = false, message = "Evenement niet gevonden." });
+
+                var stages = await _stageService.GetStagesByEventId(stage.EventId) ?? new List<Stage>();
+                
+                var model = new ManageStageViewModel
+                {
+                    EventStages = new EventStagesViewModel
+                    {
+                        EventId = stage.EventId,
+                        EventName = eventEntity.EventName ?? "Onbekend evenement",
+                        EventStartDate = eventEntity.StartDate ?? DateTime.Today,
+                        EventEndDate = eventEntity.EndDate ?? DateTime.Today.AddDays(1),
+                        Stages = stages
+                    },
+                    NewStage = stage
+                };
+
+                Console.WriteLine("Returning _ManageStagesPartial with model: " +
+                $"EventId={model.EventStages.EventId}, Stages={model.EventStages.Stages.Count()}");
+
                 // Return partial met errors
-                stage.Events = await GetEventSelectListAsync();
-                return PartialView("_ManageStagesPartial", stage);
+                return PartialView("~/Views/Events/_ManageStagesPartial.cshtml", model);
             }
 
             var existingEvent = await _eventService.GetEventById(stage.EventId);
@@ -88,7 +110,8 @@ namespace WebCycleManager.Controllers
             await _stageService.AddStage(entity);
 
             return Json(new 
-            {                 success = true, 
+            {                 
+                success = true, 
                 redirectUrl = Url.Action("Edit", "Events", new { id = stage.EventId })
             });
         }

@@ -1,6 +1,4 @@
-﻿using Domain.Models;
-using Microsoft.AspNetCore.Mvc;
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
 namespace WebCycleManager.Models
@@ -13,7 +11,7 @@ namespace WebCycleManager.Models
             Events = new List<EventItemViewModel>();
         }
     }
-    public class EventItemViewModel
+    public class EventItemViewModel : IValidatableObject
     {
         public int Id { get; set; }
         [DisplayName("Evenement")]
@@ -55,6 +53,16 @@ namespace WebCycleManager.Models
             get 
             { 
                 return Stages != null; }
+        }
+
+        public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+        {
+            if (StartDate > EndDate)
+            {
+                yield return new ValidationResult(
+                    "Startdatum mag niet later zijn dan de einddatum",
+                    new[] { nameof(StartDate), nameof(EndDate) });
+            }
         }
     }
 }

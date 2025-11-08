@@ -58,5 +58,9 @@ namespace CycleManager.Services
         Task<int> GetAantalDeelnemers(int id);
 
         Task<IEnumerable<Event>> GetActiveEvents();
+
+        Task RemoveAllTeamsForEvent(int eventId);
+
+        Task AddTeamToEvent(int eventId, int teamId);
     }
 }

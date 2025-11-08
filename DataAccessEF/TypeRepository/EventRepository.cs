@@ -1,4 +1,5 @@
 ﻿using CycleManager.Domain.Dto;
+using CycleManager.Domain.Models;
 using CycleManager.Domain.ViewModel;
 using Domain.Context;
 using Domain.Dto;
@@ -12,6 +13,16 @@ namespace DataAccessEF.TypeRepository
     {
         public EventRepository(ApplicationDbContext context) : base(context) 
         { 
+        }
+
+        public async Task AddTeamToEvent(int eventId, int teamId)
+        {
+            context.EventTeam.Add(new EventTeam
+            {
+                EventId = eventId,
+                TeamId = teamId
+            });
+            await context.SaveChangesAsync();
         }
 
         public async Task<int> GetAantalDeelnemers(int eventId)
@@ -128,6 +139,13 @@ namespace DataAccessEF.TypeRepository
                     }).ToList()
             }).ToList();
             return teams;
+        }
+
+        public async Task RemoveAllTeamsFromEvent(int eventId)
+        {
+            var eventTeams = context.EventTeam.Where(et => et.EventId == eventId);
+            context.EventTeam.RemoveRange(eventTeams);
+            await context.SaveChangesAsync();
         }
     }
 }
