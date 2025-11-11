@@ -1,4 +1,5 @@
 ﻿using CycleManager.Domain.Dto;
+using CycleManager.Domain.Models;
 using Domain.Dto;
 using Domain.Models;
 
@@ -17,5 +18,6 @@ namespace Domain.Interfaces
         Task UpdateCompetitorWithTeam(CompetitorEditDto dto);
         Task<Competitor?> GetByIdWithTeamsAsync(int id);
         Task UpdateCompetitorAsync(Competitor competitor);
+        Task<List<CompetitorInTeam>> GetCompetitorInTeamsByIdsAsync(List<int> ids);
     }
 }

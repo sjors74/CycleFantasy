@@ -195,5 +195,10 @@ namespace CycleManager.Services
                 .ToList()
             };
         }
+
+        public async Task<List<CompetitorInTeam>> GetCompetitorInTeamsByIdsAsync(List<int> ids)
+        {
+            return await _competitorRepository.GetCompetitorInTeamsByIdsAsync(ids);
+        }
     }
 }

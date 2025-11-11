@@ -12,6 +12,7 @@
     </dl>
 </div>
 <form asp-action="Delete" method="post" class="mt-3">
+    @Html.AntiForgeryToken()
     <input type="hidden" asp-for="CompetitorInEventId" />
     <input type="hidden" name="FilterTeam" value="@Context.Request.Query["FilterTeam"]" />
     <div class="d-flex justify-content-between">

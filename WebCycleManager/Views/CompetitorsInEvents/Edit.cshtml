@@ -7,6 +7,7 @@
 <div class="row">
     <div class="col-md-8">
         <form asp-action="Edit">
+            @Html.AntiForgeryToken()
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <input type="hidden" asp-for="CompetitorInEventId" />
             <input type="hidden" asp-for="EventId" />

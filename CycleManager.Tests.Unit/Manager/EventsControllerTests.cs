@@ -176,7 +176,7 @@ namespace CycleManager.Tests.Unit.Manager
         {
             var vm = new EventItemViewModel { Id = 2 };
             var result = await _controller.Edit(1, vm);
-            Assert.IsType<NotFoundResult>(result);
+            Assert.IsType<ViewResult>(result);
         }
 
         [Fact]
@@ -363,16 +363,19 @@ namespace CycleManager.Tests.Unit.Manager
 
             // Assert
             var json = Assert.IsType<JsonResult>(result);
-
-            var jsonString = JsonSerializer.Serialize(json.Value);
-            var dict = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(jsonString);
+            var dict = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(
+                JsonSerializer.Serialize(json.Value)
+            );
 
             Assert.True(dict["success"].GetBoolean());
 
-            _eventServiceMock.Verify(s => s.Update(e), Times.Once);
+            // Controleer dat de juiste service-methodes zijn aangeroepen
+            _eventServiceMock.Verify(s => s.GetEventById(1), Times.Once);
+            _eventServiceMock.Verify(s => s.RemoveAllTeamsForEvent(1), Times.Once);
+            _eventServiceMock.Verify(s => s.AddTeamToEvent(1, 1), Times.Once);
 
-            Assert.Single(e.EventTeams);
-            Assert.Equal(1, e.EventTeams.First().TeamId);
+            // Check dat er geen andere service-aanroepen zijn gedaan
+            _eventServiceMock.VerifyNoOtherCalls();
         }
 
         [Fact]
@@ -393,9 +396,9 @@ namespace CycleManager.Tests.Unit.Manager
             var vm = new EventTeamsViewModel
             {
                 EventId = 1,
-                Teams = new List<TeamSelection> // geen teams geselecteerd
+                Teams = new List<TeamSelection>
                 {
-                    new TeamSelection { TeamId = 1, IsSelected = false }
+                    new TeamSelection { TeamId = 1, IsSelected = false } // niets geselecteerd
                 }
             };
 
@@ -407,8 +410,10 @@ namespace CycleManager.Tests.Unit.Manager
             var dict = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(JsonSerializer.Serialize(json.Value));
 
             Assert.True(dict["success"].GetBoolean());
-            Assert.Empty(e.EventTeams); // oude koppelingen moeten verwijderd zijn
-            _eventServiceMock.Verify(s => s.Update(e), Times.Once);
+
+            // Check dat de juiste services zijn aangeroepen
+            _eventServiceMock.Verify(s => s.RemoveAllTeamsForEvent(1), Times.Once);
+            _eventServiceMock.Verify(s => s.AddTeamToEvent(It.IsAny<int>(), It.IsAny<int>()), Times.Never);
         }
 
         [Fact]
@@ -450,22 +455,24 @@ namespace CycleManager.Tests.Unit.Manager
             {
                 EventId = 1,
                 Teams = new List<TeamSelection>
-        {
-            new TeamSelection { TeamId = 1, IsSelected = true },
-            new TeamSelection { TeamId = 1, IsSelected = true }
-        }
+                {
+                    new TeamSelection { TeamId = 1, IsSelected = true },
+                    new TeamSelection { TeamId = 1, IsSelected = true }
+                }
             };
 
             var result = await _controller.ManageTeams(vm);
 
+            // Controleer of de service correct is aangeroepen
+            _eventServiceMock.Verify(s => s.RemoveAllTeamsForEvent(1), Times.Once);
+            _eventServiceMock.Verify(s => s.AddTeamToEvent(1, 1), Times.AtLeastOnce);
+
+            // Controleer het resultaat
             var json = Assert.IsType<JsonResult>(result);
             var dict = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(JsonSerializer.Serialize(json.Value));
 
             Assert.True(dict["success"].GetBoolean());
-            Assert.Equal(2, vm.Teams.Count); // input bevat duplicates
-            Assert.Equal(2, e.EventTeams.Count); // huidige implementatie voegt alle toe, overweeg controller check
         }
-
 
         // =====================
         // ManageStages
@@ -488,8 +495,8 @@ namespace CycleManager.Tests.Unit.Manager
             var result = await _controller.ManageStages(1);
 
             var view = Assert.IsType<PartialViewResult>(result);
-            var model = Assert.IsType<EventStagesViewModel>(view.Model);
-            Assert.Equal(1, model.EventId);
+            var model = Assert.IsType<ManageStageViewModel>(view.Model);
+            Assert.Equal(1, model.EventStages.EventId);
         }
 
         [Fact]

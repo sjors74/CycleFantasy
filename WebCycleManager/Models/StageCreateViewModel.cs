@@ -11,7 +11,7 @@ namespace WebCycleManager.Models
         [Display(Name = "Datum")]
         public DateTime StageDate { get; set; }
 
-        [Required(ErrorMessage = "De etappenaam is verplicht.")]
+        [Required(ErrorMessage = "StageNameRequired")]
         [Display(Name = "Etappe naam")]
         [StringLength(100)]
         public string StageName { get; set; } = string.Empty;

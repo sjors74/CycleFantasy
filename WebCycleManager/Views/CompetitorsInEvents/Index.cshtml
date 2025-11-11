@@ -49,10 +49,10 @@
                     </td>
                 <td>
                     <div class="d-flex gap-2">
-                        <a asp-action="Edit" asp-route-id="@item.CompetitorInEventId" asp-route-FilterTeam="@Model.FilterTeam" title="Bewerken" aria-label="Bewerken">
+                            <a asp-action="Edit" asp-route-id="@item.CompetitorInEventId" asp-route-eventId="@item.EventId" asp-route-FilterTeam="@Model.FilterTeam" title="Bewerken" aria-label="Bewerken">
                             <i class="bi bi-pencil"></i>
                         </a>
-                        <a asp-action="Delete" asp-route-id="@item.CompetitorInEventId" asp-route-FilterTeam="@Model.FilterTeam" title="Verwijderen" aria-label="Verwijderen">
+                        <a asp-action="Delete" asp-route-id="@item.CompetitorInEventId" asp-route-eventId="@item.EventId" asp-route-FilterTeam="@Model.FilterTeam" title="Verwijderen" aria-label="Verwijderen">
                             <i class="bi bi-trash"></i>
                         </a>
                     </div>

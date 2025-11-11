@@ -7,6 +7,7 @@ using DataAccessEF.TypeRepository;
 using Domain.Context;
 using Domain.Interfaces;
 using Domain.Mapping;
+using Humanizer.Localisation;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -26,36 +27,41 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
 builder.Services.AddAutoMapper(typeof(DomainToResponseMappingProfile));
-builder.Services.AddTransient<ICompetitorRepository, CompetitorRepository>();
-builder.Services.AddTransient<ICompetitorInTeamRepository, CompetitorInTeamRepository>();
-builder.Services.AddTransient<ICompetitorsInEventRepository, CompetitorsInEventRepository>();
-builder.Services.AddTransient<IConfigurationRepository, ConfigurationRepository>(); 
-builder.Services.AddTransient<IConfigurationItemRepository, ConfigurationItemRepository>();
-builder.Services.AddTransient<ICountryRepository, CountryRepository>();
-builder.Services.AddTransient<IEventRepository, EventRepository>();
-builder.Services.AddTransient<IResultsRepository, ResultsRepository>();
-builder.Services.AddTransient<IStageRepository, StageRepository>();
-builder.Services.AddTransient<ITeamRepository, TeamRepository>();
-builder.Services.AddTransient<IGameCompetitorEventPickRepository, GameCompetitorEventPickRepository>();
-builder.Services.AddTransient<IGameCompetitorInEventRepository, GameCompetitorInEventRepository>();
-builder.Services.AddTransient<IUserRepository, UserRepository>();
+builder.Services.AddScoped<ICompetitorRepository, CompetitorRepository>();
+builder.Services.AddScoped<ICompetitorInTeamRepository, CompetitorInTeamRepository>();
+builder.Services.AddScoped<ICompetitorsInEventRepository, CompetitorsInEventRepository>();
+builder.Services.AddScoped<IConfigurationRepository, ConfigurationRepository>(); 
+builder.Services.AddScoped<IConfigurationItemRepository, ConfigurationItemRepository>();
+builder.Services.AddScoped<ICountryRepository, CountryRepository>();
+builder.Services.AddScoped<IEventRepository, EventRepository>();
+builder.Services.AddScoped<IResultsRepository, ResultsRepository>();
+builder.Services.AddScoped<IStageRepository, StageRepository>();
+builder.Services.AddScoped<ITeamRepository, TeamRepository>();
+builder.Services.AddScoped<IGameCompetitorEventPickRepository, GameCompetitorEventPickRepository>();
+builder.Services.AddScoped<IGameCompetitorInEventRepository, GameCompetitorInEventRepository>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
 //Service
-builder.Services.AddTransient<IEventService, EventService>();
-builder.Services.AddTransient<IStageService, StageService>();
-builder.Services.AddTransient<IConfigurationService, ConfigurationService>();
-builder.Services.AddTransient<IResultService, ResultService>();
-builder.Services.AddTransient<ICountryService, CountryService>();
-builder.Services.AddTransient<ICompetitorService, CompetitorService>();
-builder.Services.AddTransient<ICompetitorInEventService, CompetitorInEventService>();
-builder.Services.AddTransient<ITeamService, TeamService>();
-builder.Services.AddTransient<IGameCompetitorInEventService, GameCompetitorInEventService>();
-builder.Services.AddTransient<IUserService, UserService>();
-builder.Services.AddTransient<IScoreRepository, ScoreRepository>();
-builder.Services.AddTransient<IScraperService, ScraperService>();
-builder.Services.AddTransient<IPcsScraper, PcsScraper>();
-builder.Services.AddTransient<IScoreService, ScoreService>();
+builder.Services.AddScoped<IEventService, EventService>();
+builder.Services.AddScoped<IStageService, StageService>();
+builder.Services.AddScoped<IConfigurationService, ConfigurationService>();
+builder.Services.AddScoped<IResultService, ResultService>();
+builder.Services.AddScoped<ICountryService, CountryService>();
+builder.Services.AddScoped<ICompetitorService, CompetitorService>();
+builder.Services.AddScoped<ICompetitorInEventService, CompetitorInEventService>();
+builder.Services.AddScoped<ITeamService, TeamService>();
+builder.Services.AddScoped<IGameCompetitorInEventService, GameCompetitorInEventService>();
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IScoreRepository, ScoreRepository>();
+builder.Services.AddScoped<IScraperService, ScraperService>();
+builder.Services.AddScoped<IPcsScraper, PcsScraper>();
+builder.Services.AddScoped<IScoreService, ScoreService>();
 builder.Services.AddScoped<IAdminScraperService, AdminScraperService>();
-builder.Services.AddControllersWithViews();
+builder.Services.AddControllersWithViews()
+    .AddDataAnnotationsLocalization(options =>
+    {
+        options.DataAnnotationLocalizerProvider = (type, factory) =>
+            factory.Create(typeof(WebCycleManager.Resources.SharedResources));
+    });
 builder.Services.Configure<ApiSettings>(
 builder.Configuration.GetSection("ApiSettings"));
 builder.Services.Configure<ScraperSettings>(builder.Configuration.GetSection("ScraperSettings"));

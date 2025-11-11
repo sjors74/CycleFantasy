@@ -4,7 +4,8 @@
 <h3>Voeg renners toe aan evenement</h3>
 <div class="row">
     <div class="col-md-12">
-        <form asp-action="Create" asp-controller="CompetitorsInEvents" method="post" class="form-control" role="form">
+        <form asp-action="Create" asp-controller="CompetitorsInEvents" method="post" class="form" role="form">
+            @Html.AntiForgeryToken()
             <input type="hidden" id="year" name="year" value="@(DateTime.Now.Year)" />
             <input type="hidden" name="FilterTeam" value="@Context.Request.Query["FilterTeam"]" />
             <div class="form-group">

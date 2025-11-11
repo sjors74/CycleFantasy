@@ -194,5 +194,12 @@ namespace DataAccessEF.TypeRepository
             }
             await context.SaveChangesAsync();
         }
+
+        public async Task<List<CompetitorInTeam>> GetCompetitorInTeamsByIdsAsync(List<int> ids)
+        {
+            return await context.CompetitorInTeams
+                .Where(cit => ids.Contains(cit.Id))
+                .ToListAsync();
+        }
     }
 }

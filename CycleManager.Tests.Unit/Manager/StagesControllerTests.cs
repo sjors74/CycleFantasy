@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Routing;
 using Moq;
 using Newtonsoft.Json.Linq;
+using System.Text.Json;
 using WebCycleManager.Controllers;
 using WebCycleManager.Models;
 
@@ -125,7 +126,7 @@ namespace CycleManager.Tests.Unit.Manager
         }
 
         [Fact]
-        public async Task CreateAjax_InvalidModel_ReturnsPartialView()
+        public async Task CreateAjax_InvalidModel_ReturnsJsonResult()
         {
             // Arrange
             var model = new StageCreateViewModel();
@@ -135,8 +136,20 @@ namespace CycleManager.Tests.Unit.Manager
             var result = await _controller.CreateAjax(model);
 
             // Assert
-            var view = Assert.IsType<PartialViewResult>(result);
-            Assert.Equal("_ManageStagesPartial", view.ViewName);
+            // Controleer eerst dat het resultaat een JsonResult is
+            var jsonResult = Assert.IsType<JsonResult>(result);
+
+            // Serialiseer en deserialiseer om Dictionary<string, JsonElement> te krijgen
+            var dict = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(
+                JsonSerializer.Serialize(jsonResult.Value)
+            );
+
+            // Controleer dat success = false
+            Assert.False(dict["success"].GetBoolean());
+
+            // Controleer dat er een message aanwezig is
+            var message = dict["message"].GetString();
+            Assert.False(string.IsNullOrWhiteSpace(message));
         }
 
         #endregion

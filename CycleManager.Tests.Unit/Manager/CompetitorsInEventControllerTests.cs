@@ -7,6 +7,7 @@ using Domain.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
+using Microsoft.Extensions.Logging;
 using Moq;
 using System;
 using System.Collections.Generic;
@@ -138,16 +139,26 @@ namespace CycleManager.Tests.Unit.Manager
         {
             // Arrange
             int eventId = 1;
+            var eventObject = new Event
+            {
+                EventId = eventId,
+                EventName = "Test Event",
+                IsActive = true,
+            };
+
+            _eventServiceMock.Setup(s => s.GetEventById(eventId))
+                .ReturnsAsync(eventObject);
+
             var competitors = new List<CompetitorDto>
             {
-                new CompetitorDto { CompetitorId = 1, FirstName = "Jonas", LastName = "Vingegaard" },
-                new CompetitorDto { CompetitorId = 2, FirstName = "Remco", LastName = "Evenepoel" }
+                new CompetitorDto { CompetitorId = 1, FirstName = "Jonas", LastName = "Vingegaard", Teams = new List<CompetitorInTeamDto> { new CompetitorInTeamDto {  CompetitorInTeamId = 101 } } },
+                new CompetitorDto { CompetitorId = 2, FirstName = "Remco", LastName = "Evenepoel", Teams = new List<CompetitorInTeamDto> { new CompetitorInTeamDto { CompetitorInTeamId = 102 } } }
             };
 
             _competitorServiceMock.Setup(s => s.GetAllCompetitors(It.IsAny<int>()))
                 .ReturnsAsync(competitors);
 
-            _teamServiceMock.Setup(s => s.GetTeamsForEvent(eventId))
+            _teamServiceMock.Setup(s => s.GetTeamsForEvent(It.Is<int>(id => id == eventId)))
                 .ReturnsAsync(new List<Team>
                 {
             new Team { TeamId = 99, CurrentTeamName = "Team Test" }
@@ -167,21 +178,64 @@ namespace CycleManager.Tests.Unit.Manager
         {
             // Arrange
             int eventId = 1;
+
+            // Dit is wat uit je service komt (Competitors met Teams)
+            var competitors = new List<CompetitorDto>
+            {
+                new CompetitorDto
+                {
+                    CompetitorId = 1,
+                    FirstName = "Jonas",
+                    LastName = "Vingegaard",
+                    Teams = new List<CompetitorInTeamDto>
+                    {
+                        new CompetitorInTeamDto { CompetitorInTeamId = 5, TeamId = 1 }  
+                    }
+                },
+                new CompetitorDto
+                {
+                    CompetitorId = 2,
+                    FirstName = "Remco",
+                    LastName = "Evenepoel",
+                    Teams = new List<CompetitorInTeamDto>
+                    {
+                        new CompetitorInTeamDto { CompetitorInTeamId = 7, TeamId = 1 }
+                    }
+                }
+            };
+            _competitorServiceMock
+                .Setup(s => s.GetCompetitorInTeamsByIdsAsync(It.IsAny<List<int>>()))
+                .ReturnsAsync(new List<CompetitorInTeam>
+                {
+                    new CompetitorInTeam { Id = 5, TeamId = 1 },
+                    new CompetitorInTeam { Id = 7, TeamId = 1 }
+                });
+
+            // Mock de service call die de CompetitorsInEvent opslaat
+            _competitorInEventServiceMock.Setup(s => s.Create(It.IsAny<List<CompetitorsInEvent>>()))
+                .Returns(Task.CompletedTask)
+                .Verifiable();
+
+            // FormCollection zoals door de controller ontvangen
             var form = new FormCollection(new Dictionary<string, Microsoft.Extensions.Primitives.StringValues>
             {
                 { "SelectCompetitorId", new[] { "5", "7" } }
             });
 
-            _competitorInEventServiceMock.Setup(s => s.Create(It.IsAny<List<CompetitorsInEvent>>()))
-                .Returns(Task.CompletedTask);
-
             // Act
-            var result = await _controller.Create(eventId, 0, form);
+            var result = await _controller.Create(eventId, null, form);
 
-            // Assert
+            // Assert redirect
             var redirect = Assert.IsType<RedirectToActionResult>(result);
             Assert.Equal("Index", redirect.ActionName);
             Assert.Equal(eventId, redirect.RouteValues["eventId"]);
+
+            // Assert dat de service werd aangeroepen met de juiste CompetitorInTeamIds
+            _competitorInEventServiceMock.Verify(s => s.Create(It.Is<List<CompetitorsInEvent>>(list =>
+                list.Count == 2 &&
+                list.Any(c => c.CompetitorInTeamId == 5) &&
+                list.Any(c => c.CompetitorInTeamId == 7)
+            )), Times.Once);
         }
 
         [Fact]
@@ -420,7 +474,7 @@ namespace CycleManager.Tests.Unit.Manager
 
             _competitorInEventServiceMock.Setup(s => s.GetCompetitorById(1)).ReturnsAsync(entity);
 
-            var result = await _controller.Delete(1);
+            var result = await _controller.Delete(1, 2);
 
             var view = Assert.IsType<ViewResult>(result);
             var model = Assert.IsType<CompetitorInEventViewModel>(view.Model);
@@ -432,7 +486,7 @@ namespace CycleManager.Tests.Unit.Manager
         {
             _competitorInEventServiceMock.Setup(s => s.GetCompetitorById(It.IsAny<int>())).ReturnsAsync((CompetitorsInEvent)null);
 
-            var result = await _controller.Delete(99);
+            var result = await _controller.Delete(99, 2);
 
             Assert.IsType<NotFoundResult>(result);
         }

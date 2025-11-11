@@ -67,5 +67,7 @@ namespace CycleManager.Services.Interfaces
         IQueryable<Competitor> GetCompetitorsByTerm(string term);
         Task UpdateCompetitorWithTeam(CompetitorEditDto dto);
         Task<CompetitorEditDto> GetCompetitorForEdit(int competitorId);
+
+        Task<List<CompetitorInTeam>> GetCompetitorInTeamsByIdsAsync(List<int> ids);
     }
 }
