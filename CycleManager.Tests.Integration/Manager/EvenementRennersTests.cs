@@ -1,17 +1,16 @@
-﻿using CycleManager.Domain.Models;
-using DataAccessEF.Migrations;
+﻿using CycleManager.Domain.Dto;
+using CycleManager.Domain.Models;
 using Domain.Context;
+using Domain.Dto;
 using Domain.Models;
 using FluentAssertions;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+using Microsoft.Extensions.Primitives;
 using System.Net;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using WebCycleManager.Controllers;
 
 namespace CycleManager.Tests.Integration.Manager
@@ -29,6 +28,11 @@ namespace CycleManager.Tests.Integration.Manager
             {
                 AllowAutoRedirect = false
             });
+
+            using var scope = _factory.Services.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            db.Database.EnsureDeleted();
+            db.Database.EnsureCreated();
         }
 
         private async Task<(Event ev, Team team1, Team team2)> EnsureTestEventWithTeamsAsync(bool withRiders = true)
@@ -43,7 +47,6 @@ namespace CycleManager.Tests.Integration.Manager
             var countryNl = new Country { CountryNameShort = "NL", CountryNameLong = "Nederland" };
             var countryBe = new Country { CountryNameShort = "BE", CountryNameLong = "België" };
             db.Countries.AddRange(countryNl, countryBe);
-            await db.SaveChangesAsync();
 
             // Configuratie
             var config = await db.Configurations.FirstOrDefaultAsync();
@@ -51,14 +54,12 @@ namespace CycleManager.Tests.Integration.Manager
             {
                 config = new Configuration { ConfigurationType = $"Default Config {unique}" };
                 db.Configurations.Add(config);
-                await db.SaveChangesAsync();
             }
 
             // Teams
             var team1 = new Team { CurrentTeamName = $"Team A {unique}", CountryId = countryNl.CountryId };
             var team2 = new Team { CurrentTeamName = $"Team B {unique}", CountryId = countryBe.CountryId };
             db.Teams.AddRange(team1, team2);
-            await db.SaveChangesAsync();
 
             // Event
             var ev = new Event
@@ -72,7 +73,6 @@ namespace CycleManager.Tests.Integration.Manager
                 ConfigurationId = config.Id
             };
             db.Events.Add(ev);
-            await db.SaveChangesAsync();
 
             // Renners + koppeling
             if (withRiders)
@@ -81,13 +81,11 @@ namespace CycleManager.Tests.Integration.Manager
                 var comp1 = new Competitor { FirstName = "Jan", LastName = "Jansen", CountryId = countryNl.CountryId, PcsName = "jan_jansen", ScraperName = "jan-jansen" };
                 var comp2 = new Competitor { FirstName = "Piet", LastName = "Pietersen", CountryId = countryBe.CountryId, PcsName = "piet_pietersen", ScraperName = "piet-pietersen" };
                 db.Competitors.AddRange(comp1, comp2);
-                await db.SaveChangesAsync();
 
                 // CompetitorInTeam
                 var cit1 = new CompetitorInTeam { CompetitorId = comp1.CompetitorId, TeamId = team1.TeamId, IsNationalChampion = false };
                 var cit2 = new CompetitorInTeam { CompetitorId = comp2.CompetitorId, TeamId = team2.TeamId, IsNationalChampion = false };
                 db.CompetitorInTeams.AddRange(cit1, cit2);
-                await db.SaveChangesAsync();
 
                 // CompetitorInEvent
                 var cie1 = new CompetitorsInEvent
@@ -99,64 +97,11 @@ namespace CycleManager.Tests.Integration.Manager
                     OutOfCompetition = false
                 };
                 db.CompetitorsInEvent.Add(cie1);
-                await db.SaveChangesAsync();
             }
+            await db.SaveChangesAsync();
 
             return (ev, team1, team2);
         }
-
-        private async Task<Team> EnsureTestTeamForEventAsync(int eventId)
-        {
-            using var scope = _factory.Services.CreateScope();
-            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-
-            var team = await db.Teams.FirstOrDefaultAsync()
-                       ?? new Team { CurrentTeamName = "Test Team" };
-
-            if (team.TeamId == 0)
-            {
-                db.Teams.Add(team);
-                await db.SaveChangesAsync();
-            }
-
-            // Event-team koppeling
-            if (!await db.EventTeam.AnyAsync(te => te.EventId == eventId && te.TeamId == team.TeamId))
-            {
-                db.EventTeam.Add(new EventTeam { EventId = eventId, TeamId = team.TeamId });
-                await db.SaveChangesAsync();
-            }
-
-            return team;
-        }
-
-        private async Task<CompetitorInTeam> EnsureTestCompetitorInTeamAsync(int teamId)
-        {
-            using var scope = _factory.Services.CreateScope();
-            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-
-            var competitor = await db.Competitors.FirstOrDefaultAsync()
-                             ?? new Competitor { FirstName = "Jan", LastName = "Test", CountryId = 1 };
-
-            if (competitor.CompetitorId == 0)
-            {
-                db.Competitors.Add(competitor);
-                await db.SaveChangesAsync();
-            }
-
-            var competitorInTeam = await db.CompetitorInTeams
-                                          .FirstOrDefaultAsync(cit => cit.TeamId == teamId && cit.CompetitorId == competitor.CompetitorId)
-                                    ?? new CompetitorInTeam { CompetitorId = competitor.CompetitorId, TeamId = teamId, Year = 2025 };
-
-            if (competitorInTeam.Id == 0)
-            {
-                db.CompetitorInTeams.Add(competitorInTeam);
-                await db.SaveChangesAsync();
-            }
-
-            return competitorInTeam;
-        }
-
-
 
         [Fact]
         public async Task Riders_Should_DisplaySelectedRiders()
@@ -201,9 +146,7 @@ namespace CycleManager.Tests.Integration.Manager
             getResponse.StatusCode.Should().Be(HttpStatusCode.OK);
 
             var getHtml = await getResponse.Content.ReadAsStringAsync();
-            var tokenMatch = Regex.Match(getHtml, @"name=""__RequestVerificationToken"" type=""hidden"" value=""([^""]+)""");
-            tokenMatch.Success.Should().BeTrue();
-            var token = tokenMatch.Groups[1].Value;
+            var token = ExtractAntiForgeryToken(getHtml);
 
             // POST – stuur gewijzigde data
             var formData = new Dictionary<string, string>
@@ -248,11 +191,8 @@ namespace CycleManager.Tests.Integration.Manager
             getResponse.StatusCode.Should().Be(HttpStatusCode.OK);
             var getHtml = await getResponse.Content.ReadAsStringAsync();
 
-            // Haal token uit formulier
-            var tokenMatch = Regex.Match(getHtml, @"name=""__RequestVerificationToken"" type=""hidden"" value=""([^""]+)""");
-            tokenMatch.Success.Should().BeTrue();
-            var token = tokenMatch.Groups[1].Value;
-                        
+            var token = ExtractAntiForgeryToken(getHtml);
+
             var formData = new Dictionary<string, string>
             {
                 ["__RequestVerificationToken"] = token,
@@ -311,9 +251,7 @@ namespace CycleManager.Tests.Integration.Manager
             var getHtml = await getResponse.Content.ReadAsStringAsync();
 
             // Haal token uit formulier
-            var tokenMatch = Regex.Match(getHtml, @"name=""__RequestVerificationToken"" type=""hidden"" value=""([^""]+)""");
-            tokenMatch.Success.Should().BeTrue();
-            var token = tokenMatch.Groups[1].Value;
+            var token = ExtractAntiForgeryToken(getHtml);
 
             // POST de geselecteerde renners
             var postData = new Dictionary<string, string>
@@ -363,9 +301,7 @@ namespace CycleManager.Tests.Integration.Manager
             var getResponse = await _client.GetAsync($"/CompetitorsInEvents/Create?eventId={ev.EventId}&filterTeam={team.TeamId}");
             getResponse.StatusCode.Should().Be(HttpStatusCode.OK);
             var getHtml = await getResponse.Content.ReadAsStringAsync();
-            var tokenMatch = Regex.Match(getHtml, @"name=""__RequestVerificationToken""[^>]*value=""([^""]+)""");
-            tokenMatch.Success.Should().BeTrue();
-            var token = tokenMatch.Groups[1].Value;
+            var token = ExtractAntiForgeryToken(getHtml);
 
             // POST: stuur het formulier zonder selectie
             var postData = new Dictionary<string, string>
@@ -433,9 +369,7 @@ namespace CycleManager.Tests.Integration.Manager
             getResponse.StatusCode.Should().Be(HttpStatusCode.OK);
 
             var getHtml = await getResponse.Content.ReadAsStringAsync();
-            var tokenMatch = Regex.Match(getHtml, @"name=""__RequestVerificationToken"" type=""hidden"" value=""([^""]+)""");
-            tokenMatch.Success.Should().BeTrue();
-            var token = tokenMatch.Groups[1].Value;
+            var token = ExtractAntiForgeryToken(getHtml);
 
             // POST – meerdere renners
             var postData = new List<KeyValuePair<string, string>>
@@ -529,9 +463,7 @@ namespace CycleManager.Tests.Integration.Manager
             getResponse.StatusCode.Should().Be(HttpStatusCode.OK);
             var getHtml = await getResponse.Content.ReadAsStringAsync();
 
-            var tokenMatch = Regex.Match(getHtml, @"name=""__RequestVerificationToken"" type=""hidden"" value=""([^""]+)""");
-            tokenMatch.Success.Should().BeTrue();
-            var token = tokenMatch.Groups[1].Value;
+            var token = ExtractAntiForgeryToken(getHtml);
 
             // -------------------------
             // POST Delete
@@ -564,7 +496,8 @@ namespace CycleManager.Tests.Integration.Manager
             var getResponse = await _client.GetAsync($"/CompetitorsInEvents/Create?eventId={ev.EventId}&filterTeam={team.TeamId}");
             getResponse.StatusCode.Should().Be(HttpStatusCode.OK);
             var getHtml = await getResponse.Content.ReadAsStringAsync();
-            var token = Regex.Match(getHtml, @"name=""__RequestVerificationToken"" type=""hidden"" value=""([^""]+)""").Groups[1].Value;
+            var token = ExtractAntiForgeryToken(getHtml);
+
 
             // POST met ongeldig CompetitorInTeamId
             var postData = new Dictionary<string, string>
@@ -598,5 +531,91 @@ namespace CycleManager.Tests.Integration.Manager
             var postResponse = await _client.PostAsync("/CompetitorsInEvents/Create", new FormUrlEncodedContent(postData));
             postResponse.StatusCode.Should().Be(HttpStatusCode.BadRequest); // POST zonder geldig event
         }
+
+        [Fact]
+        public void FilterCompetitors_ShouldIncludeOnlyEventTeams()
+        {
+            // Arrange
+            var competitors = new List<CompetitorDto>
+            {
+                new CompetitorDto { CompetitorId = 1, FirstName= "Ab", LastName = "Pogacar", Teams = new List<CompetitorInTeamDto> { new CompetitorInTeamDto { TeamId = 10 } } },
+                new CompetitorDto { CompetitorId = 2, FirstName = "B", LastName = "Evenepoel", Teams = new List<CompetitorInTeamDto> { new CompetitorInTeamDto { TeamId = 99 } } },
+            };
+            var teamIds = new List<int> { 10 }; // Alleen team 10 hoort erbij
+
+            // Act
+            var result = CompetitorsInEventsController.FilterCompetitors(competitors, teamIds, null);
+
+            // Assert
+            result.Should().HaveCount(1);
+            result.First().CompetitorName.Should().Be("Ab Pogacar");
+        }
+
+        [Fact]
+        public void FilterCompetitors_WithFilterTeam_ShouldReturnOnlyThatTeam()
+        {
+            // Arrange
+            var competitors = new List<CompetitorDto>
+            {
+                new CompetitorDto { CompetitorId = 1, FirstName = "A", LastName = "Pogacar", Teams = new List<CompetitorInTeamDto> { new CompetitorInTeamDto { TeamId = 10 } } },
+                new CompetitorDto { CompetitorId = 2,FirstName = "B", LastName = "Evenepoel",  Teams = new List<CompetitorInTeamDto> { new CompetitorInTeamDto { TeamId = 20 } } },
+            };
+            var teamIds = new List<int> { 10, 20 };
+
+            // Act
+            var result = CompetitorsInEventsController.FilterCompetitors(competitors, teamIds, 20);
+
+            // Assert
+            result.Should().HaveCount(1);
+            result.First().CompetitorName.Should().Be("B Evenepoel");
+        }
+
+        [Fact]
+        public void FilterCompetitors_ShouldHandleNullOrEmptySafely()
+        {
+            // Arrange
+            List<CompetitorDto>? competitors = null;
+            var teamIds = new List<int> { 1, 2 };
+
+            // Act
+            var result1 = CompetitorsInEventsController.FilterCompetitors(competitors, teamIds, null);
+            var result2 = CompetitorsInEventsController.FilterCompetitors(new List<CompetitorDto>(), teamIds, null);
+
+            // Assert
+            result1.Should().BeEmpty();
+            result2.Should().BeEmpty();
+        }
+
+        [Fact]
+        public void ParseSelectedCompetitorIds_ParsesValidInts_AndSkipsInvalids()
+        {
+            // Arrange
+            var form = new FormCollection(new Dictionary<string, StringValues>
+            {
+                { "SelectCompetitorId", new StringValues(new[] { "1", "x", "3", "" }) }
+            });
+
+            // Act
+            var result = InvokeParseMethod(form);
+
+            // Assert
+            result.Should().BeEquivalentTo(new List<int> { 1, 3 });
+        }
+
+        // 🔹 Helper to call the private ParseSelectedCompetitorIds via reflection
+        private static List<int> InvokeParseMethod(IFormCollection form)
+        {
+            var method = typeof(CompetitorsInEventsController)
+                .GetMethod("ParseSelectedCompetitorIds", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+            return (List<int>)method.Invoke(null, new object[] { form });
+        }
+
+        private static string ExtractAntiForgeryToken(string html)
+        {
+            var match = Regex.Match(html, @"name=""__RequestVerificationToken""[^>]*value=""([^""]+)""");
+            return match.Success ? match.Groups[1].Value : throw new InvalidOperationException("Token not found");
+        }
+
     }
+
 }

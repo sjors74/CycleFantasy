@@ -85,28 +85,24 @@ namespace WebCycleManager.Controllers
         // GET: CompetitorsInEvents/Create
         public async Task<IActionResult> Create(int eventId, int? filterTeam)
         {
+            // Check event geldig en actief
             var eventEntity = await _eventService.GetEventById(eventId);
             if (eventEntity == null || !eventEntity.IsActive)
-            {
                 return NotFound();
-            }
 
-            // Teams die meedoen aan dit event
+            // Teams die meedoen aan het event
             var eventTeams = await _teamService.GetTeamsForEvent(eventId);
             var teamIds = eventTeams.Select(t => t.TeamId).ToList();
 
-            // Competitors in deze teams
+            // Haal alle renners op (van dit jaar)
             var competitors = await _competitorService.GetAllCompetitors(DateTime.Now.Year);
-            competitors = competitors
-                .Where(c => c.Teams != null && c.Teams.Any(t => teamIds.Contains(t.TeamId)))
-                .ToList();
 
-            // Filteren op specifiek team indien gevraagd
-            if (filterTeam.HasValue && filterTeam.Value > 0)
-                competitors = competitors.Where(c => c.Teams.Any(t => t.TeamId == filterTeam.Value)).ToList();
+            // Filter renners op teams die aan het event meedoen
+            var filteredCompetitors = FilterCompetitors(competitors, teamIds, filterTeam);
 
-            var competitorsList = competitors
-                .SelectMany(c => c.Teams
+            // Bouw de SelectList voor de view
+            var competitorsList = filteredCompetitors
+                .SelectMany(c => c.Teams!
                     .Where(t => teamIds.Contains(t.TeamId))
                     .Select(t => new
                     {
@@ -116,12 +112,38 @@ namespace WebCycleManager.Controllers
                 .OrderBy(x => x.CompetitorName)
                 .ToList();
 
+            // ViewBag data vullen
             ViewBag.ListOfCompetitors = new SelectList(competitorsList, "CompetitorId", "CompetitorName");
             ViewBag.ListOfTeams = eventTeams.OrderBy(t => t.CurrentTeamName).ToList();
             ViewBag.EventId = eventId;
 
             return View();
         }
+
+
+        public static List<CompetitorDto> FilterCompetitors(IEnumerable<CompetitorDto> competitors, List<int> teamIds, int? filterTeam)
+        {
+            if (competitors == null)
+                return new();
+
+            var filtered = competitors
+                .Where(c => c.Teams != null && c.Teams.Any(t => teamIds.Contains(t.TeamId)))
+                .ToList();
+
+            if (filterTeam is > 0)
+                filtered = filtered.Where(c => c.Teams.Any(t => t.TeamId == filterTeam.Value)).ToList();
+
+            return filtered;
+        }
+
+        private IActionResult ViewWithEmptyLists(int eventId)
+        {
+            ViewBag.ListOfCompetitors = new SelectList(Enumerable.Empty<object>());
+            ViewBag.ListOfTeams = new List<Team>();
+            ViewBag.EventId = eventId;
+            return View();
+        }
+
 
         // POST: CompetitorsInEvents/Create
         [HttpPost]
@@ -131,38 +153,33 @@ namespace WebCycleManager.Controllers
             if (!ModelState.IsValid)
                 return View();
 
-            // Parse geselecteerde IDs uit formulier
-            var selectedIds = formCollection["SelectCompetitorId"]
-                .Select(id => int.TryParse(id, out var parsed) ? parsed : (int?)null)
-                .Where(id => id.HasValue)
-                .Select(id => id.Value)
+            // 1️⃣ Parse geselecteerde IDs
+            var selectedIds = ParseSelectedCompetitorIds(formCollection);
+            if (!selectedIds.Any())
+                return RedirectToAction("Index", new { eventId, filterTeam });
+
+            // 2️⃣ Haal valide CompetitorInTeam entries op via service
+            var validCompetitorsInTeam = await _competitorService.GetCompetitorInTeamsByIdsAsync(selectedIds);
+            if (validCompetitorsInTeam == null || !validCompetitorsInTeam.Any())
+                return RedirectToAction("Index", new { eventId, filterTeam });
+
+            // 3️⃣ Map naar CompetitorsInEvent
+            var competitorsInEvent = validCompetitorsInTeam
+                .Select(cit => new CompetitorsInEvent
+                {
+                    EventId = eventId,
+                    CompetitorInTeamId = cit.Id,
+                    EventNumber = 0,
+                    InSelectie = false,
+                    OutOfCompetition = false
+                })
                 .ToList();
 
-            if (selectedIds.Any())
-            {
-                // Vraag service om alleen valide CompetitorInTeamIds terug te geven
-                var validCompetitorsInTeam = await _competitorService
-                    .GetCompetitorInTeamsByIdsAsync(selectedIds);
+            // 4️⃣ Opslaan indien geldig
+            if (competitorsInEvent.Any())
+                await _competitorInEventService.Create(competitorsInEvent);
 
-                // Maak CompetitorsInEvent objecten
-                var listOfCompetitorsInEvent = validCompetitorsInTeam
-                    .Select(cit => new CompetitorsInEvent
-                    {
-                        EventId = eventId,
-                        CompetitorInTeamId = cit.Id,
-                        EventNumber = 0,
-                        InSelectie = false,
-                        OutOfCompetition = false
-                    }).ToList();
-
-                // Alleen toevoegen als er valide entries zijn
-                if (listOfCompetitorsInEvent.Any())
-                {
-                    await _competitorInEventService.Create(listOfCompetitorsInEvent);
-                }
-            }
-
-            // Redirect ongeacht of er iets is toegevoegd
+            // 5️⃣ Redirect, ongeacht of er iets is toegevoegd
             return RedirectToAction("Index", new { eventId, filterTeam });
         }
 
@@ -339,6 +356,15 @@ namespace WebCycleManager.Controllers
         {
             var e = await _eventService.GetEventById(id);
             return e;
+        }
+
+        private static List<int> ParseSelectedCompetitorIds(IFormCollection formCollection)
+        {
+            return formCollection["SelectCompetitorId"]
+                .Select(id => int.TryParse(id, out var parsed) ? parsed : (int?)null)
+                .Where(id => id.HasValue)
+                .Select(id => id.Value)
+                .ToList();
         }
     }
 }
