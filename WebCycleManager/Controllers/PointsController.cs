@@ -47,13 +47,14 @@ namespace WebCycleManager.Controllers
             List<IGrouping<int, PointsCompetitorInEventViewModel>> orderedCompetitors = 
                 groupedList.GroupBy(g => g.Points).OrderByDescending(g => g.Key).ToList();
 
-            for (int i = 0; i < orderedCompetitors.Count(); i++)
+            int currentRank = 1;
+            foreach (var group in orderedCompetitors)
             {
-                IGrouping<int, PointsCompetitorInEventViewModel> grouping = orderedCompetitors[i];
-                foreach (var element in grouping)
+                foreach (var element in group)
                 {
-                    element.Ranking = i + 1;
+                    element.Ranking = currentRank;
                 }
+                currentRank += group.Count();
             }
             vm = orderedCompetitors.SelectMany(c => c).ToList();
             return View(vm);
