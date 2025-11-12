@@ -250,6 +250,59 @@ namespace CycleManager.Tests.Integration.Manager
             names.Should().Equal("Alex Adams", "Carl Baker", "Bert Zon");
         }
 
+        [Fact]
+        public async Task Points_Index_ShouldAccumulatePointsOverMultipleStages()
+        {
+            // Arrange
+            using var scope = _factory.Services.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            db.Database.EnsureCreated();
+
+            // Maak een event met meerdere renners en meerdere stages
+            (Event ev, List<CompetitorsInEvent> competitors) =
+                await CreateTestEventWithRandomPointsAsync(db, numCompetitors: 4, numStages: 3, allowTies: false);
+
+            var client = _factory.CreateClient();
+
+            // Act
+            var response = await client.GetAsync($"/Points?eventId={ev.EventId}");
+            response.EnsureSuccessStatusCode();
+            var html = await response.Content.ReadAsStringAsync();
+
+            // Assert: er moet HTML zijn met de ranglijst
+            html.Should().Contain("Ranglijst renners");
+
+            // Ranking extractie
+            var rows = Regex.Matches(html, @"<tr>\s*<td>\s*(\d+)\s*</td>\s*<td>\s*([^<]+)</td>\s*<td>\s*(\d+)\s*</td>");
+            rows.Count.Should().BeGreaterThan(0, "er moeten renners in de ranglijst staan");
+
+            var ranks = new List<int>();
+            var scores = new List<int>();
+            foreach (Match match in rows)
+            {
+                ranks.Add(int.Parse(match.Groups[1].Value.Trim()));
+                scores.Add(int.Parse(match.Groups[3].Value.Trim()));
+            }
+
+            // Controleer dat ranking correct is bij gelijke scores
+            var expectedRanks = CalculateStandardCompetitionRanking(scores);
+            ranks.Should().BeEquivalentTo(expectedRanks, options => options.WithStrictOrdering(),
+                "de ranking moet correct zijn op basis van het totaal aantal punten over alle stages");
+
+            // Extra: controleer dat het totaal aantal punten klopt met wat in de database staat
+            foreach (var cie in competitors)
+            {
+                var expectedPoints = await db.Results
+                    .Where(r => r.CompetitorInEventId == cie.Id)
+                    .SumAsync(r => r.ConfigurationItem.Score);
+
+                var row = rows.Cast<Match>().FirstOrDefault(m => m.Groups[2].Value.Trim() == cie.CompetitorInTeam.Competitor.FirstName + " " + cie.CompetitorInTeam.Competitor.LastName);
+                row.Should().NotBeNull("de renner moet in de ranglijst voorkomen");
+
+                int actualPoints = int.Parse(row.Groups[3].Value.Trim());
+                actualPoints.Should().Be(expectedPoints, "de totaalpunten moeten correct worden opgeteld over alle stages");
+            }
+        }
 
         // ================== Helper methods ==================
 
