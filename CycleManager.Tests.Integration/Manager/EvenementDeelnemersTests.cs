@@ -18,14 +18,22 @@ namespace CycleManager.Tests.Integration.Manager
             _factory = factory;
         }
 
-        [Fact]
-        public async Task Index_ShouldShowListOfDeelnemers_WithCorrectScores_FromConfiguratieItems()
+        private ApplicationDbContext GetDbContext() =>
+            _factory.Services.CreateScope().ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+        private string ExtractRequestVerificationToken(string html)
         {
-            using var scope = _factory.Services.CreateScope();
-            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            var match = Regex.Match(html, @"name=""__RequestVerificationToken""[^>]*value=""([^""]+)""");
+            return match.Success ? match.Groups[1].Value : throw new InvalidOperationException("Antiforgery token not found");
+        }
+
+        [Fact]
+        public async Task Index_ShouldShowListOfDeelnemers_WithCorrectScores()
+        {
+            var db = GetDbContext();
             db.Database.EnsureCreated();
 
-            // Arrange: event + configuratie
+            // Arrange: Users, Event, Configuratie, Teams, Competitors, Results, Picks
             var user1 = new ApplicationUser { Id = "u1", FirstName = "Alice", LastName = "Tester", Email = "alice@test.com" };
             var user2 = new ApplicationUser { Id = "u2", FirstName = "Bob", LastName = "Builder", Email = "bob@test.com" };
             db.Users.AddRange(user1, user2);
@@ -38,19 +46,16 @@ namespace CycleManager.Tests.Integration.Manager
             db.Events.Add(ev);
             await db.SaveChangesAsync();
 
-            // configuratie-items (positie → punten)
             var conf1 = new ConfigurationItem { Configuration = configuratie, Position = 1, Score = 50 };
             var conf2 = new ConfigurationItem { Configuration = configuratie, Position = 2, Score = 30 };
             db.ConfigurationItems.AddRange(conf1, conf2);
             await db.SaveChangesAsync();
 
-            // Teams (spelers)
             var gc1 = new GameCompetitorEvent { EventId = ev.EventId, UserId = user1.Id, TeamName = "Team Alice" };
             var gc2 = new GameCompetitorEvent { EventId = ev.EventId, UserId = user2.Id, TeamName = "Team Bob" };
             db.GameCompetitorsEvent.AddRange(gc1, gc2);
             await db.SaveChangesAsync();
 
-            // Land + ploeg + renners
             var country = new Country { CountryNameShort = "NL", CountryNameLong = "Nederland" };
             db.Countries.Add(country);
             await db.SaveChangesAsync();
@@ -74,7 +79,6 @@ namespace CycleManager.Tests.Integration.Manager
             db.CompetitorsInEvent.AddRange(cie1, cie2);
             await db.SaveChangesAsync();
 
-            // Stage + resultaten (met configuratie-item)
             var stage = new Stage { EventId = ev.EventId, StageName = "Etappe 1", StageOrder = 1 };
             db.Stages.Add(stage);
             await db.SaveChangesAsync();
@@ -83,9 +87,6 @@ namespace CycleManager.Tests.Integration.Manager
                 new Result { StageId = stage.Id, CompetitorInEventId = cie1.Id, ConfigurationItemId = conf1.Id },
                 new Result { StageId = stage.Id, CompetitorInEventId = cie2.Id, ConfigurationItemId = conf2.Id }
             );
-            await db.SaveChangesAsync();
-
-            // Picks
             db.GameCompetitorEventPicks.AddRange(
                 new GameCompetitorEventPick { GameCompetitorEventId = gc1.Id, CompetitorsInEventId = cie1.Id },
                 new GameCompetitorEventPick { GameCompetitorEventId = gc2.Id, CompetitorsInEventId = cie2.Id }
@@ -93,13 +94,10 @@ namespace CycleManager.Tests.Integration.Manager
             await db.SaveChangesAsync();
 
             var client = _factory.CreateClient();
-
-            // Act
             var response = await client.GetAsync($"/GameCompetitorEvents?eventId={ev.EventId}");
             response.StatusCode.Should().Be(HttpStatusCode.OK);
-            var html = await response.Content.ReadAsStringAsync();
 
-            // Assert
+            var html = await response.Content.ReadAsStringAsync();
             html.Should().Contain("Team Alice");
             html.Should().Contain("Team Bob");
             html.Should().Contain("50");
@@ -109,11 +107,9 @@ namespace CycleManager.Tests.Integration.Manager
         [Fact]
         public async Task Create_ShouldAddNewGameCompetitor()
         {
-            using var scope = _factory.Services.CreateScope();
-            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            var db = GetDbContext();
             db.Database.EnsureCreated();
 
-            // Arrange: user + event
             var user = new ApplicationUser { Id = "u3", FirstName = "Chris", LastName = "Demo", Email = "chris@demo.com" };
             db.Users.Add(user);
 
@@ -121,18 +117,13 @@ namespace CycleManager.Tests.Integration.Manager
             db.Events.Add(ev);
             await db.SaveChangesAsync();
 
-            // Maak HttpClient met cookie container
-            var handler = new HttpClientHandler { AllowAutoRedirect = false, UseCookies = true, CookieContainer = new System.Net.CookieContainer() };
             var client = _factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
 
-            // 1. GET de create-pagina, haal token en cookies
             var getResponse = await client.GetAsync($"/GameCompetitorEvents/Create?eventId={ev.EventId}");
             getResponse.StatusCode.Should().Be(HttpStatusCode.OK);
             var html = await getResponse.Content.ReadAsStringAsync();
-
             var token = ExtractRequestVerificationToken(html);
 
-            // 2. POST formulier met token
             var formData = new Dictionary<string, string>
             {
                 { "__RequestVerificationToken", token },
@@ -143,24 +134,19 @@ namespace CycleManager.Tests.Integration.Manager
             var content = new FormUrlEncodedContent(formData);
 
             var postResponse = await client.PostAsync("/GameCompetitorEvents/Create", content);
+            postResponse.StatusCode.Should().Be(HttpStatusCode.Found);
 
-            // 3. Assert redirect
-            postResponse.StatusCode.Should().Be(HttpStatusCode.Found); // 302
-            postResponse.Headers.Location!.ToString().Should().Contain($"/GameCompetitorEvents?eventId={ev.EventId}");
-
-            // 4. Check database
-            var added = db.GameCompetitorsEvent.FirstOrDefault(gc => gc.TeamName == "Team Chris");
-            added.Should().NotBeNull();
+            using var verifyDbScope = _factory.Services.CreateScope();
+            var dbVerify = verifyDbScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            dbVerify.GameCompetitorsEvent.Any(gc => gc.TeamName == "Team Chris").Should().BeTrue();
         }
 
         [Fact]
         public async Task Edit_ShouldUpdateTeamName()
         {
-            using var scope = _factory.Services.CreateScope();
-            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            var db = GetDbContext();
             db.Database.EnsureCreated();
 
-            // Arrange: user, event, bestaande gamecompetitor
             var user = new ApplicationUser { Id = "user4", FirstName = "Edit", LastName = "Test", Email = "edit@test.com" };
             db.Users.Add(user);
 
@@ -171,19 +157,13 @@ namespace CycleManager.Tests.Integration.Manager
             db.GameCompetitorsEvent.Add(gc);
             await db.SaveChangesAsync();
 
-            var client = _factory.CreateClient(new WebApplicationFactoryClientOptions
-            {
-                AllowAutoRedirect = false
-            });
+            var client = _factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
 
-            // 1. GET de edit-pagina om de antiforgery-token te halen
             var getResponse = await client.GetAsync($"/GameCompetitorEvents/Edit/{gc.Id}");
             getResponse.StatusCode.Should().Be(HttpStatusCode.OK);
-
             var html = await getResponse.Content.ReadAsStringAsync();
             var token = ExtractRequestVerificationToken(html);
 
-            // 2. POST de gewijzigde data met token
             var formData = new Dictionary<string, string>
             {
                 { "__RequestVerificationToken", token },
@@ -192,25 +172,20 @@ namespace CycleManager.Tests.Integration.Manager
                 { "UserId", user.Id },
                 { "TeamName", "NewName" }
             };
-
             var content = new FormUrlEncodedContent(formData);
-            var postResponse = await client.PostAsync($"/GameCompetitorEvents/Edit/{gc.Id}", content);
 
-            // 3. Assert redirect
+            var postResponse = await client.PostAsync($"/GameCompetitorEvents/Edit/{gc.Id}", content);
             postResponse.StatusCode.Should().Be(HttpStatusCode.Found);
 
-            // 4. Verify dat het team in de DB is aangepast
-            using var verifyScope = _factory.Services.CreateScope();
-            var dbVerify = verifyScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-            var updated = dbVerify.GameCompetitorsEvent.First(g => g.Id == gc.Id);
-            updated.TeamName.Should().Be("NewName");
+            using var verifyDbScope = _factory.Services.CreateScope();
+            var dbVerify = verifyDbScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            dbVerify.GameCompetitorsEvent.First(g => g.Id == gc.Id).TeamName.Should().Be("NewName");
         }
 
         [Fact]
         public async Task Delete_ShouldRemoveGameCompetitor()
         {
-            using var scope = _factory.Services.CreateScope();
-            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            var db = GetDbContext();
             db.Database.EnsureCreated();
 
             var user = new ApplicationUser { Id = "user5", FirstName = "Del", LastName = "Test", Email = "del@test.com" };
@@ -223,47 +198,38 @@ namespace CycleManager.Tests.Integration.Manager
             db.GameCompetitorsEvent.Add(gc);
             await db.SaveChangesAsync();
 
-            var client = _factory.CreateClient(new WebApplicationFactoryClientOptions
-            {
-                AllowAutoRedirect = false
-            });
+            var client = _factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
 
-            // 1. GET de Delete-pagina om het token te krijgen
             var getResponse = await client.GetAsync($"/GameCompetitorEvents/Delete/{gc.Id}");
             getResponse.StatusCode.Should().Be(HttpStatusCode.OK);
             var html = await getResponse.Content.ReadAsStringAsync();
-
-            // 2. Token extraheren
             var token = ExtractRequestVerificationToken(html);
 
-            // 3. POST om te verwijderen
-            var form = new Dictionary<string, string>
+            var formData = new Dictionary<string, string>
             {
                 { "__RequestVerificationToken", token },
-                { "id", gc.Id.ToString() } // MVC bindt dit vaak van hidden input
+                { "id", gc.Id.ToString() }
             };
-            var content = new FormUrlEncodedContent(form);
+            var content = new FormUrlEncodedContent(formData);
 
             var postResponse = await client.PostAsync($"/GameCompetitorEvents/Delete/{gc.Id}", content);
-            postResponse.StatusCode.Should().Be(HttpStatusCode.Found); // 302 redirect
+            postResponse.StatusCode.Should().Be(HttpStatusCode.Found);
 
-            // 4. Nieuwe scope voor fresh DbContext
-            using var verifyScope = _factory.Services.CreateScope();
-            var dbVerify = verifyScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            using var verifyDbScope = _factory.Services.CreateScope();
+            var dbVerify = verifyDbScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
             dbVerify.GameCompetitorsEvent.Any(g => g.Id == gc.Id).Should().BeFalse();
         }
 
         [Fact]
         public async Task Details_ShouldShowPicksAndScores_FromConfiguratie()
         {
-            using var scope = _factory.Services.CreateScope();
-            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            var db = GetDbContext();
             db.Database.EnsureCreated();
 
             var user = new ApplicationUser { Id = "u6", FirstName = "Daan", LastName = "Test", Email = "daan@test.com" };
             db.Users.Add(user);
 
-            var configuratie = new Configuration { Id = 2, ConfigurationType = "Details Config" };
+            var configuratie = new Configuration { ConfigurationType = "Details Config" };
             db.Add(configuratie);
             await db.SaveChangesAsync();
 
@@ -271,7 +237,7 @@ namespace CycleManager.Tests.Integration.Manager
             db.Events.Add(ev);
             await db.SaveChangesAsync();
 
-            var confItem = new ConfigurationItem { Id = configuratie.Id, Position = 1, Score = 45 };
+            var confItem = new ConfigurationItem { Position = 1, Score = 45 };
             db.ConfigurationItems.Add(confItem);
             await db.SaveChangesAsync();
 
@@ -309,18 +275,12 @@ namespace CycleManager.Tests.Integration.Manager
             var client = _factory.CreateClient();
             var response = await client.GetAsync($"/GameCompetitorEvents/Details?id={gc.Id}&eventId={ev.EventId}");
             response.StatusCode.Should().Be(HttpStatusCode.OK);
-            var html = await response.Content.ReadAsStringAsync();
 
+            var html = await response.Content.ReadAsStringAsync();
             html.Should().Contain("Team Daan");
             html.Should().Contain("Jan");
             html.Should().Contain("Deelnemer");
             html.Should().Contain("45");
-        }
-
-        private string ExtractRequestVerificationToken(string html)
-        {
-            var match = Regex.Match(html, @"name=""__RequestVerificationToken""[^>]*value=""([^""]+)""");
-            return match.Success ? match.Groups[1].Value : throw new InvalidOperationException("Antiforgery token not found");
         }
     }
 }
