@@ -198,11 +198,11 @@ namespace CycleManager.Tests.Integration.Manager
 
             // Drie renners met dezelfde score
             var competitors = new List<Competitor>
-    {
-        new Competitor { FirstName = "Bert", LastName = "Zon", CountryId = country.CountryId },
-        new Competitor { FirstName = "Alex", LastName = "Adams", CountryId = country.CountryId },
-        new Competitor { FirstName = "Carl", LastName = "Baker", CountryId = country.CountryId }
-    };
+            {
+                new Competitor { FirstName = "Bert", LastName = "Zon", CountryId = country.CountryId },
+                new Competitor { FirstName = "Alex", LastName = "Adams", CountryId = country.CountryId },
+                new Competitor { FirstName = "Carl", LastName = "Baker", CountryId = country.CountryId }
+            };
             db.Competitors.AddRange(competitors);
             await db.SaveChangesAsync();
 
