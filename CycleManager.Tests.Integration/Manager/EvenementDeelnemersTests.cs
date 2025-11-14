@@ -282,5 +282,250 @@ namespace CycleManager.Tests.Integration.Manager
             html.Should().Contain("Deelnemer");
             html.Should().Contain("45");
         }
+
+        [Fact]
+        public async Task DeletePick_ShouldRemovePick()
+        {
+            using var scope = _factory.Services.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+            var user = new ApplicationUser { Id = "u10", FirstName = "Test", LastName = "DeletePick", Email = "delpick@test.com" };
+            db.Users.Add(user);
+
+            var ev = new Event { EventName = "DeletePickEvent", EventYear = 2025, StartDate = DateTime.Today, EndDate = DateTime.Today.AddDays(1), IsActive = true };
+            db.Events.Add(ev);
+
+            var gc = new GameCompetitorEvent { EventId = ev.EventId, UserId = user.Id, TeamName = "TeamDeletePick" };
+            db.GameCompetitorsEvent.Add(gc);
+            await db.SaveChangesAsync();
+
+            var country = new Country { CountryNameShort = "NL", CountryNameLong = "Nederland" };
+            db.Countries.Add(country);
+            await db.SaveChangesAsync();
+
+            var team = new Team { CurrentTeamName = "Toppers", CountryId = country.CountryId };
+            db.Teams.Add(team);
+            await db.SaveChangesAsync();
+
+            var comp = new Competitor { FirstName = "Jan", LastName = "Deelnemer", CountryId = country.CountryId };
+            db.Competitors.Add(comp);
+            await db.SaveChangesAsync();
+
+            var cit = new CompetitorInTeam { CompetitorId = comp.CompetitorId, TeamId = team.TeamId, Year = 2025 };
+            db.CompetitorInTeams.Add(cit);
+            await db.SaveChangesAsync();
+
+            var cie = new CompetitorsInEvent { EventId = ev.EventId, CompetitorInTeamId = cit.Id };
+            db.CompetitorsInEvent.Add(cie);
+            await db.SaveChangesAsync();
+
+            var pick = new GameCompetitorEventPick { GameCompetitorEventId = gc.Id, CompetitorsInEventId = cie.Id };
+            db.GameCompetitorEventPicks.Add(pick);
+            await db.SaveChangesAsync();
+
+            var client = _factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
+
+            // GET details page om token te krijgen
+            var getResponse = await client.GetAsync($"/GameCompetitorEvents/Details?id={gc.Id}&eventId={ev.EventId}");
+            var html = await getResponse.Content.ReadAsStringAsync();
+            var token = ExtractRequestVerificationToken(html);
+
+            // POST om pick te verwijderen
+            var form = new Dictionary<string, string> { { "__RequestVerificationToken", token }, { "pickId", pick.Id.ToString() } };
+            var content = new FormUrlEncodedContent(form);
+            var postResponse = await client.PostAsync("/GameCompetitorEvents/DeletePick", content);
+
+            postResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+
+            // Verify
+            var pickExists = db.GameCompetitorEventPicks.Any(p => p.Id == pick.Id);
+            pickExists.Should().BeFalse();
+        }
+
+        [Fact]
+        public async Task Details_ShouldShowPicksAndScores()
+        {
+            using var scope = _factory.Services.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+            // Arrange: User, Event, Configuration, Stage, Competitor
+            var user = new ApplicationUser { Id = "u1", FirstName = "Alice", LastName = "Tester", Email = "alice@test.com" };
+            db.Users.Add(user);
+
+            var configuration = new Configuration { Id = 1, ConfigurationType = "Default" };
+            db.Configurations.Add(configuration);
+
+            var ev = new Event
+            {
+                EventName = "Tour Test",
+                EventYear = 2025,
+                StartDate = DateTime.Today,
+                EndDate = DateTime.Today.AddDays(2),
+                IsActive = true,
+                Configuration = configuration
+            };
+            db.Events.Add(ev);
+
+            var confItem = new ConfigurationItem { Configuration = configuration, Position = 1, Score = 50 };
+            db.ConfigurationItems.Add(confItem);
+
+            var gc = new GameCompetitorEvent { EventId = ev.EventId, UserId = user.Id, TeamName = "Team Alice" };
+            db.GameCompetitorsEvent.Add(gc);
+
+            var country = new Country { CountryNameShort = "NL", CountryNameLong = "Nederland" };
+            db.Countries.Add(country);
+
+            var team = new Team { CurrentTeamName = "TeamTest", Country = country };
+            db.Teams.Add(team);
+
+            var competitor = new Competitor { FirstName = "Bob", LastName = "Builder", Country = country };
+            db.Competitors.Add(competitor);
+
+            var cit = new CompetitorInTeam { Competitor = competitor, Team = team, Year = 2025 };
+            db.CompetitorInTeams.Add(cit);
+
+            var cie = new CompetitorsInEvent { EventId = ev.EventId, CompetitorInTeam = cit };
+            db.CompetitorsInEvent.Add(cie);
+
+            var stage = new Stage { EventId = ev.EventId, StageName = "Etappe 1", StageOrder = 1 };
+            db.Stages.Add(stage);
+
+            db.Results.Add(new Result { Stage = stage, CompetitorInEvent = cie, ConfigurationItem = confItem });
+            db.GameCompetitorEventPicks.Add(new GameCompetitorEventPick { GameCompetitorEvent = gc, CompetitorsInEvent = cie });
+
+            await db.SaveChangesAsync();
+
+            var client = _factory.CreateClient();
+
+            // Act
+            var response = await client.GetAsync($"/GameCompetitorEvents/Details?id={gc.Id}&eventId={ev.EventId}");
+            response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+            var html = await response.Content.ReadAsStringAsync();
+
+            // Assert
+            html.Should().Contain("Team Alice");
+            html.Should().Contain("Bob");
+            html.Should().Contain("50");
+        }
+
+        [Fact]
+        public async Task AddPick_ShouldCreateNewPickFromDropdown()
+        {
+            using var scope = _factory.Services.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+            // Arrange: User, Event, GameCompetitorEvent, CompetitorsInEvent
+            var user = new ApplicationUser { Id = "u3", FirstName = "Add", LastName = "Pick", Email = "add@test.com" };
+            db.Users.Add(user);
+
+            var ev = new Event { EventName = "AddPickEvent", EventYear = 2025, StartDate = DateTime.Today, EndDate = DateTime.Today.AddDays(1), IsActive = true };
+            db.Events.Add(ev);
+
+            var gc = new GameCompetitorEvent { EventId = ev.EventId, UserId = user.Id, TeamName = "TeamAddPick" };
+            db.GameCompetitorsEvent.Add(gc);
+
+            var country = new Country { CountryNameShort = "NL", CountryNameLong = "Nederland" };
+            db.Countries.Add(country);
+
+            var team = new Team { CurrentTeamName = "TeamAdd", Country = country };
+            db.Teams.Add(team);
+
+            var competitor = new Competitor { FirstName = "Max", LastName = "Add", Country = country };
+            db.Competitors.Add(competitor);
+
+            var cit = new CompetitorInTeam { Competitor = competitor, Team = team, Year = 2025 };
+            db.CompetitorInTeams.Add(cit);
+
+            var cie = new CompetitorsInEvent { EventId = ev.EventId, CompetitorInTeam = cit };
+            db.CompetitorsInEvent.Add(cie);
+
+            await db.SaveChangesAsync();
+
+            var client = _factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
+
+            var getHtml = await client.GetStringAsync($"/GameCompetitorEvents/Details?id={gc.Id}&eventId={ev.EventId}");
+            var token = ExtractRequestVerificationToken(getHtml);
+
+            var form = new Dictionary<string, string>
+            {
+                { "__RequestVerificationToken", token },
+                { "Id", gc.Id.ToString() },
+                { "EventId", ev.EventId.ToString() },
+                { "UserId", user.Id },
+                { "TeamName", gc.TeamName },
+                { "CompetitorsInEvent[0].SelectedCompetitorId", cie.Id.ToString() }
+            };
+            var content = new FormUrlEncodedContent(form);
+
+            var postResponse = await client.PostAsync("/GameCompetitorEvents/Details", content);
+            postResponse.StatusCode.Should().Be(HttpStatusCode.Found);
+
+            db.GameCompetitorEventPicks.Any(p => p.GameCompetitorEventId == gc.Id && p.CompetitorsInEventId == cie.Id)
+                .Should().BeTrue();
+        }
+
+        [Fact]
+        public async Task FillList_ShouldAddMissingPicksUpToMax()
+        {
+            using var scope = _factory.Services.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+            // Arrange
+            var user = new ApplicationUser { Id = "u4", FirstName = "Fill", LastName = "Test", Email = "fill@test.com" };
+            db.Users.Add(user);
+
+            var ev = new Event { EventName = "FillListEvent", EventYear = 2025, StartDate = DateTime.Today, EndDate = DateTime.Today.AddDays(1), IsActive = true };
+            db.Events.Add(ev);
+
+            var gc = new GameCompetitorEvent { EventId = ev.EventId, UserId = user.Id, TeamName = "TeamFill" };
+            db.GameCompetitorsEvent.Add(gc);
+
+            var country = new Country { CountryNameShort = "NL", CountryNameLong = "Nederland" };
+            db.Countries.Add(country);
+
+            var team = new Team { CurrentTeamName = "TeamFillTeam", Country = country };
+            db.Teams.Add(team);
+
+            var competitors = new List<Competitor>();
+            for (int i = 0; i < 10; i++)
+            {
+                var comp = new Competitor { FirstName = $"Comp{i}", LastName = $"Fill{i}", Country = country };
+                db.Competitors.Add(comp);
+                competitors.Add(comp);
+            }
+
+            await db.SaveChangesAsync();
+
+            var citList = new List<CompetitorInTeam>();
+            foreach (var comp in competitors)
+            {
+                var cit = new CompetitorInTeam { Competitor = comp, Team = team, Year = 2025 };
+                db.CompetitorInTeams.Add(cit);
+                citList.Add(cit);
+            }
+
+            await db.SaveChangesAsync();
+
+            foreach (var cit in citList)
+            {
+                var cie = new CompetitorsInEvent { EventId = ev.EventId, CompetitorInTeam = cit };
+                db.CompetitorsInEvent.Add(cie);
+            }
+
+            await db.SaveChangesAsync();
+
+            var client = _factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
+
+            // POST FillList
+            var postResponse = await client.GetAsync($"/GameCompetitorEvents/FillList?id={gc.Id}&picks=5&eventId={ev.EventId}");
+            postResponse.StatusCode.Should().Be(HttpStatusCode.Redirect);
+
+            // Verify: picks zijn aangevuld tot max 15 en uniek
+            var picks = db.GameCompetitorEventPicks.Where(p => p.GameCompetitorEventId == gc.Id).ToList();
+            picks.Count.Should().Be(10); // 5 toegevoegd (15 max in je controller, hier simuleer 10)
+            picks.Select(p => p.CompetitorsInEventId).Distinct().Count().Should().Be(picks.Count);
+        }
+
     }
 }
