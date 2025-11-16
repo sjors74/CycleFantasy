@@ -11,16 +11,11 @@ namespace DataAccessEF.TypeRepository
         {
         }
 
-        public async Task<Configuration> GetConfigurationById(int id)
+        public async Task<Configuration?> GetConfigurationById(int id)
         {
-            var configuration = await context.Configurations
+            return await context.Configurations
                 .Include(c => c.ConfigurationItems)
                 .FirstOrDefaultAsync(c => c.Id == id);
-            
-            if (configuration == null)
-                throw new InvalidOperationException($"Configuration with id {id} not found.");
-
-            return configuration;
         }
     }
 }

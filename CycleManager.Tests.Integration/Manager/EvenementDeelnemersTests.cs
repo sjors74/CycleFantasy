@@ -31,6 +31,7 @@ namespace CycleManager.Tests.Integration.Manager
         public async Task Index_ShouldShowListOfDeelnemers_WithCorrectScores()
         {
             var db = GetDbContext();
+            db.Database.EnsureDeleted();
             db.Database.EnsureCreated();
 
             // Arrange: Users, Event, Configuratie, Teams, Competitors, Results, Picks
@@ -108,6 +109,7 @@ namespace CycleManager.Tests.Integration.Manager
         public async Task Create_ShouldAddNewGameCompetitor()
         {
             var db = GetDbContext();
+            db.Database.EnsureDeleted();
             db.Database.EnsureCreated();
 
             var user = new ApplicationUser { Id = "u3", FirstName = "Chris", LastName = "Demo", Email = "chris@demo.com" };
@@ -145,6 +147,7 @@ namespace CycleManager.Tests.Integration.Manager
         public async Task Edit_ShouldUpdateTeamName()
         {
             var db = GetDbContext();
+            db.Database.EnsureDeleted();
             db.Database.EnsureCreated();
 
             var user = new ApplicationUser { Id = "user4", FirstName = "Edit", LastName = "Test", Email = "edit@test.com" };
@@ -186,6 +189,7 @@ namespace CycleManager.Tests.Integration.Manager
         public async Task Delete_ShouldRemoveGameCompetitor()
         {
             var db = GetDbContext();
+            db.Database.EnsureDeleted();
             db.Database.EnsureCreated();
 
             var user = new ApplicationUser { Id = "user5", FirstName = "Del", LastName = "Test", Email = "del@test.com" };
@@ -224,6 +228,7 @@ namespace CycleManager.Tests.Integration.Manager
         public async Task Details_ShouldShowPicksAndScores_FromConfiguratie()
         {
             var db = GetDbContext();
+            db.Database.EnsureDeleted();
             db.Database.EnsureCreated();
 
             var user = new ApplicationUser { Id = "u6", FirstName = "Daan", LastName = "Test", Email = "daan@test.com" };
@@ -288,6 +293,8 @@ namespace CycleManager.Tests.Integration.Manager
         {
             using var scope = _factory.Services.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            db.Database.EnsureDeleted();
+            db.Database.EnsureCreated();
 
             var user = new ApplicationUser { Id = "u10", FirstName = "Test", LastName = "DeletePick", Email = "delpick@test.com" };
             db.Users.Add(user);
@@ -347,6 +354,8 @@ namespace CycleManager.Tests.Integration.Manager
         {
             using var scope = _factory.Services.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            db.Database.EnsureDeleted();
+            db.Database.EnsureCreated();
 
             // Arrange: User, Event, Configuration, Stage, Competitor
             var user = new ApplicationUser { Id = "u1", FirstName = "Alice", LastName = "Tester", Email = "alice@test.com" };
@@ -414,6 +423,8 @@ namespace CycleManager.Tests.Integration.Manager
         {
             using var scope = _factory.Services.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            db.Database.EnsureDeleted();
+            db.Database.EnsureCreated();
 
             // Arrange: User, Event, GameCompetitorEvent, CompetitorsInEvent
             var user = new ApplicationUser { Id = "u3", FirstName = "Add", LastName = "Pick", Email = "add@test.com" };
@@ -470,6 +481,8 @@ namespace CycleManager.Tests.Integration.Manager
         {
             using var scope = _factory.Services.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            db.Database.EnsureDeleted();
+            db.Database.EnsureCreated();
 
             // Arrange
             var user = new ApplicationUser { Id = "u4", FirstName = "Fill", LastName = "Test", Email = "fill@test.com" };

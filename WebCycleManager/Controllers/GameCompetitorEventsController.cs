@@ -4,6 +4,7 @@ using CycleManager.Services.Interfaces;
 using Domain.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
 using WebCycleManager.Models;
 
 namespace WebCycleManager.Controllers
@@ -337,6 +338,82 @@ namespace WebCycleManager.Controllers
             return 0;
         }
 
+        //TODO: implement services instead of using context directly
+        //[HttpGet]
+        //public async Task<IActionResult> FillList(int id, int picks, int eventId)
+        //{
+        //    // id = GameCompetitorEvent.Id
+        //    // 'picks' parameter is ignored for current DB state; we compute currentCount from DB.
+
+        //    const int maxPicks = 15; // TODO: haal uit configuratie: event.Configuration etc.
+
+        // TODO haal de gamecompetitor op via service/repo (deelnemer)
+        //    var gameCompetitor = await _context.GameCompetitorsEvent
+        //        .AsTracking()
+        //        .FirstOrDefaultAsync(g => g.Id == id);
+
+        //    if (gameCompetitor == null)
+        //        return NotFound();
+
+        // TODO :Haal het aantal reeds gekozen Picks op voor deze GameCompetitorEvent via service/repo
+        //    huidig aantal picks uit DB
+        //    var currentCount = await _context.GameCompetitorEventPicks
+        //        .CountAsync(p => p.GameCompetitorEventId == id);
+
+        //    var slotsToFill = Math.Max(0, maxPicks - currentCount);
+        //    if (slotsToFill == 0)
+        //    {
+        //        // niets te doen
+        //        return RedirectToAction("Details", new { id, eventId });
+        //    }
+
+        //    // Vraag mogelijke kandidaten op — let op: service moet kandidaten teruggeven
+        //    // die nog niet gepickt zijn (of we filteren hier zelf).
+        //    // Verwacht: GetCompetitors(eventId, count) -> lijst van CompetitorsInEvent of DTO met CompetitorInTeamId
+        //    var candidates = await _gameCompetitorEventService.GetCompetitors(eventId, slotsToFill);
+
+        //    if (candidates == null || !candidates.Any())
+        //    {
+        //        return RedirectToAction("Details", new { id, eventId });
+        //    }
+
+        //    // haal al gepickte competitors in event op, om duplicaten te voorkomen
+        //    var alreadyPickedIds = await _context.GameCompetitorEventPicks
+        //        .Where(p => p.GameCompetitorEventId == id)
+        //        .Select(p => p.CompetitorsInEventId)
+        //        .ToListAsync();
+
+        //    // Transformeer candidates naar ids (pas aan op jouw DTO)
+        //    var candidateIds = candidates.Select(c => c.CompetitorInTeamId).Distinct().ToList();
+
+        //    // Filter bestaande picks
+        //    var toAddIds = candidateIds
+        //        .Where(cid => !alreadyPickedIds.Contains(cid))
+        //        .Take(slotsToFill)
+        //        .ToList();
+
+        //    // In het onwaarschijnlijke geval dat service teruggeeft > beschikbare unique ids,
+        //    // we beperken met Take(slotsToFill) hierboven.
+
+        //    foreach (var cid in toAddIds)
+        //    {
+        //        var pick = new GameCompetitorEventPick
+        //        {
+        //            GameCompetitorEventId = id,
+        //            CompetitorsInEventId = cid
+        //        };
+        //        _context.GameCompetitorEventPicks.Add(pick);
+        //    }
+
+        //    // Persist
+        //    await _context.SaveChangesAsync();
+
+        //    // Optioneel: zet de suggesties in TempData als je die in Details wilt tonen
+        //    TempData["suggestedCompetitors"] = toAddIds;
+
+        //    return RedirectToAction("Details", new { id, eventId });
+        //}
+
         public async Task<IActionResult> FillList(int id, int picks, int eventId)
         {
             //id = the gamecompetitor
@@ -346,7 +423,7 @@ namespace WebCycleManager.Controllers
             // b determine how many picks you should add
             // c pick random competitorsinevent: c = (b - a)
             var c = b - a;
-            var suggestedCompetitiorsList =  await _gameCompetitorEventService.GetCompetitors(eventId, c);
+            var suggestedCompetitiorsList = await _gameCompetitorEventService.GetCompetitors(eventId, c);
             var suggestedCompetitorsId = new List<int>();
             suggestedCompetitorsId = suggestedCompetitiorsList.Select(c => c.CompetitorInTeamId).ToList();
             TempData["suggestedCompetitors"] = suggestedCompetitorsId;

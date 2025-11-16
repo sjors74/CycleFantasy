@@ -92,7 +92,7 @@ namespace CycleManager.Tests.Unit.Manager
             var vm = new ConfigurationItemViewModel { Id = 0, ConfigurationId = 3, Position = 1, Score = 50 };
 
             _configurationServiceMock.Setup(s => s.CreateItem(It.IsAny<ConfigurationItem>()))
-                .Returns(Task.CompletedTask);
+                .ReturnsAsync(true);
 
             // Act
             var result = await _controller.Create(vm);
@@ -163,7 +163,7 @@ namespace CycleManager.Tests.Unit.Manager
             _configurationServiceMock.Setup(s => s.GetConfigurationItemById(1))
                 .ReturnsAsync(item);
             _configurationServiceMock.Setup(s => s.UpdateItem(It.IsAny<ConfigurationItem>()))
-                .Returns(Task.CompletedTask);
+                .ReturnsAsync(true);
 
             // Act
             var result = await _controller.Edit(1, vm);
@@ -251,26 +251,28 @@ namespace CycleManager.Tests.Unit.Manager
         }
 
         [Fact]
-        public async Task Edit_Post_ConcurrencyException_ItemNotExists_ReturnsNotFound()
+        public async Task Edit_Post_ItemDoesNotExist_ReturnsViewWithModelError()
         {
-            var vm = new ConfigurationItemViewModel { Id = 1, ConfigurationId = 3, Position = 1, Score = 10 };
+            // Arrange
+            var vm = new ConfigurationItemViewModel
+            {
+                Id = 1,
+                ConfigurationId = 3,
+                Position = 1,
+                Score = 10
+            };
 
-            // Eerste call: item bestaat
-            // Tweede call (ConfigurationItemExists): null
-            _configurationServiceMock.SetupSequence(s => s.GetConfigurationItemById(It.IsAny<int>()))
-                .ReturnsAsync(new ConfigurationItem { Id = 1, ConfigurationId = 3 })
-                .ReturnsAsync((ConfigurationItem)null);
-
-            // UpdateItem gooit de concurrency exception
-            _configurationServiceMock.Setup(s => s.UpdateItem(It.IsAny<ConfigurationItem>()))
-                .ThrowsAsync(new DbUpdateConcurrencyException());
+            _configurationServiceMock
+                .Setup(s => s.GetConfigurationItemById(vm.Id))
+                .ReturnsAsync((ConfigurationItem)null); // item bestaat niet
 
             // Act
-            var result = await _controller.Edit(1, vm);
+            var result = await _controller.Edit(vm.Id, vm);
 
             // Assert
-            Assert.IsType<NotFoundResult>(result);
+            var viewResult = Assert.IsType<NotFoundResult>(result);
         }
+
 
 
         [Fact]

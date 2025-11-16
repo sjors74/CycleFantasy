@@ -45,19 +45,6 @@ namespace CycleManager.Tests.Integration.DataAccess
         }
 
         [Fact]
-        public async Task GetConfigurationById_ThrowsWhenNotFound()
-        {
-            using var context = GetInMemoryDbContext("ConfigTest2");
-            var repo = new ConfigurationRepository(context);
-
-            // Act & Assert
-            var ex = await Assert.ThrowsAsync<InvalidOperationException>(async () =>
-                await repo.GetConfigurationById(999));
-
-            Assert.Equal("Configuration with id 999 not found.", ex.Message);
-        }
-
-        [Fact]
         public async Task GetConfigurationById_ReturnsCorrectConfigurationAmongMultiple()
         {
             using var context = GetInMemoryDbContext("ConfigTest3");
@@ -118,7 +105,7 @@ namespace CycleManager.Tests.Integration.DataAccess
         }
 
         [Fact]
-        public async Task GetConfigurationById_Throws_WhenNotFound()
+        public async Task GetConfigurationById_ReturnsNull_WhenNotFound()
         {
             using var context = GetInMemoryDbContext("ConfigTest_NotFound");
 
@@ -126,11 +113,8 @@ namespace CycleManager.Tests.Integration.DataAccess
             var repo = new ConfigurationRepository(context);
 
             // Act & Assert
-            var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
-                repo.GetConfigurationById(999) // id die niet bestaat
-            );
-
-            Assert.Equal("Configuration with id 999 not found.", exception.Message);
+            var config = await repo.GetConfigurationById(999); // id die niet bestaat
+            Assert.Null(config);
         }
     }
 }
