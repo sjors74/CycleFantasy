@@ -18,7 +18,7 @@ namespace Domain.Models
         [JsonIgnore]
         public virtual CompetitorsInEvent? CompetitorInEvent { get; set; }
         
-        public int ConfigurationItemId { get; set; }
+        public int? ConfigurationItemId { get; set; }
         [JsonIgnore]
         public virtual ConfigurationItem? ConfigurationItem { get; set; }
         

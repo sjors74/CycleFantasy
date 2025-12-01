@@ -174,5 +174,16 @@ namespace CycleManager.Services
         {
             return _resultsRepository.GetCompetitorFullName(competitorId);
         }
+
+        /// <summary>
+        /// Recalculate all scores for an event based on current ConfigurationItems.
+        /// Updates Results, DeelnemerScores, and DeelnemerPickScores.
+        /// </summary>
+        /// <param name="eventId"></param>
+        /// <returns></returns>
+        public Task RecalculateEventScoresAsync(int eventId)
+        {
+            return _resultsRepository.RecalculateEventScoresAsync(eventId);
+        }
     }
 }

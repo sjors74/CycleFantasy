@@ -47,5 +47,6 @@ namespace Domain.Interfaces
         Task DeleteResultAsync(Result result);
         Task<bool> ResultExistsAsync(int id);
         string GetCompetitorFullName(int competitorId);
+        Task RecalculateEventScoresAsync(int eventId);
     }
 }

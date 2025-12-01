@@ -38,6 +38,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\WebApp\WebApp.csproj" />
+    <ProjectReference Include="..\WebCycle\WebCycleApi.csproj" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="8.*" />
   </ItemGroup>
 

@@ -9,9 +9,11 @@ using Domain.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using WebCycle.Services;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -36,11 +38,12 @@ builder.Services.Configure<SmtpSettings>(
 // -------------------
 // Database
 // -------------------
+
 if (builder.Environment.IsEnvironment("Test"))
 {
     // In-memory DB voor tests
     builder.Services.AddDbContext<ApplicationDbContext>(options =>
-        options.UseInMemoryDatabase("TestDb"));
+        options.UseInMemoryDatabase("TestDb", TestDb.Root));
 }
 else
 {
@@ -122,21 +125,33 @@ var app = builder.Build();
 // -------------------
 // Seed & Ensure DB
 // -------------------
-
-using (var scope = app.Services.CreateScope())
-{ 
-    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    if (builder.Environment.IsEnvironment("Test"))
+if (app.Environment.IsEnvironment("Test"))
+{
+    Console.WriteLine("Test environment detected — running SeedData...");
+    using (var scope = app.Services.CreateScope())
     {
-        var env = scope.ServiceProvider.GetRequiredService<IWebHostEnvironment>();
-        await TestDataSeeder.SeedAsync(db, env);
-    }
-    else
-    {
-        db.Database.Migrate();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        //db.Database.Migrate(); // (optioneel als SQL Server)
+        await SeedData.EnsureSeedAsync(db);
     }
 }
-
+else
+{
+    Console.WriteLine("Not Test environment — skipping SeedData");
+    using (var scope = app.Services.CreateScope())
+    {
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        if (builder.Environment.IsEnvironment("Test"))
+        {
+            //var env = scope.ServiceProvider.GetRequiredService<IWebHostEnvironment>();
+            //await TestDataSeeder.SeedAsync(db, env);
+        }
+        else
+        {
+            db.Database.Migrate();
+        }
+    }
+}
 // -------------------
 // Middleware
 // -------------------
@@ -153,15 +168,6 @@ app.MapControllers();
 
 app.MapGet("/", () => "API draait!");
 
-// Extra ping endpoint voor AppFixture
-if (app.Environment.IsEnvironment("Test"))
-{
-    app.MapGet("/test/seed-ready", (ApplicationDbContext db) =>
-    {
-        bool ready = db.Events.Any();
-        return ready ? Results.Ok() : Results.StatusCode(503);
-    });
-}
 
 // -------------------
 // Start the app
@@ -177,4 +183,9 @@ else
     await app.RunAsync(); // start de host
     Console.WriteLine("[API] Test environment: keeping host alive...");
 
+}
+
+public static class TestDb
+{
+    public static readonly InMemoryDatabaseRoot Root = new();
 }

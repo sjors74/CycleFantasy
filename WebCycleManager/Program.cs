@@ -11,10 +11,26 @@ using Humanizer.Localisation;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using Microsoft.Playwright;
 using WebCycleManager.Config;
 using WebCycleManager.Helpers;
 
 var builder = WebApplication.CreateBuilder(args);
+
+
+// Playwright setup
+builder.Services.AddSingleton<IBrowser>(sp =>
+{
+    var playwright = Playwright.CreateAsync().GetAwaiter().GetResult();
+    return playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
+    {
+        Headless = false,
+        Args = new[]
+        {
+            "--disable-blink-features=AutomationControlled"
+        }
+    }).GetAwaiter().GetResult();
+});
 
 var connectionString = builder.Configuration.GetConnectionString("CycleDb");
 builder.Services.AddDbContext<ApplicationDbContext>(x => 
@@ -97,6 +113,23 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
 app.Run();
+
+app.MapGet("/competitors", async (IPcsScraper scraper, string team, int teamId, int year) =>
+{
+    // Bouw de URL dynamisch
+    var url = $"https://www.procyclingstats.com/team/{team}-{year}";
+
+    try
+    {
+        var competitors = await scraper.ScrapeCompetitorsAsync(url, teamId, year);
+        return Results.Ok(competitors);
+    }
+    catch (Exception ex)
+    {
+        return Results.Problem($"Scrapen mislukt: {ex.Message}");
+    }
+});
+
 
 // Alleen nodig voor integratietests
 public partial class Program { }

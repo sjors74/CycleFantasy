@@ -44,11 +44,12 @@ namespace WebCycle.Controllers
                             .Where(s => s.GameCompetitorEventId == deelnemer.Id)
                             .ToList();
 
-                        deelnemer.Punten = scoresForDeelnemer.Sum(s => s.TotalScore);
-
-                        deelnemer.LaatsteScore = scoresForDeelnemer
+                        var last = scoresForDeelnemer
                             .OrderByDescending(s => s.StageId)
-                            .FirstOrDefault()?.TotalScore ?? 0;
+                            .FirstOrDefault();
+
+                        deelnemer.Punten = last?.TotalScore ?? 0;
+                        deelnemer.LaatsteScore = last?.LaatsteScore ?? 0;
                     }
                 }
             }

@@ -14,7 +14,7 @@
             if (string.IsNullOrWhiteSpace(input))
                 return ("Unknown", "Unknown");
 
-            var parts = input.Split(' ', StringSplitOptions.RemoveEmptyEntries).ToList();
+            var parts = input.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries).ToList();
             if (parts.Count == 0) return ("", "");
             if (parts.Count == 1) return (parts[0], "");
 
@@ -38,6 +38,31 @@
             string firstName = string.Join(" ", parts.Skip(i));
 
             return (firstName, lastName);
+        }
+
+        public static string FormatPart(string part)
+        {
+            if (string.IsNullOrWhiteSpace(part))
+                return "";
+
+            part = part.ToLower();
+
+            if (LastnamePrefixes.Contains(part))
+                return part;
+
+            // Normale capitalisatie
+            return char.ToUpper(part[0]) + part.Substring(1);
+        }
+
+        public static string FormatName(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+                return "";
+
+            var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            return string.Join(" ",
+                parts.Select(p => FormatPart(p))
+            );
         }
     }
 }

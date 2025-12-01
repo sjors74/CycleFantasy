@@ -45,10 +45,10 @@ namespace CycleManager.Tests.E2E
                 await spinner.WaitForAsync(new() { State = WaitForSelectorState.Hidden, Timeout = 60000 });
 
                 var title = page.Locator("h1");
-                await Assertions.Expect(title).ToHaveTextAsync("Tour de Test");
+                await Assertions.Expect(title).ToHaveTextAsync("E2E Test Event");
 
-                // Klik op de etappe-link “Proloog”
-                var proloogLink = page.Locator("a:text-is('Pr')");
+                // Klik op de etappe-link “1”
+                var proloogLink = page.Locator("a:text-is('1')");
                 await proloogLink.ClickAsync();
 
                 // Wacht tot resultatenpagina geladen is
@@ -56,7 +56,7 @@ namespace CycleManager.Tests.E2E
 
                 var etappeTitle = page.Locator("h1#etappe-title");
                 await Assertions.Expect(etappeTitle)
-                    .ToHaveTextAsync("Etappe Proloog – Resultaten", new() { Timeout = 10000 });
+                    .ToHaveTextAsync("Etappe 1 – Resultaten", new() { Timeout = 10000 });
 
                 // Controleer dat er resultaten zijn
                 var rows = page.Locator("#renner-lijst tr");
@@ -72,7 +72,7 @@ namespace CycleManager.Tests.E2E
 
                 // Controleer dat we terug zijn op de eventpagina
                 var eventTitle = page.Locator("h1");
-                await Assertions.Expect(eventTitle).ToContainTextAsync("Tour de Test");
+                await Assertions.Expect(eventTitle).ToContainTextAsync("E2E Test Event");
 
                 Console.WriteLine("EventResultPage test succesvol afgerond!");
             }

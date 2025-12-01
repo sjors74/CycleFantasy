@@ -37,10 +37,12 @@ namespace DataAccessEF.TypeRepository
         {
             var eventList = await context.Events
                 .Include(e => e.GameCompetitorEvents)
-                    .ThenInclude(e => e.User)
+                    .ThenInclude(p => p.Renners)
                 .Include(s => s.Stages)
                     .ThenInclude(r => r.Results)
                 .Include(e => e.Configuration)
+                .Include(e => e.GameCompetitorEvents)
+                    .ThenInclude(e => e.User)
                 .Where(e => e.IsActive.Equals(true))
                 .AsNoTracking()
                 .ToListAsync();

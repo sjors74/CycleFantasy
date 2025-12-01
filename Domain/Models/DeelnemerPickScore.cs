@@ -10,8 +10,7 @@ namespace Domain.Models
         [Required]
         public int GameCompetitorEventPickId { get; set; }
 
-        [Required]
-        public int StageId { get; set; }
+        public int? StageId { get; set; }
 
         public int Score { get; set; }
 

@@ -4,6 +4,7 @@ using Domain.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DataAccessEF.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251125140330_MakeConfigurationItemIdNullable")]
+    partial class MakeConfigurationItemIdNullable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -384,7 +387,7 @@ namespace DataAccessEF.Migrations
                     b.Property<int>("Score")
                         .HasColumnType("int");
 
-                    b.Property<int?>("StageId")
+                    b.Property<int>("StageId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
@@ -411,7 +414,7 @@ namespace DataAccessEF.Migrations
                     b.Property<DateTime>("LastUpdated")
                         .HasColumnType("datetime2");
 
-                    b.Property<int?>("StageId")
+                    b.Property<int>("StageId")
                         .HasColumnType("int");
 
                     b.Property<int>("TotalScore")
@@ -638,6 +641,7 @@ namespace DataAccessEF.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("PcsName")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("TeamId");
@@ -900,7 +904,8 @@ namespace DataAccessEF.Migrations
                     b.HasOne("Domain.Models.Stage", "Stage")
                         .WithMany()
                         .HasForeignKey("StageId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.Navigation("Pick");
 
@@ -918,7 +923,8 @@ namespace DataAccessEF.Migrations
                     b.HasOne("Domain.Models.Stage", "Stage")
                         .WithMany()
                         .HasForeignKey("StageId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.Navigation("GameCompetitorEvent");
 

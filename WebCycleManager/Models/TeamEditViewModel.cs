@@ -16,7 +16,7 @@ namespace WebCycleManager.Models
         public List<SelectListItem> Countries { get; set; } = [];
 
         [Display(Name = "PCS naam")]
-        public string PcsName { get; set; } = string.Empty;
+        public string? PcsName { get; set; }
 
         public List<int> AvailableYears { get; set; } = [];
 

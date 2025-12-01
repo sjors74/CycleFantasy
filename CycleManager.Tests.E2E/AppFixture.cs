@@ -1,5 +1,14 @@
-﻿using Microsoft.Playwright;
+﻿using CycleManager.Services;
+using CycleManager.Services.Interfaces;
+using DataAccessEF.TypeRepository;
+using Domain.Context;
+using Domain.Interfaces;
+using Domain.Models;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Playwright;
 using System.Diagnostics;
+using WebCycle.Services;
 
 namespace CycleManager.Tests.E2E
 {
@@ -17,6 +26,10 @@ namespace CycleManager.Tests.E2E
         private bool _initialized = false;
         private bool _isRunning = false;
 
+        public IServiceProvider Services { get; private set; } = null!;
+
+        private readonly string _dbName = $"E2ETestDb_{Guid.NewGuid()}";
+
         // Start de apps en Playwright
         public async Task InitializeAsync()
         {
@@ -26,17 +39,11 @@ namespace CycleManager.Tests.E2E
             Console.WriteLine("Initializing AppFixture...");
 
             // Start API
-            if (!await IsUrlReachable(ApiBaseUrl))
-            {
-                Console.WriteLine("Starting API...");
-                _apiProcess = StartProcess("WebCycle", "https://localhost:44302", "Test");
-                await WaitForUrl(ApiBaseUrl);
-                await WaitForApiReadyAsync(ApiBaseUrl);
-            }
-            else
-            {
-                Console.WriteLine("API already running");
-            }
+            Console.WriteLine("Starting API...");
+            _apiProcess = StartProcess("WebCycle", "https://localhost:44302", "Test");
+            await WaitForApiReadyAsync(ApiBaseUrl);
+    
+            await WaitForUrl(ApiBaseUrl);
 
             // Start WebApp
             if (!await IsUrlReachable(WebBaseUrl))
@@ -58,10 +65,44 @@ namespace CycleManager.Tests.E2E
                 Args = new[] { "--ignore-certificate-errors" }
             });
 
+            var hostBuilder = Microsoft.Extensions.Hosting.Host.CreateDefaultBuilder()
+                .ConfigureServices((context, services) =>
+                {
+                    services.AddDbContext<ApplicationDbContext>(options =>
+                        options.UseInMemoryDatabase(_dbName));
+
+                    // Je services registreren
+                    services.AddScoped<IResultService, ResultService>();
+                    services.AddScoped<IResultsRepository, ResultsRepository>();
+                    services.AddScoped<IScoreRepository, ScoreRepository>();
+                });
+
+            var host = hostBuilder.Build();
+            Services = host.Services;
+
+            // Database reset + seed
+            await ResetDatabaseAsync();
+
+
             _initialized = true;
             _isRunning = true;
 
             Console.WriteLine("AppFixture ready!");
+        }
+
+        // Reset database en seed opnieuw
+        private async Task ResetDatabaseAsync()
+        {
+            using var scope = Services.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+            Console.WriteLine("Resetting database...");
+            await db.Database.EnsureDeletedAsync();
+            await db.Database.EnsureCreatedAsync();
+
+            Console.WriteLine("Seeding database...");
+            await SeedData.EnsureSeedAsync(db);
+            Console.WriteLine("Database seeded successfully!");
         }
 
         //Controleer of alles nog draait, anders restart
@@ -204,7 +245,7 @@ namespace CycleManager.Tests.E2E
         // Helper: wacht tot seed klaar is (voor API)
         private async Task WaitForApiReadyAsync(string baseUrl, int timeoutMs = 30000)
         {
-            await Task.Delay(5000);
+            //await Task.Delay(5000);
             using var http = new HttpClient { BaseAddress = new Uri(baseUrl) };
             var sw = Stopwatch.StartNew();
 
@@ -213,6 +254,11 @@ namespace CycleManager.Tests.E2E
                 try
                 {
                     var response = await http.GetAsync($"/test/seed-ready");
+                    var body = await response.Content.ReadAsStringAsync();
+
+                    Console.WriteLine("Status: " + response.StatusCode);
+                    Console.WriteLine("Body: " + body);
+
                     if (response.IsSuccessStatusCode)
                     {
                         Console.WriteLine("API seeded and ready.");
@@ -225,6 +271,62 @@ namespace CycleManager.Tests.E2E
             }
 
             throw new Exception($"Timeout: API at {baseUrl} did not return seeded data in {timeoutMs}ms");
+        }
+
+        public async Task ApplyCustomConfigAsync(int eventId, int[] customPoints)
+        {
+            using var scope = Services.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+            // 1. Maak nieuwe configuratie
+            var config = new Configuration { ConfigurationType = "E2E Custom Test Config" };
+            db.Configurations.Add(config);
+            await db.SaveChangesAsync();
+
+            for (int i = 0; i < customPoints.Length; i++)
+            {
+                db.ConfigurationItems.Add(new ConfigurationItem
+                {
+                    ConfigurationId = config.Id,
+                    Position = i + 1,
+                    Score = customPoints[i]
+                });
+            }
+            await db.SaveChangesAsync();
+
+            // 2. Koppel config aan event
+            var ev = await db.Events.FirstAsync(e => e.EventId == eventId);
+            ev.ConfigurationId = config.Id;
+
+            // 3. Verwijder oude scores
+            var pickIds = db.GameCompetitorEventPicks
+                .Where(p => p.GameCompetitorEvent.EventId == eventId)
+                .Select(p => p.Id)
+                .ToList();
+
+            db.DeelnemerPickScores.RemoveRange(
+                db.DeelnemerPickScores.Where(dps => pickIds.Contains(dps.GameCompetitorEventPickId))
+            );
+
+            db.DeelnemerScores.RemoveRange(
+                db.DeelnemerScores.Where(ds => ds.Stage.EventId == eventId)
+            );
+
+            await db.SaveChangesAsync();
+
+            // 4. Herbereken opnieuw via applicatieservice
+            var resultService = scope.ServiceProvider.GetRequiredService<IResultService>();
+            await RecalculateEventScoresAsync(eventId);
+        }
+
+        public async Task RecalculateEventScoresAsync(int eventId)
+        {
+            using var scope = Services.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            var resultService = scope.ServiceProvider.GetRequiredService<IResultService>();
+
+            await resultService.RecalculateEventScoresAsync(eventId);
+            await db.SaveChangesAsync();
         }
     }
 }

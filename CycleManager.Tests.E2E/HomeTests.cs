@@ -69,8 +69,8 @@ namespace CycleManager.Tests.E2E
             await firstEventTile.ClickAsync();
 
             await Assertions.Expect(Page).ToHaveURLAsync(new Regex(@".*/Event\?EventId=\d+"));
-            await Assertions.Expect(Page.Locator("h1")).ToHaveTextAsync("Tour de Test");
-            await Assertions.Expect(Page.Locator("#slogan")).ToHaveTextAsync("test test test");
+            await Assertions.Expect(Page.Locator("h1")).ToHaveTextAsync("E2E Test Event");
+            await Assertions.Expect(Page.Locator("#slogan")).ToHaveTextAsync("Testing the slogan");
         }
 
         [TestMethod]

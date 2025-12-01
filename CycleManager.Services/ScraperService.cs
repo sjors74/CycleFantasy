@@ -154,7 +154,7 @@ namespace CycleManager.Services
 
             if (team == null) return;
 
-            string url = $"https://www.procyclingstats.com/team/{team.PcsName}-{year}/overview/start";
+            string url = $"https://www.procyclingstats.com/team/{team.PcsName}-{year}/overview/start-v3";
             _logger.LogInformation($"Start scraping competitors for team {team.CurrentTeamName}, year {year}");
 
             var competitors = await _pcsScraper.ScrapeCompetitorsAsync(url, teamId, year);
@@ -169,20 +169,45 @@ namespace CycleManager.Services
                 .Where(sc => sc.ProcessedAt == null)
                 .ToListAsync();
 
-            // Cache bestaande competitors (in memory dictionary)
-            var competitors = await _db.Competitors.ToListAsync();
-            var competitorLookup = competitors
-                .ToDictionary(c => (c.FirstName.ToLower(), c.LastName.ToLower()));
+            if (scraped.Count == 0)
+                _logger.LogInformation("Geen nieuwe scraped competitors om te importeren.");
 
-            // Cache bestaande CompetitorInTeams (hashset)
-            var competitorInTeams = await _db.CompetitorInTeams
-                .Select(cit => new { cit.CompetitorId, cit.TeamId, cit.Year })
+            var competitors = await _db.Competitors
+                .Include(c => c.Country)
                 .ToListAsync();
-            var competitorInTeamSet = new HashSet<(int CompetitorId, int TeamId, int Year)>(
-                competitorInTeams.Select(cit => (cit.CompetitorId, cit.TeamId, cit.Year)));
+
+            var competitorLookup = competitors
+                .GroupBy(c => (c.FirstName?.ToLowerInvariant() ?? "", c.LastName?.ToLowerInvariant() ?? ""))
+                .ToDictionary(g => g.Key, g => g.First());
+
+            var competitorByScraperName = competitors
+                .Where(c => !string.IsNullOrEmpty(c.ScraperName))
+                .GroupBy(c => c.ScraperName.ToLowerInvariant())
+                .ToDictionary(g => g.Key, g => g.First());
+
+            foreach (var c in competitors)
+            {
+                if (string.IsNullOrWhiteSpace(c.ScraperName))
+                    continue;
+
+                var key = c.ScraperName.Trim().ToLower();
+
+                // Als hij al bestaat -> negeren of loggen
+                if (!competitorByScraperName.ContainsKey(key))
+                    competitorByScraperName[key] = c;
+            }
 
             var countries = await _db.Countries.ToListAsync();
             var countryLookup = countries.ToDictionary(c => c.CountryNameShort, StringComparer.OrdinalIgnoreCase);
+
+            // Cache bestaande CompetitorInTeams (hashset)
+            var existingCompetitorInTeams = await _db.CompetitorInTeams
+                .Select(c => new { c.CompetitorId, c.TeamId, c.Year })
+                .ToListAsync();
+
+            var competitorInTeamSet = existingCompetitorInTeams
+                .Select(x => ((object)x.CompetitorId, x.TeamId, x.Year))
+                .ToHashSet();
 
             var newCompetitors = new List<Competitor>();
             var newCompetitorInTeams = new List<CompetitorInTeam>();
@@ -191,6 +216,7 @@ namespace CycleManager.Services
             foreach (var sc in scraped)
             {
                 Country country = null;
+
                 if (!string.IsNullOrEmpty(sc.CountryShortName))
                 {
                     if (!countryLookup.TryGetValue(sc.CountryShortName, out country))
@@ -200,22 +226,30 @@ namespace CycleManager.Services
                             CountryNameShort = sc.CountryShortName,
                             CountryNameLong = CountryHelper.GetName(sc.CountryShortName),
                         };
+
                         newCountries.Add(country);
                         countryLookup[sc.CountryShortName] = country;
                     }
                 }
 
                 Competitor competitor = null;
-                competitor = competitors.FirstOrDefault(c =>
-                    string.Equals(c.ScraperName, sc.RiderName, StringComparison.OrdinalIgnoreCase));
+                var scraperKey = sc.RiderName.ToLower();
 
-                if (competitor == null)
+                if (competitorByScraperName.TryGetValue(scraperKey, out competitor))
+                {
+                    if (country != null)
+                        competitor.Country = country;
+                }
+                else
                 {
 
                     var (firstName, lastName) = SplitNamesHelper.SplitName(sc.RiderName);
+                    firstName = SplitNamesHelper.FormatName(firstName);
+                    lastName = SplitNamesHelper.FormatName(lastName);
+                    var key = (firstName.ToLower(), lastName.ToLower());
 
                     // Zoek bestaande competitor (case-insensitive)
-                    if (!competitorLookup.TryGetValue((firstName.ToLower(), lastName.ToLower()), out competitor))
+                    if (!competitorLookup.TryGetValue(key, out competitor))
                     {
                         competitor = new Competitor
                         {
@@ -224,35 +258,48 @@ namespace CycleManager.Services
                             Country = country,
                             ScraperName = sc.RiderName
                         };
+
                         newCompetitors.Add(competitor);
-                        competitorLookup[(firstName.ToLower(), lastName.ToLower())] = competitor;
+
+                        competitorLookup[key] = competitor;
+                        competitorByScraperName[scraperKey] = competitor;
                     }
                     else
                     {
                         competitor.ScraperName = sc.RiderName;
+                        if (country != null)
+                            competitor.Country = country;
+
+                        competitorByScraperName[scraperKey] = competitor;
                     }
                 }
 
-                if (!competitorInTeamSet.Contains((competitor.CompetitorId, sc.TeamId, sc.Year)))
+                object competitorKey = competitor.CompetitorId == 0 ? competitor : competitor.CompetitorId;
+
+                var citKey = (competitorKey, sc.TeamId, sc.Year);
+
+                if (!competitorInTeamSet.Contains(citKey))
                 {
-                    var cit = new CompetitorInTeam
+                    newCompetitorInTeams.Add(new CompetitorInTeam
                     {
                         Competitor = competitor,
                         TeamId = sc.TeamId,
                         Year = sc.Year
-                    };
-                    newCompetitorInTeams.Add(cit);
-                    competitorInTeamSet.Add((competitor.CompetitorId, sc.TeamId, sc.Year));
+                    });
+
+                    competitorInTeamSet.Add(citKey);
                 }
+
                 sc.ProcessedAt = DateTime.UtcNow;
             }
 
-            if (newCountries.Any())
+            if (newCountries.Count > 0)
                 await _db.Countries.AddRangeAsync(newCountries);
-            if (newCompetitors.Any())
+
+            if (newCompetitors.Count > 0)
                 await _db.Competitors.AddRangeAsync(newCompetitors);
 
-            if (newCompetitorInTeams.Any())
+            if (newCompetitorInTeams.Count > 0)
                 await _db.CompetitorInTeams.AddRangeAsync(newCompetitorInTeams);
 
             await _db.SaveChangesAsync();
