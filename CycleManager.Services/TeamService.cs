@@ -19,6 +19,11 @@ namespace CycleManager.Services
             await _teamRepository.SaveChangesAsync();
         }
 
+        public async Task<int> CountUnprocessedScrapedCompetitors()
+        {
+            return await _teamRepository.CountUnprocessedScrapedCompetitors();
+        }
+
         public async Task Delete(Team entity)
         {
             _teamRepository.Remove(entity);
@@ -65,6 +70,11 @@ namespace CycleManager.Services
         public async Task<IEnumerable<Team>> GetTeamsForEvent(int eventId)
         {
             return await _teamRepository.GetTeamsForEvent(eventId);
+        }
+
+        public async Task<bool> HasUnprocessedScrapedTeams()
+        {
+            return await _teamRepository.HasUnprocessedScrapedCompetitors();
         }
 
         public async Task Update(Team entity)

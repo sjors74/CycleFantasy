@@ -23,6 +23,9 @@ namespace WebCycleManager.Controllers
             var _teamViewModels = new List<TeamViewModel>();
             var teams = await _teamService.GetAllTeams();
 
+            bool hasUnprocessedScraped = await _teamService.HasUnprocessedScrapedTeams();
+            int unprocessedCount = await _teamService.CountUnprocessedScrapedCompetitors();
+
             foreach (var team in teams.OrderBy(t => t.CurrentTeamName))
             {
                 _teamViewModels.Add(new TeamViewModel
@@ -35,6 +38,8 @@ namespace WebCycleManager.Controllers
                 });
             }
 
+            ViewBag.HasUnprocessedScraped = hasUnprocessedScraped;
+            ViewBag.UnprocessedScrapedCount = unprocessedCount;
             return View(_teamViewModels);
         }
 

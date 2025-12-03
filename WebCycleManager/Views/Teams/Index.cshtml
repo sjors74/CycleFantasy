@@ -8,9 +8,17 @@
         <a asp-action="Create" class="btn btn-success">
             <i class="bi bi-plus-circle"></i> Maak team aan
         </a>
-        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#confirmImportModal">
-            <i class="bi bi-person-x"></i> Update renners
-        </button>
+        <div class="position-relative d-inline-block">
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#confirmImportModal" @(ViewBag.HasUnprocessedScraped ? "" : "disabled")>
+                <i class="bi bi-person-x"></i> Update renners
+            </button>
+            @if(ViewBag.UnprocessedScrapedCount > 0)
+            {
+                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="min-width: 1.5rem; height: 1.5rem; display: flex; align-items: center; justify-content:center; font-size: 0.75rem;">
+                    @ViewBag.UnprocessedScrapedCount
+                </span>
+            }
+        </div>
     </div>
 </div>
 

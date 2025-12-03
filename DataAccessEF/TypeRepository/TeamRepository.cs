@@ -9,6 +9,11 @@ namespace DataAccessEF.TypeRepository
     {
         public TeamRepository(ApplicationDbContext context) : base(context) { }
 
+        public async Task<int> CountUnprocessedScrapedCompetitors()
+        {
+            return await context.ScrapedCompetitors.CountAsync(s => s.ProcessedAt == null);
+        }
+
         public async Task<IEnumerable<Team>> GetAllTeams()
         {
             var teams = await context.Teams
@@ -58,6 +63,11 @@ namespace DataAccessEF.TypeRepository
                 .ToListAsync();
 
             return teams;
+        }
+
+        public async Task<bool> HasUnprocessedScrapedCompetitors()
+        {
+            return await context.ScrapedCompetitors.AnyAsync(t => t.ProcessedAt == null);
         }
 
     }
