@@ -162,7 +162,7 @@ namespace WebCycleManager.Controllers
         }
 
         // GET: Competitors/Edit/5
-        public async Task<IActionResult> Edit(int id)
+        public async Task<IActionResult> Edit(int id, string? returnUrl)
         {
             var dto = await _competitorService.GetCompetitorForEdit(id);
             if (dto == null) return NotFound();
@@ -177,6 +177,7 @@ namespace WebCycleManager.Controllers
                 CountryId = dto.CountryId,
                 SelectedTeamId = dto.SelectedTeamId,
                 SelectedYear = dto.SelectedYear,
+                ReturnUrl = returnUrl,
                 
                 Countries = dto.Countries.Select(c => new SelectListItem
                 {
@@ -206,7 +207,7 @@ namespace WebCycleManager.Controllers
                     TeamNameForYear  = cit.TeamNameForYear,
                     Year = cit.Year,
                     IsNationalChampion = cit.IsNationalChampion,
-                    TeamId = cit.TeamId   // belangrijk voor POST
+                    TeamId = cit.TeamId
                 }).ToList()
             };
 

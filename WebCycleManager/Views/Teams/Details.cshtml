@@ -42,7 +42,7 @@
                         <td>@c.Land</td>
                         <td class="text-center">@((c.IsNationalChampion) ? "🏆" : "")</td>
                         <td class="text-end">
-                            <a asp-controller="Competitors" asp-action="Edit" asp-route-id="@c.CompetitorId" class="text-muted" title="Bewerken">
+                            <a asp-controller="Competitors" asp-action="Edit" asp-route-id="@c.CompetitorId" asp-route-id="@c.CompetitorId" asp-route-returnUrl="@(Context.Request.Path + Context.Request.QueryString)" class="text-muted" title="Bewerken">
                                 <i class="bi bi-pencil"></i>
                             </a>
                         </td>
@@ -74,7 +74,7 @@
                         <td>@c.Land</td>
                         <td class="text-center">@((c.IsNationalChampion) ? "🏆" : "")</td>
                         <td class="text-end">
-                            <a asp-controller="Competitors" asp-action="Edit" asp-route-id="@c.CompetitorId" class="text-muted" title="Bewerken">
+                            <a asp-controller="Competitors" asp-action="Edit" asp-route-id="@c.CompetitorId" asp-route-returnUrl="@(Context.Request.Path + Context.Request.QueryString)" class="text-muted" title="Bewerken">
                                 <i class="bi bi-pencil"></i>
                             </a>
                         </td>

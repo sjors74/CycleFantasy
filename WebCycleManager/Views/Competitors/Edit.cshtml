@@ -126,7 +126,7 @@
 
     <!-- Onderste regel: Terug + Opslaan -->
     <div class="d-flex justify-content-between align-items-center mt-3">
-        <a asp-action="Index" class="btn btn-outline-secondary">Terug naar de lijst</a>
+        <a href="@(Model.ReturnUrl ?? Url.Action("Index"))" class="btn btn-outline-secondary">Terug naar de lijst</a>
         <button type="submit" class="btn btn-primary">Opslaan</button>
     </div>
 </form>
