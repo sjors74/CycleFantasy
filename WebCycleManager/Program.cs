@@ -15,6 +15,12 @@ using Microsoft.Playwright;
 using WebCycleManager.Config;
 using WebCycleManager.Helpers;
 
+Environment.SetEnvironmentVariable(
+    "PLAYWRIGHT_BROWSERS_PATH",
+    Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ms-playwright")
+);
+
+
 var builder = WebApplication.CreateBuilder(args);
 
 
@@ -129,7 +135,6 @@ app.MapGet("/competitors", async (IPcsScraper scraper, string team, int teamId, 
         return Results.Problem($"Scrapen mislukt: {ex.Message}");
     }
 });
-
 
 // Alleen nodig voor integratietests
 public partial class Program { }

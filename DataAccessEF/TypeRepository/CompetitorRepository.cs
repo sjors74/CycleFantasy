@@ -50,7 +50,9 @@ namespace DataAccessEF.TypeRepository
                 .Include(c => c.Country)
                 .Include(c => c.CompetitorInTeams)
                     .ThenInclude(cit => cit.Team)
+                        .ThenInclude(t => t.TeamYears)
                 .Include(c => c.CompetitorInTeams)
+                    .ThenInclude(cit => cit.TeamYear)
                 .FirstOrDefaultAsync(c => c.CompetitorId == competitorId);
 
             return competitor;

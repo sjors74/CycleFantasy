@@ -189,6 +189,7 @@ namespace CycleManager.Services
                     CompetitorInTeamId = cit.Id,
                     TeamId = cit.TeamId,
                     TeamName = cit.Team.CurrentTeamName,
+                    TeamNameForYear = cit.Team.TeamYears.Where(ty => ty.Year == cit.Year).Select(ty => ty.Name).FirstOrDefault(),
                     Year = cit.Year,
                     IsNationalChampion = cit.IsNationalChampion
                 })

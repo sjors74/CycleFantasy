@@ -203,6 +203,7 @@ namespace WebCycleManager.Controllers
                 {
                     CompetitorInTeamId = cit.CompetitorInTeamId,
                     TeamName = cit.TeamName,
+                    TeamNameForYear  = cit.TeamNameForYear,
                     Year = cit.Year,
                     IsNationalChampion = cit.IsNationalChampion,
                     TeamId = cit.TeamId   // belangrijk voor POST

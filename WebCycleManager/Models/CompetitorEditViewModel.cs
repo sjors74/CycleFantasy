@@ -49,6 +49,7 @@ namespace WebCycleManager.Models.ViewModel
         public string TeamName { get; set; } = string.Empty;
         public int Year { get; set; }
         public bool IsNationalChampion { get; set; }
+        public string? TeamNameForYear { get; set; }
         public int TeamId { get; set; }
     }
 }
