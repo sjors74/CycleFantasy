@@ -35,6 +35,7 @@ namespace WebCycleManager.Models.ViewModel
         public int CountryId { get; set; }
         public int SelectedTeamId { get; set; }
         public int SelectedYear { get; set; }
+        public string? ReturnUrl { get; set; }
 
         public IEnumerable<SelectListItem> Countries { get; set; }
         public IEnumerable<SelectListItem> Teams { get; set; }
