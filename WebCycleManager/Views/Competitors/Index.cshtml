@@ -30,6 +30,7 @@
 <!-- Compact zoekformulier -->
 <form asp-action="Index" method="get" class="d-flex align-items-center mb-3">
     <label class="me-2 mb-0">Zoek op naam:</label>
+    <input type="hidden" name="year" value="@(selectedYear)" />
     <input type="text" name="SearchString" value="@ViewData["CurrentFilter"]"
            class="form-control form-control-sm me-2" style="width:150px;" />
     <input type="submit" value="Zoek" class="btn btn-secondary btn-sm me-2" />
@@ -81,15 +82,36 @@
 </div>
 
 <!-- Paginate -->
+
 <div class="d-flex justify-content-between mt-3">
-    <a asp-action="Index"
-       asp-route-pageNumber="@(Model.PageIndex - 1)"
-       class="btn btn-outline-secondary btn-sm @(Model.HasPreviousPage ? "" : "disabled")">
-        Vorige
-    </a>
-    <a asp-action="Index"
-       asp-route-pageNumber="@(Model.PageIndex + 1)"
-       class="btn btn-outline-secondary btn-sm @(Model.HasNextPage ? "" : "disabled")">
-        Volgende
-    </a>
+    @if (Model.HasPreviousPage)
+    {
+        <a asp-action="Index"
+        asp-route-pageNumber="@(Model.PageIndex - 1)"
+        asp-route-year="@(selectedYear)"
+        asp-route-currentFilter="@ViewData["CurrentFilter"]"
+        class="btn btn-outline-secondary btn-sm">
+            Vorige
+        </a>
+    }
+    else
+    {
+        <button class="btn btn-outline-secondary btn-sm" disabled>Vorige</button>
+    }
+
+    @if (Model.HasNextPage)
+    {
+        <a asp-action="Index"
+        asp-route-pageNumber="@(Model.PageIndex + 1)"
+        asp-route-year="@(selectedYear)"
+        asp-route-currentFilter="@ViewData["CurrentFilter"]"
+        class="btn btn-outline-secondary btn-sm">
+            Volgende
+        </a>
+    }
+    else
+    {
+        <button class="btn btn-outline-secondary btn-sm" disabled>Volgende</button>
+    }
+
 </div>
