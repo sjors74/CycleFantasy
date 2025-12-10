@@ -20,10 +20,10 @@ namespace CycleManager.Services
         /// </summary>
         /// <param name="eventId"></param>
         /// <returns></returns>
-        public async Task<IEnumerable<ResultDto>> GetResultsByEventId(int eventId)
+        public async Task<IEnumerable<ResultDto>> GetResultsByEventId(int eventId, bool onlyTop15 = false)
         {
-            var dto = new List<ResultDto>();
             var results = await _resultsRepository.GetResultsByEventId(eventId);
+
             var groupedList = results
                 .GroupBy(g => g.CompetitorInEventId)
                 .Select(c =>
@@ -45,21 +45,24 @@ namespace CycleManager.Services
                 .ThenBy(c => c.CompetitorName)
                 .ToList();
 
-            var top15 = groupedList.Take(15).ToList();
-            int minScoreInTop15 = top15.LastOrDefault()?.Points ?? 0;
+            if (onlyTop15 && groupedList.Any())
+            {
+                var top15 = groupedList.Take(15).ToList();
+                int minScoreInTop15 = top15.LastOrDefault()?.Points ?? 0;
 
-            var extendedTop15 = groupedList
-                .Skip(15)
-                .TakeWhile(x => x.Points == minScoreInTop15)
-                .ToList();
+                var extendedTop15 = groupedList
+                    .Skip(15)
+                    .TakeWhile(x => x.Points == minScoreInTop15)
+                    .ToList();
 
-            var finalTop = top15.Concat(extendedTop15).ToList();
+                groupedList = top15.Concat(extendedTop15).ToList();
+            }
 
             int rank = 1;
             int actualRank = -1;
             int? previousScore = null;
 
-            foreach(var item in finalTop)
+            foreach(var item in groupedList)
             {
                 if(previousScore != item.Points)
                 {
@@ -71,8 +74,7 @@ namespace CycleManager.Services
                 rank++;
             }
 
-            dto = finalTop;
-            return dto;
+            return groupedList;
         }
 
         /// <summary>
@@ -122,7 +124,7 @@ namespace CycleManager.Services
             return _scoreRepository.GetPoolRankingForStage(eventId, stageId);
         }
 
-        public async Task<List<DeelnemerScore>> GetScoresByEventIdAsync(int eventId)
+        public async Task<List<DeelnemerStageScore>> GetScoresByEventIdAsync(int eventId)
         {
             return await _scoreRepository.GetScoresByEventIdAsync(eventId);
         }
@@ -184,6 +186,11 @@ namespace CycleManager.Services
         public Task RecalculateEventScoresAsync(int eventId)
         {
             return _resultsRepository.RecalculateEventScoresAsync(eventId);
+        }
+
+        public Task<List<DeelnemerScore>> GetTotalScoresByEventIdAsync(int eventId)
+        {
+            return _resultsRepository.GetTotalScoresByEventIdAsync(eventId);
         }
     }
 }

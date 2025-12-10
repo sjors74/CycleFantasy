@@ -211,7 +211,13 @@ namespace CycleManager.Tests.Integration.DataAccess
             // Setup related tables for join
             var stage = new Stage { Id = 1, EventId = 1 };
             var gcep = new GameCompetitorEventPick { Id = 1, CompetitorsInEventId = 1 };
-            var dps = new DeelnemerPickScore { Id = Guid.NewGuid(), GameCompetitorEventPickId = 1, StageId = 1, Score = 5 };
+            var dps = new DeelnemerPickScore
+            {
+                Id = Guid.NewGuid(),
+                GameCompetitorEventPickId = gcep.Id,
+                TotalScore = 5,
+                LastUpdate = DateTime.UtcNow
+            };
 
             context.Stages.Add(stage);
             context.GameCompetitorEventPicks.Add(gcep);
@@ -223,6 +229,7 @@ namespace CycleManager.Tests.Integration.DataAccess
             score.Should().NotBeNull();
             score.TotalScore.Should().Be(5);
         }
+
 
         [Fact]
         public async Task GetCompetitorLatestScore_ReturnsCorrectScore()

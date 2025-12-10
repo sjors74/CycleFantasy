@@ -33,7 +33,7 @@ namespace WebCycle.Controllers
         [HttpGet("top15/{eventId}")]
         public async Task<IActionResult> GetTop15(int eventId)
         {
-            var top15 = await _resultService.GetResultsByEventId(eventId);
+            var top15 = await _resultService.GetResultsByEventId(eventId, onlyTop15: true);
             return Ok(top15);
         }
 

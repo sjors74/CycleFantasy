@@ -33,7 +33,7 @@ namespace CycleManager.Services.Interfaces
         /// </summary>
         /// <param name="eventId"></param>
         /// <returns></returns>
-        Task<IEnumerable<ResultDto>> GetResultsByEventId(int eventId);
+        Task<IEnumerable<ResultDto>> GetResultsByEventId(int eventId, bool onlyTop15 = false);
 
         /// <summary>
         /// 
@@ -50,7 +50,9 @@ namespace CycleManager.Services.Interfaces
         /// <returns></returns>
         Task<List<DeelnemerDto>> GetPoolRankingForStage(int eventId, int stageId);
 
-        Task<List<DeelnemerScore>> GetScoresByEventIdAsync(int eventId);
+        Task<List<DeelnemerStageScore>> GetScoresByEventIdAsync(int eventId);
+
+        Task<List<DeelnemerScore>> GetTotalScoresByEventIdAsync(int eventId);
 
         //methodes for manager
         Task<Stage?> GetStageByIdAsync(int stageId);

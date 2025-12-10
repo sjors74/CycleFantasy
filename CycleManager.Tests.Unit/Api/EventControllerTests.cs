@@ -55,11 +55,11 @@ namespace CycleManager.Tests.Unit.Api
                 .Returns(mappedEvents);
 
             // 3️⃣ Scores voor dit event (zoals uit de resultservice komt)
-            var scores = new List<DeelnemerScore>
+            var scores = new List<DeelnemerStageScore>
             {
-                new DeelnemerScore { GameCompetitorEventId = 10, StageId = 1, TotalScore = 5 },
-                new DeelnemerScore { GameCompetitorEventId = 10, StageId = 2, TotalScore = 10 },
-                new DeelnemerScore { GameCompetitorEventId = 20, StageId = 1, TotalScore = 7 }
+                new DeelnemerStageScore { GameCompetitorEventId = 10, StageId = 1, Score = 5 },
+                new DeelnemerStageScore { GameCompetitorEventId = 10, StageId = 2, Score = 10 },
+                new DeelnemerStageScore { GameCompetitorEventId = 20, StageId = 1, Score = 7 }
             };
 
             mockResultService

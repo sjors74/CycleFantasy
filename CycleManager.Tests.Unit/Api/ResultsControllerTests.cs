@@ -68,7 +68,7 @@ namespace CycleManager.Tests.Unit.Api
                 new ResultDto { CompetitorName = "Vingegaard", Points = 145 }
             };
 
-            _mockResultService.Setup(s => s.GetResultsByEventId(eventId)).ReturnsAsync(top15);
+            _mockResultService.Setup(s => s.GetResultsByEventId(eventId, true)).ReturnsAsync(top15);
 
             // Act
             var result = await _controller.GetTop15(eventId);

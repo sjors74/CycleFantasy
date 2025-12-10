@@ -22,86 +22,137 @@ namespace CycleManager.Services
                 .Where(d => d.EventId == eventId)
                 .ToListAsync();
 
-            var resultsForStage = await _context.Results
+            var resultsLookup = await _context.Results
                 .Where(r => r.StageId == stageId)
                 .Include(r => r.ConfigurationItem)
-                .ToListAsync();
+                .ToDictionaryAsync(
+                    r => r.CompetitorInEventId,
+                    r => r.ConfigurationItem.Score
+                );
 
-            var existingPickScores = await _context.DeelnemerPickScores
+            var existingStagePickScores = await _context.DeelnemerStagePickScores
                 .Where(s => s.StageId == stageId)
-                .ToListAsync();
+                .ToDictionaryAsync(s => s.GameCompetitorEventPickId);
 
-            var existingTotalScores = await _context.DeelnemerScores
+            var existingPickTotals = await _context.DeelnemerPickScores
+                    .ToDictionaryAsync(p => p.GameCompetitorEventPickId);
+
+            var existingStageScores = await _context.DeelnemerStageScores
                 .Where(s => s.StageId == stageId)
-                .ToListAsync();
+                .ToDictionaryAsync(s => s.GameCompetitorEventId);
 
-            var resultsLookup = resultsForStage
-                .GroupBy(r => r.CompetitorInEventId)
-                .ToDictionary(g => g.Key, g => g.First().ConfigurationItem.Score);
+            var existingTotals = await _context.DeelnemerScores
+                .ToDictionaryAsync(s => s.GameCompetitorEventId);
 
-            var newPickScores = new List<DeelnemerPickScore>();
-            var newTotalScores = new List<DeelnemerScore>();
+            var newStagePickScores = new List<DeelnemerStagePickScore>();
+            var newPickTotals = new List<DeelnemerPickScore>();
+            var newStageScores = new List<DeelnemerStageScore>();
+            var newTotals = new List<DeelnemerScore>();
 
 
             foreach (var deelnemer in deelnemers)
             {
-                int totalScore = 0;
+                int newStageTotalForDeelnemer = 0;
 
-                foreach (var pick in deelnemer.Renners)
-                {
-                    int pickScore = resultsLookup.TryGetValue(pick.CompetitorsInEventId, out var score)
-                         ? score : 0;
-                                        
-                    var existingPick = existingPickScores
-                        .FirstOrDefault(s => s.GameCompetitorEventPickId == pick.Id);
+                foreach(var pick in deelnemer.Renners)
+                { 
+                    int newPickScore = resultsLookup.TryGetValue(pick.CompetitorsInEventId, out var s) ? s : 0;
+                    newStageTotalForDeelnemer += newPickScore;
 
-                    if (existingPick != null)
+                    existingStagePickScores.TryGetValue(pick.Id, out var prevStagePickEntry);
+                    int prevPickStageScore = prevStagePickEntry?.Score ?? 0;
+
+                    int pickDelta = newPickScore - prevPickStageScore;
+
+                    if (prevStagePickEntry != null)
                     {
-                        existingPick.Score = pickScore;
-                        existingPick.LastUpdate = DateTime.UtcNow;
+                        prevStagePickEntry.Score = newPickScore;
+                        prevStagePickEntry.LastUpdated = DateTime.UtcNow;
                     }
                     else
                     {
-                        newPickScores.Add(new DeelnemerPickScore
+                        newStagePickScores.Add(new DeelnemerStagePickScore
                         {
                             Id = Guid.NewGuid(),
                             GameCompetitorEventPickId = pick.Id,
                             StageId = stageId,
-                            Score = pickScore,
-                            LastUpdate = DateTime.UtcNow
+                            Score = newPickScore,
+                            LastUpdated = DateTime.UtcNow
                         });
                     }
 
-                    totalScore += pickScore;
+                    if (existingPickTotals.TryGetValue(pick.Id, out var pickTotalEntry))
+                    {
+                        if (pickDelta != 0)
+                        {
+                            pickTotalEntry.TotalScore += pickDelta;
+                            pickTotalEntry.LastUpdate = DateTime.UtcNow;
+                        }
+                    }
+                    else
+                    {
+                        // eerste keer dat we deze pick tegenkomen; TotalScore = newPickScore
+                        newPickTotals.Add(new DeelnemerPickScore
+                        {
+                            Id = Guid.NewGuid(),
+                            GameCompetitorEventPickId = pick.Id,
+                            TotalScore = newPickScore,
+                            LastUpdate = DateTime.UtcNow
+                        });
+                    }
                 }
 
+                existingStageScores.TryGetValue(deelnemer.Id, out var prevStageScoreEntry);
+                int prevStageScore = prevStageScoreEntry?.Score ?? 0;
+                int participantDelta = newStageTotalForDeelnemer - prevStageScore;
 
-                var existingTotal = existingTotalScores
-                    .FirstOrDefault(s => s.GameCompetitorEventId == deelnemer.Id);
-
-                if(existingTotal != null)
+                // update of insert DeelnemerStageScore (snapshot)
+                if (prevStageScoreEntry != null)
                 {
-                    existingTotal.TotalScore = totalScore;
-                    existingTotal.LastUpdated = DateTime.UtcNow;
+                    prevStageScoreEntry.Score = newStageTotalForDeelnemer;
+                    prevStageScoreEntry.LastUpdated = DateTime.UtcNow;
                 }
                 else
                 {
-                    newTotalScores.Add(new DeelnemerScore
+                    newStageScores.Add(new DeelnemerStageScore
                     {
                         Id = Guid.NewGuid(),
                         GameCompetitorEventId = deelnemer.Id,
                         StageId = stageId,
-                        TotalScore = totalScore,
+                        Score = newStageTotalForDeelnemer,
+                        LastUpdated = DateTime.UtcNow
+                    });
+                }
+
+                if (existingTotals.TryGetValue(deelnemer.Id, out var totalEntry))
+                {
+                    if (participantDelta != 0)
+                    {
+                        totalEntry.TotalScore += participantDelta;
+                    }
+
+                    totalEntry.LaatsteStageScore = newStageTotalForDeelnemer;
+                    totalEntry.LaatsteStageId = stageId;
+                    totalEntry.LastUpdated = DateTime.UtcNow;
+                }
+                else
+                {
+                    newTotals.Add(new DeelnemerScore
+                    {
+                        Id = Guid.NewGuid(),
+                        GameCompetitorEventId = deelnemer.Id,
+                        TotalScore = newStageTotalForDeelnemer,
+                        LaatsteStageScore = newStageTotalForDeelnemer,
+                        LaatsteStageId = stageId,
                         LastUpdated = DateTime.UtcNow
                     });
                 }
             }
 
-            if(newPickScores.Any())
-                _context.DeelnemerPickScores.AddRange(newPickScores);
-            
-            if(newTotalScores.Any())
-                _context.DeelnemerScores.AddRange(newTotalScores);
+            if (newStagePickScores.Any()) _context.DeelnemerStagePickScores.AddRange(newStagePickScores);
+            if (newPickTotals.Any()) _context.DeelnemerPickScores.AddRange(newPickTotals);
+            if (newStageScores.Any()) _context.DeelnemerStageScores.AddRange(newStageScores);
+            if (newTotals.Any()) _context.DeelnemerScores.AddRange(newTotals);
 
             await _context.SaveChangesAsync();
         }

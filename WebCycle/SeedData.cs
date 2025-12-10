@@ -290,14 +290,14 @@ namespace WebCycle.Services
                     }
 
                     int stageTotal = scorePerPick.Values.Sum();
-                    int cumulativeTotal = context.DeelnemerScores.Where(ds => ds.GameCompetitorEventId == pool.Id).Sum(ds => ds.LaatsteScore) + stageTotal;
+                    int cumulativeTotal = context.DeelnemerScores.Where(ds => ds.GameCompetitorEventId == pool.Id).Sum(ds => ds.LaatsteStageScore) + stageTotal;
 
                     context.DeelnemerScores.Add(new DeelnemerScore
                     {
                         GameCompetitorEventId = pool.Id,
-                        StageId = stage.Id,
+                        LaatsteStageId = stage.Id,
                         TotalScore = cumulativeTotal,
-                        LaatsteScore = stageTotal,
+                        LaatsteStageScore = stageTotal,
                         LastUpdated = DateTime.UtcNow
                     });
 
@@ -306,8 +306,8 @@ namespace WebCycle.Services
                         context.DeelnemerPickScores.Add(new DeelnemerPickScore
                         {
                             GameCompetitorEventPickId = pick.Id,
-                            StageId = stage.Id,
-                            Score = scorePerPick[pick.Id],
+                            //StageId = stage.Id,
+                            TotalScore = scorePerPick[pick.Id],
                             LastUpdate = DateTime.UtcNow
                         });
                     }

@@ -2,7 +2,7 @@
 
 namespace Domain.Models
 {
-    public class DeelnemerScore
+    public class DeelnemerStageScore
     {
         [Key]
         public Guid Id { get; set; }
@@ -10,13 +10,12 @@ namespace Domain.Models
         [Required]
         public int GameCompetitorEventId { get; set; }
 
-        public int TotalScore { get; set; }
+        [Required]
+        public int StageId { get; set; }
 
-        public int LaatsteStageScore { get; set; }
-
-        public int LaatsteStageId { get; set; } 
+        [Required]
+        public int Score { get; set; }
 
         public DateTime LastUpdated { get; set; } = DateTime.UtcNow;
-
     }
 }

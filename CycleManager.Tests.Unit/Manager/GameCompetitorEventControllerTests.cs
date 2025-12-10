@@ -45,7 +45,7 @@ namespace CycleManager.Tests.Unit.Manager
         {
             // Arrange
             int eventId = 1;
-            _mockResultService.Setup(s => s.GetResultsByEventId(eventId))
+            _mockResultService.Setup(s => s.GetResultsByEventId(eventId, false))
                 .ReturnsAsync(new List<ResultDto> {
                     new ResultDto { CompetitorInEventId = 10, Points = 5 }
                 });
@@ -78,7 +78,7 @@ namespace CycleManager.Tests.Unit.Manager
         {
             // Arrange
             int eventId = 1;
-            _mockResultService.Setup(s => s.GetResultsByEventId(eventId))
+            _mockResultService.Setup(s => s.GetResultsByEventId(eventId, false))
                 .ReturnsAsync(new List<ResultDto>());  // geen resultaten
             _mockGameCompetitorEventService.Setup(s => s.GetPicks(eventId))
                 .Returns(new List<GameCompetitorEventPick>().AsQueryable());
@@ -114,7 +114,7 @@ namespace CycleManager.Tests.Unit.Manager
             int id = 1;
             int eventId = 2;
 
-            _mockResultService.Setup(s => s.GetResultsByEventId(eventId))
+            _mockResultService.Setup(s => s.GetResultsByEventId(eventId, false))
                 .ReturnsAsync(new List<ResultDto>());
 
             _mockGameCompetitorEventService.Setup(s => s.GetPicks(eventId))
@@ -146,7 +146,7 @@ namespace CycleManager.Tests.Unit.Manager
         public async Task Details_LessThan15Picks_FillsWithEmptyRows()
         {
             int eventId = 1, id = 2;
-            _mockResultService.Setup(s => s.GetResultsByEventId(eventId))
+            _mockResultService.Setup(s => s.GetResultsByEventId(eventId, false))
                 .ReturnsAsync(new List<ResultDto>());
             _mockGameCompetitorEventService.Setup(s => s.GetPicks(eventId))
                 .Returns(new List<GameCompetitorEventPick>().AsQueryable());

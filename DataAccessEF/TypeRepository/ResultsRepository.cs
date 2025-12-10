@@ -32,31 +32,28 @@ namespace DataAccessEF.TypeRepository
 
         public async Task<CompetitorScoreDto?> GetCompetitorResultsByEventId(int eventId, int competitorInEventId)
         {
-            var result =
-                (from ds in context.DeelnemerPickScores
-                 join gcp in context.GameCompetitorEventPicks
-                     on ds.GameCompetitorEventPickId equals gcp.Id
-                 join s in context.Stages
-                     on ds.StageId equals s.Id
-                 where s.EventId == eventId
-                    && gcp.CompetitorsInEventId == competitorInEventId
-                 select new
-                 {
-                     ds.StageId,
-                     gcp.CompetitorsInEventId,
-                     ds.Score
-                 })
-                .Distinct()
-                .GroupBy(x => x.CompetitorsInEventId)
-                .Select(g => new CompetitorScoreDto
-                {
-                    CompetitorInEventId = g.Key,
-                    TotalScore = g.Sum(x => x.Score)
-                })
-                .FirstOrDefault();
+            // haal alle picks van deze deelnemer in dit event
+            var pickIds = await context.GameCompetitorEventPicks
+                .Where(p => p.CompetitorsInEventId == competitorInEventId
+                         && p.GameCompetitorEvent.EventId == eventId)
+                .Select(p => p.Id)
+                .ToListAsync();
 
-            return result;
+            if (!pickIds.Any())
+                return null;
+
+            // cumulatieve scores van deze picks
+            var totalScore = await context.DeelnemerPickScores
+                .Where(ds => pickIds.Contains(ds.GameCompetitorEventPickId))
+                .SumAsync(ds => ds.TotalScore);
+
+            return new CompetitorScoreDto
+            {
+                CompetitorInEventId = competitorInEventId,
+                TotalScore = totalScore
+            };
         }
+
         public async Task<int> GetCompetitorLatestScore(int eventId, int competitorInEventId)
         {
             var configItems = await context.ConfigurationItems.ToListAsync();
@@ -247,115 +244,171 @@ namespace DataAccessEF.TypeRepository
             if (ev == null)
                 throw new InvalidOperationException($"Event {eventId} not found");
 
-            var newConfigItems = ev.Configuration.ConfigurationItems
+            var configItems = ev.Configuration.ConfigurationItems
                 .OrderBy(ci => ci.Position)
+                .ToList();
+
+            var stages = ev.Stages
+                .OrderBy(s => s.Id)
                 .ToList();
 
             // --- 2. Haal alle resultaten voor dit event ---
             var allResults = await context.Results
                 .Where(r => r.Stage.EventId == eventId)
+                .Include(r => r.ConfigurationItem)
                 .ToListAsync();
 
             // --- 3. Update ConfigurationItemId in Results op basis van positie ---
             foreach (var result in allResults)
             {
-                var oldCi = await context.ConfigurationItems
-                    .FirstOrDefaultAsync(ci => ci.Id == result.ConfigurationItemId);
+                if(result.ConfigurationItemId == null)
+                    continue;
 
-                if (oldCi == null)
-                    throw new InvalidOperationException($"Old ConfigurationItem {result.ConfigurationItemId} not found");
 
-                var newCi = newConfigItems.FirstOrDefault(ci => ci.Position == oldCi.Position);
-
-                result.ConfigurationItemId = newCi?.Id; // null als positie buiten nieuwe configuratie
+                var oldCi = result.ConfigurationItem;
+                var newCi = configItems.FirstOrDefault(ci => ci.Position == oldCi.Position);
+                result.ConfigurationItemId = newCi?.Id;
             }
 
             await context.SaveChangesAsync();
 
             // --- 4. Verwijder oude pick-scores en deelnemer-scores ---
-            var allPickIds = ev.GameCompetitorEvents
-                .SelectMany(gce => gce.Renners)
-                .Select(p => p.Id)
-                .ToList();
+            var stageIds = ev.Stages.Select(s => s.Id).ToList();
+            var deelnemerIds = ev.GameCompetitorEvents.Select(g => g.Id).ToList();
+            var pickIds = ev.GameCompetitorEvents.SelectMany(g => g.Renners).Select(p => p.Id).ToList();
 
-            var oldPickScores = await context.DeelnemerPickScores
-                .Where(ps => allPickIds.Contains(ps.GameCompetitorEventPickId))
-                .ToListAsync();
+            context.DeelnemerStagePickScores.RemoveRange(
+                context.DeelnemerStagePickScores.Where(x => stageIds.Contains(x.StageId))
+            );
 
-            context.DeelnemerPickScores.RemoveRange(oldPickScores);
+            context.DeelnemerStageScores.RemoveRange(
+                context.DeelnemerStageScores.Where(x => stageIds.Contains(x.StageId))
+            );
 
-            var oldScores = await context.DeelnemerScores
-                .Where(ds => ds.Stage.EventId == eventId)
-                .ToListAsync();
+            context.DeelnemerPickScores.RemoveRange(
+                context.DeelnemerPickScores.Where(x => deelnemerIds.Contains(x.Pick.GameCompetitorEventId))
+            );
 
-            context.DeelnemerScores.RemoveRange(oldScores);
+            context.DeelnemerScores.RemoveRange(
+                context.DeelnemerScores.Where(s => deelnemerIds.Contains(s.GameCompetitorEventId))
+            );
+
             await context.SaveChangesAsync();
 
             // --- 5. Bereken nieuwe scores ---
-            foreach (var gce in ev.GameCompetitorEvents)
+            // prepare accumulators
+            var pickTotals = pickIds.ToDictionary(pid => pid, _ => 0);  // pickId → total score
+            var deelnemerTotals = deelnemerIds.ToDictionary(gid => gid, _ => 0); // gceId → total score
+
+            // results per stage
+            var resultsByStage = allResults
+                .GroupBy(r => r.StageId)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.Where(r => r.ConfigurationItemId != null)
+                          .ToDictionary(
+                              x => x.CompetitorInEventId,
+                              x => configItems.First(ci => ci.Id == x.ConfigurationItemId).Score
+                          )
+                );
+
+            foreach (var stage in stages)
             {
-                int totalScore = 0;
-                int lastStageScore = 0;
-                int? lastStageId = null;
+                var stageId = stage.Id;
+                var stageResults = resultsByStage.ContainsKey(stageId)
+                    ? resultsByStage[stageId]
+                    : new Dictionary<int, int>();
 
-                foreach (var pick in gce.Renners) // pick = GameCompetitorEventPick
+                foreach (var gce in ev.GameCompetitorEvents)
                 {
-                    int pickTotal = 0;
-                    int pickLastStageScore = 0;
-                    int? pickLastStageId = null;
+                    int stageScoreForDeelnemer = 0;
 
-                    var pickResults = allResults
-                        .Where(r => r.CompetitorInEventId == pick.CompetitorsInEventId)
-                        .OrderBy(r => r.StageId);
-
-                    foreach (var r in pickResults)
+                    foreach (var pick in gce.Renners)
                     {
-                        if (r.ConfigurationItemId == null)
-                            continue;
+                        int pickScore = stageResults.TryGetValue(pick.CompetitorsInEventId, out var score)
+                            ? score
+                            : 0;
 
-                        var ci = newConfigItems.First(ci => ci.Id == r.ConfigurationItemId);
-                        pickTotal += ci.Score;
+                        pickTotals[pick.Id] += pickScore;
 
-                        // laatste stage
-                        pickLastStageScore = ci.Score;
-                        pickLastStageId = r.StageId;
+                        // stage-pickscore opslaan
+                        context.DeelnemerStagePickScores.Add(new DeelnemerStagePickScore
+                        {
+                            Id = Guid.NewGuid(),
+                            GameCompetitorEventPickId = pick.Id,
+                            StageId = stage.Id,
+                            Score = pickScore,
+                            LastUpdated = DateTime.UtcNow
+                        });
+
+                        stageScoreForDeelnemer += pickScore;
                     }
 
-                    // Nieuwe pick-score toevoegen
-                    var ps = new DeelnemerPickScore
+                    // opslaan deelnemer score voor deze stage (snapshot)
+                    context.DeelnemerStageScores.Add(new DeelnemerStageScore
                     {
                         Id = Guid.NewGuid(),
-                        GameCompetitorEventPickId = pick.Id,
-                        StageId = pickLastStageId,  // nullable
-                        Score = pickTotal,
-                        LastUpdate = DateTime.UtcNow
-                    };
-                    context.DeelnemerPickScores.Add(ps);
+                        GameCompetitorEventId = gce.Id,
+                        StageId = stage.Id,
+                        Score = stageScoreForDeelnemer,
+                        LastUpdated = DateTime.UtcNow
+                    });
 
-                    // total & laatste stage voor deelnemer
-                    totalScore += pickTotal;
-                    if (pickLastStageId.HasValue &&
-                        (!lastStageId.HasValue || pickLastStageId > lastStageId))
-                    {
-                        lastStageId = pickLastStageId;
-                        lastStageScore = pickLastStageScore;
-                    }
+                    // cumulatief deelnemer totaal
+                    deelnemerTotals[gce.Id] += stageScoreForDeelnemer;
                 }
+            }
 
-                // Nieuwe deelnemer-score toevoegen
-                var ds = new DeelnemerScore
+            // ##########################################################
+            // ### 6. SLA CUMULATIEVE PICK SCORES OP ###
+            // ##########################################################
+
+            foreach (var pickId in pickTotals.Keys)
+            {
+                context.DeelnemerPickScores.Add(new DeelnemerPickScore
                 {
+                    Id = Guid.NewGuid(),
+                    GameCompetitorEventPickId = pickId,
+                    TotalScore = pickTotals[pickId],
+                    LastUpdate = DateTime.UtcNow
+                });
+            }
+
+            // ##########################################################
+            // ### 7. SLA CUMULATIEVE DEELNEMER SCORES OP ###
+            // ##########################################################
+
+            foreach (var gce in ev.GameCompetitorEvents)
+            {
+                var last = context.DeelnemerStageScores
+                    .Where(s => s.GameCompetitorEventId == gce.Id)
+                    .OrderByDescending(s => s.StageId)
+                    .First();
+
+                context.DeelnemerScores.Add(new DeelnemerScore
+                {
+                    Id = Guid.NewGuid(),
                     GameCompetitorEventId = gce.Id,
-                    StageId = lastStageId,       // nullable
-                    TotalScore = totalScore,
-                    LaatsteScore = lastStageScore,
+                    TotalScore = deelnemerTotals[gce.Id],
+                    LaatsteStageId = last.StageId,
+                    LaatsteStageScore = last.Score,
                     LastUpdated = DateTime.UtcNow
-                };
-                context.DeelnemerScores.Add(ds);
+                });
             }
 
             await context.SaveChangesAsync();
         }
 
+        public async Task<List<DeelnemerScore>> GetTotalScoresByEventIdAsync(int eventId)
+        {
+            var gceIds = await context.GameCompetitorsEvent
+                .Where(gce => gce.EventId == eventId)
+                .Select(gce => gce.Id)
+                .ToListAsync();
+
+            return await context.DeelnemerScores
+                .Where(ds => gceIds.Contains(ds.GameCompetitorEventId))
+                .ToListAsync();
+        }
     }
 }

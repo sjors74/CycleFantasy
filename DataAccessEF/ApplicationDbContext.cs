@@ -28,6 +28,8 @@ namespace Domain.Context
         public DbSet<NewsItem> NewsItems { get; set; }
         public DbSet<DeelnemerScore> DeelnemerScores { get; set; }
         public DbSet<DeelnemerPickScore> DeelnemerPickScores { get; set; }
+        public DbSet<DeelnemerStageScore> DeelnemerStageScores { get; set; }
+        public DbSet<DeelnemerStagePickScore> DeelnemerStagePickScores { get; set; }
         public DbSet<ScrapedCompetitor> ScrapedCompetitors { get; set; }
         public DbSet<CompetitorInTeam> CompetitorInTeams { get; set; }
         public DbSet<TeamYear> TeamYear { get; set; }
@@ -95,7 +97,7 @@ namespace Domain.Context
               .HasOne(p => p.CompetitorsInEvent)
               .WithMany(c => c.GameCompetitorEventPicks)
               .HasForeignKey(p => p.CompetitorsInEventId)
-              .OnDelete(DeleteBehavior.Cascade); // of .Restrict als je het liever handmatig doet
+              .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<GameCompetitorEventPick>()
                 .HasOne(p => p.GameCompetitorEvent)
@@ -106,17 +108,21 @@ namespace Domain.Context
             modelBuilder.Entity<EventTeam>()
                 .HasKey(et => new { et.EventId, et.TeamId });
 
-            modelBuilder.Entity<DeelnemerScore>()
-                .HasOne(ds => ds.Stage)
-                .WithMany()
-                .HasForeignKey(ds => ds.StageId)
-                .OnDelete(DeleteBehavior.Restrict);
-
             modelBuilder.Entity<DeelnemerPickScore>()
-                .HasOne(dps => dps.Stage)
-                .WithMany()
-                .HasForeignKey(dps => dps.StageId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .HasIndex(x => x.GameCompetitorEventPickId)
+                .IsUnique();
+
+            modelBuilder.Entity<DeelnemerStagePickScore>()
+                .HasIndex(x => new { x.GameCompetitorEventPickId, x.StageId })
+                .IsUnique();
+
+            modelBuilder.Entity<DeelnemerStageScore>()
+                .HasIndex(x => new { x.GameCompetitorEventId, x.StageId })
+                .IsUnique();
+
+            modelBuilder.Entity<DeelnemerScore>()
+                .HasIndex(x => x.GameCompetitorEventId)
+                .IsUnique();
 
             modelBuilder.Entity<CompetitorInTeam>()
                 .HasOne(cit => cit.Competitor)

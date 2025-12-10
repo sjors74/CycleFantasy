@@ -36,20 +36,24 @@ namespace WebCycle.Controllers
             {
                 if(cEvent.Deelnemers != null)
                 {
-                    var deelnemerScores = await _resultService.GetScoresByEventIdAsync(cEvent.EventId);
+                    var totalScores = await _resultService.GetTotalScoresByEventIdAsync(cEvent.EventId);
+
+                    var stageScores = await _resultService.GetScoresByEventIdAsync(cEvent.EventId);
 
                     foreach(var deelnemer in cEvent.Deelnemers)
                     {
-                        var scoresForDeelnemer = deelnemerScores
-                            .Where(s => s.GameCompetitorEventId == deelnemer.Id)
-                            .ToList();
 
-                        var last = scoresForDeelnemer
+
+                        var total = totalScores
+                            .FirstOrDefault(s => s.GameCompetitorEventId == deelnemer.Id);
+
+                        var lastStageScore = stageScores
+                            .Where(s => s.GameCompetitorEventId == deelnemer.Id)
                             .OrderByDescending(s => s.StageId)
                             .FirstOrDefault();
 
-                        deelnemer.Punten = last?.TotalScore ?? 0;
-                        deelnemer.LaatsteScore = last?.LaatsteScore ?? 0;
+                        deelnemer.Punten = total != null ? total.TotalScore : 0;
+                        deelnemer.LaatsteScore = lastStageScore?.Score ?? 0;
                     }
                 }
             }

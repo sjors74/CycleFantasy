@@ -4,6 +4,7 @@ using Domain.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DataAccessEF.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251210112819_AddDeelnemerStageScore")]
+    partial class AddDeelnemerStageScore
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -381,13 +384,17 @@ namespace DataAccessEF.Migrations
                     b.Property<DateTime>("LastUpdate")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("TotalScore")
+                    b.Property<int>("Score")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("StageId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("GameCompetitorEventPickId")
-                        .IsUnique();
+                    b.HasIndex("GameCompetitorEventPickId");
+
+                    b.HasIndex("StageId");
 
                     b.ToTable("DeelnemerPickScores");
                 });
@@ -421,34 +428,6 @@ namespace DataAccessEF.Migrations
                     b.ToTable("DeelnemerScores");
                 });
 
-            modelBuilder.Entity("Domain.Models.DeelnemerStagePickScore", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<int>("GameCompetitorEventPickId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("LastUpdated")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("Score")
-                        .HasColumnType("int");
-
-                    b.Property<int>("StageId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("StageId");
-
-                    b.HasIndex("GameCompetitorEventPickId", "StageId")
-                        .IsUnique();
-
-                    b.ToTable("DeelnemerStagePickScores");
-                });
-
             modelBuilder.Entity("Domain.Models.DeelnemerStageScore", b =>
                 {
                     b.Property<Guid>("Id")
@@ -464,13 +443,16 @@ namespace DataAccessEF.Migrations
                     b.Property<int>("Score")
                         .HasColumnType("int");
 
-                    b.Property<int>("StageId")
+                    b.Property<int?>("StageId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
 
+                    b.HasIndex("StageId");
+
                     b.HasIndex("GameCompetitorEventId", "StageId")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("[StageId] IS NOT NULL");
 
                     b.ToTable("DeelnemerStageScores");
                 });
@@ -946,24 +928,40 @@ namespace DataAccessEF.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Domain.Models.Stage", "Stage")
+                        .WithMany()
+                        .HasForeignKey("StageId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.Navigation("Pick");
+
+                    b.Navigation("Stage");
                 });
 
-            modelBuilder.Entity("Domain.Models.DeelnemerStagePickScore", b =>
+            modelBuilder.Entity("Domain.Models.DeelnemerScore", b =>
                 {
-                    b.HasOne("Domain.Models.GameCompetitorEventPick", "Pick")
+                    b.HasOne("Domain.Models.GameCompetitorEvent", "GameCompetitorEvent")
                         .WithMany()
-                        .HasForeignKey("GameCompetitorEventPickId")
+                        .HasForeignKey("GameCompetitorEventId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("GameCompetitorEvent");
+                });
+
+            modelBuilder.Entity("Domain.Models.DeelnemerStageScore", b =>
+                {
+                    b.HasOne("Domain.Models.GameCompetitorEvent", "GameCompetitorEvent")
+                        .WithMany()
+                        .HasForeignKey("GameCompetitorEventId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("Domain.Models.Stage", "Stage")
                         .WithMany()
-                        .HasForeignKey("StageId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("StageId");
 
-                    b.Navigation("Pick");
+                    b.Navigation("GameCompetitorEvent");
 
                     b.Navigation("Stage");
                 });

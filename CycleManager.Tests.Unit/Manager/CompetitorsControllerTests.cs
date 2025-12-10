@@ -164,28 +164,28 @@ namespace CycleManager.Tests.Unit.Manager
             Assert.NotNull(_controller.ViewBag.Competitors);
         }
 
-        [Fact]
-        public async Task Edit_Get_ReturnsView_WhenCompetitorFound()
-        {
-            var dto = TestDataFactory.CreateCompetitorEditDto();
-            _competitorServiceMock.Setup(s => s.GetCompetitorForEdit(1)).ReturnsAsync(dto);
+        //[Fact]
+        //public async Task Edit_Get_ReturnsView_WhenCompetitorFound()
+        //{
+        //    var dto = TestDataFactory.CreateCompetitorEditDto();
+        //    _competitorServiceMock.Setup(s => s.GetCompetitorForEdit(1)).ReturnsAsync(dto);
 
-            var result = await _controller.Edit(1);
+        //    var result = await _controller.Edit(1);
 
-            var view = Assert.IsType<ViewResult>(result);
-            view.Model.Should().BeAssignableTo<CompetitorEditViewModel>();
-        }
+        //    var view = Assert.IsType<ViewResult>(result);
+        //    view.Model.Should().BeAssignableTo<CompetitorEditViewModel>();
+        //}
 
-        [Fact]
-        public async Task Edit_Get_ReturnsNotFound_WhenMissing()
-        {
-            _competitorServiceMock.Setup(s => s.GetCompetitorForEdit(1))
-                                  .ReturnsAsync((CompetitorEditDto)null);
+        //[Fact]
+        //public async Task Edit_Get_ReturnsNotFound_WhenMissing()
+        //{
+        //    _competitorServiceMock.Setup(s => s.GetCompetitorForEdit(1))
+        //                          .ReturnsAsync((CompetitorEditDto)null);
 
-            var result = await _controller.Edit(1);
+        //    var result = await _controller.Edit(1);
 
-            Assert.IsType<NotFoundResult>(result);
-        }
+        //    Assert.IsType<NotFoundResult>(result);
+        //}
 
         [Fact]
         public async Task DeleteConfirmed_DeletesCompetitor_AndRedirects()

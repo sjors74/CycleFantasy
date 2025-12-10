@@ -48,5 +48,7 @@ namespace Domain.Interfaces
         Task<bool> ResultExistsAsync(int id);
         string GetCompetitorFullName(int competitorId);
         Task RecalculateEventScoresAsync(int eventId);
+
+        Task<List<DeelnemerScore>> GetTotalScoresByEventIdAsync(int eventId);
     }
 }

@@ -308,8 +308,14 @@ namespace CycleManager.Tests.E2E
                 db.DeelnemerPickScores.Where(dps => pickIds.Contains(dps.GameCompetitorEventPickId))
             );
 
-            db.DeelnemerScores.RemoveRange(
-                db.DeelnemerScores.Where(ds => ds.Stage.EventId == eventId)
+            var stageIds = await db.Stages
+                .Where(s => s.EventId == eventId)
+                .Select(s => s.Id)
+                .ToListAsync();
+
+
+            db.DeelnemerStageScores.RemoveRange(
+                db.DeelnemerStageScores.Where(ds => stageIds.Contains(ds.StageId))
             );
 
             await db.SaveChangesAsync();
