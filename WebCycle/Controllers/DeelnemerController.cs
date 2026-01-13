@@ -82,17 +82,22 @@ namespace WebCycle.Controllers
 
             var competitorResponse = _mapper.Map<List<ResultDto>>(picks);
 
+            var pickDetails = await resultService.GetPickDetailsAsync(eventId, id);
+
+            var scoreLookup = pickDetails.ToDictionary(p => p.CompetitorInEventId);
+
             foreach (var pick in competitorResponse)
             {
-                var score = 0;
-                var results = await resultService.GetCompetitorResultsByEventId(eventId, pick.CompetitorInEventId);
-                if (results != null)
+                if(scoreLookup.TryGetValue(pick.CompetitorInEventId, out var score))
                 {
-                    score = score + results.TotalScore;
-                    pick.LatestPoints = results.LaatsteScore;
+                    pick.Points = score.TotalScore;
+                    pick.LatestPoints = score.LastScore;
                 }
-                pick.Points = score;
-                
+                else
+                {
+                    pick.Points = 0;
+                    pick.LatestPoints = 0;
+                }
             }
 
             return Ok(competitorResponse);

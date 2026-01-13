@@ -149,5 +149,17 @@ namespace DataAccessEF.TypeRepository
             context.EventTeam.RemoveRange(eventTeams);
             await context.SaveChangesAsync();
         }
+
+        public async Task RemoveTeamFromEvent(int eventId, int teamId)
+        {
+            var eventTeam = await context.EventTeam
+                .FirstOrDefaultAsync(et => et.EventId == eventId && et.TeamId == teamId);
+            if (eventTeam == null)
+                return;
+
+            context.EventTeam.Remove(eventTeam);
+            await context.SaveChangesAsync();
+        }
+
     }
 }

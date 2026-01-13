@@ -50,5 +50,7 @@ namespace Domain.Interfaces
         Task RecalculateEventScoresAsync(int eventId);
 
         Task<List<DeelnemerScore>> GetTotalScoresByEventIdAsync(int eventId);
+
+        Task<List<PickDetailDto>> GetPickDetailsAsync(int eventId, int gameCompetitorEventId);
     }
 }

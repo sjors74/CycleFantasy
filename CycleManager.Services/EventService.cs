@@ -220,6 +220,11 @@ namespace CycleManager.Services
             return await _eventRepository.GetActiveEvents();
         }
 
+        public async Task RemoveTeamFromEvent(int eventId, int teamId)
+        {
+            await _eventRepository.RemoveTeamFromEvent(eventId, teamId);
+        }
+
         public async Task RemoveAllTeamsForEvent(int eventId)
         {
             await _eventRepository.RemoveAllTeamsFromEvent(eventId);

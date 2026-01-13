@@ -192,5 +192,10 @@ namespace CycleManager.Services
         {
             return _resultsRepository.GetTotalScoresByEventIdAsync(eventId);
         }
+
+        public Task<List<PickDetailDto>> GetPickDetailsAsync(int eventId, int competitorInEventId)
+        {
+            return _resultsRepository.GetPickDetailsAsync(eventId, competitorInEventId);
+        }
     }
 }

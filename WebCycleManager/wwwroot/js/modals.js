@@ -2,8 +2,7 @@
 window.ModalHelper = (function () {
 
     /*** Specifieke controles voor Stage modals ***/
-    function initStageModalControls(modalContentId) {
-        const container = document.getElementById(modalContentId);
+    function initStageModalControls(container) {
         if (!container) return;
 
         const check = container.querySelector('#noScoreCheck');
@@ -11,10 +10,9 @@ window.ModalHelper = (function () {
         if (!check || !wrapper) return;
 
         const toggleDescription = () => wrapper.style.display = check.checked ? 'block' : 'none';
+
         toggleDescription();
 
-        if (check._toggleListener) check.removeEventListener('change', check._toggleListener);
-        check._toggleListener = toggleDescription;
         check.addEventListener('change', toggleDescription);
     }
 
@@ -55,51 +53,57 @@ window.ModalHelper = (function () {
         const container = document.getElementById(modalContentId);
         if (!container) return;
 
-        container.querySelectorAll('form').forEach(form => {
-            form.addEventListener('submit', function (e) {
-                e.preventDefault();
+        const form = container.querySelector('form');
+        if (!form) return;
 
-                const formData = new FormData(form);
-                fetch(form.action, { method: 'POST', body: formData })
-                    .then(res => res.json())
-                    .then(data => {
-                        const modal = bootstrap.Modal.getOrCreateInstance(container.closest('.modal'));
-                        if (data.success) {
-                            if (data.stage) {
-                                // update tabelrij bij stage
-                                const row = document.getElementById('stage-' + data.stage.id);
-                                if (row) {
-                                    row.innerHTML = `
-                                        <td>${data.stage.date}</td>
-                                        <td>${data.stage.name}</td>
-                                        <td>${data.stage.start} → ${data.stage.finish}</td>
-                                        <td class="text-end">
-                                            <button class="btn btn-sm btn-outline-primary edit-stage-btn" data-url="/Stages/EditStage/${data.stage.id}">
-                                                <i class="bi bi-pencil"></i>
-                                            </button>
-                                            <button type="button" class="btn btn-danger btn-sm delete-stage-btn" data-stage-id="${data.stage.id}">
-                                                <i class="bi bi-trash"></i>
-                                            </button>
-                                        </td>
-                                    `;
-                                }
-                            }
+        // voorkom dubbele binding
+        if (form.dataset.ajaxBound === "true") return;
+        form.dataset.ajaxBound = "true";
 
-                            modal.hide();
-                            if (data.redirectUrl) {
-                                window.location.href = data.redirectUrl;
-                            } else {
-                                Swal.fire({ icon: 'success', title: 'Actie voltooid!' });
-                            }
-                        } else {
-                            // validation errors
-                            container.innerHTML = data.html || `<div class="text-danger">${data.message}</div>`;
-                            onModalLoad(modalContentId, container);
-                        }
-                    })
-                    .catch(() => Swal.fire('Fout', 'Er is iets misgegaan bij het opslaan.', 'error'));
-            });
-        });
+        form.addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            try {
+                const response = await fetch(form.action, {
+                    method: 'POST',
+                    body: new FormData(form)
+                });
+
+                const html = await response.text();
+
+                // Vervang inhoud veilig (zonder jQuery events)
+                const fragment = document.createRange()
+                    .createContextualFragment(html);
+
+                container.replaceChildren(fragment);
+
+                const countEl = container.querySelector('#stageCount');
+                if (countEl) {
+                    const count = countEl.dataset.stageCount;
+
+                    const badge = document.querySelector(
+                        '[data-bs-target="#manageStagesModal"] .badge'
+                    );
+
+                    if (badge) {
+                        badge.textContent = count;
+                    }
+                }
+
+                // Herinitialiseer JS op nieuwe HTML
+                setupAjaxForm(modalContentId);
+                const modalEl = container.closest('.modal');
+                if (modalEl) {
+                    onModalLoad(modalEl.id, container);
+                }
+
+
+            } catch (err) {
+                console.error(err);
+                Swal.fire('Fout', 'Er is iets misgegaan bij het opslaan.', 'error');
+            }
+
+        })
     }
 
     /*** Delete actie via SweetAlert2 ***/
@@ -125,15 +129,26 @@ window.ModalHelper = (function () {
                         method: 'POST',
                         headers: { 'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value }
                     })
-                        .then(res => res.json())
-                        .then(data => {
-                            if (data.success) {
-                                const row = document.getElementById(`stage-${stageId}`);
-                                if (row) row.remove();
-                                Swal.fire('Verwijderd!', 'De etappe is verwijderd.', 'success');
-                            } else {
-                                Swal.fire('Fout', 'Kon de etappe niet verwijderen', 'error');
+                        .then(res => res.text())
+                        .then(html => {
+                            const fragment = document
+                                .createRange()
+                                .createContextualFragment(html);
+
+                            const container = document.getElementById('manageStagesContent');
+                            container.replaceChildren(fragment);
+
+                            const countEl = container.querySelector('#stageCount');
+                            if (countEl) {
+                                const badge = document.querySelector(
+                                    '[data-bs-target="#manageStagesModal"] .badge'
+                                );
+                                if (badge) badge.textContent = countEl.dataset.stageCount;
+
                             }
+                            // JS opnieuw binden
+                            ModalHelper.setupDeleteButtons();
+                            ModalHelper.setupAjaxForm('manageStagesContent');
                         });
                 }
             });
@@ -143,7 +158,7 @@ window.ModalHelper = (function () {
     /*** Functie om extra JS per modal te initialiseren ***/
     function onModalLoad(modalId, contentEl) {
         if (modalId === "editStageModal" || modalId === "manageStagesModal") {
-            initStageModalControls(contentEl.id);
+            initStageModalControls(contentEl);
         }
     }
 
@@ -159,5 +174,13 @@ window.ModalHelper = (function () {
 
 // Init bij DOM ready
 document.addEventListener("DOMContentLoaded", function () {
+    if (!window.ModalHelper) {
+        console.error("ModalHelper not loaded");
+        return;
+    }
+
+    ModalHelper.setupModal('manageTeamsModal', 'manageTeamsContent');
+    ModalHelper.setupModal('manageStagesModal', 'manageStagesContent');
+    ModalHelper.setupModal('editStageModal', 'editStageModalContent');
     ModalHelper.setupDeleteButtons();
 });

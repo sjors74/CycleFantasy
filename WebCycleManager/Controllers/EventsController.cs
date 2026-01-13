@@ -201,28 +201,33 @@ namespace WebCycleManager.Controllers
                 return Json(new { success = false, message = "Evenement niet gevonden" });
             }
 
-            try
-            {
-                // Huidige koppelingen verwijderen
-                await _eventService.RemoveAllTeamsForEvent(vm.EventId);
+            var currentTeamIds = eventEntity.EventTeams
+                .Select(et => et.TeamId)
+                .ToList();
 
-                // Nieuwe koppelingen toevoegen
-                var selectedTeams = vm.Teams?.Where(t => t.IsSelected).ToList() ?? new();
-                foreach (var team in selectedTeams)
-                {
-                    _eventService.AddTeamToEvent(vm.EventId, team.TeamId);
-                }
+            var selectedTeamIds = vm.Teams
+                .Where(t => t.IsSelected)
+                .Select(t => t.TeamId)
+                .ToList();
 
-                return Json(new
-                {
-                    success = true,
-                    redirectUrl = Url.Action("Edit", new { id = vm.EventId })
-                });
-            }
-            catch (Exception ex)
+            var teamsToAdd = selectedTeamIds.Except(currentTeamIds);
+            var teamsToRemove = currentTeamIds.Except(selectedTeamIds);
+
+            foreach (var teamId in teamsToAdd)
             {
-                return Json(new { success = false, message = "Er is een fout opgetreden tijdens het opslaan." });
+                await _eventService.AddTeamToEvent(vm.EventId, teamId);
             }
+
+            foreach(var teamId in teamsToRemove)
+            {
+                await _eventService.RemoveTeamFromEvent(vm.EventId, teamId);
+            }
+
+            return Json(new
+            {
+                success = true,
+                redirectUrl = Url.Action("Edit", new { id = vm.EventId })
+            });
         }
 
         [HttpGet]

@@ -17,7 +17,7 @@
            data-bs-target="#manageStagesModal"
            data-url="@Url.Action("ManageStages", "Events", new { eventid = Model.Id })">
             Etappes beheren
-            <span class="badge bg-light text-dark ms-2">#</span>
+            <span class="badge bg-light text-dark ms-2">@Model.StagesInEvent</span>
         </a>
     </div>
 </div>
@@ -100,14 +100,4 @@
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
-    <script src="~/js/modals.js"></script>
-
-    <script>
-        // Setup modals
-        document.addEventListener("DOMContentLoaded", function() {
-            ModalHelper.setupModal('manageTeamsModal', 'manageTeamsContent');
-            ModalHelper.setupModal('manageStagesModal', 'manageStagesContent');
-            ModalHelper.setupModal('editStageModal', 'editStageModalContent');
-        });
-    </script>
 }

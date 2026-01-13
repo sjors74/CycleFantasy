@@ -147,6 +147,67 @@ namespace DataAccessEF.TypeRepository
             return top15;
         }
 
+        public async Task<List<PickDetailDto>> GetPickDetailsAsync(int eventId, int gameCompetitorEventId)
+        {
+            var lastStageId = await context.Results
+                .Where(r => r.Stage.EventId == eventId)
+                .MaxAsync(r => (int?)r.StageId);
+
+            if (!lastStageId.HasValue)
+                lastStageId = null;
+
+            var picks = await context.GameCompetitorEventPicks
+                .Where(p =>
+                    p.GameCompetitorEventId == gameCompetitorEventId &&
+                    p.GameCompetitorEvent.EventId == eventId)
+                .Select(p => new
+                {
+                    p.CompetitorsInEventId,
+                    CompetitorName = p.CompetitorsInEvent
+                        .CompetitorInTeam
+                        .Competitor
+                        .CompetitorName
+                })
+                .ToListAsync();
+            if (!picks.Any())
+                return new List<PickDetailDto>();
+
+            var competitorIds = picks.Select(p => p.CompetitorsInEventId).ToList();
+
+            var results = await context.Results
+                .Where(r =>
+                    competitorIds.Contains(r.CompetitorInEventId) &&
+                    r.Stage.EventId == eventId &&
+                    r.ConfigurationItemId != null)
+                .Select(r => new
+                {
+                    r.CompetitorInEventId,
+                    r.StageId,
+                    Score = r.ConfigurationItem.Score
+                })
+                .ToListAsync();
+
+            var details = picks.Select(p =>
+            {
+                var rennerResults = results
+                    .Where(r => r.CompetitorInEventId == p.CompetitorsInEventId)
+                    .ToList();
+
+                return new PickDetailDto
+                {
+                    CompetitorInEventId = p.CompetitorsInEventId,
+                    CompetitorName = p.CompetitorName,
+                    TotalScore = rennerResults.Sum(r => r.Score),
+                    LastScore = rennerResults.Where(r => r.StageId == lastStageId).Sum(r => r.Score)
+                };
+            })
+            .OrderByDescending(d => d.TotalScore)
+            .ToList();
+
+            return details;
+        }
+
+
         //Methodes voor de Manager
         public async Task<Stage?> GetStageByIdAsync(int stageId)
         {

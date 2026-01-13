@@ -14,5 +14,6 @@ namespace Domain.Interfaces
         Task<int> GetAantalDeelnemers(int eventId);
         Task RemoveAllTeamsFromEvent(int eventId);
         Task AddTeamToEvent(int eventId, int teamId);
+        Task RemoveTeamFromEvent(int eventId, int teamId);
     }
 }

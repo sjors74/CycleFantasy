@@ -1,37 +1,66 @@
 ﻿@model ManageStageViewModel
 
-<form id="addStageForm" class="mb-3 row g-2" method="post" asp-action="CreateAjax" asp-controller="Stages">
-    @Html.AntiForgeryToken()
-    <input type="hidden" asp-for="NewStage.EventId" />
+<div class="new-stage-section">
 
-    <div class="col-md-3">
-        <div class="input-group">
-            <span class="input-group-text"><i class="bi bi-calendar-date"></i></span>
-            <input asp-for="NewStage.StageDate" class="form-control" type="date" />
-            <span asp-validation-for="NewStage.StageDate" class="text-danger"></span>
+    <form id="addStageForm" 
+        class="mb-3 row g-2" 
+        method="post" 
+        asp-action="CreateAjax" 
+        asp-controller="Stages">
+
+        @Html.AntiForgeryToken()
+
+        <input type="hidden" asp-for="NewStage.EventId" />
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="mb-0">Nieuwe etappe toevoegen</h5>
+            <div>
+                <button type="button"
+                        class="btn btn-outline-secondary btn-sm"
+                        data-bs-dismiss="modal">
+                    Annuleren
+                </button>
+                <button type="submit" class="btn btn-primary btn-sm" form="addStageForm">Stage toevoegen</button>
+            </div>
         </div>
-    </div>
 
-    <div class="col-md-1">
-        <input asp-for="NewStage.StageName" class="form-control" placeholder="#" />
-        <span asp-validation-for="NewStage.StageName" class="text-danger"></span>
-    </div>
+        @if(!string.IsNullOrEmpty(Model.UiErrorMessage))
+        {
+            <div class="alert alert-warning">
+                @Model.UiErrorMessage
+            </div>
+        }
 
-    <div class="col-md-2">
-        <input asp-for="NewStage.StageOrder" class="form-control" placeholder="Volgorde" type="number" />
-        <span asp-validation-for="NewStage.StageOrder" class="text-danger"></span>
-    </div>
+        <div class="col-md-3">
+            <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-calendar-date"></i></span>
+                <input asp-for="NewStage.StageDate" class="form-control" type="date" />
+                <span asp-validation-for="NewStage.StageDate" class="text-danger"></span>
+            </div>
+        </div>
 
-    <div class="col-md-3">
-        <input asp-for="NewStage.StartLocation" class="form-control" placeholder="Van" />
-        <span asp-validation-for="NewStage.StartLocation" class="text-danger"></span>
-    </div>
+        <div class="col-md-1">
+            <input asp-for="NewStage.StageName" class="form-control" placeholder="#" />
+            <span asp-validation-for="NewStage.StageName" class="text-danger"></span>
+        </div>
 
-    <div class="col-md-3">
-        <input asp-for="NewStage.FinishLocation" class="form-control" placeholder="Naar" />
-        <span asp-validation-for="NewStage.FinishLocation" class="text-danger"></span>
-    </div>
-</form>
+        <div class="col-md-2">
+            <input asp-for="NewStage.StageOrder" class="form-control" placeholder="Volgorde" type="number" />
+            <span asp-validation-for="NewStage.StageOrder" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-3">
+            <input asp-for="NewStage.StartLocation" class="form-control" placeholder="Van" />
+            <span asp-validation-for="NewStage.StartLocation" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-3">
+            <input asp-for="NewStage.FinishLocation" class="form-control" placeholder="Naar" />
+            <span asp-validation-for="NewStage.FinishLocation" class="text-danger"></span>
+        </div>
+
+    </form>
+</div>
 
 <!-- Lijst van stages blijft in EventStagesViewModel -->
 <table class="table table-sm" data-event-name="@Model.EventStages.EventName ?? "Onbekend event"">
@@ -49,7 +78,7 @@
             foreach (var stage in Model.EventStages.Stages)
             {
                 <tr id="stage-@stage.Id">
-                    <td>@stage.StageDate:dd-MM-yyyy</td>
+                    <td>@stage.StageDate.ToString("dd-MM")</td>
                     <td>@stage.StageName</td>
                     <td>@stage.StartLocation → @stage.FinishLocation</td>
                     <td class="text-end">
@@ -76,3 +105,6 @@
         }
     </tbody>
 </table>
+<div id="stageCount"
+     data-stage-count="@Model.EventStages.Stages.Count()">
+</div>

@@ -57,29 +57,14 @@ namespace WebCycleManager.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> CreateAjax(StageCreateViewModel stage)
+        public async Task<IActionResult> CreateAjax(
+            [Bind(Prefix = "NewStage")] StageCreateViewModel stage)
         {
-            if (!ModelState.IsValid)
+            if(IsEmptyStage(stage))
             {
-                var eventEntity = await _eventService.GetEventById(stage.EventId);
-                
-                if (eventEntity == null)
-                    return Json(new { success = false, message = "Evenement niet gevonden." });
-
-                var stages = await _stageService.GetStagesByEventId(stage.EventId) ?? new List<Stage>();
-                
-                var model = new ManageStageViewModel
-                {
-                    EventStages = new EventStagesViewModel
-                    {
-                        EventId = stage.EventId,
-                        EventName = eventEntity.EventName ?? "Onbekend evenement",
-                        EventStartDate = eventEntity.StartDate ?? DateTime.Today,
-                        EventEndDate = eventEntity.EndDate ?? DateTime.Today.AddDays(1),
-                        Stages = stages
-                    },
-                    NewStage = stage
-                };
+                var model = await BuildManageStagesViewModel(
+                    stage.EventId, stage, "Geen stage ingevoerd."
+                    );
 
                 Console.WriteLine("Returning _ManageStagesPartial with model: " +
                 $"EventId={model.EventStages.EventId}, Stages={model.EventStages.Stages.Count()}");
@@ -88,32 +73,27 @@ namespace WebCycleManager.Controllers
                 return PartialView("~/Views/Events/_ManageStagesPartial.cshtml", model);
             }
 
-            var existingEvent = await _eventService.GetEventById(stage.EventId);
-
-            if (existingEvent == null)
+            if (!ModelState.IsValid)
             {
-                return Json(new { success = false, message = "Evenement niet gevonden." });
+                var model = await BuildManageStagesViewModel(stage.EventId, stage);
+                return PartialView("~/Views/Events/_ManageStagesPartial.cshtml", model);
             }
 
-            var entity = new Stage
+            await _stageService.AddStage(new Stage
             {
-                StageDate = stage.StageDate,
                 StageName = stage.StageName,
+                StageDate = stage.StageDate,
                 StageOrder = stage.StageOrder,
                 StartLocation = stage.StartLocation,
                 FinishLocation = stage.FinishLocation,
+                EventId = stage.EventId,
                 NoScore = stage.NoScore,
-                NoScoreDescription = stage.NoScoreDescription,
-                EventId = stage.EventId
-            };
-
-            await _stageService.AddStage(entity);
-
-            return Json(new 
-            {                 
-                success = true, 
-                redirectUrl = Url.Action("Edit", "Events", new { id = stage.EventId })
+                NoScoreDescription = stage.NoScoreDescription
             });
+
+            var successModel = await BuildManageStagesViewModel(stage.EventId);
+
+            return PartialView("~/Views/Events/_ManageStagesPartial.cshtml", successModel);
         }
 
         [HttpGet]
@@ -216,8 +196,14 @@ namespace WebCycleManager.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteAjax(int id)
         {
-            bool deleted = await _stageService.DeleteStage(id);
-            return Json(new { success = deleted });
+            var stage = await _stageService.GetStageById(id);
+            if (stage == null)
+                return BadRequest();
+
+            await _stageService.DeleteStage(id);
+
+            var model = await BuildManageStagesViewModel(stage.EventId);
+            return PartialView("~/Views/Events/_ManageStagesPartial.cshtml", model);
         }
 
         public StageViewModel CreateViewModel(Stage stage)
@@ -276,6 +262,37 @@ namespace WebCycleManager.Controllers
                     Text = e.EventName + " (" + e.EventYear + ")"
                 })
                 .ToList();
+        }
+
+        private bool IsEmptyStage(StageCreateViewModel stage)
+        {
+            return string.IsNullOrWhiteSpace(stage.StageName)
+                && stage.StageDate == default
+                && string.IsNullOrWhiteSpace(stage.StartLocation)
+                && string.IsNullOrWhiteSpace(stage.FinishLocation);
+        }
+
+        private async Task<ManageStageViewModel> BuildManageStagesViewModel(
+            int eventId,
+            StageCreateViewModel? newStage = null,
+            string? uiErrorMessage = null)
+        {
+            var eventEntity = await _eventService.GetEventById(eventId);
+            var stages = await _stageService.GetStagesByEventId(eventId) ?? new List<Stage>();
+
+            return new ManageStageViewModel
+            {
+                EventStages = new EventStagesViewModel
+                {
+                    EventId = eventId,
+                    EventName = eventEntity.EventName ?? "Onbekend evenement",
+                    EventStartDate = eventEntity.StartDate ?? DateTime.Today,
+                    EventEndDate = eventEntity.EndDate ?? DateTime.Today.AddDays(1),
+                    Stages = stages
+                },
+                NewStage = newStage ?? new StageCreateViewModel {  EventId = eventId},
+                UiErrorMessage = uiErrorMessage
+            };
         }
     }
 }
