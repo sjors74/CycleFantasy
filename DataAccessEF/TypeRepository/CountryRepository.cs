@@ -12,18 +12,18 @@ namespace DataAccessEF.TypeRepository
         }
         public new Country GetById(int id)
         {
-            var country = context.Country.Where(c => c.CountryId.Equals(id)).FirstOrDefault();
+            var country = context.Countries.Where(c => c.CountryId.Equals(id)).FirstOrDefault();
             return country;
         }
 
         public new void Update(Country country)
         {
-             context.Country.Update(country);
+             context.Countries.Update(country);
         }
 
         public new void Remove(Country country) 
         {
-            context.Country.Remove(country);
+            context.Countries.Remove(country);
         }
     }
 }

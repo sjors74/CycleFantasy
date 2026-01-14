@@ -11,7 +11,7 @@ namespace DataAccessEF
         protected readonly ApplicationDbContext context;
         public GenericRepository(ApplicationDbContext context)
         {
-            this.context = context;
+            this.context = context ?? throw new ArgumentNullException(nameof(context));
         }
 
         public void Add(T entity)
@@ -41,6 +41,9 @@ namespace DataAccessEF
 
         public void Remove(T entity)
         {
+            if (entity == null || !context.Set<T>().Contains(entity))
+                return;
+
             context.Set<T>().Remove(entity);
         }
 

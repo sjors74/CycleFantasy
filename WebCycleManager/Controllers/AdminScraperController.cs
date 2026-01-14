@@ -1,47 +1,39 @@
-﻿using CycleManager.Services;
-using Domain.Context;
+﻿using CycleManager.Domain.Dto;
+using CycleManager.Services;
+using CycleManager.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace WebCycleManager.Controllers
 {
     public class AdminScraperController : Controller
     {
-        private readonly ScraperService _scraperService;
-        private readonly ScoreService _scoreService;
-        private readonly ApplicationDbContext _db;
+        private readonly IScraperService _scraperService;
+        private readonly IScoreService _scoreService;
+        private readonly IAdminScraperService _adminScraperService;
 
-        public AdminScraperController(ScraperService scraperService, ScoreService scoreService, ApplicationDbContext db)
+        public AdminScraperController(
+            IScraperService scraperService, 
+            IScoreService scoreService, 
+            IAdminScraperService adminScraperService)
         {
             _scraperService = scraperService;
             _scoreService = scoreService;
-            _db = db;
+            _adminScraperService = adminScraperService;
         }
-
+        
         [HttpGet]
         public async Task<IActionResult> ScrapeAndPair(int stageId, int eventId, string eventName, int year)
         {
-            var stage = await _db.Stages
-                .Include(s => s.Event)
-                .FirstOrDefaultAsync(s => s.Id == stageId);
+            var stage = await _adminScraperService.GetStageByIdAsync(stageId); 
             if (stage == null)
-                throw new Exception("Stage not found while trying to scrape results.");
-
-            int.TryParse(stage.StageName, out var stageNumber);
-
-            if (stage == null)
-            {
+            { 
                 TempData["Error"] = "Stage niet gevonden.";
                 return RedirectToAction("Details", "Events", new { eventId });
             }
 
-            await _scraperService.RunAsync(
-                eventId: eventId,
-                eventName: eventName,
-                stageNumber: stageNumber,
-                year: year
-            );
+            int.TryParse(stage.StageName, out var stageNumber);
 
+            await _scraperService.RunAsync(eventId, eventName, stageNumber, year);
             await _scoreService.UpdateScoresForStageAsync(eventId, stageId);
 
             TempData["Success"] = "Scrape voltooid.";
@@ -53,6 +45,25 @@ namespace WebCycleManager.Controllers
         {
             await _scraperService.RunDropoutsAsync(eventId, eventName, year);
             return RedirectToAction("Details", "Events", new { id = eventId });
+        }               
+
+        [HttpPost]
+        public async Task<IActionResult> ScrapeCompetitors([FromBody] ScrapeRequestDto dto)
+        {
+            var team = await _adminScraperService.GetTeamByIdAsync(dto.TeamId);
+            if (team == null)
+                throw new Exception("Team not found while trying to scrape competitors.");
+
+            await _scraperService.RunCompetitorsAsync(dto.TeamId, dto.Year);
+
+            return Ok();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ImportScrapedCompetitors()
+        {
+            await _scraperService.ImportScrapedCompetitorsAsync();
+            return RedirectToAction("Index", "Teams");
         }
     }
 }

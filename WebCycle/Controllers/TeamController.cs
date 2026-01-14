@@ -1,5 +1,4 @@
 ﻿using CycleManager.Services.Interfaces;
-using Domain.Interfaces;
 using Domain.Models;
 using Microsoft.AspNetCore.Mvc;
 
@@ -16,15 +15,20 @@ namespace WebCycle.Controllers
         }
 
         [HttpGet]
-        public async Task<IEnumerable<Team>> GetAllTeams()
+        public async Task<ActionResult<IEnumerable<Team>>> GetAllTeams()
         {
-            return await _teamService.GetAll();
+            var teams = await _teamService.GetAllTeams();
+            return Ok(teams);
         }
 
         [HttpGet("{id}", Name = "Get")]
-        public async Task<Team> GetTeam(int id) 
+        public async Task<ActionResult<Team>> GetTeam(int id) 
         {
-            return await _teamService.GetTeamById(id);
+            var team = await _teamService.GetTeamById(id);
+            if (team == null)
+                return NotFound();
+
+            return Ok(team);
         }
     }
 }

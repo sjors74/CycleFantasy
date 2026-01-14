@@ -5,6 +5,7 @@ using CycleManager.Services.Interfaces;
 using Domain.Dto;
 using Domain.Interfaces;
 using Domain.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace CycleManager.Services
 {
@@ -45,14 +46,17 @@ namespace CycleManager.Services
             await _eventRepository.SaveChangesAsync();
         }
 
-        public Task<IEnumerable<Event>> GetAllEvents()
+        public async Task<IEnumerable<Event>> GetAllEvents()
         {
-            return _eventRepository.GetAllEvents();
+            return await _eventRepository.GetAllEvents()
+                .OrderByDescending(e => e.EventYear)
+                .ThenBy(e => e.StartDate)
+                .ToListAsync();
         }
 
-        public Task<Event> GetEventById(int id)
+        public async Task<Event> GetEventById(int id)
         {
-            return _eventRepository.GetEventById(id);
+            return await _eventRepository.GetEventById(id);
         }
 
         public async Task Update(Event entity)
@@ -78,11 +82,11 @@ namespace CycleManager.Services
                 var result = await _resultRepository.GetResultsByStageId(stage.Id);
                 if (result == 0)
                 {
-                    resultList.Add(new StageResultDto { StageNumber = int.Parse(stage.StageName), HasResult = false });
+                    resultList.Add(new StageResultDto { StageNumber = stage.StageName, HasResult = false });
                 }
                 else
                 {
-                    resultList.Add(new StageResultDto { StageNumber = int.Parse(stage.StageName), HasResult = true });
+                    resultList.Add(new StageResultDto { StageNumber = stage.StageName, HasResult = true });
                 }
             }
             return resultList;
@@ -106,14 +110,15 @@ namespace CycleManager.Services
                         var punten = results != null ? results.TotalScore : 0;
                         renners.Add(new CompetitorDto
                         {
-                            CompetitorId = renner.CompetitorsInEvent.CompetitorId,
-                            CompetitorName = renner.CompetitorsInEvent.CompetitorName,
-                            CountryShort = renner.CompetitorsInEvent.Competitor.Country.CountryNameShort,
+                            FirstName = renner.CompetitorsInEvent.CompetitorInTeam.Competitor.FirstName,
+                            LastName = renner.CompetitorsInEvent.CompetitorInTeam.Competitor.LastName,
+                            CountryShort = renner.CompetitorsInEvent.CompetitorInTeam.Competitor.Country.CountryNameShort,
                             EventNumber = renner.CompetitorsInEvent.EventNumber.ToString(),
-                            PcsName = renner.CompetitorsInEvent.Competitor.PcsName,
-                            IsNationalChampion = renner.CompetitorsInEvent.Competitor.IsNationalChampion,
-                            TeamName = renner.CompetitorsInEvent.Competitor.Team.TeamName,
-                            Punten = punten
+                            PcsName = renner.CompetitorsInEvent.CompetitorInTeam.Competitor.PcsName,
+                            Punten = punten,
+                            CurrentTeamName = renner.CompetitorsInEvent.CompetitorInTeam.Team.CurrentTeamName,
+                            IsNationalChampion = renner.CompetitorsInEvent.CompetitorInTeam.IsNationalChampion,
+                            CompetitorInTeamId = renner.CompetitorsInEvent.CompetitorInTeam.Id
                         });
                     }
                     deelnemers.Add(new DeelnemerDto
@@ -163,7 +168,7 @@ namespace CycleManager.Services
 
         public async Task<DeelnemerDto> CreatePoolAsync(DeelnemerDto deelnemerDto)
         {
-            var gameCompetitorEvent = new GameCompetitorEvent
+            var gameCompetitorEvent = new DeelnemerCreateDto
             {
                 TeamName = deelnemerDto.PoolNaam,
                 UserId = deelnemerDto.UserId,
@@ -208,6 +213,26 @@ namespace CycleManager.Services
         public async Task<int> GetAantalDeelnemers(int id)
         {
             return await _eventRepository.GetAantalDeelnemers(id);
+        }
+
+        public async Task<IEnumerable<Event>> GetActiveEvents()
+        {
+            return await _eventRepository.GetActiveEvents();
+        }
+
+        public async Task RemoveTeamFromEvent(int eventId, int teamId)
+        {
+            await _eventRepository.RemoveTeamFromEvent(eventId, teamId);
+        }
+
+        public async Task RemoveAllTeamsForEvent(int eventId)
+        {
+            await _eventRepository.RemoveAllTeamsFromEvent(eventId);
+        }
+
+        public async Task AddTeamToEvent(int eventId, int teamId)
+        {
+            await _eventRepository.AddTeamToEvent(eventId, teamId);
         }
     }
 }

@@ -73,6 +73,7 @@ namespace ScraperFunction
                     _logger.LogInformation($"Next timer schedule at: {myTimer.ScheduleStatus.Next}");
                 }
 
+                _logger.LogInformation($"Update scores for stagenumber {stageNumber} with stageId {stage.Id}");
                 if (stage.Id > 0)
                     await _scoreService.UpdateScoresForStageAsync(eventId, stage.Id);
             }

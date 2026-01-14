@@ -19,7 +19,7 @@ namespace Domain.Interfaces
         /// <param name="eventId"></param>
         /// <param name="competitorId"></param>
         /// <returns></returns>
-        Task<CompetitorScoreDto?> GetCompetitorResultsByEventId(int eventId, int competitorId);
+        Task<CompetitorScoreDto?> GetCompetitorResultsByEventId(int eventId, int competitorInEventId);
 
         /// <summary>
         /// Get the latest (stage) score for an competitor in an event
@@ -36,5 +36,21 @@ namespace Domain.Interfaces
         /// <returns></returns>
         Task<int> GetResultsByStageId(int stageId);
         Task<List<EtappeUitslagDto>?> GetEtappeUitslag(int stageId);
+
+        //methodes voor manager
+        Task<Stage?> GetStageByIdAsync(int stageId);
+        Task<List<Result>> GetResultsByStageAsync(int stageId);
+        Task<List<CompetitorsInEvent>> GetCompetitorsInEventAsync(int eventId);
+        Task<List<ConfigurationItem>> GetConfigurationItemsByConfigAsync(int configId);
+        Task AddResultsAsync(IEnumerable<Result> results);
+        Task<Result?> GetResultByIdAsync(int id);
+        Task DeleteResultAsync(Result result);
+        Task<bool> ResultExistsAsync(int id);
+        string GetCompetitorFullName(int competitorId);
+        Task RecalculateEventScoresAsync(int eventId);
+
+        Task<List<DeelnemerScore>> GetTotalScoresByEventIdAsync(int eventId);
+
+        Task<List<PickDetailDto>> GetPickDetailsAsync(int eventId, int gameCompetitorEventId);
     }
 }

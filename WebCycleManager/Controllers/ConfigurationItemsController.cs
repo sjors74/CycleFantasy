@@ -3,7 +3,9 @@ using Domain.Interfaces;
 using Domain.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.CodeAnalysis.Elfie.Diagnostics;
 using Microsoft.EntityFrameworkCore;
+using System.Reflection;
 using WebCycleManager.Models;
 
 namespace WebCycleManager.Controllers
@@ -32,7 +34,7 @@ namespace WebCycleManager.Controllers
                 return NotFound();
             }
 
-            var configurationItem = _configurationService.GetConfigurationItemById((int)id);
+            var configurationItem = await _configurationService.GetConfigurationItemById((int)id);
             if (configurationItem == null)
             {
                 return NotFound();
@@ -49,17 +51,29 @@ namespace WebCycleManager.Controllers
         }
 
         // POST: ConfigurationItems/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Position,Score,ConfigurationId")] ConfigurationItemViewModel vm)
+        public async Task<IActionResult> Create(ConfigurationItemViewModel vm)
         {
             if (ModelState.IsValid)
             {
-                var configurationItem = new ConfigurationItem { ConfigurationId = vm.ConfigurationId, Position = vm.Position, Score = vm.Score };
-                await _configurationService.CreateItem(configurationItem);
-                return RedirectToAction("Details", "Configurations", new { id = vm.ConfigurationId });
+                var configurationItem = new ConfigurationItem 
+                {
+                    ConfigurationId = vm.ConfigurationId, 
+                    Position = vm.Position, 
+                    Score = vm.Score 
+                };
+
+                var success = await _configurationService.CreateItem(configurationItem);
+
+                if (!success)
+                {
+                    ModelState.AddModelError("Position", "Deze positie bestaat al binnen deze configuratie.");
+                }
+                else
+                {
+                    return RedirectToAction("Details", "Configurations", new { id = vm.ConfigurationId });
+                }    
             }
             ViewData["ConfigurationId"] = new SelectList(await GetConfigurationList(), "Id", "ConfigurationType", vm.ConfigurationId);
             return View(vm);
@@ -84,43 +98,39 @@ namespace WebCycleManager.Controllers
         }
 
         // POST: ConfigurationItems/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Position,Score,ConfigurationId")] ConfigurationItemViewModel vm)
+        public async Task<IActionResult> Edit(int id, ConfigurationItemViewModel vm)
         {
             if (id != vm.Id)
-            {
                 return NotFound();
-            }
 
             if (ModelState.IsValid)
             {
-                try
+                var configurationItem = await _configurationService.GetConfigurationItemById(vm.Id);
+                if (configurationItem == null)
                 {
-                    var configurationItem = await _configurationService.GetConfigurationItemById(vm.Id);
-                    if(configurationItem != null)
-                    { 
-                        configurationItem.Position = vm.Position;
-                        configurationItem.Score = vm.Score;
-                        configurationItem.ConfigurationId = vm.ConfigurationId;
-                        await _configurationService.UpdateItem(configurationItem);
-                    }
+                    return NotFound();
                 }
-                catch (DbUpdateConcurrencyException)
+                else
                 {
-                    if (!ConfigurationItemExists(vm.Id))
+                    configurationItem.Position = vm.Position;
+                    configurationItem.Score = vm.Score;
+                    configurationItem.ConfigurationId = vm.ConfigurationId;
+
+                    var success = await _configurationService.UpdateItem(configurationItem);
+
+                    if (!success)
                     {
-                        return NotFound();
+                        ModelState.AddModelError("Position", "Deze positie bestaat al binnen deze configuratie.");
                     }
                     else
                     {
-                        throw;
+                        return RedirectToAction("Details", "Configurations", new { id = vm.ConfigurationId });
                     }
                 }
-                return RedirectToAction("Details", "Configurations", new { id = vm.ConfigurationId });
             }
+
             ViewData["ConfigurationId"] = new SelectList(await GetConfigurationList(), "Id", "ConfigurationType", vm.ConfigurationId);
             return View(vm);
         }
@@ -157,9 +167,10 @@ namespace WebCycleManager.Controllers
             return RedirectToAction("Details", "Configurations", new { id = configurationId });
         }
 
-        private bool ConfigurationItemExists(int id)
+        private async Task<bool> ConfigurationItemExists(int id)
         {
-          return (_configurationService.GetConfigurationItemById(id) != null);
+            var item = await _configurationService.GetConfigurationItemById(id);
+            return  item != null;
         }
 
         private async Task<IEnumerable<Configuration>> GetConfigurationList()

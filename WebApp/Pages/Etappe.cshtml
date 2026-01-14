@@ -3,30 +3,108 @@
 @{
     ViewData["Title"] = "Etappe resultaten";
 }
-    <div class="etappe-knoppen-container">
-        <a id="terug-naar-event" href="#" class="btn etappe-knop">← Terug</a>
-        <div id="navigatie-links" class="etappe-knop-groep"></div>
+<div class="tabs">
+    <ul class="tab-header">
+        <li class="active" data-tab="tab1">Uitslag etappe</li>
+        <li data-tab="tab2">Tussenstand pool</li>
+    </ul>
+    <div class="tab-content active" id="tab1">
+        <div class="etappe-knoppen-container">
+            <a id="terug-naar-event" href="#" class="btn etappe-knop">← Terug</a>
+            <div id="navigatie-links" class="etappe-knop-groep"></div>
+        </div>
+        <div class="event-header etappe-header">
+            <h1 id="etappe-title"></h1>
+            <div class="event-dates" id="etappe-datum"></div>
+        </div>
+        <table class="resultaten-tabel">
+            <thead>
+                <tr>
+                    <th>Positie</th>
+                    <th>Naam</th>
+                    <th>Team</th>
+                    <th>Punten</th>
+                </tr>
+            </thead>
+            <tbody id="renner-lijst">
+                <!-- rijen worden via JS toegevoegd -->
+            </tbody>
+        </table>
     </div>
-    <div class="event-header etappe-header">
-        <h1 id="etappe-title"></h1>
-        <div class="event-dates" id="etappe-datum"></div>
+    <div class="tab-content" id="tab2">
+        <div class="etappe-knoppen-container">
+            <a id="terug-naar-event-2" href="#" class="btn etappe-knop">← Terug</a>
+            <div id="navigatie-links-2" class="etappe-knop-groep"></div>
+        </div>
+        <div class="event-header etappe-header">
+            <h1 id="tussenstand-title"></h1>
+            <div class="event-dates" id="tussenstand-etappe-datum"></div>
+        </div>
+        <table class="resultaten-tabel">
+            <thead>
+                <tr>
+                    <th>Positie</th>
+                    <th>Pool naam</th>
+                    <th>Deelnemer naam</th>
+                    <th>Punten</th>
+                </tr>
+            </thead>
+            <tbody id="tussenstand-lijst">
+                <!-- rijden worden via JS toegevoegd-->
+            </tbody>
+        </table>
     </div>
-    <table class="resultaten-tabel">
-        <thead>
-            <tr>
-                <th>Positie</th>
-                <th>Naam</th>
-                <th>Team</th>
-                <th>Punten</th>
-            </tr>
-        </thead>
-        <tbody id="renner-lijst">
-            <!-- rijen worden via JS toegevoegd -->
-        </tbody>
-    </table>
+</div>
 @section Scripts {
     <script>
+        // Tab switching logic
+        document.querySelectorAll('.tab-header li').forEach(tab => {
+            tab.addEventListener('click', function () {
+                document.querySelectorAll('.tab-header li').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                this.classList.add('active');
+                document.getElementById(this.getAttribute('data-tab')).classList.add('active');
+            });
+        });
         window._suppressAutoLoaderToggle = true;
     </script>
     <script src="~/js/etappe.js" asp-append-version="true"></script>
+ 
 }
+<!-- TODO: style should be done in css files-->
+        <style>
+            .tabs {
+                margin-top: 1em;
+            }
+
+            .tab-header {
+                list-style: none;
+                padding: 0;
+                display: flex;
+                border-bottom: 1px solid #ccc;
+            }
+
+                .tab-header li {
+                    padding: 0.5em 1.5em;
+                    cursor: pointer;
+                    border: 1px solid #ccc;
+                    border-bottom: none;
+                    background: #f9f9f9;
+                    margin-right: 0.2em;
+                }
+
+                    .tab-header li.active {
+                        background: #fff;
+                        font-weight: bold;
+                        border-bottom: 1px solid #fff;
+                    }
+
+            .tab-content {
+                display: none;
+                padding: 1em 0;
+            }
+
+                .tab-content.active {
+                    display: block;
+                }
+        </style>

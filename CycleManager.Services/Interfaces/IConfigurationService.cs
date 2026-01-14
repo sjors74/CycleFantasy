@@ -12,8 +12,8 @@ namespace CycleManager.Services.Interfaces
 
         Task<IEnumerable<ConfigurationItem>> GetAllConfigurationItems();
         Task<ConfigurationItem> GetConfigurationItemById(int id);
-        Task CreateItem(ConfigurationItem entity);
-        Task UpdateItem(ConfigurationItem entity);
+        Task<bool> CreateItem(ConfigurationItem entity);
+        Task<bool> UpdateItem(ConfigurationItem entity);
         Task DeleteItem(ConfigurationItem entity);
 
 

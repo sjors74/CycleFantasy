@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+﻿using CycleManager.Domain.Models;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -14,17 +15,13 @@ namespace Domain.Models
         [DisplayName("Achternaam")]
         public string LastName { get; set; } = string.Empty;
         public string PcsName { get; set; } = string.Empty;
-        public bool IsNationalChampion { get; set; }
-
-        [DisplayName("Team")]
-        public int TeamId { get; set; }
+        public string? ScraperName { get; set; }
         [DisplayName("Land")]
-        public Team? Team { get; set; }
-
         public int CountryId { get; set; }
         [DisplayName("Land")]
         public Country? Country { get; set; }
-        
+        public virtual ICollection<CompetitorInTeam> CompetitorInTeams { get; set; } = [];
+
         [NotMapped]
         [DisplayName("Naam")]
         public string CompetitorName
@@ -34,7 +31,5 @@ namespace Domain.Models
                 return $"{FirstName} {LastName}";
             }
         }
-
-        public Competitor() { }
     }
 }

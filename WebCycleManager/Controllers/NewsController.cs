@@ -1,4 +1,4 @@
-﻿using Domain.Context;
+﻿using CycleManager.Services.Interfaces;
 using Domain.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -7,18 +7,16 @@ namespace WebCycleManager.Controllers
 {
     public class NewsController : Controller
     {
-        private readonly ApplicationDbContext _context;
-        public NewsController(ApplicationDbContext context)
+        private readonly INewsService _newsService;
+        public NewsController(INewsService newsService)
         {
-            _context = context;
+            _newsService = newsService;
         }
 
         // GET: News
         public async Task<IActionResult> Index()
         {
-            var newsItems = await _context.NewsItems
-                .OrderByDescending(n => n.DatePosted)
-                .ToListAsync();
+            var newsItems = await _newsService.GetAllActiveNewsItems(); 
             return View(newsItems);
         }
 
@@ -35,8 +33,7 @@ namespace WebCycleManager.Controllers
         {
             if (ModelState.IsValid)
             {
-                _context.Add(newsItem);
-                await _context.SaveChangesAsync();
+                await _newsService.CreateAsync(newsItem);
                 return RedirectToAction(nameof(Index));
             }
             return View(newsItem);
@@ -47,7 +44,7 @@ namespace WebCycleManager.Controllers
         {
             if (id == null) return NotFound();
 
-            var newsItem = await _context.NewsItems.FindAsync(id);
+            var newsItem = await _newsService.GetByIdAsync((int)id);
             if (newsItem == null) return NotFound();
 
             return View(newsItem);
@@ -64,7 +61,7 @@ namespace WebCycleManager.Controllers
             {
                 try
                 {
-                    var existingItem = await _context.NewsItems.FindAsync(id);
+                    var existingItem = await _newsService.GetByIdAsync((int)id);
                     if (existingItem == null) return NotFound();
 
                     // Alleen de velden bijwerken die mogen wijzigen
@@ -73,11 +70,11 @@ namespace WebCycleManager.Controllers
                     existingItem.DatePosted = updatedItem.DatePosted;
                     existingItem.IsActive = updatedItem.IsActive;
 
-                    await _context.SaveChangesAsync();
+                    await _newsService.UpdateAsync(existingItem);
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!NewsItemExists(updatedItem.Id)) return NotFound();
+                    if (!await NewsItemExists(updatedItem.Id)) return NotFound();
                     else throw;
                 }
                 return RedirectToAction(nameof(Index));
@@ -90,7 +87,7 @@ namespace WebCycleManager.Controllers
         {
             if (id == null) return NotFound();
 
-            var newsItem = await _context.NewsItems.FirstOrDefaultAsync(m => m.Id == id);
+            var newsItem = await _newsService.GetByIdAsync((int)id);
             if (newsItem == null) return NotFound();
 
             return View(newsItem);
@@ -101,16 +98,17 @@ namespace WebCycleManager.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var newsItem = await _context.NewsItems.FindAsync(id);
+            var newsItem = await _newsService.GetByIdAsync(id);
             if (newsItem != null)
             {
-                _context.NewsItems.Remove(newsItem);
-                await _context.SaveChangesAsync();
+                await _newsService.DeleteAsync(id);
             }
             return RedirectToAction(nameof(Index));
         }
 
-        private bool NewsItemExists(int id) =>
-            _context.NewsItems.Any(e => e.Id == id);
+        private async Task<bool> NewsItemExists(int id)
+        {
+            return await _newsService.ExistsAsync(id);
+        }
     }
 }

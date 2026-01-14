@@ -1,22 +1,19 @@
-﻿using CycleManager.Services.Interfaces;
-using Domain.Context;
-using Domain.Interfaces;
+﻿using CycleManager.Domain.Models;
+using CycleManager.Services.Interfaces;
 using Domain.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
-using WebCycleManager.Helpers;
 using WebCycleManager.Models;
 
 namespace WebCycleManager.Controllers
 {
     public class TeamsController : Controller
     {
-        private readonly ITeamRepository _teamRepository;
+        private readonly ITeamService _teamService;
         private readonly ICountryService _countryService;
-        public TeamsController(ITeamRepository teamRepository, ICountryRepository countryRepository, ICountryService countryService)
+        public TeamsController(ITeamService teamService, ICountryService countryService)
         {
-            _teamRepository = teamRepository;
+            _teamService = teamService;
             _countryService = countryService;
         }
 
@@ -24,143 +21,223 @@ namespace WebCycleManager.Controllers
         public async Task<IActionResult> Index()
         {
             var _teamViewModels = new List<TeamViewModel>();
-            var teams = await _teamRepository.GetAll();
-            foreach (var team in teams.OrderBy(t => t.TeamName))
+            var teams = await _teamService.GetAllTeams();
+
+            bool hasUnprocessedScraped = await _teamService.HasUnprocessedScrapedTeams();
+            int unprocessedCount = await _teamService.CountUnprocessedScrapedCompetitors();
+
+            foreach (var team in teams.OrderBy(t => t.CurrentTeamName))
             {
                 _teamViewModels.Add(new TeamViewModel
                 {
                     Id = team.TeamId,
-                    TeamName = team.TeamName,
-                    CountryNameShort = team.Country == null ? string.Empty : team.Country.CountryNameShort,
-                    CompetitorsInTeam = team.Competitors == null ? 0 : team.Competitors.Count,
+                    TeamName = team.CurrentTeamName,
+                    PcsName = team.PcsName,
+                    CountryNameShort = team.Country?.CountryNameShort ?? string.Empty,
+                    CompetitorsInTeam = team.CompetitorInTeams?.Count ?? 0, // telt via CompetitorInTeams
                 });
             }
+
+            ViewBag.HasUnprocessedScraped = hasUnprocessedScraped;
+            ViewBag.UnprocessedScrapedCount = unprocessedCount;
             return View(_teamViewModels);
         }
 
         // GET: Teams/Details/5
-        public async Task<IActionResult> Details(int? id)
+        public async Task<IActionResult> Details(int id, int? year)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
-            var team = await _teamRepository.GetById((int)id);
-            if (team == null)
-            {
-                return NotFound();
-            }
-            var competitorsList = new List<CompetitorViewModel>();
-            var vm = new TeamViewModel();
-            vm.Id = team.TeamId;
-            vm.TeamName = team.TeamName;
-            vm.CountryNameShort = team.Country == null ? string.Empty : team.Country.CountryNameShort;
+            var selectedYear = year ?? DateTime.Now.Year;
 
-            if (team.Competitors != null)
-            {
-                var orderedCompetitors = team.Competitors.OrderBy(c => c.LastName);
-                foreach (var comp in orderedCompetitors)
+            var team = await _teamService.GetTeamForCurrentYear(id, selectedYear);
+
+            if (team == null)
+                return NotFound();
+
+            var competitors = team.CompetitorInTeams
+                .Where(cit => cit.Year == selectedYear)
+                .Select(cit => new CompetitorViewModel
                 {
-                    var compViewModel = new CompetitorViewModel { CompetitorId = comp.CompetitorId, FirstName = comp.FirstName, LastName = comp.LastName, Land = comp.Country == null ? string.Empty : comp.Country.CountryNameShort };
-                    competitorsList.Add(compViewModel);
-                }
-                vm = new TeamViewModel {  CompetitorsInTeam = team.Competitors.Count, Competitors = competitorsList };
-            }
+                    CompetitorId = cit.CompetitorId,
+                    FirstName = cit.Competitor.FirstName,
+                    LastName = cit.Competitor.LastName,
+                    Land = cit.Competitor.Country?.CountryNameShort ?? "onbekend",
+                    IsNationalChampion = cit.IsNationalChampion
+                })
+                .OrderBy(c => c.LastName)
+                .ToList();
+
+            var vm = new TeamDetailsViewModel
+            {
+                TeamId = team.TeamId,
+                TeamName = team.CurrentTeamName,
+                Country = team.Country?.CountryNameShort ?? "onbekend",
+                SelectedYear = selectedYear,
+                AvailableYears = team.TeamYears
+                                    .Select(ty => ty.Year)
+                                    .Distinct()
+                                    .OrderByDescending(y => y)
+                                    .ToList(),
+                Competitors = competitors
+            };
             return View(vm);
         }
 
         // GET: Teams/Create
         public async Task<IActionResult> Create()
         {
-           
-            ViewData["CountryId"] = new SelectList(await CountrySelectListHelper.GetOrderedCountries(_countryService), "CountryId", "CountryNameLong");
-            return View();
+            var countries = await _countryService.GetAll();
+            var vm = new TeamCreateViewModel
+            {
+                Countries = countries.Select(c => new SelectListItem
+                {
+                    Value = c.CountryId.ToString(),
+                    Text = c.CountryNameLong
+                })
+            };
+            return View(vm);
         }
 
         // POST: Teams/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("TeamId,TeamName,CountryId")] Team team)
+        public async Task<IActionResult> Create(TeamCreateViewModel vm)
         {
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
-                _teamRepository.Add(team);
-                await _teamRepository.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                var countries = await _countryService.GetAll();
+                vm.Countries = countries.Select(c => new SelectListItem
+                {
+                    Value = c.CountryId.ToString(),
+                    Text = c.CountryNameLong
+                });
+                return View(vm);
             }
-            return View(team);
-        }
 
+            var team = new Team
+            {
+                CurrentTeamName = vm.CurrentTeamName,
+                PcsName = vm.PcsName ?? string.Empty,
+                CountryId = vm.CountryId
+            };
+
+            await _teamService.Add(team);
+            return RedirectToAction(nameof(Index));
+        }        
+            
         // GET: Teams/Edit/5
-        public async Task<IActionResult> Edit(int? id)
+        public async Task<IActionResult> Edit(int id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            var team = await _teamService.GetTeamById(id);
+            if (team == null)  return NotFound();
 
-            var team = await _teamRepository.GetById((int)id);
-            if (team == null)
+            var availableYears = Enumerable.Range(2025, 4).ToList();
+            
+            var countries = _countryService.GetAll().Result
+                .OrderBy(c => c.CountryNameLong)
+                .Select(c => new SelectListItem
+                {
+                    Value = c.CountryId.ToString(),
+                    Text = c.CountryNameLong,
+                    Selected = c.CountryId == team.CountryId // hier de geselecteerde waarde instellen
+                })
+                .ToList();
+            
+            var model = new TeamEditViewModel
             {
-                return NotFound();
-            }
-            ViewData["CountryId"] = new SelectList(await CountrySelectListHelper.GetOrderedCountries(_countryService), "CountryId", "CountryNameLong");
+                TeamId = team.TeamId,
+                CurrentTeamName = team.CurrentTeamName,
+                CountryId = team.CountryId,
+                PcsName = team.PcsName,
+                Countries = countries,
+                AvailableYears = availableYears,
+                TeamYears = team.TeamYears
+                            .OrderBy(ty => ty.Year)
+                            .Select(ty => new TeamYearViewModel
+                            {
+                                TeamYearId = ty.TeamYearId,
+                                Year = ty.Year,
+                                Name = ty.Name
+                            }).ToList()
+            };
 
-            return View(team);
+            return View(model);
         }
 
         // POST: Teams/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("TeamId,TeamName,CountryId")] Team team)
+        public async Task<IActionResult> Edit(TeamEditViewModel model)
         {
-            if (id != team.TeamId)
+            model.AvailableYears = Enumerable.Range(2025, 4).ToList();
+            model.Countries = _countryService.GetAll().Result
+                .OrderBy(c => c.CountryNameLong)
+                .Select(c => new SelectListItem
+                {
+                    Value = c.CountryId.ToString(),
+                    Text = c.CountryNameLong
+                })
+                .ToList();
+
+            if (!ModelState.IsValid)
             {
-                return NotFound();
+                return View(model);
             }
 
-            if (ModelState.IsValid)
+            var team = await _teamService.GetTeamById(model.TeamId);
+            if (team == null) return NotFound();
+
+            team.CurrentTeamName = model.CurrentTeamName;
+            team.PcsName = model.PcsName;
+            team.CountryId = model.CountryId;
+
+            foreach (var year in model.AvailableYears)
             {
-                try
+                var posted = model.TeamYears.FirstOrDefault(x => x.Year == year);
+                var existing = team.TeamYears.FirstOrDefault(x => x.Year == year);
+
+                if (posted == null || string.IsNullOrWhiteSpace(posted.Name))
                 {
-                    _teamRepository.Update(team);
-                    await _teamRepository.SaveChangesAsync();
-                }
-                catch
-                {
-                    if (!TeamExists(team.TeamId))
+                    if (existing != null)
                     {
-                        return NotFound();
+                        team.TeamYears.Remove(existing);
+                    }
+                }
+                else
+                {
+                    if (existing != null)
+                    {
+                        existing.Name = posted.Name;
                     }
                     else
                     {
-                        throw;
+                        team.TeamYears.Add(new TeamYear
+                        {
+                            Year = posted.Year,
+                            Name = posted.Name
+                        });
                     }
                 }
-                return RedirectToAction(nameof(Index));
             }
-            return View(team);
+
+            await _teamService.Update(team);
+            return RedirectToAction(nameof(Index));
         }
 
         // GET: Teams/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            if (id == null) return NotFound();
+            
+            var team = await _teamService.GetTeamById(id.Value);
+            if (team == null) return NotFound();
 
-            var team = await _teamRepository.GetById((int)id);
-            if (team == null)
+            var vm = new TeamDeleteViewModel
             {
-                return NotFound();
-            }
+                TeamId = team.TeamId,
+                CurrentTeamName = team.CurrentTeamName
+            };
 
-            return View(team);
+            return View(vm);
         }
 
         // POST: Teams/Delete/5
@@ -168,21 +245,13 @@ namespace WebCycleManager.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var team = await _teamRepository.GetById((int)id);
+            var team = await _teamService.GetTeamById(id);
             if (team != null)
             {
-                _teamRepository.Remove(team);
+                await _teamService.Delete(team);
             }
             
-            await _teamRepository.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
-
-        private bool TeamExists(int id)
-        {
-            return (_teamRepository.GetById(id) != null);
-        }
-
-
     }
 }

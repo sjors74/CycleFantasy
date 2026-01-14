@@ -10,15 +10,11 @@ namespace Domain.Models
         [Required]
         public int GameCompetitorEventPickId { get; set; }
 
-        [Required]
-        public int StageId { get; set; }
-
-        public int Score { get; set; }
+        public int TotalScore { get; set; }
 
         public DateTime LastUpdate { get;set; }
 
         public virtual GameCompetitorEventPick Pick { get; set; }
 
-        public virtual Stage Stage { get; set; }
     }
 }

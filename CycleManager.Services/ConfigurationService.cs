@@ -31,10 +31,10 @@ namespace CycleManager.Services
         /// </summary>
         /// <param name="entity"></param>
         /// <returns></returns>
-        public async Task CreateItem(ConfigurationItem entity)
+        public async Task<bool> CreateItem(ConfigurationItem entity)
         {
-            _configurationItemRepository.Add(entity);
-            await _configurationItemRepository.SaveChangesAsync();
+            var success = await _configurationItemRepository.CreateItem(entity);
+            return success;
         }
 
         /// <summary>
@@ -85,7 +85,7 @@ namespace CycleManager.Services
         /// <returns></returns>
         public Task<Configuration> GetConfigurationById(int id)
         {
-            return _configurationRepository.GetById(id);
+            return _configurationRepository.GetConfigurationById(id);
         }
 
         /// <summary>
@@ -114,10 +114,10 @@ namespace CycleManager.Services
         /// </summary>
         /// <param name="entity"></param>
         /// <returns></returns>
-        public async Task UpdateItem(ConfigurationItem entity)
+        public async Task<bool> UpdateItem(ConfigurationItem entity)
         {
-            _configurationItemRepository.Update(entity);
-            await _configurationItemRepository.SaveChangesAsync();
+            var success = await _configurationItemRepository.UpdateItem(entity);
+            return success;
         }
     }
 }

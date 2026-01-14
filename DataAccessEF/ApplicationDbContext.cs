@@ -1,5 +1,6 @@
 ﻿using CycleManager.Domain.Models;
 using Domain.Models;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
@@ -15,7 +16,7 @@ namespace Domain.Context
         public DbSet<Competitor> Competitors { get; set;}
         public DbSet<Team> Teams { get; set;}
         public DbSet<CompetitorsInEvent> CompetitorsInEvent { get; set; }
-        public DbSet<Country> Country { get; set; }
+        public DbSet<Country> Countries { get; set; }
         public DbSet<Stage> Stages { get; set; }
         public DbSet<Configuration> Configurations { get; set; }
         public DbSet<ConfigurationItem> ConfigurationItems { get; set; }
@@ -27,20 +28,16 @@ namespace Domain.Context
         public DbSet<NewsItem> NewsItems { get; set; }
         public DbSet<DeelnemerScore> DeelnemerScores { get; set; }
         public DbSet<DeelnemerPickScore> DeelnemerPickScores { get; set; }
+        public DbSet<DeelnemerStageScore> DeelnemerStageScores { get; set; }
+        public DbSet<DeelnemerStagePickScore> DeelnemerStagePickScores { get; set; }
+        public DbSet<ScrapedCompetitor> ScrapedCompetitors { get; set; }
+        public DbSet<CompetitorInTeam> CompetitorInTeams { get; set; }
+        public DbSet<TeamYear> TeamYear { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
-            modelBuilder.Entity<Team>()
-                .HasMany(c => c.Competitors)
-                .WithOne(t => t.Team)
-                .IsRequired();
-            modelBuilder.Entity<Team>()
-                .HasOne(c => c.Country);
-            modelBuilder.Entity<Competitor>()
-                .HasOne(c => c.Team)
-                .WithMany(t => t.Competitors)
-                .HasForeignKey(c => c.TeamId);
             modelBuilder.Entity<Competitor>()
                 .HasOne(c => c.Country)
                 .WithMany()
@@ -100,7 +97,7 @@ namespace Domain.Context
               .HasOne(p => p.CompetitorsInEvent)
               .WithMany(c => c.GameCompetitorEventPicks)
               .HasForeignKey(p => p.CompetitorsInEventId)
-              .OnDelete(DeleteBehavior.Cascade); // of .Restrict als je het liever handmatig doet
+              .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<GameCompetitorEventPick>()
                 .HasOne(p => p.GameCompetitorEvent)
@@ -111,17 +108,44 @@ namespace Domain.Context
             modelBuilder.Entity<EventTeam>()
                 .HasKey(et => new { et.EventId, et.TeamId });
 
-            modelBuilder.Entity<DeelnemerScore>()
-                .HasOne(ds => ds.Stage)
-                .WithMany()
-                .HasForeignKey(ds => ds.StageId)
-                .OnDelete(DeleteBehavior.Restrict);
-
             modelBuilder.Entity<DeelnemerPickScore>()
-                .HasOne(dps => dps.Stage)
-                .WithMany()
-                .HasForeignKey(dps => dps.StageId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .HasIndex(x => x.GameCompetitorEventPickId)
+                .IsUnique();
+
+            modelBuilder.Entity<DeelnemerStagePickScore>()
+                .HasIndex(x => new { x.GameCompetitorEventPickId, x.StageId })
+                .IsUnique();
+
+            modelBuilder.Entity<DeelnemerStageScore>()
+                .HasIndex(x => new { x.GameCompetitorEventId, x.StageId })
+                .IsUnique();
+
+            modelBuilder.Entity<DeelnemerScore>()
+                .HasIndex(x => x.GameCompetitorEventId)
+                .IsUnique();
+
+            modelBuilder.Entity<CompetitorInTeam>()
+                .HasOne(cit => cit.Competitor)
+                .WithMany(c => c.CompetitorInTeams)
+                .HasForeignKey(cit => cit.CompetitorId);
+
+            modelBuilder.Entity<CompetitorInTeam>()
+                .HasOne(cit => cit.Team)
+                .WithMany(t => t.CompetitorInTeams)
+                .HasForeignKey(cit => cit.TeamId);
+
+
+            modelBuilder.Entity<IdentityUserToken<string>>(b =>
+            {
+                b.Property(t => t.Name).HasMaxLength(450);
+                b.Property(t => t.LoginProvider).HasMaxLength(450);
+            });
+
+            modelBuilder.Entity<IdentityUserLogin<string>>(b =>
+            {
+                b.Property(t => t.LoginProvider).HasMaxLength(450);
+                b.Property(t => t.ProviderKey).HasMaxLength(450);
+            });
         }
     }
 }

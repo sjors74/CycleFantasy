@@ -9,12 +9,17 @@ using Domain.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using WebCycle.Services;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container. 
+// -------------------
+// Configuration
+// -------------------
 var connectionString = builder.Configuration.GetConnectionString("CycleDb");
 
 builder.Services.AddCors(options =>
@@ -30,26 +35,43 @@ builder.Services.AddCors(options =>
 builder.Services.Configure<SmtpSettings>(
     builder.Configuration.GetSection("SmtpSettings"));
 
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseLazyLoadingProxies(false)
-        .UseSqlServer(connectionString, sqlOptions =>
-        {
-            sqlOptions.EnableRetryOnFailure(
-                maxRetryCount: 5,
-                maxRetryDelay: TimeSpan.FromSeconds(10),
-                errorNumbersToAdd: null
-            );
-            sqlOptions.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
-        }));
+// -------------------
+// Database
+// -------------------
+
+if (builder.Environment.IsEnvironment("Test"))
+{
+    // In-memory DB voor tests
+    builder.Services.AddDbContext<ApplicationDbContext>(options =>
+        options.UseInMemoryDatabase("TestDb", TestDb.Root));
+}
+else
+{
+    builder.Services.AddDbContext<ApplicationDbContext>(options =>
+        options.UseLazyLoadingProxies(false)
+               .UseSqlServer(connectionString, sqlOptions =>
+               {
+                   sqlOptions.EnableRetryOnFailure(5, TimeSpan.FromSeconds(10), null);
+                   sqlOptions.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
+               }));
+}
+
+// -------------------
+// Identity & DI
+// -------------------
 builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
 {
     options.SignIn.RequireConfirmedAccount = true;
     options.User.RequireUniqueEmail = true;
 })
-    .AddEntityFrameworkStores<ApplicationDbContext>();
+.AddEntityFrameworkStores<ApplicationDbContext>();
+
+// Repositories & Services
 builder.Services.AddTransient<ITeamRepository, TeamRepository>();
 builder.Services.AddTransient<ICompetitorRepository, CompetitorRepository>();
 builder.Services.AddTransient<ICompetitorsInEventRepository, CompetitorsInEventRepository>();
+builder.Services.AddScoped<ICompetitorInTeamRepository, CompetitorInTeamRepository>();
+builder.Services.AddScoped<ICountryRepository, CountryRepository>();
 builder.Services.AddTransient<IEventRepository, EventRepository>();
 builder.Services.AddTransient<IResultsRepository, ResultsRepository>();
 builder.Services.AddTransient<IScoreRepository, ScoreRepository>();
@@ -59,20 +81,22 @@ builder.Services.AddScoped<IGameCompetitorInEventService, GameCompetitorInEventS
 builder.Services.AddTransient<IGameCompetitorEventPickRepository, GameCompetitorEventPickRepository>();
 builder.Services.AddTransient<IResultService, ResultService>();
 builder.Services.AddTransient<IEventService, EventService>();
-builder.Services.AddTransient<ICompetitorService, CompetitorService>();
+builder.Services.AddScoped<ICompetitorService, CompetitorService>();
 builder.Services.AddTransient<ICompetitorInEventService, CompetitorInEventService>();
 builder.Services.AddTransient<ITeamService, TeamService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddTransient<INewsItemRepository, NewsItemRepository>();
 builder.Services.AddTransient<INewsService, NewsService>();
+
 builder.Services.AddControllers();
 builder.Services.AddHttpClient();
 builder.Services.AddTransient<IEmailSender, EmailSender>();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddMemoryCache();
 builder.Services.AddSwaggerGen();
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+
+// JWT Auth
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -93,15 +117,44 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
+// -------------------
+// Build app
+// -------------------
 var app = builder.Build();
 
-using(var scope = app.Services.CreateScope())
+// -------------------
+// Seed & Ensure DB
+// -------------------
+if (app.Environment.IsEnvironment("Test"))
 {
-    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    db.Database.Migrate();
+    Console.WriteLine("Test environment detected — running SeedData...");
+    using (var scope = app.Services.CreateScope())
+    {
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        //db.Database.Migrate(); // (optioneel als SQL Server)
+        await SeedData.EnsureSeedAsync(db);
+    }
 }
-
-// Configure the HTTP request pipeline.
+else
+{
+    Console.WriteLine("Not Test environment — skipping SeedData");
+    using (var scope = app.Services.CreateScope())
+    {
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        if (builder.Environment.IsEnvironment("Test"))
+        {
+            //var env = scope.ServiceProvider.GetRequiredService<IWebHostEnvironment>();
+            //await TestDataSeeder.SeedAsync(db, env);
+        }
+        else
+        {
+            db.Database.Migrate();
+        }
+    }
+}
+// -------------------
+// Middleware
+// -------------------
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -109,13 +162,30 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseCors();
-
 app.UseHttpsRedirection();
-
 app.UseAuthorization();
-
 app.MapControllers();
 
 app.MapGet("/", () => "API draait!");
 
-app.Run();
+
+// -------------------
+// Start the app
+// -------------------
+
+if (!builder.Environment.IsEnvironment("Test"))
+{
+    app.Run(); // normale run voor dev/prod
+}
+else
+{
+    Console.WriteLine("Running in Test mode");
+    await app.RunAsync(); // start de host
+    Console.WriteLine("[API] Test environment: keeping host alive...");
+
+}
+
+public static class TestDb
+{
+    public static readonly InMemoryDatabaseRoot Root = new();
+}

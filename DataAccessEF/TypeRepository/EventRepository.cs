@@ -1,4 +1,5 @@
 ﻿using CycleManager.Domain.Dto;
+using CycleManager.Domain.Models;
 using CycleManager.Domain.ViewModel;
 using Domain.Context;
 using Domain.Dto;
@@ -14,6 +15,16 @@ namespace DataAccessEF.TypeRepository
         { 
         }
 
+        public async Task AddTeamToEvent(int eventId, int teamId)
+        {
+            context.EventTeam.Add(new EventTeam
+            {
+                EventId = eventId,
+                TeamId = teamId
+            });
+            await context.SaveChangesAsync();
+        }
+
         public async Task<int> GetAantalDeelnemers(int eventId)
         {
             var eventGameCompetitors = await context.GameCompetitorsEvent
@@ -26,32 +37,33 @@ namespace DataAccessEF.TypeRepository
         {
             var eventList = await context.Events
                 .Include(e => e.GameCompetitorEvents)
-                    .ThenInclude(e => e.User)
+                    .ThenInclude(p => p.Renners)
                 .Include(s => s.Stages)
                     .ThenInclude(r => r.Results)
                 .Include(e => e.Configuration)
+                .Include(e => e.GameCompetitorEvents)
+                    .ThenInclude(e => e.User)
                 .Where(e => e.IsActive.Equals(true))
                 .AsNoTracking()
                 .ToListAsync();
             return eventList;   
         }
 
-        public async Task<IEnumerable<Event>> GetAllEvents()
+        public IQueryable<Event> GetAllEvents()
         {
-            var eventList = 
-                await context.Events
+            return
+                context.Events
                 .Include(e => e.Configuration)
                 .Include(s => s.Stages)
-                .OrderByDescending(e => e.EventYear)
-                .ThenBy(e => e.StartDate)
-                .AsNoTracking()
-                .ToListAsync();
-            return eventList;
-        }
+                .AsNoTracking();
+         }
 
         public async Task<Event> GetEventById(int id)
         {
             var e = await context.Events
+                    .Include(e => e.EventTeams)
+                        .ThenInclude(et => et.Team)
+                    .Include(s => s.Stages)
                     .FirstOrDefaultAsync(e => e.EventId == id);
             return e;
         }
@@ -93,37 +105,61 @@ namespace DataAccessEF.TypeRepository
 
             var competitorsInEvent = await context.CompetitorsInEvent
                 .Where(cie => cie.EventId == id)
-                .Include(cie => cie.Competitor)
-                    .ThenInclude(c => c.Country)
+                .Include(cie => cie.CompetitorInTeam)
+                    .ThenInclude(cie => cie.Competitor)
+                        .ThenInclude(c => c.Country)
                 .ToListAsync();
 
             var eventTeams = await context.EventTeam
                 .Where(et => et.EventId == id)
                 .Include(et => et.Team)
-                .OrderBy(et => et.Team.TeamName)
+                .OrderBy(et => et.Team.CurrentTeamName)
                 .ToListAsync();
 
             var teams = eventTeams.Select(et => new TeamDto
             { 
                    Id = et.Team.TeamId,
-                   Naam = et.Team.TeamName,
+                   Naam = et.Team.CurrentTeamName,
                    Renners = competitorsInEvent
-                    .Where(cie => cie.Competitor.TeamId == et.Team.TeamId)
+                    .Where(cie => cie.CompetitorInTeam.TeamId == et.Team.TeamId)
                     .OrderByDescending(cie => cie.InSelectie)
                     .ThenBy(cie => cie.EventNumber)
-                    .ThenBy(cie => cie.Competitor.LastName)
-                    .Select(cie => new CompetitorDto
+                    .ThenBy(cie => cie.CompetitorInTeam.Competitor.LastName)
+                    .Select(cie =>
                     {
-                            CompetitorId = cie.Competitor.CompetitorId,
-                            CompetitorName = cie.CompetitorName,
-                            PcsName = cie.Competitor.PcsName,
-                            IsNationalChampion = cie.Competitor.IsNationalChampion,
-                            CountryShort = cie.Competitor.Country.CountryNameShort,
-                            TeamName = et.Team.TeamName,
+                        var competitor = cie.CompetitorInTeam.Competitor;
+                        var team = cie.CompetitorInTeam.Team;
+                        return new CompetitorDto
+                        {
+                            CompetitorInTeamId = cie.CompetitorInTeamId,
+                            FirstName = cie.CompetitorInTeam.Competitor.FirstName,
+                            LastName = cie.CompetitorInTeam.Competitor.LastName,
+                            PcsName = competitor.PcsName,
+                            CountryShort = competitor.Country.CountryNameShort,
                             InSelectie = cie.InSelectie
+                        };
                     }).ToList()
             }).ToList();
             return teams;
         }
+
+        public async Task RemoveAllTeamsFromEvent(int eventId)
+        {
+            var eventTeams = context.EventTeam.Where(et => et.EventId == eventId);
+            context.EventTeam.RemoveRange(eventTeams);
+            await context.SaveChangesAsync();
+        }
+
+        public async Task RemoveTeamFromEvent(int eventId, int teamId)
+        {
+            var eventTeam = await context.EventTeam
+                .FirstOrDefaultAsync(et => et.EventId == eventId && et.TeamId == teamId);
+            if (eventTeam == null)
+                return;
+
+            context.EventTeam.Remove(eventTeam);
+            await context.SaveChangesAsync();
+        }
+
     }
 }

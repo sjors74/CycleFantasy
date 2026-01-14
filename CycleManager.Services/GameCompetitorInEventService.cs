@@ -1,7 +1,9 @@
-﻿using CycleManager.Domain.Interfaces;
+﻿using CycleManager.Domain.Dto;
+using CycleManager.Domain.Interfaces;
 using CycleManager.Services.Interfaces;
 using Domain.Interfaces;
 using Domain.Models;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace CycleManager.Services
 {
@@ -56,9 +58,9 @@ namespace CycleManager.Services
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
-        public async Task<GameCompetitorEvent> GetCompetitorEventById(int id)
+        public async Task<GameCompetitorEvent?> GetGameCompetitorEventById(int id)
         {
-            return await _repo.GetById(id);
+            return await _repo.GetGameCompetitorInEventById(id);
         }
 
 
@@ -100,9 +102,14 @@ namespace CycleManager.Services
         /// </summary>
         /// <param name="entity"></param>
         /// <returns></returns>
-        public async Task Update(GameCompetitorEvent entity)
+        public async Task UpdateAsync(DeelnemerEditDto dto)
         {
-            _repo.Update(entity);
+            var entity = await _repo.GetById(dto.Id);
+            if (entity == null) throw new Exception("Deelnemer niet gevonden.");
+
+            entity.TeamName = dto.TeamName;
+            entity.UserId = dto.UserId;
+
             await _repo.SaveChangesAsync();
         }
 
@@ -117,17 +124,61 @@ namespace CycleManager.Services
             var picks = await _pickRepository.GetCompetitorEventPicksById(id);
             foreach (var pick in picks)
             {
-                competitorPicks.Add(pick.CompetitorsInEvent.CompetitorId);
+                competitorPicks.Add(pick.CompetitorsInEvent.CompetitorInTeamId);
             }
 
             return competitorPicks;
         }
-
 
         public async Task<CompetitorsInEvent> GetCompetitorInEventById(int id)
         {
             return await _competitorRepo.GetById(id);
         }
 
+        public async Task<GameCompetitorEvent> CreateGameCompetitorEventAsync(DeelnemerCreateDto dto)
+        {
+            return await _repo.CreateGameCompetitorEventAsync(dto);
+        }
+
+        public async Task RemovePickFromEvent(int id)
+        {
+            await _pickRepository.RemovePickFromEvent(id);
+            await _pickRepository.SaveChangesAsync();
+        }
+
+        public async Task AddPicks(List<GameCompetitorEventPick> picks)
+        {
+            _pickRepository.AddRange(picks);
+            await _pickRepository.SaveChangesAsync();
+        }
+
+        public async Task DeleteGameCompetitorEventAsync(int id)
+        {
+            await _pickRepository.DeleteGameCompetitorEventAsync(id);
+            await _pickRepository.SaveChangesAsync();
+        }
+
+        public async Task<IEnumerable<SelectListItem>> GetDropdownListAsync(int eventId)
+        {
+            var competitors = new List<SelectListItem>();
+            var competitorsDb = await _competitorRepo.GetCompetitorsInEventList(eventId);
+            var groupedCompetitors = competitorsDb
+                .GroupBy(x => x.CompetitorInTeam?.Team?.CurrentTeamName ?? "onbekend");
+
+            foreach (var group in groupedCompetitors)
+            {
+                var optionGroup = new SelectListGroup { Name = group.Key };
+                foreach (var item in group)
+                {
+                    competitors.Add(new SelectListItem
+                    {
+                        Value = item.Id.ToString(),
+                        Text = item.CompetitorInTeam.Competitor.CompetitorName,
+                        Group = optionGroup
+                    });
+                }
+            }
+            return competitors;
+        }
     }
 }

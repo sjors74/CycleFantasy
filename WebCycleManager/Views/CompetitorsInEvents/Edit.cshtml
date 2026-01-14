@@ -1,45 +1,48 @@
 ﻿@model CompetitorInEventViewModel
 
-@{
-    ViewData["Title"] = "Edit";
-}
-
-<h1>@Model.CompetitorName</h1>
+<h3>@Model.CompetitorName</h3>
 
 <h4>@Model.EventName</h4>
-<hr />
+
 <div class="row">
-    <div class="col-md-4">
+    <div class="col-md-8">
         <form asp-action="Edit">
+            @Html.AntiForgeryToken()
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <input type="hidden" asp-for="CompetitorInEventId" />
             <input type="hidden" asp-for="EventId" />
             <input type="hidden" asp-for="TeamId" />
-            <div class="form-group">
-                <label asp-for="EventNumber" class="control-label"></label>
-                <input asp-for="EventNumber" class="form-control" />
-                <span asp-validation-for="EventNumber" class="text-danger"></span>
+            <input type="hidden" name="FilterTeam" value="@Context.Request.Query["FilterTeam"]" />
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="form-group">
+                        <label asp-for="EventNumber" class="control-label"></label>
+                        <input asp-for="EventNumber" class="form-control" />
+                        <span asp-validation-for="EventNumber" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="col-md-10 d-flex align-items-center gap-4">
+                    <div class="form-check form-check-lg">
+                        <input class="form-check-input" type="checkbox" asp-for="InSelection" />
+                        <label asp-for="InSelection" class="form-check-label"></label>
+                    </div>
+                    <div class="form-check form-check-lg">
+                        <input class="form-check-input" type="checkbox" asp-for="OutOfCompetition" />
+                        <label asp-for="OutOfCompetition" class="form-check-label"></label>
+                    </div>
+                </div>
             </div>
-            <div class="form-group">
-                <label asp-for="InSelection" class="control-label"></label>
-                <input type="checkbox" asp-for="InSelection" />
-                <span asp-validation-for="InSelection" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="OutOfCompetition" class="control-label"></label>
-                <input type="checkbox" asp-for="OutOfCompetition"  />
-                <span asp-validation-for="OutOfCompetition" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Opslaan" class="btn btn-primary" />
+            <div class="mt-3 d-flex gap-2">
+                <a asp-action="Index" asp-route-eventId="@Model.EventId" asp-route-FilterTeam="@Context.Request.Query["FilterTeam"]" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Terug naar de lijst
+                </a>
+                <button type="submit" class="btn btn-primary">Wijzig</button>
             </div>
         </form>
     </div>
 </div>
+    
 
-<div>
-    <a asp-route-eventId="@Model.EventId" asp-route-FilterTeam="@Model.TeamId.ToString()" asp-action="Index">Terug naar de lijst</a>
-</div>
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}

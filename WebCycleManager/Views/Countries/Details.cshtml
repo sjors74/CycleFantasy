@@ -1,13 +1,7 @@
 ﻿@model Domain.Models.Country
 
-@{
-    ViewData["Title"] = "Details";
-}
-
-<h1>Details</h1>
-
 <div>
-    <h4>Land</h4>
+    <h3>Land</h3>
     <hr />
     <dl class="row">
         <dt class = "col-sm-2">
@@ -24,7 +18,11 @@
         </dd>
     </dl>
 </div>
-<div>
-    <a asp-action="Edit" asp-route-id="@Model?.CountryId">Wijzig</a> |
-    <a asp-action="Index">Terug naar de lijst</a>
+<div class="mt-3 d-flex gap-2">
+    <a asp-action="Index" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Terug naar de lijst
+    </a>
+    <a asp-action="Edit" asp-route-id="@Model?.CountryId" class="btn btn-outline-primary">
+        <i class="bi bi-pencil"></i> Bewerk
+    </a>
 </div>

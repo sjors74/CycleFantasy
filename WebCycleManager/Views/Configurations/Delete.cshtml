@@ -1,23 +1,24 @@
 ﻿@model ConfigurationViewModel
-@{
-    ViewData["Title"] = "Delete";
-}
-
-<h3>Weet je zeker dat je deze configuratie wilt verwijderen?</h3>
-<div>
-    <hr />
-    <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.ConfigurationName)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.ConfigurationName)
-        </dd>
+<h1>Verwijder configuratie</h1>
+<div class="alert alert-warning">
+    <h4 class="alert-heading">Weet je het zeker?</h4>
+    <p>
+        Je staat op het punt om de volgende configuratie definitief te verwijderen:
+    </p>
+    <hr>
+    <dl class="row mb-0">
+        <dt class="col-sm-3">Naam</dt>
+        <dd class="col-sm-9">@Model.ConfigurationName</dd>
     </dl>
-    
-    <form asp-action="Delete">
-        <input type="hidden" asp-for="Id" />
-        <input type="submit" value="Verwijder" class="btn btn-danger" /> |
-        <a asp-action="Index">Terug naar de lijst</a>
-    </form>
 </div>
+<form asp-action="Delete" method="post" class="mt-3">
+    <input type="hidden" asp-for="Id" />
+
+    <div class="d-flex justify-content-between">
+        <a asp-action="Index" class="btn btn-outline-secondary">Annuleren</a>
+        <button type="submit" class="btn btn-danger">
+            <i class="bi bi-trash"></i> Verwijder
+        </button>
+    </div>
+</form>
+

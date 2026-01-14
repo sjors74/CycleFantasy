@@ -10,6 +10,7 @@ namespace WebCycleManager.Models
         public string LastName { get; set; } = string.Empty;
         public string TeamName { get; set; } = string.Empty;
         public string Land { get; set; } = string.Empty;
+        public bool IsNationalChampion { get; set; } = false;
 
         public string CompetitorName
         {

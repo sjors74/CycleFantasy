@@ -1,36 +1,24 @@
 ﻿@model  CompetitorInEventViewModel
-
-@{
-    ViewData["Title"] = "Delete";
-}
-
-<h3>Weet je zeker dat je deze deelnemer wilt verwijderen uit de deelnemerslijst?</h3>
-<div>
-    <hr />
-    <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.EventNumber)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.EventNumber)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.CompetitorName)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.CompetitorName)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.TeamName)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.TeamName)
-        </dd>
+<h1>Verwijder</h1>
+<div class="alert alert-warning">
+    <h4 class="alert-heading">Weet je het zeker?</h4>
+    <p>
+        Je staat op het punt om de volgende renner uit het evenement te verwijderen:
+    </p>
+    <hr>
+    <dl class="row mb-0">
+        <dt class="col-sm-3">Naam renner</dt>
+        <dd class="col-sm-9">@Model.CompetitorName</dd>
     </dl>
-    
-    <form asp-action="Delete">
-        <input type="hidden" asp-for="CompetitorInEventId" />
-        <input type="submit" value="Verwijder" class="btn btn-danger" /> |
-        <a asp-action="Index" asp-route-eventId="@Model.EventId">Terug naar de lijst</a>
-    </form>
 </div>
+<form asp-action="Delete" method="post" class="mt-3">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="CompetitorInEventId" />
+    <input type="hidden" name="FilterTeam" value="@Context.Request.Query["FilterTeam"]" />
+    <div class="d-flex justify-content-between">
+        <a asp-action="Index" asp-route-eventId="@Model.EventId" asp-route-FilterTeam="@Context.Request.Query["FilterTeam"]" class="btn btn-outline-secondary">Annuleren</a>
+        <button type="submit" class="btn btn-danger">
+            <i class="bi bi-trash"></i> Verwijder
+        </button>
+    </div>
+</form>

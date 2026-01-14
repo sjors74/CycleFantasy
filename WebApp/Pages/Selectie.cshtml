@@ -47,7 +47,7 @@
             var aantalNogVrij = maxTonen - aantalGeselecteerd;
 
             var getoondeRenners = team.Renners
-            .OrderByDescending(r => Model.SelectedRiders.Contains(r.CompetitorId)) // gekozen renners eerst
+            .OrderByDescending(r => Model.SelectedRiders.Contains(r.CompetitorInTeamId)) // gekozen renners eerst
             .Take(maxTonen)
             .ToList();
 
@@ -67,18 +67,27 @@
                                     @foreach (var renner in getoondeGeselecteerdDoorTeam)
                                     {
                                         <div class="form-check mb-1">
-                                            <input type="checkbox" class="form-check-input renner-checkbox" value="@renner.CompetitorId" 
-                                                @(Model.SelectedRiders.Contains(renner.CompetitorId) ? "checked" : "") />
+                                            <input type="checkbox" 
+                                                class="form-check-input renner-checkbox"
+                                                   value="@renner.CompetitorInTeamId"
+                                                   @if (Model.SelectedRiders.Contains(renner.CompetitorInTeamId))
+                                                   {
+                                                       <text>checked</text>
+                                                   } />
+            
                                             <label class="form-check-label">
                                                 @if (!string.IsNullOrEmpty(renner.PcsName))
                                                 {
-                                                    <a href="https://www.procyclingstats.com/rider/@renner.PcsName" target="_blank" rel="noopener noreferrer">
-                                                        @renner.CompetitorName
+                                                    var pcsUrl = $"https://www.procyclingstats.com/rider/{renner.PcsName}";
+                                                    <a href="@pcsUrl"
+                                                       target="_blank"
+                                                       rel="noopener noreferrer">
+                                                        @(renner.FirstName + " " + renner.LastName)
                                                     </a>
                                                 }
                                                 else
                                                 {
-                                                    @renner.CompetitorName
+                                                    @($"{renner.FirstName} {renner.LastName}")
                                                 }
                                             </label>
                                         </div>
@@ -93,10 +102,10 @@
                                     @foreach (var renner in getoondeNietGeselecteerdDoorTeam)
                                     {
                                         <div class="form-check mb-1">
-                                            <input type="checkbox" class="form-check-input renner-checkbox" value="@renner.CompetitorId"
-                                                @(Model.SelectedRiders.Contains(renner.CompetitorId) ? "checked" : "") />
+                                            <input type="checkbox" class="form-check-input renner-checkbox" value="@renner.CompetitorInTeamId"
+                                                   @(Model.SelectedRiders.Contains(renner.CompetitorInTeamId) ? "checked" : "") />
                                             <label class="form-check-label">
-                                                @renner.CompetitorName
+                                                @renner.FirstName @renner.LastName
                                             </label>
                                         </div>
                                     }
@@ -108,7 +117,7 @@
                                     class="btn btn-outline-primary w-100 show-more-btn"
                                     data-team-id="@team.Id"
                                     data-event-id="@Model.EvenementId"
-                                    data-loaded-ids='@string.Join(",", getoondeRenners.Select(r => r.CompetitorId))'>
+                                    data-loaded-ids='@string.Join(",", getoondeRenners.Select(r => r.CompetitorInTeamId))'>
                                 Meer...
                             </button>
                             <div id="team-@team.Id-extra-renners"></div>

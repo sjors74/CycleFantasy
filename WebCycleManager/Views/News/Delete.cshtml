@@ -1,25 +1,23 @@
 ﻿@model Domain.Models.NewsItem
-
-@{
-    ViewData["Title"] = "Verwijder Nieuwsbericht";
-}
-
-<h2 class="mb-4">Verwijder Nieuwsbericht</h2>
-
+<h1 class="mb-4">Verwijder bericht</h1>
 <div class="alert alert-warning">
-    Weet je zeker dat je dit nieuwsbericht wilt verwijderen?
+    <h4 class="alert-heading">Weet je het zeker?</h4>
+    <p>
+        Je staat op het punt om het volgende nieuwsbericht definitief te verwijderen:
+    </p>
+    <hr>
+    <dl class="row mb-0">
+        <dt class="col-sm-3">Titel bericht</dt>
+        <dd class="col-sm-9">@Model.Title (@Model.DatePosted.ToString("dd-MM-yyyy HH:mm"))</dd>
+    </dl>
 </div>
-
-<div class="card mb-3">
-    <div class="card-body">
-        <h4 class="card-title">@Model.Title</h4>
-        <p class="card-text">@Model.Message</p>
-        <p class="text-muted">Geplaatst op: @Model.DatePosted.ToString("dd-MM-yyyy HH:mm")</p>
-    </div>
-</div>
-
-<form asp-action="Delete" method="post">
+<form asp-action="Delete" method="post" class="mt-3">
     <input type="hidden" asp-for="Id" />
-    <button type="submit" class="btn btn-danger">Verwijder</button>
-    <a asp-action="Index" class="btn btn-secondary">Annuleer</a>
+
+    <div class="d-flex justify-content-between">
+        <a asp-action="Index" class="btn btn-outline-secondary">Annuleren</a>
+        <button type="submit" class="btn btn-danger">
+            <i class="bi bi-trash"></i> Verwijder
+        </button>
+    </div>
 </form>

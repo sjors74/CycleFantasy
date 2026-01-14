@@ -1,8 +1,6 @@
 ﻿using CycleManager.Domain.Models;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.Text.Json.Serialization;
 
 namespace Domain.Models
 {
@@ -11,13 +9,13 @@ namespace Domain.Models
         [Key]
         public int TeamId { get; set; }
         [DisplayName("Team naam")]
-        public string TeamName { get; set; } = string.Empty;
+        public string CurrentTeamName { get; set; } = string.Empty;
         [DisplayName("Land")]
         public int? CountryId { get; set; }
-        [NotMapped]
         public virtual Country? Country { get; set; }
-        [JsonIgnore]
-        public virtual ICollection<Competitor>? Competitors { get; set;}
-        public ICollection<EventTeam>? EventTeams { get; set; }
+        public string? PcsName { get; set; } = string.Empty;
+        public virtual ICollection<CompetitorInTeam> CompetitorInTeams { get; set; } = [];
+        public ICollection<TeamYear> TeamYears { get; set; } = [];
+        public ICollection<EventTeam> EventTeams { get; set; } = [];
     }
 }

@@ -368,3 +368,4 @@ FodyWeavers.xsd
 /WebCycle/appsettings.Development.json
 /WebCycleManager/appsettings.Development.json
 /ScraperFunction/Properties/ServiceDependencies/cyclefantasyscraper - Zip Deploy/profile.arm.json
+/Coverage/report

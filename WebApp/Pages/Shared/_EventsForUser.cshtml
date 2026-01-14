@@ -85,23 +85,23 @@
                                                                                         <a href="https://procyclingstats.com/rider/@renner.PcsName"
                                                                                            target="_blank" rel="noopener noreferrer"
                                                                                            class="text-dark text-decoration-none">
-                                                                                            @renner.CompetitorName
+                                                                                            @($"{renner.FirstName} {renner.LastName} ")
                                                                                         </a>
-                                                                                        @if(renner.IsNationalChampion)
+                                                                                        @if (renner.IsNationalChampion)
                                                                                         {
                                                                                             <span class="nc-badge">NC</span>
                                                                                         }
                                                                                     }
                                                                                     else
                                                                                     {
-                                                                                        @renner.CompetitorName
+                                                                                        @($"{renner.FirstName} {renner.LastName} ")
                                                                                         @if (renner.IsNationalChampion)
                                                                                         {
                                                                                             <span class="nc-label">NC</span>
                                                                                         }
                                                                                      }
                                                                                 </div>
-                                                                                <div class="col-md-4 text-muted">@renner.TeamName</div>
+                                                                                @* <div class="col-md-4 text-muted">@renner.TeamName</div> *@
                                                                                 <div class="col-md-2 text-end">@renner.Punten</div>
                                                                             </div>
                                                                         </li>

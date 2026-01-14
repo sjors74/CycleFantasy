@@ -13,7 +13,8 @@ namespace WebApp.Pages
     {
         private readonly HttpClient _httpClient;
         private readonly IConfiguration _configuration;
-
+        private readonly ILogger<SelectieModel> _logger;
+        
         public List<TeamDto> AllTeams { get; set; } = [];
         public List<TeamDto> VisibleTeams { get; set; } = [];
 
@@ -33,10 +34,11 @@ namespace WebApp.Pages
 
         private const string SessionKey = "SelectedRiders";
 
-        public SelectieModel(HttpClient httpClient, IConfiguration configuration)
+        public SelectieModel(HttpClient httpClient, IConfiguration configuration, ILogger<SelectieModel> logger)
         {
             _httpClient = httpClient;
             _configuration = configuration;
+            _logger = logger;
         }
 
         public void OnGet()
@@ -67,7 +69,7 @@ namespace WebApp.Pages
                     currentSelection.Add(id);
             }
 
-            var visibleRiderIds = VisibleTeams.SelectMany(t => t.Renners.Select(r => r.CompetitorId)).ToList();
+            var visibleRiderIds = VisibleTeams.SelectMany(t => t.Renners.Select(r => r.CompetitorInTeamId)).ToList();
             currentSelection.RemoveAll(id => visibleRiderIds.Contains(id) && !SelectedRiders.Contains(id));
 
             SaveSelectedRidersToSession(currentSelection);
@@ -176,25 +178,49 @@ namespace WebApp.Pages
             return savedIds;
         }
 
-        public Task<IActionResult> OnPostLaadMeerRennersAsync(int teamId, int eventId, List<int> alreadyLoadedIds)
+        public async Task<IActionResult> OnPostLaadMeerRennersAsync(int teamId, int eventId, List<int> alreadyLoadedIds)
         {
             var competitors = new List<CompetitorDto>();
             var apiBaseUrl = _configuration["ClientSettings:ApiBaseUrl"];
-            var response = _httpClient.GetAsync($"{apiBaseUrl}/api/event/team/{teamId}/teams-with-more-renners").Result;
-            if (response.IsSuccessStatusCode)
+            try
             {
-                var json = response.Content.ReadAsStringAsync().Result;
+                var response = await _httpClient.GetAsync($"{apiBaseUrl}/api/event/team/{teamId}/teams-with-more-renners");
+                if(!response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    _logger.LogError("API call failed. StatusCode: {StatusCode}, Content: {Content}",
+                         response.StatusCode, content);
+
+                    return StatusCode((int)response.StatusCode, "Fout bij ophalen van renners.");
+                }
+                
+                var json = await response.Content.ReadAsStringAsync();
                 competitors = JsonSerializer.Deserialize<List<CompetitorDto>>(json, new JsonSerializerOptions
                 {
-                    PropertyNameCaseInsensitive = true
+                        PropertyNameCaseInsensitive = true
                 }) ?? new List<CompetitorDto>();
+            }
+            catch(HttpRequestException httpEx)
+            {
+                _logger.LogError(httpEx, "HTTP request naar API mislukt voor teamId {TeamId}", teamId);
+                return StatusCode(503, "Kan de API niet bereiken.");
+            }
+            catch (JsonException jsonEx)
+            {
+                _logger.LogError(jsonEx, "Deserialisatie van CompetitorDto mislukt.");
+                return StatusCode(500, "Fout bij verwerken van renners data.");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Onverwachte fout bij ophalen van renners voor teamId {TeamId}", teamId);
+                return StatusCode(500, "Onverwachte fout opgetreden.");
             }
 
             var filteredCompetitors = competitors
-                .Where(dto => !alreadyLoadedIds.Contains(dto.CompetitorId))
+                .Where(dto => !alreadyLoadedIds.Contains(dto.CompetitorInTeamId))
                 .ToList();
            
-            return Task.FromResult<IActionResult>(new JsonResult(filteredCompetitors));
+            return new JsonResult(filteredCompetitors);
         }
     }
 }

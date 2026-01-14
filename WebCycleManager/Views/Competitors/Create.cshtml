@@ -1,56 +1,99 @@
-﻿@model Domain.Models.Competitor
+﻿    @model CreateCompetitorViewModel
 
-@{
-    ViewData["Title"] = "Create";
-}
+    <h2>Nieuwe renner of toevoegen aan team </h2>
+    <hr />
+    <div class="row">
+        <div class="col-md-4">
+            <form asp-action="Create" method="post">
+                @Html.AntiForgeryToken()
+                <div class="form-group">
+                    <label for=" competitorSearch">Renner zoeken</label>
+                    <input type="text" id="competitorSearch" class="form-control" placeholder="Typ naam..." />
+                    <input type="hidden" asp-for="CompetitorId" id="CompetitorId" />
+                </div>
+                <div id="competitorInfo" style="margin-top:10px; display:none;">
+                    <p>Team: <span id="teamName"></span></p>
+                    <p>Land: <span id="countryName"></span></p>
+                    <p>PCS-naam: <span id="pcsName"></span></p>
+                </div>
 
-<h1>Maak</h1>
+                <h4>Nieuwe renner gegevens (alleen invullen indien nieuwe</h4>
+                <div class="form-group">
+                    <label asp-for="FirstName" class="control-label"></label>
+                    <input asp-for="FirstName" class="form-control" />
+                </div>
+                <div class="form-group">
+                    <label asp-for="LastName" class="control-label"></label>
+                    <input asp-for="LastName" class="form-control" />
+                </div>
+                <div class="form-group">
+                    <label asp-for="PcsName" class="control-label"></label>
+                    <input asp-for="PcsName" class="form-control" />
+                </div>
+                <div class="form-group">
+                    <label asp-for="CountryId" class="control-label"></label>
+                    <select asp-for="CountryId" class="form-control" asp-items="ViewBag.CountryId"></select>
+                </div>
 
-<h4>Renner</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <form asp-action="Create">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="form-group">
-                <label asp-for="FirstName" class="control-label"></label>
-                <input asp-for="FirstName" class="form-control" />
-                <span asp-validation-for="FirstName" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="LastName" class="control-label"></label>
-                <input asp-for="LastName" class="form-control" />
-                <span asp-validation-for="LastName" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="PcsName" class="control-label"></label>
-                <input asp-for="PcsName" class="form-control" />
-                <span asp-validation-for="PcsName" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <input asp-for="IsNationalChampion" class="form-check-input" />
-                <label asp-for="IsNationalChampion" class="form-check-label"></label>
-                <span asp-validation-for="IsNationalChampion" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="TeamId" class="control-label"></label>
-                <select asp-for="TeamId" class ="form-control" asp-items="ViewBag.TeamId"></select>
-            </div>
-            <div class="form-group">
-                <label asp-for="CountryId" class="control-label"></label>
-                <select asp-for="CountryId" class="form-control" asp-items="ViewBag.CountryId"></select>
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Maak" class="btn btn-primary" />
-            </div>
-        </form>
+                <h4>Team en jaar</h4>
+                <div class="form-group">
+                    <label asp-for="TeamId" class="control-label"></label>
+                    <select asp-for="TeamId" class="form-control" asp-items="ViewBag.TeamId"></select>
+                </div>
+                <div class="form-group">
+                    <label asp-for="Year"></label>
+                    <input asp-for="Year" class="form-control" />
+                </div>
+                 <div class="form-group">
+                    <input asp-for="IsNationalChampion" class="form-check-input" />
+                    <label asp-for="IsNationalChampion" class="form-check-label"></label>
+                </div>
+                <div class="form-group">
+                    <input type="submit" value="Maak" class="btn btn-primary" />
+                </div>
+            </form>
+        </div>
     </div>
-</div>
 
-<div>
-    <a asp-action="Index">Terug naar de lijst</a>
-</div>
+    <div>
+        <a asp-action="Index">Terug naar de lijst</a>
+    </div>
 
-@section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
-}
+    @section Scripts {
+        @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+
+    <script>
+        $(function () {
+            $("#competitorSearch").autocomplete({
+                source: '/Competitors/SearchCompetitors',
+                minLength: 2,
+                select: function (event, ui) {
+                    $("#CompetitorId").val(ui.item.id);
+
+                    const selectYear = $("#Year").val();
+
+                    // AJAX call voor extra info
+                    $.ajax({
+                        url: '/Competitors/GetCompetitorInfo',
+                        data: { id: ui.item.id, year: selectYear },
+                        success: function (data) {
+                            $("#teamName").text(data.teamName);
+                            $("#countryName").text(data.country);
+                            $("#pcsName").text(data.pcsName);
+                            $("#competitorInfo").show();
+                        }
+                    });
+                }
+            });
+
+            // voorkom form submit bij Enter in het zoekveld
+            $("#competitorSearch").on("keydown", function (e) {
+                if (e.key === "Enter") {
+                    e.preventDefault();
+                }
+            });
+        });
+
+    </script>
+
+    }

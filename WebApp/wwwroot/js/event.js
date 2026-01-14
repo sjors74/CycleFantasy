@@ -177,10 +177,16 @@ document.addEventListener('DOMContentLoaded', function () {
         const fragment = document.createDocumentFragment();
 
         etappes.forEach((etappe) => {
+            const stage = etappe.stageNumber ?? "";
+            const formatted = stage.charAt(0).toUpperCase() + stage.charAt(1).toLowerCase();
             const step = document.createElement("div");
             step.classList.add("step");
             if (etappe.noScore) {
                 step.classList.add("noscore");
+                const link = document.createElement("a");
+                link.href = `/Etappe?nummer=${etappe.stageNumber}&stageId=${etappe.stageId}`;
+                link.textContent = formatted;
+                step.appendChild(link);
             }
 
             if (etappe.hasResult) {
@@ -188,10 +194,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 const link = document.createElement("a");
                 link.href = `/Etappe?nummer=${etappe.stageNumber}&stageId=${etappe.stageId}`;
-                link.textContent = etappe.stageNumber;
+                link.textContent = formatted;
                 step.appendChild(link);
             } else {
-                step.textContent = etappe.stageNumber;
+                if (!etappe.noScore) {
+                    step.textContent = formatted;
+                }
             }
             fragment.appendChild(step);
         });
@@ -267,7 +275,10 @@ document.addEventListener('DOMContentLoaded', function () {
                     </div>
                 </div>
 
-                <div class="text-end ms-2" style="min-width: 50px;">
+                <div class="text-end ms-2" style="min-width: 70px; display: flex; justify-content: flex-end; align-items: center; gap: 0.25rem;">
+                    ${pick.latestPoints > 0
+                                ? `<span class="fs-7 text-success">(+${pick.latestPoints})</span>`
+                                : ''}
                     <span class="fw-bold fs-5">${pick.points}</span>
                 </div>
             </div>

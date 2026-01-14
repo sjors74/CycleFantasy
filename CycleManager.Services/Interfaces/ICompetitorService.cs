@@ -1,4 +1,7 @@
-﻿using Domain.Models;
+﻿using CycleManager.Domain.Dto;
+using CycleManager.Domain.Models;
+using Domain.Dto;
+using Domain.Models;
 
 namespace CycleManager.Services.Interfaces
 {
@@ -22,7 +25,7 @@ namespace CycleManager.Services.Interfaces
         /// Get all competitors
         /// </summary>
         /// <returns></returns>
-        IQueryable<Competitor> GetAllCompetitors();
+        Task<List<CompetitorDto>> GetAllCompetitors(int year);
 
         /// <summary>
         /// Create a new competitor and save it
@@ -31,6 +34,12 @@ namespace CycleManager.Services.Interfaces
         /// <returns></returns>
         Task Create(Competitor entity);
 
+        /// <summary>
+        /// Create a new competitorInTeam and save it
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <returns></returns>
+        Task CreateCompetitorInTeam(CompetitorInTeam entity);
         /// <summary>
         /// Update and save a competitor
         /// </summary>
@@ -50,6 +59,15 @@ namespace CycleManager.Services.Interfaces
         /// </summary>
         /// <param name="teamId"></param>
         /// <returns></returns>
-        Task<IEnumerable<Competitor>> GetByTeamId(int teamId);
+        Task<IEnumerable<CompetitorInTeamDto>> GetByTeamId(int teamId, int year);
+        Task<List<int>> GetAvailableYears();
+
+        Task<Competitor?> GetCompetitorByName(string firstName, string lastName, int countryId);
+        Task<bool> CheckCompetitorInTeam(int competitorId, int teamId, int year);
+        IQueryable<Competitor> GetCompetitorsByTerm(string term);
+        Task UpdateCompetitorWithTeam(CompetitorEditDto dto);
+        Task<CompetitorEditDto> GetCompetitorForEdit(int competitorId);
+
+        Task<List<CompetitorInTeam>> GetCompetitorInTeamsByIdsAsync(List<int> ids);
     }
 }

@@ -1,4 +1,6 @@
-﻿using CycleManager.Domain.Interfaces;
+﻿using AutoMapper;
+using CycleManager.Domain.Dto;
+using CycleManager.Domain.Interfaces;
 using Domain.Context;
 using Domain.Models;
 using Microsoft.EntityFrameworkCore;
@@ -7,15 +9,18 @@ namespace DataAccessEF.TypeRepository
 {
     public class GameCompetitorInEventRepository : GenericRepository<GameCompetitorEvent>, IGameCompetitorInEventRepository
     {
-        public GameCompetitorInEventRepository(ApplicationDbContext context) : base(context) 
+        private readonly IMapper _mapper;
+        public GameCompetitorInEventRepository(ApplicationDbContext context, IMapper mapper) : base(context) 
         {
+            _mapper = mapper;
         }
 
-        public async Task<GameCompetitorEvent> CreateGameCompetitorEventAsync(GameCompetitorEvent gameCompetitorEvent)
+        public async Task<GameCompetitorEvent?> CreateGameCompetitorEventAsync(DeelnemerCreateDto dto)
         {
-            await context.GameCompetitorsEvent.AddAsync(gameCompetitorEvent);
+            var entity = _mapper.Map<GameCompetitorEvent>(dto);
+            await context.GameCompetitorsEvent.AddAsync(entity);
             await context.SaveChangesAsync();
-            return gameCompetitorEvent;
+            return entity;
         }
 
         public async Task<IEnumerable<GameCompetitorEvent>> GetAllGameCompetitorsInEventByEventId(int eventId)
@@ -24,6 +29,16 @@ namespace DataAccessEF.TypeRepository
                 .Include(gce => gce.User)
                 .Where(c => c.EventId.Equals(eventId));
             return await gameCompetitorsInEvent.ToListAsync();
+        }
+
+        public async Task<GameCompetitorEvent?> GetGameCompetitorInEventById(int id)
+        {
+
+            return await context.GameCompetitorsEvent
+                .AsNoTracking()
+                .Include(e => e.Event)
+                .Include(u => u.User)
+                .FirstOrDefaultAsync(gce => gce.Id == id);
         }
 
         public async Task<List<Event>> GetEventsByUserId(string userId)
@@ -35,11 +50,12 @@ namespace DataAccessEF.TypeRepository
                 .Include(e => e.GameCompetitorEvents.Where(gce => gce.UserId == userId))
                     .ThenInclude(gce => gce.Renners)
                         .ThenInclude(p => p.CompetitorsInEvent)
-                            .ThenInclude(ci => ci.Competitor)
-                                .ThenInclude(c => c.Team)
+                            .ThenInclude(c => c.CompetitorInTeam)
+                                    .ThenInclude(cit => cit.Team)
                 .Include(e => e.GameCompetitorEvents.Where(gce => gce.UserId == userId))
                     .ThenInclude(gce => gce.Renners)
                         .ThenInclude(p => p.CompetitorsInEvent)
+                            .ThenInclude(p => p.CompetitorInTeam)
                             .ThenInclude(ci => ci.Competitor)
                                 .ThenInclude(c => c.Country)
                 .Include(e => e.GameCompetitorEvents.Where(gce => gce.UserId == userId))
@@ -47,7 +63,6 @@ namespace DataAccessEF.TypeRepository
                         .ThenInclude(p => p.CompetitorsInEvent)
                             .ThenInclude(ci => ci.Event)
                 .ToListAsync();
-
 
 
             return events;

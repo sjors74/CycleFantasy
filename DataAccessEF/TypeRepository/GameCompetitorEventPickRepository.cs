@@ -20,7 +20,8 @@ namespace DataAccessEF.TypeRepository
         {
             var picks = context.GameCompetitorEventPicks
                 .Include(c => c.CompetitorsInEvent)
-                    .ThenInclude(a => a.Competitor)
+                    .ThenInclude(c => c.CompetitorInTeam)
+                       .ThenInclude(a => a.Competitor)
                 .Include(g => g.GameCompetitorEvent)
                     .ThenInclude(b => b.User)
                 .Where(c => c.CompetitorsInEvent.EventId.Equals(eventId));
@@ -35,25 +36,30 @@ namespace DataAccessEF.TypeRepository
         /// <returns></returns>
         public async Task<IEnumerable<GameCompetitorEventPick>> GetCompetitorEventPicksById(int id)
         {
-            var picks =  await context.GameCompetitorEventPicks
-                 .Include(g => g.GameCompetitorEvent)
+            var picks = await context.GameCompetitorEventPicks
+                .Include(g => g.GameCompetitorEvent)
                     .ThenInclude(b => b.User)
-                 .Include(c => c.CompetitorsInEvent)
-                    .ThenInclude(c => c.Competitor)
-                         .ThenInclude(c => c.Team)
-                 .Include(c => c.CompetitorsInEvent)
-                    .ThenInclude(c => c.Competitor)
-                         .ThenInclude(c => c.Country)
-                 .Include(c => c.CompetitorsInEvent)
-                    .ThenInclude(e => e.Event)
-                 .Where(c => c.GameCompetitorEvent.Id.Equals(id))
-                 .OrderBy(c => c.CompetitorsInEvent.EventNumber)
-                 .ToListAsync();
+                .Include(c => c.CompetitorsInEvent)
+                    .ThenInclude(c => c.CompetitorInTeam)
+                        .ThenInclude(cie => cie.Competitor)
+                            .ThenInclude(c => c.Country)
+                .Include(c => c.CompetitorsInEvent)
+                        .ThenInclude(c => c.CompetitorInTeam)
+                            .ThenInclude(cit => cit.Team)
+                .Include(c => c.CompetitorsInEvent)
+                    .ThenInclude(cie => cie.Event)
+                .Where(c => c.GameCompetitorEvent.Id == id)
+                .OrderBy(c => c.CompetitorsInEvent.EventNumber)
+                .ToListAsync();
+
             return picks;
         }
 
         public async Task CreateGamePicksAsync(List<GameCompetitorEventPick> picks)
         {
+            if(picks == null || !picks.Any())
+                return;
+
             var gameCompetitorEventId = picks.First().GameCompetitorEventId;
 
             // Maak een HashSet van actuele picks (vanuit frontend)
@@ -83,15 +89,37 @@ namespace DataAccessEF.TypeRepository
             // Pas wijzigingen toe
             context.GameCompetitorEventPicks.RemoveRange(toDelete);
             await context.GameCompetitorEventPicks.AddRangeAsync(newPicks);
-            
+
             try
             {
                 var changes = await context.SaveChangesAsync();
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Console.WriteLine($"Er is een fout opgetreden: {ex.Message}");
             }
+        }
+
+        public async Task RemovePickFromEvent(int id)
+        {
+            var pick = await context.GameCompetitorEventPicks.Where(p => p.Id == id).FirstOrDefaultAsync();
+            if (pick != null)
+            {
+                context.GameCompetitorEventPicks.Remove(pick);
+            }
+        }
+
+        public async Task DeleteGameCompetitorEventAsync(int id)
+        {
+            var entity = await context.GameCompetitorsEvent
+            .Include(e => e.Renners)
+            .FirstOrDefaultAsync(e => e.Id == id);
+
+            if (entity == null)
+                return;
+
+            context.GameCompetitorEventPicks.RemoveRange(entity.Renners);
+            context.GameCompetitorsEvent.Remove(entity);
         }
     }
 }

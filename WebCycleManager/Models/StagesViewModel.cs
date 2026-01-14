@@ -40,7 +40,13 @@ namespace WebCycleManager.Models
                 return $"Etappe {StageName}: {StartLocation}-{FinishLocation}";
             }
         }
-
+        [DisplayName("Geen uitslag")]
         public bool NoScore { get; set; }
+        [DisplayName("Opmerking")]
+        public string? NoScoreDescription { get; set; }
+        public DateOnly EventStartDate { get; set; }
+        public DateOnly EventEndDate { get; set; }
+        public string StageDateMin => EventStartDate.ToString("yyyy-MM-dd");
+        public string StageDateMax => EventEndDate.ToString("yyyy-MM-dd");
     }
 }

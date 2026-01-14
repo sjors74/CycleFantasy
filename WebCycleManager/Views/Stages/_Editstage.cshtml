@@ -1,0 +1,25 @@
+﻿@model StageViewModel
+
+<form id="editStageForm" class="row g-2">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="Id" value="@Model.StageId" />
+
+    <div class="col-md-2">
+        <input type="text" name="StageName" class="form-control" value="@Model.StageName" placeholder="Naam" />
+    </div>
+    <div class="col-md-2">
+        <input type="date" name="StageDate" class="form-control" value="@Model.StageDate.ToString("yyyy-MM-dd")" />
+    </div>
+    <div class="col-md-2">
+        <input type="text" name="StageOrder" class="form-control" value="@Model.StageOrder" placeholder="Volgorde" />
+    </div>
+    <div class="col-md-2">
+        <input type="text" name="StartLocation" class="form-control" value="@Model.StartLocation" placeholder="Van" />
+    </div>
+    <div class="col-md-2">
+        <input type="text" name="FinishLocation" class="form-control" value="@Model.FinishLocation" placeholder="Naar" />
+    </div>
+    <div class="col-md-2">
+        <button type="submit" class="btn btn-primary w-100">Opslaan</button>
+    </div>
+</form>

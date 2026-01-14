@@ -3,7 +3,6 @@ using CycleManager.Domain.Dto;
 using CycleManager.Services;
 using CycleManager.Services.Interfaces;
 using Domain.Dto;
-using Domain.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace WebCycle.Controllers
@@ -12,20 +11,15 @@ namespace WebCycle.Controllers
     [ApiController]
     public class EventController : ControllerBase
     {
-        private readonly IEventRepository eventRepository;
-        private readonly IScoreRepository scoreRepository;
-        private readonly IEventService eventService;
+        private readonly IEventService _eventService;
         private readonly IResultService _resultService;
         private readonly IGameCompetitorInEventService _deelnemerService;
         private readonly ITeamService _teamService;
         private readonly IMapper _mapper;
 
-        public EventController(IEventRepository eventRepository, IScoreRepository scoreRepository, IEventService eventService, IGameCompetitorInEventService deelnemerService, ITeamService teamService, IResultService resultService, IMapper mapper)
+        public EventController(IEventService eventService, IGameCompetitorInEventService deelnemerService, ITeamService teamService, IResultService resultService, IMapper mapper)
         {
-            this.eventRepository = eventRepository;
-            this.scoreRepository = scoreRepository;
-            this.eventService = eventService;
-
+            _eventService = eventService;
             _deelnemerService = deelnemerService;
             _resultService = resultService;
             _teamService = teamService;
@@ -35,26 +29,31 @@ namespace WebCycle.Controllers
         [HttpGet(Name = "GetActiveEvent")]
         public async Task<IActionResult> GetEvent()
         {
-            var events = await eventRepository.GetActiveEvents();
+            var events = await _eventService.GetActiveEvents();
             var eventResponse = _mapper.Map<List<EventDto>>(events);
 
             foreach(var cEvent in eventResponse)
             {
                 if(cEvent.Deelnemers != null)
                 {
-                    var deelnemerScores = await scoreRepository.GetScoresByEventIdAsync(cEvent.EventId);
+                    var totalScores = await _resultService.GetTotalScoresByEventIdAsync(cEvent.EventId);
+
+                    var stageScores = await _resultService.GetScoresByEventIdAsync(cEvent.EventId);
 
                     foreach(var deelnemer in cEvent.Deelnemers)
                     {
-                        var scoresForDeelnemer = deelnemerScores
+
+
+                        var total = totalScores
+                            .FirstOrDefault(s => s.GameCompetitorEventId == deelnemer.Id);
+
+                        var lastStageScore = stageScores
                             .Where(s => s.GameCompetitorEventId == deelnemer.Id)
-                            .ToList();
-
-                        deelnemer.Punten = scoresForDeelnemer.Sum(s => s.TotalScore);
-
-                        deelnemer.LaatsteScore = scoresForDeelnemer
                             .OrderByDescending(s => s.StageId)
-                            .FirstOrDefault()?.TotalScore ?? 0;
+                            .FirstOrDefault();
+
+                        deelnemer.Punten = total != null ? total.TotalScore : 0;
+                        deelnemer.LaatsteScore = lastStageScore?.Score ?? 0;
                     }
                 }
             }
@@ -65,7 +64,11 @@ namespace WebCycle.Controllers
         [HttpGet("{id}", Name = "GetEventById")]
         public async Task<IActionResult> GetEvent(int id)
         {
-            var e = await eventService.GetEventById(id);
+            var e = await _eventService.GetEventById(id);
+            if(e == null)
+            {
+                return NotFound();
+            }
             var eventResponse = _mapper.Map<EventDto>(e);
 
             foreach (var deelnemer in eventResponse.Deelnemers)
@@ -89,15 +92,15 @@ namespace WebCycle.Controllers
         [HttpGet("{id}/stages")]
         public async Task<IActionResult> GetStagesByEventId(int id)
         {
-            var stages = await eventService.GetStagesWithResultsForEvent(id);
+            var stages = await _eventService.GetStagesWithResultsForEvent(id);
             return Ok(stages);
         }
 
         [HttpGet("{userid}/user")]
         public async Task<IActionResult> GetEventByUserId(string userid)
         {
-            var allEvents = await eventService.GetAllEvents();
-            var allEventsForUser = await eventService.GetEventsByUserId(userid);
+            var allEvents = await _eventService.GetAllEvents();
+            var allEventsForUser = await _eventService.GetEventsByUserId(userid);
             var nu = DateTime.UtcNow;
 
             var active = allEventsForUser
@@ -113,13 +116,10 @@ namespace WebCycle.Controllers
                 .Where(e => e.EndDate < nu)
                 .ToList();
 
-            var activeDtos = _mapper.Map<List<EventForUserDto>>(active);
-            var historicDtos = _mapper.Map<List<EventForUserDto>>(historic);
-            var futureWithUserDtos = _mapper.Map<List<EventForUserDto>>(futureWithUser);
             var futureAllDtos = _mapper.Map<List<EventForUserDto>>(future);
             var userIds = new HashSet<int>(futureWithUser.Select(e => e.EventId));
 
-            futureWithUserDtos.ForEach(e =>
+            futureWithUser.ForEach(e =>
             {
                 e.UserId = userid;
                 e.IsIngeschreven = true;
@@ -135,18 +135,18 @@ namespace WebCycle.Controllers
                 e.IsIngeschreven = false;
             });
 
-            var futureDtos = futureWithUserDtos
+            var futureDtos = futureWithUser
                 .Concat(notIngeschrevenDtos)
                 .ToList();
 
-            activeDtos.ForEach(e => e.UserId = userid);
-            historicDtos.ForEach(e => e.UserId = userid);
+            active.ForEach(e => e.UserId = userid);
+            historic.ForEach(e => e.UserId = userid);
 
             var result = new EventViewDto
             {
-                ActieveEvenementen = activeDtos,
+                ActieveEvenementen = active,
                 ToekomstigeEvenementen = futureDtos,
-                HistorischeEvenementen = historicDtos
+                HistorischeEvenementen = historic
             };
 
             return Ok(result);
@@ -155,13 +155,13 @@ namespace WebCycle.Controllers
         [HttpGet("{id}/teams-with-renners")]
         public async Task<ActionResult<IEnumerable<TeamDto>>> GetTeamsWithRennersForEvent(int id)
         {
-            var eventExists = await eventService.GetEventById(id);
+            var eventExists = await _eventService.GetEventById(id);
             if (eventExists == null)
             {
                 return NotFound();
             }
 
-            var teams = await eventService.GetTeamsForEvent(id);
+            var teams = await _eventService.GetTeamsForEvent(id);
 
             if (teams == null)
             {
@@ -174,14 +174,25 @@ namespace WebCycle.Controllers
         [HttpGet("team/{teamId}/teams-with-more-renners")]
         public async Task<ActionResult<IEnumerable<CompetitorDto>>> GetTeamsWithRennersFromTeam(int teamId)
         {
-            var team = await _teamService.GetTeamById(teamId);
+            var year = DateTime.Now.Year;
+            var team = await _teamService.GetTeamForCurrentYear(teamId, year);
 
             if (team == null)
             {
                 return NotFound();
             }
 
-            var competitors = team.Competitors;
+            // Haal competitors via CompetitorInTeams
+            var competitors = team.CompetitorInTeams
+                .Where(cit => cit.Year == year)
+                .Select(cit => new CompetitorInSelectieDto
+                {
+                    CompetitorInTeamId = cit.Id,
+                    FirstName = cit.Competitor.FirstName,
+                    LastName = cit.Competitor.LastName,
+                    PcsName = cit.Competitor.PcsName
+                }).ToList();
+
             return Ok(competitors);
         }
 
@@ -195,7 +206,7 @@ namespace WebCycle.Controllers
 
             try
             {
-                await eventService.SaveSelectie(dto);
+                await _eventService.SaveSelectie(dto);
             }
             catch
             {
@@ -212,7 +223,7 @@ namespace WebCycle.Controllers
                 return BadRequest("Deelnemer dto is null.");
             }
 
-            var result = await eventService.CreatePoolAsync(dto);
+            var result = await _eventService.CreatePoolAsync(dto);
 
             if (result != null && result.Id > 0)
             {
@@ -227,7 +238,7 @@ namespace WebCycle.Controllers
         {
             try
             {
-                await eventService.DeletePoolAsync(id);
+                await _eventService.DeletePoolAsync(id);
                 return NoContent();
             }
             catch (Exception ex)
@@ -239,7 +250,7 @@ namespace WebCycle.Controllers
         [HttpGet("{id}/deelnemers")]
         public async Task<int> GetDeelnemersAantal(int id)
         {
-            return await eventService.GetAantalDeelnemers(id);
+            return await _eventService.GetAantalDeelnemers(id);
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using CycleManager.Services;
+﻿using CycleManager.Domain.Models;
+using CycleManager.Services;
 using CycleManager.Services.Interfaces;
 using Domain.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -11,14 +12,17 @@ namespace WebCycleManager.Controllers
     public class EventsController : Controller
     {
         private IEventService _eventService;
+        private ITeamService _teamService;
         private IStageService _stageService;
         private IResultService _resultService;
         private IConfigurationService _configurationService;
 
-        public EventsController(IEventService eventService, IStageService stageService, IResultService resultService, 
+        public EventsController(IEventService eventService, ITeamService teamService,
+            IStageService stageService, IResultService resultService, 
             IConfigurationService configurationService)
         {
             _eventService = eventService;
+            _teamService = teamService;
             _stageService = stageService;
             _resultService = resultService;
             _configurationService = configurationService;
@@ -62,7 +66,7 @@ namespace WebCycleManager.Controllers
         // POST: Events/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Name,Code,Year,StartDate,EndDate,Slogan,CountryCode,ColorName,ConfigurationId,IsActive,ShowPodium")] EventItemViewModel @event)
+        public async Task<IActionResult> Create(EventItemViewModel @event)
         {
             if (ModelState.IsValid)
             {
@@ -95,36 +99,35 @@ namespace WebCycleManager.Controllers
         // POST: Events/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Name,Code,Year,StartDate,EndDate,Slogan,CountryCode,ColorName,ConfigurationId,IsActive,ShowPodium")] EventItemViewModel @event)
+        public async Task<IActionResult> Edit(int? id, EventItemViewModel @event)
         {
-            if (id != @event.Id)
+            if (id == null || id <= 0)
             {
-                return NotFound();
+                ModelState.AddModelError("Id", "Ongeldig of ontbrekend ID.");
+                return View(@event ?? new EventItemViewModel());
             }
 
-            if (ModelState.IsValid)
+            if (@event == null || id != @event.Id)
             {
-                try
-                {
-                    var e = await CreateFromViewModel(@event);
+                ModelState.AddModelError("Id", "Het opgegeven ID komt niet overeen met het model.");
+                return View(@event ?? new EventItemViewModel());
+            }
 
-                    await _eventService.Update(e);
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (_eventService.GetEventById(@event.Id) == null)
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
+            if (!ModelState.IsValid)
+                return View(@event);
+
+            try
+            {
+                var e = await CreateFromViewModel(@event);
+                await _eventService.Update(e);
                 return RedirectToAction(nameof(Index));
             }
-
-            return View(@event);
+            catch (DbUpdateConcurrencyException)
+            {
+                if (await _eventService.GetEventById(@event.Id) == null)
+                    return NotFound();
+                throw;
+            }
         }
 
         // GET: Events/Delete/5
@@ -153,10 +156,102 @@ namespace WebCycleManager.Controllers
             var @event = await _eventService.GetEventById(id);
             if (@event != null)
             {
-                _eventService.Delete(@event);
+                await _eventService.Delete(@event);
             }
             
             return RedirectToAction(nameof(Index));
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ManageTeams(int id)
+        {
+            var eventEntity = await _eventService.GetEventById(id);
+            if(eventEntity == null) return NotFound();
+
+            var allTeams = await _teamService.GetAllTeams();
+
+            var model = new EventTeamsViewModel
+            {
+                EventId = eventEntity.EventId,
+                EventName = eventEntity.EventName,
+                Teams = allTeams.Select(t => new TeamSelection
+                {
+                    TeamId = t.TeamId,
+                    TeamName = t.CurrentTeamName,
+                    IsSelected = eventEntity.EventTeams.Any(et => et.TeamId == t.TeamId)
+                })
+                .OrderByDescending(t => t.IsSelected)
+                .ThenBy(t => t.TeamName)
+                .ToList()
+            };
+
+            return PartialView("_ManageTeamsPartial",model);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ManageTeams(EventTeamsViewModel vm)
+        {
+            if (!ModelState.IsValid)
+            {
+                return Json(new { success = false, message = "Er is een fout opgetreden." });
+            }
+            var eventEntity = await _eventService.GetEventById(vm.EventId);
+            if (eventEntity == null)
+            {
+                return Json(new { success = false, message = "Evenement niet gevonden" });
+            }
+
+            var currentTeamIds = eventEntity.EventTeams
+                .Select(et => et.TeamId)
+                .ToList();
+
+            var selectedTeamIds = vm.Teams
+                .Where(t => t.IsSelected)
+                .Select(t => t.TeamId)
+                .ToList();
+
+            var teamsToAdd = selectedTeamIds.Except(currentTeamIds);
+            var teamsToRemove = currentTeamIds.Except(selectedTeamIds);
+
+            foreach (var teamId in teamsToAdd)
+            {
+                await _eventService.AddTeamToEvent(vm.EventId, teamId);
+            }
+
+            foreach(var teamId in teamsToRemove)
+            {
+                await _eventService.RemoveTeamFromEvent(vm.EventId, teamId);
+            }
+
+            return Json(new
+            {
+                success = true,
+                redirectUrl = Url.Action("Edit", new { id = vm.EventId })
+            });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ManageStages(int eventId)
+        {
+            var eventEntity = await _eventService.GetEventById(eventId);
+            if (eventEntity == null) return NotFound();
+
+            var stages = await _stageService.GetStagesByEventId(eventId);
+
+            var model = new ManageStageViewModel
+            {
+                EventStages = new EventStagesViewModel
+                {
+                    EventId = eventId,
+                    EventName = eventEntity.EventName,
+                    EventStartDate = eventEntity.StartDate ?? DateTime.Today,
+                    EventEndDate = eventEntity.EndDate ?? DateTime.Today.AddDays(1),
+                    Stages = stages
+                },
+                NewStage = new StageCreateViewModel { EventId = eventId }
+            };
+
+            return PartialView("_ManageStagesPartial", model);
         }
 
         public EventItemViewModel CreateViewModel(Event @event)
@@ -174,7 +269,9 @@ namespace WebCycleManager.Controllers
                 CountryCode = @event.CountryCode,
                 IsActive = @event.IsActive,
                 ShowPodium = @event.ShowPodium,
-                ConfigurationId = @event.ConfigurationId
+                ConfigurationId = @event.ConfigurationId,
+                StagesInEvent = @event.Stages?.Count ?? 0,
+                SelectedTeamsCount = @event.EventTeams?.Count ?? 0
             };
             return vm;
         }

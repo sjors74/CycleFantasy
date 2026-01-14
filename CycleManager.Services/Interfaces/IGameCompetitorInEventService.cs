@@ -1,9 +1,6 @@
-﻿using Domain.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using CycleManager.Domain.Dto;
+using Domain.Models;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace CycleManager.Services.Interfaces
 {
@@ -14,7 +11,7 @@ namespace CycleManager.Services.Interfaces
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
-        Task<GameCompetitorEvent> GetCompetitorEventById(int id);
+        Task<GameCompetitorEvent?> GetGameCompetitorEventById(int id);
         
         /// <summary>
         /// Get a list of all gamecompetitors in an event
@@ -35,7 +32,7 @@ namespace CycleManager.Services.Interfaces
         /// </summary>
         /// <param name="entity"></param>
         /// <returns></returns>
-        Task Update(GameCompetitorEvent entity);
+        Task UpdateAsync(DeelnemerEditDto entity);
         
         /// <summary>
         /// Delete a game competitor for an event and save it
@@ -66,5 +63,14 @@ namespace CycleManager.Services.Interfaces
         Task<CompetitorsInEvent> GetCompetitorInEventById(int id);
 
         Task<IEnumerable<int>> GetAllPicksAsCompetitorIds(int id);
+
+        Task<GameCompetitorEvent> CreateGameCompetitorEventAsync(DeelnemerCreateDto dto);
+
+        Task RemovePickFromEvent(int id);
+        Task AddPicks(List<GameCompetitorEventPick> picks);
+
+        Task DeleteGameCompetitorEventAsync(int id);
+
+        Task<IEnumerable<SelectListItem>> GetDropdownListAsync(int eventId);
     }
 }

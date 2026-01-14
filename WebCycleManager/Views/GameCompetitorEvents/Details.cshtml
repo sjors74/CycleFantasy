@@ -1,120 +1,120 @@
 ﻿@model GameCompetitorInEventViewModel
 <form method="post" asp-controller="GameCompetitorEvents" asp-action="Details">
-<div>
-    <h4>Deelnemer @Model.TeamName (@Model.Score punten)</h4>
-    <hr />
-    <table class="table">
-        <thead>
-            <tr>
-                <th>
-                   naam
-                </th>
-                <th>
-                    achternaam
-                </th>
-                <th>
-                    score
-                </th>
-                <th>
-                    uitgevallen
-                </th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-            @if(Model.CompetitorsInEvent != null)
-            {
-                for(int i=0; i < Model.NumberOfPicks; i++)
+    <input type="hidden" name="EventId" value="@Model.EventId" />
+    <input type="hidden" name="GameCompetitorInEventId" value="@Model.GameCompetitorInEventId" />
+    <div>
+        <h4>@Model.TeamName (@Model.Score punten)</h4>
+        <hr />
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Naam</th>
+                    <th>Achternaam</th>
+                    <th>Score</th>
+                    <th>Status</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (int i = 0; i < Model.CompetitorsInEvent.Count; i++)
                 {
-                    <tr>
+                    var pick = Model.CompetitorsInEvent[i];
+                    <input type="hidden" asp-for="CompetitorsInEvent[@i].PickId" />
+                    <tr id="pickRow_@pick.PickId">
+                        <td>@if(pick.PickId > 0)
+                            {
+                                @pick.FirstName
+                                 <input type="hidden" asp-for="CompetitorsInEvent[@i].SelectedCompetitorId" />
+                            }
+                            else
+                            {
+                                <select asp-for="CompetitorsInEvent[@i].SelectedCompetitorId"
+                                        class="form-select"
+                                        asp-items="pick.Competitors">
+                                    <option value="">-- Selecteer --</option>
+                                </select>
+                            }
+                        </td>
+                        <td>@(pick.PickId > 0 ? pick.LastName : "")</td>
+                        <td>@(pick.PickId > 0 ? pick.Score.ToString() : "")</td>
                         <td>
-                            @Html.DisplayFor(modelItem => Model.CompetitorsInEvent[i].FirstName)
+                            @if (pick.PickId > 0)
+                            {
+                                if (pick.IsOutOfCompetition)
+                                {
+                                    <i class="bi bi-x-circle text-danger" title="Uitgevallen"></i>
+                                }
+                                else
+                                {
+                                    <i class="bi bi-check-circle text-success" title="Actief"></i>
+                                }
+                            }
                         </td>
                         <td>
-                            @Html.DisplayFor(modelItem => Model.CompetitorsInEvent[i].LastName)
+                            @if (pick.PickId > 0) // Alleen bestaande picks kunnen verwijderd worden
+                            {
+                                <button type="button" class="btn btn-sm btn-outline-danger deletePickBtn"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#deletePickModal"
+                                    data-pickid="@pick.PickId"
+                                >
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            }
                         </td>
-                        <td>
-                            @Html.DisplayFor(modelItem => Model.CompetitorsInEvent[i].Score)
-                        </td>
-                        <td>
-                            @(Model.CompetitorsInEvent[i].OutOfCompetition ? "ja" : "")
-                        </td>
-                        </tr>
-                    }
-                    var toPick = 15 - Model.NumberOfPicks;
-                    if (Model.SuggestedCompetitors == null && Model.SuggestedCompetitors.Count == 0)
-                    {
-                        for (int j = 0; j < toPick; j++)
-                        {
-                            <tr>
-                                <td>
-                                    @(j + 1)
-                                </td>
-                                <td>
-                                    @Html.DropDownList($"Model.CompetitorsInEvent[{j}].SelectedCompetitorId",Model.DropdownList, "-- selecteer --", "Value")
-                                </td>
-                                <td></td>
-                                <td></td>
-                            </tr>
-                        }
-                    }
-                    else
-                    {
-                        for (int i = 0; i < Model.SuggestedCompetitors.Count; i++)
-                        {
-                            <tr>
-                                <td>
-                                    @Html.DisplayFor(modelItem => Model.SuggestedCompetitors[i].Competitor.FirstName)
-                                </td>
-                                <td>
-                                    @Html.DisplayFor(modelItem => Model.SuggestedCompetitors[i].Competitor.LastName)
-                                </td>
-                                <td>
-                                    <button type="button" onclick="AddCompetitor(@Model.SuggestedCompetitors[i].CompetitorId)">voeg toe</button> |
-                                    <button type="button" onclick="RemoveCompetitor(@Model.SuggestedCompetitors[i].CompetitorId)">verwijder</button>
-                                </td>
-                                <td>
-                                    
-                                </td>
-                            </tr>
-                        }
-                        var aantal = 15 - Model.NumberOfPicks - Model.SuggestedCompetitors.Count;
-                        for(int j = 0; j < aantal; j++)
-                        {
-                            <tr>
-                                <td>
-                                    @(j + 1)
-                                </td>
-                                <td>
-                                    @Html.DropDownList($"Model.CompetitorsInEvent[{j}].SelectedCompetitorId",Model.DropdownList, "-- selecteer --", "Value")
-                                </td>
-                                <td></td>
-                                <td></td>
-                            </tr>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
 
-                        }
-                    }
-            }
-        </tbody>
-    </table>
-</div>
-<div>
-    <input type="hidden" name="gameCompetitorInEventId" value="@Model.GameCompetitorInEventId" />
-    <input type="hidden" name="eventId" value="@Model.EventId" />
-        <button type="submit" value="Opslaan">Opslaan</button> | <input type="button"
-                                                                        value="Vul lijst"
-                                                                        onclick="location.href='@Url.Action("FillList", "GameCompetitorEvents", new { id = Model.GameCompetitorInEventId, picks = Model.NumberOfPicks, eventId = Model.EventId } )'" /> |
-    <a asp-action="Index" asp-route-eventId="@Model.EventId">Terug naar de lijst</a>
-</div>
+    <div class="mt-3 d-flex justify-content-between">
+        <a asp-action="Index" asp-route-eventId="@Model.EventId" class="btn btn-outline-secondary">Terug naar de lijst</a>
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary">Opslaan</button>
+            <a asp-action="FillList"
+               asp-controller="GameCompetitorEvents"
+               asp-route-id="@Model.GameCompetitorInEventId"
+               asp-route-picks="@Model.NumberOfPicks"
+               asp-route-eventId="@Model.EventId"
+               class="btn btn-outline-primary">
+                Vul lijst
+            </a>
+        </div>
+    </div>
 </form>
+@await Html.PartialAsync("_DeletePickModal", new DeletePickModalViewModel())
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
-    function AddCompetitor(competitorId){
-        console.log('voeg competitor met Id toe:' + competitorId);
-        
-        //add suggestion (competitorId) to picks.
-    }
-    function RemoveCompetitor(competitorId) {
-        console.log('verwijder competitor met Id:' + competitorId);
-        //remove suggestion (competitorId) from SuggestedCompetitors and show ddl
-    }
+        $(document).ready(function () {
+
+        var pickIdToDelete;
+        // Wanneer iemand op de prullenbak klikt
+        $('.deletePickBtn').click(function () {
+            pickIdToDelete = $(this).data('pickid');
+            $('#confirmDeletePick').data('pickid', pickIdToDelete);
+        });
+
+        // Bevestig verwijderen
+        $('#confirmDeletePick').click(function () {
+            var id = $(this).data('pickid');
+            var token = $('input[name="__RequestVerificationToken"]').val();
+
+            $.ajax({
+                url: '/GameCompetitorEvents/DeletePick',
+                type: 'POST',
+                data: { 
+                    __RequestVerificationToken: token,
+                    pickId: id 
+                },
+                success: function () {
+                    $('#deletePickModal').modal('hide');
+                    $('#pickRow_' + id).fadeOut(300, function () { $(this).remove(); });
+                },
+                error: function () {
+                    alert('Er is iets misgegaan bij het verwijderen.');
+                }
+            });
+        });
+    });
 </script>

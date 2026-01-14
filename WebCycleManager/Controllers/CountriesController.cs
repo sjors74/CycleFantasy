@@ -110,7 +110,7 @@ namespace WebCycleManager.Controllers
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!CountryExists(country.CountryId))
+                    if (!await CountryExists(country.CountryId))
                     {
                         return NotFound();
                     }
@@ -155,9 +155,10 @@ namespace WebCycleManager.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        private bool CountryExists(int id)
+        private async Task<bool> CountryExists(int id)
         {
-          return (_countryService.GetById(id) != null);
+            var country = await _countryService.GetById(id);
+            return country  != null;
         }
     }
 }

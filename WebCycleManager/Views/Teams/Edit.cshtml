@@ -1,40 +1,126 @@
-﻿@model Domain.Models.Team
+﻿@model TeamEditViewModel
 
-@{
-    ViewData["Title"] = "Edit";
-}
-
-<h1>Bewerk team</h1>
-
-<h4>Team</h4>
+<h3>Bewerk team</h3>
 <hr />
-<div class="row">
-    <div class="col-md-4">
-        <form asp-action="Edit">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+<form asp-action="Edit">
+    <div class="row">
+        <!-- Linkerkant: Algemene gegevens -->
+        <div class="col-md-6">
+            <h4>Algemene gegevens</h4>
             <input type="hidden" asp-for="TeamId" />
-            <div class="form-group">
-                <label asp-for="TeamName" class="control-label"></label>
-                <input asp-for="TeamName" class="form-control" />
-                <span asp-validation-for="TeamName" class="text-danger"></span>
+            <div class="form-group mb-2">
+                <label class="form-label" asp-for="CurrentTeamName"></label>
+                <input asp-for="CurrentTeamName" class="form-control" />
             </div>
-            <div class="form-group">
-                <label asp-for="CountryId" class="control-label"></label>
-                <select asp-for="CountryId" class="form-control" asp-items="ViewBag.CountryId"></select>
-                <span asp-validation-for="CountryId" class="text-danger"></span>
+            <div class="form-group mb-2">
+                <label class="form-label" asp-for="CountryId"></label>
+                <select asp-for="CountryId" class="form-control" asp-items="Model.Countries"></select>
             </div>
+            <div class="form-group mb-2">
+                <label class="form-label" asp-for="PcsName"></label>
+                <input asp-for="PcsName" class="form-control" />
+            </div>
+        </div>
 
-            <div class="form-group">
-                <input type="submit" value="Opslaan" class="btn btn-primary" />
+        <!-- Rechterkant: TeamYears per jaar -->
+        <div class="col-md-6">
+            <h4>Per jaar</h4>
+            <ul class="nav nav-tabs" id="yearTabs" role="tablist">
+                @for (int i = 0; i < Model.AvailableYears.Count; i++)
+                {
+                    var year = Model.AvailableYears[i];
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link @(i == 0 ? "active" : "")"
+                                id="tab-@year"
+                                data-bs-toggle="tab"
+                                data-bs-target="#year-@year"
+                                type="button"
+                                role="tab">
+                            @year
+                        </button>
+                    </li>
+                }
+            </ul>
+
+            <div class="tab-content mt-3">
+                @for (int i = 0; i < Model.AvailableYears.Count; i++)
+                {
+                    var year = Model.AvailableYears[i];
+                    var teamYear = Model.TeamYears.FirstOrDefault(ty => ty.Year == year);
+                    <div class="tab-pane fade @(i == 0 ? "show active" : "")" id="year-@year" role="tabpanel">
+                        <div id="teamyear-container-@year">
+                            @if (teamYear != null)
+                            {
+                                <input type="hidden" name="TeamYears[@i].TeamYearId" value="@teamYear.TeamYearId" />
+                                <input type="hidden" name="TeamYears[@i].Year" value="@teamYear.Year" />
+
+                                <div class="form-group mt-2">
+                                    <label>Teamnaam</label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" style="max-width: 300px;" name="TeamYears[@i].Name" value="@teamYear.Name" />
+                                        <button type="button"
+                                                class="btn btn-outline-danger"
+                                                onclick="removeTeamYear(@year, @i)">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="form-group mt-2">
+                                    <label>Teamnaam</label>
+                                    <div class="input-group" style="max-width: 300px;">
+                                        <input type="text" class="form-control" value="Geen team aanwezig voor @year" readonly />
+                                        <button type="button" class="btn btn-outline-primary"
+                                                onclick="createTeamYear(@year, @i)">
+                                            <i class="bi bi-plus"></i>
+                                        </button>
+                                    </div>                     
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
             </div>
-        </form>
+        </div>
     </div>
-</div>
-
-<div>
-    <a asp-action="Index">Terug naar de lijst</a>
-</div>
+    <div class="mt-3 d-flex justify-content-between">
+        <a asp-action="Index" class="btn btn-outline-secondary">Terug naar de lijst</a>
+        <button type="submit" class="btn btn-primary">Opslaan</button>
+    </div>
+</form>
 
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+
+    <script>
+        function createTeamYear(year, index) {
+            var container = document.getElementById('teamyear-container-' + year);
+            container.innerHTML = `
+                <input type="hidden" name="TeamYears[${index}].Year" value="${year}" />
+                <div class="form-group">
+                    <label>Teamnaam</label>
+                    <input type="text" class="form-control" name="TeamYears[${index}].Name" value="" />
+                </div>
+            `;
+        }
+    </script>
+    <script>
+        function removeTeamYear(year, index) {
+            var container = document.getElementById('teamyear-container-' + year);
+            container.innerHTML = `
+                <div class="form-group mt-2">
+                    <label>Teamnaam</label>
+                    <div class="input-group" style="max-width: 300px;">
+                        <input type="text" class="form-control" value="Geen team aanwezig voor ${year}" readonly />
+                        <button type="button" class="btn btn-outline-primary"
+                            onclick="createTeamYear(${year}, ${index})">
+                            <i class="bi bi-plus"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+    </script>
 }

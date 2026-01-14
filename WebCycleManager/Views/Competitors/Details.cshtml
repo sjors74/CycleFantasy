@@ -1,25 +1,20 @@
 ﻿@model Domain.Models.Competitor
 
-@{
-    ViewData["Title"] = "Details";
-}
-
-<h1>Details</h1>
-
+<h3>Details</h3>
 <div>
     <h4>Renner</h4>
     <hr />
     <dl class="row">
-        <dt class = "col-sm-2">
+        <dt class="col-sm-2">
             @Html.DisplayNameFor(model => model.FirstName)
         </dt>
-        <dd class = "col-sm-10">
+        <dd class="col-sm-10">
             @Html.DisplayFor(model => model.FirstName)
         </dd>
-        <dt class = "col-sm-2">
+        <dt class="col-sm-2">
             @Html.DisplayNameFor(model => model.LastName)
         </dt>
-        <dd class = "col-sm-10">
+        <dd class="col-sm-10">
             @Html.DisplayFor(model => model.LastName)
         </dd>
         <dt class="col-sm-2">
@@ -28,21 +23,15 @@
         <dd class="col-sm-10">
             @Html.DisplayFor(model => model.PcsName)
         </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.IsNationalChampion)
+         <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.ScraperName)
         </dt>
         <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.IsNationalChampion)
+            @Html.DisplayFor(model => model.ScraperName)
         </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.Team)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Team.TeamName)
-        </dd>
-    </dl>
+   </dl>
 </div>
-<div>
-    <a asp-action="Edit" asp-route-id="@Model?.CompetitorId">Wijzig</a> |
-    <a asp-action="Index">Terug naar de lijst</a>
+<div class="d-flex justify-content-between">
+    <a asp-action="Index" class="btn btn-outline-secondary">Terug naar de lijst</a>
+    <a asp-action="Edit" class="btn btn-primary" asp-route-id="@Model?.CompetitorId">Wijzig</a>
 </div>
