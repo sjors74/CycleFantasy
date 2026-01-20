@@ -83,12 +83,31 @@ namespace WebCycleManager.Controllers
         }
 
         // GET: Competitors/Create
-        public async Task<IActionResult> Create()
+        public async Task<IActionResult> Create(int year)
         {
-            ViewBag.Competitors = await GetCompetitorSelectListAsync();
-            ViewData["TeamId"] = new SelectList((await _teamService.GetAllTeams()).OrderBy(t => t.CurrentTeamName), "TeamId", "TeamName");
-            ViewData["CountryId"] = new SelectList(await CountrySelectListHelper.GetOrderedCountries(_countryService), "CountryId", "CountryNameLong");
-            return View(new CreateCompetitorViewModel());
+            var selectedYear = year == 0 ? DateTime.Now.Year : year;
+            ViewData["SelectedYear"] = selectedYear;
+
+            var teams = (await _teamService.GetAllTeams())
+                .OrderBy(t => t.CurrentTeamName)
+                .Select(t => new SelectListItem {  Value = t.TeamId.ToString(), Text = t.CurrentTeamName })
+                .ToList();
+            teams.Insert(0, new SelectListItem { Value = "", Text = "-- Kies een team --" });
+            ViewData["TeamId"] =teams ?? Enumerable.Empty<SelectListItem>();
+
+            var countries = (await CountrySelectListHelper.GetOrderedCountries(_countryService))
+                .Select(c => new SelectListItem { Value = c.CountryId.ToString(), Text = c.CountryNameLong })
+                .ToList();
+            countries.Insert(0, new SelectListItem { Value = "", Text = "-- Kies een land --" });
+            ViewData["CountryId"] = countries ?? Enumerable.Empty<SelectListItem>();
+
+            var vm = new CreateCompetitorViewModel
+            {
+                Year = selectedYear,
+                CompetitorId = 0
+            };
+
+            return View(vm);
         }
 
         // POST: Competitors/Create
@@ -96,11 +115,17 @@ namespace WebCycleManager.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(CreateCompetitorViewModel model)
         {
+
+            async Task PopulateDropdownsAsync()
+            {
+                ViewData["TeamId"] = new SelectList((await _teamService.GetAllTeams()).OrderBy(t => t.CurrentTeamName), "TeamId", "TeamName", model.TeamId);
+                ViewData["CountryId"] = new SelectList(await CountrySelectListHelper.GetOrderedCountries(_countryService), "CountryId", "CountryNameLong", model.CountryId);
+            }
+
             if (!ModelState.IsValid)
             {
                 ViewBag.Competitors = await GetCompetitorSelectListAsync();
-                ViewData["TeamId"] = new SelectList((await _teamService.GetAllTeams()).OrderBy(t => t.CurrentTeamName), "TeamId", "TeamName");
-                ViewData["CountryId"] = new SelectList(await CountrySelectListHelper.GetOrderedCountries(_countryService), "CountryId", "CountryNameLong");
+                await PopulateDropdownsAsync();
                 return View(model);
             }
 
@@ -111,19 +136,23 @@ namespace WebCycleManager.Controllers
                 if (competitor == null)
                 {
                     ModelState.AddModelError("", "Geselecteerde renner bestaat niet.");
+                    await PopulateDropdownsAsync();
                     return View(model);
                 }
             }
             else
             {
-                if (model.CompetitorId == 0) // nieuwe renner
+                if (string.IsNullOrEmpty(model.FirstName) || string.IsNullOrEmpty(model.LastName))
                 {
-                    if (string.IsNullOrEmpty(model.FirstName) || string.IsNullOrEmpty(model.LastName))
-                    {
-                        ModelState.AddModelError("", "Vul naam in voor nieuwe renner.");
-                        return View(model);
-                    }
+                    ModelState.AddModelError("", "Vul naam in voor nieuwe renner.");
+                    await PopulateDropdownsAsync();
+                    return View(model);
                 }
+
+                // If PCS name is missing, default it (prevents NULL DB insert)
+                var pcsName = string.IsNullOrWhiteSpace(model.PcsName)
+                    ? $"{model.FirstName} {model.LastName}"
+                    : model.PcsName;
 
                 competitor = await _competitorService.GetCompetitorByName(model.FirstName, model.LastName, model.CountryId);
 
@@ -133,7 +162,7 @@ namespace WebCycleManager.Controllers
                     {
                         FirstName = model.FirstName,
                         LastName = model.LastName,
-                        PcsName = model.PcsName,
+                        PcsName = pcsName,
                         CountryId = model.CountryId
                     };
                     await _competitorService.Create(competitor);
@@ -155,6 +184,7 @@ namespace WebCycleManager.Controllers
             else
             {
                 ModelState.AddModelError("", "Deze renner zit al in dit team voor dit jaar.");
+                await PopulateDropdownsAsync();
                 return View(model);
             }
 

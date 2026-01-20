@@ -1,67 +1,58 @@
 ﻿    @model CreateCompetitorViewModel
 
-    <h2>Nieuwe renner of toevoegen aan team </h2>
+    <h2>Nieuwe renner toevoegen aan team </h2>
     <hr />
     <div class="row">
-        <div class="col-md-4">
+        <div class="col-md-6">
             <form asp-action="Create" method="post">
                 @Html.AntiForgeryToken()
-                <div class="form-group">
-                    <label for=" competitorSearch">Renner zoeken</label>
-                    <input type="text" id="competitorSearch" class="form-control" placeholder="Typ naam..." />
-                    <input type="hidden" asp-for="CompetitorId" id="CompetitorId" />
-                </div>
-                <div id="competitorInfo" style="margin-top:10px; display:none;">
-                    <p>Team: <span id="teamName"></span></p>
-                    <p>Land: <span id="countryName"></span></p>
-                    <p>PCS-naam: <span id="pcsName"></span></p>
-                </div>
-
-                <h4>Nieuwe renner gegevens (alleen invullen indien nieuwe</h4>
-                <div class="form-group">
+                <input type="hidden" asp-for="CompetitorId" />
+                <h4>Nieuwe renner gegevens</h4>
+                <div class="form-group mb-2">
                     <label asp-for="FirstName" class="control-label"></label>
                     <input asp-for="FirstName" class="form-control" />
                 </div>
-                <div class="form-group">
+                <div class="form-group mb-2">
                     <label asp-for="LastName" class="control-label"></label>
                     <input asp-for="LastName" class="form-control" />
                 </div>
-                <div class="form-group">
-                    <label asp-for="PcsName" class="control-label"></label>
-                    <input asp-for="PcsName" class="form-control" />
+                <div class="form-group mb-2">
+                        <label asp-for="PcsName" class="control-label"></label>
+                        <input asp-for="PcsName" class="form-control" />
                 </div>
-                <div class="form-group">
+                <div class="form-group mb-2">
                     <label asp-for="CountryId" class="control-label"></label>
                     <select asp-for="CountryId" class="form-control" asp-items="ViewBag.CountryId"></select>
                 </div>
 
                 <h4>Team en jaar</h4>
-                <div class="form-group">
+                <div class="form-group mb-2">
                     <label asp-for="TeamId" class="control-label"></label>
                     <select asp-for="TeamId" class="form-control" asp-items="ViewBag.TeamId"></select>
                 </div>
-                <div class="form-group">
+                <div class="form-group mb-2">
                     <label asp-for="Year"></label>
                     <input asp-for="Year" class="form-control" />
                 </div>
-                 <div class="form-group">
+                 <div class="form-group mb-3">
                     <input asp-for="IsNationalChampion" class="form-check-input" />
                     <label asp-for="IsNationalChampion" class="form-check-label"></label>
                 </div>
                 <div class="form-group">
                     <input type="submit" value="Maak" class="btn btn-primary" />
+                <a asp-action="Index" class="btn btn-secondary ms-2">Annuleren</a>
                 </div>
             </form>
         </div>
     </div>
 
-    <div>
+    <div class="mt-3">
         <a asp-action="Index">Terug naar de lijst</a>
     </div>
 
     @section Scripts {
         @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
-
+@* 
     <script>
         $(function () {
             $("#competitorSearch").autocomplete({
@@ -94,6 +85,6 @@
             });
         });
 
-    </script>
+    </script> *@
 
     }
