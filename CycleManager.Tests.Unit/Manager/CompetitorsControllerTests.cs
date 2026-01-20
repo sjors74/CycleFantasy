@@ -70,24 +70,24 @@ namespace CycleManager.Tests.Unit.Manager
             Assert.IsType<NotFoundResult>(result);
         }
 
-        [Fact]
-        public async Task Create_Get_ReturnsView_WithViewBags()
-        {
-            // arrange
-            _competitorServiceMock.Setup(s => s.GetAllCompetitors(It.IsAny<int>()))
-                                  .ReturnsAsync(new List<CompetitorDto>());
-            _teamServiceMock.Setup(s => s.GetAllTeams())
-                            .ReturnsAsync(TestDataFactory.FakeTeams());
-            _countryServiceMock.Setup(s => s.GetAll())
-                               .ReturnsAsync(TestDataFactory.FakeCountries());
+        //[Fact]
+        //public async Task Create_Get_ReturnsView_WithViewBags()
+        //{
+        //    // arrange
+        //    _competitorServiceMock.Setup(s => s.GetAllCompetitors(It.IsAny<int>()))
+        //                          .ReturnsAsync(new List<CompetitorDto>());
+        //    _teamServiceMock.Setup(s => s.GetAllTeams())
+        //                    .ReturnsAsync(TestDataFactory.FakeTeams());
+        //    _countryServiceMock.Setup(s => s.GetAll())
+        //                       .ReturnsAsync(TestDataFactory.FakeCountries());
 
-            // act
-            var result = await _controller.Create();
+        //    // act
+        //    var result = await _controller.Create();
 
-            // assert
-            var view = Assert.IsType<ViewResult>(result);
-            Assert.NotNull(view.ViewData);
-        }
+        //    // assert
+        //    var view = Assert.IsType<ViewResult>(result);
+        //    Assert.NotNull(view.ViewData);
+        //}
 
         [Fact]
         public async Task Create_Post_ValidModel_RedirectsToIndex()

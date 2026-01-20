@@ -68,7 +68,7 @@ namespace DataAccessEF.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_DeelnemerScores_GameCompetitorEventId",
                 table: "DeelnemerScores",
-                column: "GameCompetitorEventId",
+                columns: new[] { "GameCompetitorEventId", "StageId" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
