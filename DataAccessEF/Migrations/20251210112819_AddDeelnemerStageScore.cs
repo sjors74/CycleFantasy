@@ -65,11 +65,11 @@ namespace DataAccessEF.Migrations
                         principalColumn: "Id");
                 });
 
-            migrationBuilder.CreateIndex(
-                name: "IX_DeelnemerScores_GameCompetitorEventId",
-                table: "DeelnemerScores",
-                columns: new[] { "GameCompetitorEventId", "StageId" },
-                unique: true);
+            //migrationBuilder.CreateIndex(
+            //    name: "IX_DeelnemerScores_GameCompetitorEventId",
+            //    table: "DeelnemerScores",
+            //    columns: new[] { "GameCompetitorEventId", "StageId" },
+            //    unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_DeelnemerStageScores_GameCompetitorEventId_StageId",
