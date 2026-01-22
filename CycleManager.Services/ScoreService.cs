@@ -42,6 +42,8 @@ namespace CycleManager.Services
                 .ToDictionaryAsync(s => s.GameCompetitorEventId);
 
             var existingTotals = await _context.DeelnemerScores
+                .GroupBy(s => s.GameCompetitorEventId)
+                .Select(g => g.First())
                 .ToDictionaryAsync(s => s.GameCompetitorEventId);
 
             var newStagePickScores = new List<DeelnemerStagePickScore>();
