@@ -32,15 +32,15 @@ namespace WebCycle.Controllers
             var events = await _eventService.GetActiveEvents();
             var eventResponse = _mapper.Map<List<EventDto>>(events);
 
-            foreach(var cEvent in eventResponse)
+            foreach (var cEvent in eventResponse)
             {
-                if(cEvent.Deelnemers != null)
+                if (cEvent.Deelnemers != null)
                 {
                     var totalScores = await _resultService.GetTotalScoresByEventIdAsync(cEvent.EventId);
 
                     var stageScores = await _resultService.GetScoresByEventIdAsync(cEvent.EventId);
 
-                    foreach(var deelnemer in cEvent.Deelnemers)
+                    foreach (var deelnemer in cEvent.Deelnemers)
                     {
 
 
@@ -65,7 +65,7 @@ namespace WebCycle.Controllers
         public async Task<IActionResult> GetEvent(int id)
         {
             var e = await _eventService.GetEventById(id);
-            if(e == null)
+            if (e == null)
             {
                 return NotFound();
             }
@@ -103,50 +103,64 @@ namespace WebCycle.Controllers
             var allEventsForUser = await _eventService.GetEventsByUserId(userid);
             var nu = DateTime.UtcNow;
 
-            var active = allEventsForUser
-                .Where(e => e.StartDate <= nu && e.EndDate >= nu)
+            var activeEvents = allEvents
+                .Where(e => e.StartDate <= nu && e.EndDate >= nu && (allEventsForUser.Any(ue => ue.EventId == e.EventId) || e.CanSubscribe  ))
                 .ToList();
-            var future = allEvents
+            var futureEvents = allEvents
                 .Where(e => e.StartDate > nu)
                 .ToList();
             var futureWithUser = allEventsForUser
                 .Where(e => e.StartDate > nu)
                 .ToList();
-            var historic = allEventsForUser
+            var historicWithUser = allEventsForUser
                 .Where(e => e.EndDate < nu)
                 .ToList();
 
-            var futureAllDtos = _mapper.Map<List<EventForUserDto>>(future);
-            var userIds = new HashSet<int>(futureWithUser.Select(e => e.EventId));
+            var activeDtos = _mapper.Map<List<EventForUserDto>>(activeEvents);
+            var futureAllDtos = _mapper.Map<List<EventForUserDto>>(futureEvents);
+            var futureWithUserDtos = _mapper.Map<List<EventForUserDto>>(futureWithUser);
+            var historicDtos = _mapper.Map<List<EventForUserDto>>(historicWithUser);
 
-            futureWithUser.ForEach(e =>
+            var userEventIds = new HashSet<int>(allEventsForUser.Select(e => e.EventId));
+
+            foreach (var dto in activeDtos)
             {
-                e.UserId = userid;
-                e.IsIngeschreven = true;
-            });
+                dto.UserId = userid;
+                dto.IsIngeschreven = userEventIds.Contains(dto.EventId);
+            }
+
+            foreach (var dto in futureWithUserDtos)
+            {
+                dto.UserId = userid;
+                dto.IsIngeschreven = true;
+            }
 
             var notIngeschrevenDtos = futureAllDtos
-                .Where(e => !userIds.Contains(e.EventId))
-                .ToList();
+                    .Where(d => !userEventIds.Contains(d.EventId))
+                    .ToList();
 
-            notIngeschrevenDtos.ForEach(e =>
+            foreach (var dto in notIngeschrevenDtos)
             {
-                e.UserId = userid;
-                e.IsIngeschreven = false;
-            });
+                dto.UserId = userid;
+                dto.IsIngeschreven = false;
+            }
 
-            var futureDtos = futureWithUser
+            // historic: user was enrolled
+            foreach (var dto in historicDtos)
+            {
+                dto.UserId = userid;
+                dto.IsIngeschreven = true;
+            }
+
+            var futureDtos = futureWithUserDtos
                 .Concat(notIngeschrevenDtos)
                 .ToList();
 
-            active.ForEach(e => e.UserId = userid);
-            historic.ForEach(e => e.UserId = userid);
-
             var result = new EventViewDto
             {
-                ActieveEvenementen = active,
+                ActieveEvenementen = activeDtos,
                 ToekomstigeEvenementen = futureDtos,
-                HistorischeEvenementen = historic
+                HistorischeEvenementen = historicDtos
             };
 
             return Ok(result);

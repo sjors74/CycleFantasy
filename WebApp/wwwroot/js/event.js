@@ -213,20 +213,38 @@ document.addEventListener('DOMContentLoaded', function () {
         list.innerHTML = "";
         podiumContainer.innerHTML = "";
 
-        const sorted = [...deelnemers].sort((a, b) => (b.punten || 0) - (a.punten || 0));
+        // Filter out null/undefined items and sort by punten desc
+        const sorted = [...(deelnemers || [])].filter(d => d && typeof d === 'object')
+            .sort((a, b) => (b.punten || 0) - (a.punten || 0));
+
+        if (sorted.length === 0) {
+            list.innerHTML = `<p class="text-muted p-3">Geen deelnemers gevonden.</p>`;
+            initializeCollapseHandlers();
+            return;
+        }
 
         if (event.showPodium) {
             podiumContainer.style.display = "flex";
 
-            const top3 = [
-                { deelnemer: sorted[1], plaats: 2 },
-                { deelnemer: sorted[0], plaats: 1 },
-                { deelnemer: sorted[2], plaats: 3 }
-            ];
+            // build podium layout depending on how many participants we have
+            let arranged = [];
+            if (sorted.length === 1) {
+                arranged = [{ deelnemer: sorted[0], plaats: 1 }];
+            } else if (sorted.length === 2) {
+                // show second (plaats 2) then first (plaats 1)
+                arranged = [{ deelnemer: sorted[1], plaats: 2 }, { deelnemer: sorted[0], plaats: 1 }];
+            } else {
+                // normal top3: left=2, center=1, right=3
+                arranged = [
+                    { deelnemer: sorted[1], plaats: 2 },
+                    { deelnemer: sorted[0], plaats: 1 },
+                    { deelnemer: sorted[2], plaats: 3 }
+                ];
+            }
 
-            const rest = sorted.slice(3);
-
-            top3.forEach(({ deelnemer, plaats }) => {
+            // append podium elements (only those that exist)
+            arranged.forEach(({ deelnemer, plaats }) => {
+                if (!deelnemer) return;
                 const wrapper = document.createElement("div");
                 wrapper.className = `place place-${plaats}`;
                 wrapper.innerHTML = `
@@ -239,8 +257,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 podiumContainer.appendChild(wrapper);
             });
 
+            // rest of participants (skip the ones used in podium)
+            const restStartIndex = Math.min(3, sorted.length);
+            const rest = sorted.slice(restStartIndex);
             rest.forEach((deelnemer, index) => {
-                const plaats = index + 4;
+                const plaats = index +restStartIndex + 1;
                 list.appendChild(makeDeelnemerListItem(deelnemer, plaats, eventId));
             });
         } else {

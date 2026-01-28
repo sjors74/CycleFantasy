@@ -31,6 +31,8 @@ namespace WebCycleManager.Models
         public bool IsActive { get; set; }
         [DisplayName("Show podium")]
         public bool ShowPodium { get; set; }
+        [DisplayName("Inschrijven mogelijk")]
+        public bool CanSubscribe { get; set; }
         [DisplayName("Landcode")]
         public string? CountryCode { get; set; }
         [DisplayName("Kleurnaam")]

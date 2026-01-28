@@ -20,6 +20,7 @@ namespace CycleManager.Tests.Unit.Manager
         private readonly Mock<ITeamService> _teamServiceMock;
         private readonly Mock<IStageService> _stageServiceMock;
         private readonly Mock<IResultService> _resultServiceMock;
+        private readonly Mock<IScoreService> _scoreServiceMock;
         private readonly Mock<IConfigurationService> _configurationServiceMock;
         private readonly EventsController _controller;
 
@@ -30,13 +31,16 @@ namespace CycleManager.Tests.Unit.Manager
             _stageServiceMock = new Mock<IStageService>();
             _resultServiceMock = new Mock<IResultService>();
             _configurationServiceMock = new Mock<IConfigurationService>();
+            _scoreServiceMock = new Mock<IScoreService>();
+
 
             _controller = new EventsController(
                 _eventServiceMock.Object,
                 _teamServiceMock.Object,
                 _stageServiceMock.Object,
                 _resultServiceMock.Object,
-                _configurationServiceMock.Object
+                _configurationServiceMock.Object,
+                _scoreServiceMock.Object
             );
         }
 

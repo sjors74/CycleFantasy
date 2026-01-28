@@ -3,6 +3,6 @@
     public interface IScoreService
     {
         Task UpdateScoresForStageAsync(int eventId, int stageId);
-
+        Task RecalculateEventScoresAsync(int eventId);
     }
 }

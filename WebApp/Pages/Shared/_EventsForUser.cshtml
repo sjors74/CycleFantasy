@@ -57,7 +57,7 @@
                                                 data-bs-parent="#accordion-@evt.EventId">
                                                     <div class="accordion-body">
                                                       <div id="deelnemer-@deelnemer.Id" class="deelnemer-blok">
-                                                            @if (Model.ShowLinkToevoegen)
+                                                            @if (evt.CanSubscribe)
                                                             {
                                                                 <div class="d-flex justify-content-end mb-2">
                                                                     <a class="btn btn-primary btn-sm"
@@ -120,7 +120,7 @@
                                     </div>
                                 }                             
                             </div>
-                            @if (Model.ShowLinkToevoegen)
+                            @if (evt.CanSubscribe)
                             {
                                 <div class="mt-4">
                                     <button class="btn btn-outline-primary mb-3" type="button" data-bs-toggle="collapse" data-bs-target="#poolFormCollapse" aria-expanded="false" aria-controls="poolFormCollapse">

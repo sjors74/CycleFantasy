@@ -140,6 +140,7 @@ namespace CycleManager.Services
                     Slogan = ev.Slogan,
                     CountryCode = ev.CountryCode,
                     ColorName = ev.CountryCode,
+                    CanSubscribe = ev.CanSubscribe,
                     UserId = userId,
                     Deelnemers = deelnemers 
                 });
