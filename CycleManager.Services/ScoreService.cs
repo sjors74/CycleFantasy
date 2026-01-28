@@ -96,7 +96,7 @@ namespace CycleManager.Services
                     }
                     else
                     {
-                        // eerste keer dat we deze pick tegenkomen; TotalScore = newPickScore
+                        // first time we see this pick -> insert total record
                         newPickTotals.Add(new DeelnemerPickScore
                         {
                             Id = Guid.NewGuid(),
@@ -133,14 +133,18 @@ namespace CycleManager.Services
             if (newStagePickScores.Any()) _context.DeelnemerStagePickScores.AddRange(newStagePickScores);
             if (newPickTotals.Any()) _context.DeelnemerPickScores.AddRange(newPickTotals);
             if (newStageScores.Any()) _context.DeelnemerStageScores.AddRange(newStageScores);
+
+            // flush changes so DB reflects updated pick totals / snapshots
             await _context.SaveChangesAsync();
 
-            var pickTotalMap = new Dictionary<int, int>();
-
+            // rebuild a map of pickId -> totalScore using DB content (including newly inserted rows)
             var allPickIds = deelnemers.SelectMany(d => d.Renners.Select(r => r.Id)).ToList();
             var pickTotalsFromDb = await _context.DeelnemerPickScores
                 .Where(dps => allPickIds.Contains(dps.GameCompetitorEventPickId))
                 .ToListAsync();
+
+            var pickTotalMap = pickTotalsFromDb.ToDictionary(dps => dps.GameCompetitorEventPickId, dps => dps.TotalScore);
+
             // Now compute and persist participant totals based on the sum of their pick totals
             foreach (var deelnemer in deelnemers)
             {
@@ -169,11 +173,13 @@ namespace CycleManager.Services
                     });
                 }
             }
+
             if (newTotals.Any()) _context.DeelnemerScores.AddRange(newTotals);
 
             await _context.SaveChangesAsync();
         }
 
+        // RecalculateEventScoresAsync remains unchanged (keeps authoritative rebuild)
         public async Task RecalculateEventScoresAsync(int eventId)
         {
             // Rebuild all aggregated score tables for an event from Results.
