@@ -1,9 +1,11 @@
 ﻿using AutoMapper;
+using AutoMapper.Internal;
 using CycleManager.Domain.Dto;
 using CycleManager.Services;
 using CycleManager.Services.Interfaces;
 using Domain.Dto;
 using Microsoft.AspNetCore.Mvc;
+using System.Linq;
 
 namespace WebCycle.Controllers
 {
@@ -103,9 +105,21 @@ namespace WebCycle.Controllers
             var allEventsForUser = await _eventService.GetEventsByUserId(userid);
             var nu = DateTime.UtcNow;
 
-            var activeEvents = allEvents
-                .Where(e => e.StartDate <= nu && e.EndDate >= nu && (allEventsForUser.Any(ue => ue.EventId == e.EventId) || e.CanSubscribe  ))
+            var activeWithUser = allEventsForUser
+                .Where(e => e.StartDate <= nu && e.EndDate >= nu);
+
+            var activeWithoutUser = allEvents
+                .Where(e => e.StartDate <= nu && e.EndDate >= nu
+                    && !allEventsForUser.Any(ue => ue.EventId == e.EventId)
+                    && e.CanSubscribe);
+
+            var activeWithoutUserDtos = _mapper
+                .Map<IEnumerable<EventForUserDto>>(activeWithoutUser);
+
+            var activeDtos = activeWithUser
+                .Concat(activeWithoutUserDtos)
                 .ToList();
+
             var futureEvents = allEvents
                 .Where(e => e.StartDate > nu)
                 .ToList();
@@ -116,7 +130,6 @@ namespace WebCycle.Controllers
                 .Where(e => e.EndDate < nu)
                 .ToList();
 
-            var activeDtos = _mapper.Map<List<EventForUserDto>>(activeEvents);
             var futureAllDtos = _mapper.Map<List<EventForUserDto>>(futureEvents);
             var futureWithUserDtos = _mapper.Map<List<EventForUserDto>>(futureWithUser);
             var historicDtos = _mapper.Map<List<EventForUserDto>>(historicWithUser);
