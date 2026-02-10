@@ -17,7 +17,7 @@
             <h1 id="etappe-title"></h1>
             <div class="event-dates" id="etappe-datum"></div>
         </div>
-        <table class="resultaten-tabel">
+        <table class="resultaten-tabel" id="resultaten-tabel" hidden>
             <thead>
                 <tr>
                     <th>Positie</th>
@@ -30,6 +30,10 @@
                 <!-- rijen worden via JS toegevoegd -->
             </tbody>
         </table>
+        <div id="geen-uitslag" hidden>
+            <strong id="geen-uitslag-titel">Er is geen uitslag</strong>
+            <div id="geen-uitslag-beschrijving"></div>
+        </div>
     </div>
     <div class="tab-content" id="tab2">
         <div class="etappe-knoppen-container">
@@ -107,4 +111,17 @@
                 .tab-content.active {
                     display: block;
                 }
+
+    #geen-uitslag {
+        margin-top: 1rem;
+        padding: 1rem;
+        background: #f6f6f6;
+        border-radius: 6px;
+    }
+
+    #geen-uitslag-beschrijving {
+        margin-top: 0.5rem;
+        color: #555;
+        font-size: 0.95em;
+    }
         </style>

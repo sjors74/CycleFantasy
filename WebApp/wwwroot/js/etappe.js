@@ -149,38 +149,57 @@ async function ensureStagesLoaded() {
 async function laadEtappeData(stageId) {
     if (!stageId) return;
     toggleGlobalLoader && toggleGlobalLoader(true);
+
+    const tabel = document.getElementById("resultaten-tabel");
+    const lijst = document.getElementById("renner-lijst");
+    const geenUitslag = document.getElementById("geen-uitslag");
+    const geenUitslagTitel = document.getElementById("geen-uitslag-titel");
+    const geenUitslagBeschrijving = document.getElementById("geen-uitslag-beschrijving");
+
     try {
         const stage = stages.find(s => s.stageId === stageId);
         if (!stage) {
-            console.error("Stage niet gevonden:", stageId);
-            document.getElementById("etappe-title").textContent = `Etappe ${stage.stageNumber}`;
             return;
         }
 
         document.getElementById("etappe-datum").textContent = stage.vanNaar ?? "";
         document.getElementById("etappe-title").textContent = `Etappe ${stage.stageNumber} – Resultaten`;
 
-        const lijst = document.getElementById("renner-lijst");
-        lijst.innerHTML = `<tr><td colspan="4">Bezig met laden...</td></tr>`;
+        tabel.hidden = true;
+        geenUitslag.hidden = true;
+        lijst.innerHTML = "";
 
         const response = await fetch(`${API_BASE_URL}/api/Results/${stage.stageId}/uitslag`);
         if (!response.ok) {
-            console.error("API error:", response.status);
-            lijst.innerHTML = `<tr><td colspan="4">Fout bij laden uitslag</td></tr>`;
+            geenUitslag.textContent = "Fout bij laden uitslag";
+            geenUitslag.hidden = false;
             return;
         }
+
         const data = await response.json();
-        lijst.innerHTML = "";
+
         if (!Array.isArray(data) || data.length === 0) {
-            lijst.innerHTML = `<tr><td colspan="4">Geen resultaten</td></tr>`;
+            geenUitslag.textContent = "Geen resultaten";
+            geenUitslag.hidden = false;
             return;
         }
 
         if (data.length === 1 && data[0].noScore === true) {
-            const description = data[0].noScoreDescription || "Geen uitslag voor deze etappe";
-            lijst.innerHTML = `<tr><td colspan="4">${description}</td></tr>`;
+            geenUitslagTitel.textContent = "Er is geen uitslag";
+
+            if (data[0].noScoreDescription) {
+                geenUitslagBeschrijving.textContent = data[0].noScoreDescription;
+                geenUitslagBeschrijving.hidden = false;
+            } else {
+                geenUitslagBeschrijving.textContent = "";
+                geenUitslagBeschrijving.hidden = true;
+            }
+
+            geenUitslag.hidden = false;
             return;
         }
+
+        tabel.hidden = false;
 
         data.forEach(item => {
             const tr = document.createElement("tr");
@@ -192,8 +211,10 @@ async function laadEtappeData(stageId) {
             `;
             lijst.appendChild(tr);
         });
-    } catch (error) {
+    } catch (err) {
         console.error("Fout bij laadEtappeData: ", err);
+        geenUitslag.textContent = "Onverwachte fout";
+        geenUitslag.hidden = false;
     } finally {
         toggleGlobalLoader && toggleGlobalLoader(false);
     }
