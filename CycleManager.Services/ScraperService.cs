@@ -25,22 +25,43 @@ namespace CycleManager.Services
             _settings = options.Value;
         }
 
-        public async Task RunAsync(int eventId, string eventName, int year, int stageNumber)
+        public async Task RunAsync(int eventId, string eventName, int stageNumber, int year)
         {
-            var stage = await _db.Stages
-            .Include(s => s.Event)
-                        .FirstOrDefaultAsync(s => s.StageName == stageNumber.ToString() && s.EventId == eventId);
+            _logger.LogInformation($"Start scraping {eventName}: EventId={eventId}, StageId={stageNumber}");
 
-            // Oude resultaten verwijderen
-            var oudeResultaten = _db.ScrapedStageResults
-                .Where(r => r.StageId == stageNumber && r.EventId == eventId);
+            // =========================================
+            // 1. Stage + Configuratie ophalen
+            // =========================================
+            var stage = await _db.Stages
+                .Include(s => s.Event)
+                    .ThenInclude(e => e.Configuration)
+                        .ThenInclude(c => c.ConfigurationItems)
+                .FirstOrDefaultAsync(s =>
+                    s.StageName == stageNumber.ToString() &&
+                    s.EventId == eventId);
+
+            if (stage == null)
+                throw new Exception("Stage niet gevonden");
+
+            var configurationItems = stage.Event.Configuration.ConfigurationItems;
+            var topLimit = configurationItems.Count;
+
+            // =========================================
+            // 2. Oude scraped resultaten verwijderen
+            // =========================================
+            var oudeResultaten = await _db.ScrapedStageResults
+                .Where(r => r.StageId == stageNumber && r.EventId == eventId)
+                .ToListAsync();
+
             _db.ScrapedStageResults.RemoveRange(oudeResultaten);
             await _db.SaveChangesAsync();
 
-            string url = $"https://www.procyclingstats.com/race/{eventName}/{year}/stage-{stageNumber}";
-            _logger.LogInformation($"Start scraping {eventName}: EventId={eventId}, StageId={stageNumber}");
+            // =========================================
+            // 3. Nieuwe scrape uitvoeren
+            // =========================================
+            string url = $"https://www.procyclingstats.com/race/{eventName}/{year}/stage-{stageNumber}/result/result";
 
-            var nieuweScrape = await ScrapeStageResultsAsync(url, _settings.TopLimit, eventId);
+            var nieuweScrape = await ScrapeStageResultsAsync(url, topLimit, eventId);
 
             foreach (var scraped in nieuweScrape)
             {
@@ -55,61 +76,95 @@ namespace CycleManager.Services
                     ImportedAt = DateTime.UtcNow
                 });
             }
+
             await _db.SaveChangesAsync();
 
+            // =========================================
+            // 4. Alles vooraf ophalen (GEEN N+1)
+            // =========================================
             var scrapedResults = await _db.ScrapedStageResults
                 .Where(r => r.EventId == eventId && r.StageId == stageNumber)
                 .ToListAsync();
 
             var competitors = await _db.CompetitorsInEvent
                 .Include(c => c.CompetitorInTeam)
-                .ThenInclude(c => c.Competitor)
+                    .ThenInclude(c => c.Competitor)
                 .Where(c => c.EventId == eventId)
                 .ToListAsync();
 
+            var bestaandeResults = await _db.Results
+                .Where(r => r.StageId == stage.Id)
+                .ToListAsync();
+
+            // =========================================
+            // 5. Dictionaries voor snelle lookup
+            // =========================================
+
+            // 0 betekent: geen rugnummer → uitsluiten
+            var competitorByBib = competitors
+                .Where(c => c.EventNumber > 0)
+                .GroupBy(c => c.EventNumber)
+                .ToDictionary(g => g.Key, g => g.First());
+
+            var resultByCompetitorId = bestaandeResults
+                .ToDictionary(r => r.CompetitorInEventId);
+
+            var configurationByPosition = configurationItems
+                .ToDictionary(ci => ci.Position);
+
+            // =========================================
+            // 6. Resultaten verwerken (geen DB calls)
+            // =========================================
+            _db.ChangeTracker.AutoDetectChangesEnabled = false;
+
             foreach (var scrapedResult in scrapedResults)
             {
-                var match = competitors.FirstOrDefault(c => c.EventNumber == scrapedResult.BibNumber);
-
-                if (match != null)
+                if (scrapedResult.BibNumber <= 0 ||
+                    !competitorByBib.TryGetValue(scrapedResult.BibNumber, out var match))
                 {
-                    scrapedResult.MatchedCompetitorInEventId = match.Id;
-                    var existingResult = await _db.Results.FirstOrDefaultAsync(r =>
-                        r.StageId == stage.Id &&
-                        r.CompetitorInEventId == match.Id);
+                    _logger.LogWarning($"Geen match voor bib {scrapedResult.BibNumber} - {scrapedResult.RiderName}");
+                    continue;
+                }
 
+                scrapedResult.MatchedCompetitorInEventId = match.Id;
 
-                    var configurationItemId = await GetIdForPositon(2, scrapedResult.Position); //TODO: 2 = configuratie wielerevenement groot
-                    if (existingResult != null)
+                configurationByPosition.TryGetValue(scrapedResult.Position, out var configurationItem);
+                resultByCompetitorId.TryGetValue(match.Id, out var existingResult);
+
+                if (existingResult != null)
+                {
+                    if (configurationItem != null)
                     {
-                        if (configurationItemId > 0)
-                        {
-                            existingResult.ConfigurationItemId = configurationItemId;
-                        }
-                        else
-                        {
-                            _db.Results.Remove(existingResult);
-                        }
+                        existingResult.ConfigurationItemId = configurationItem.Id;
                     }
                     else
                     {
-                        if (configurationItemId > 0)
-                        {
-                            _db.Results.Add(new Result
-                            {
-                                StageId = stage.Id,
-                                CompetitorInEventId = match.Id,
-                                ConfigurationItemId = await GetIdForPositon(2, scrapedResult.Position) //TODO: 2 = configuratie wielerevenement groot
-                            });
-                        }
+                        _db.Results.Remove(existingResult);
+                        resultByCompetitorId.Remove(match.Id);
                     }
                 }
                 else
                 {
-                    _logger.LogWarning($"Geen match voor bib {scrapedResult.BibNumber} - {scrapedResult.RiderName}");
+                    if (configurationItem != null)
+                    {
+                        var newResult = new Result
+                        {
+                            StageId = stage.Id,
+                            CompetitorInEventId = match.Id,
+                            ConfigurationItemId = configurationItem.Id
+                        };
+
+                        _db.Results.Add(newResult);
+                        resultByCompetitorId[match.Id] = newResult;
+                    }
                 }
             }
 
+            _db.ChangeTracker.AutoDetectChangesEnabled = true;
+
+            // =========================================
+            // 7. Alles in 1 keer opslaan
+            // =========================================
             await _db.SaveChangesAsync();
         }
 
