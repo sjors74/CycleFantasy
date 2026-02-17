@@ -88,5 +88,50 @@ namespace WebApp.Pages.Account
                 return Page();
             }
         }
+
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> OnPostRenamePoolAsync([FromBody] RenamePoolDto request)
+        {
+            if (string.IsNullOrWhiteSpace(request.NieuweNaam))
+            {
+                return new JsonResult(new { success = false, message = "De poolnaam mag niet leeg zijn." });
+            }
+
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            var dto = new
+            {
+                PoolId = request.PoolId,
+                NieuweNaam = request.NieuweNaam.Trim(),
+                UserId = userId
+            };
+
+            var content = new StringContent(
+                JsonSerializer.Serialize(dto),
+                Encoding.UTF8,
+                "application/json");
+
+            var client = _clientFactory.CreateClient();
+            var apiBaseUrl = _configuration["ClientSettings:ApiBaseUrl"];
+
+            var result = await client.PutAsync(
+                $"{apiBaseUrl}/api/event/renamepool",
+                content);
+
+            if (result.IsSuccessStatusCode)
+            {
+                return new JsonResult(new { success = true });
+            }
+            else
+            {
+                return new JsonResult(new
+                {
+                    success = false,
+                    message = "Er is iets misgegaan bij het hernoemen van de pool."
+                });
+            }
+        }
+
+
     }
 }

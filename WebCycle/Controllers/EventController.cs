@@ -279,5 +279,16 @@ namespace WebCycle.Controllers
         {
             return await _eventService.GetAantalDeelnemers(id);
         }
+
+        [HttpPut("renamepool")]
+        public async Task<IActionResult> RenamePool([FromBody] RenamePoolDto dto)
+        {
+            if (string.IsNullOrWhiteSpace(dto.NieuweNaam))
+                return BadRequest("Naam mag niet leeg zijn.");
+
+            await _eventService.RenamePoolAsync(dto);
+
+            return Ok();
+        }
     }
 }

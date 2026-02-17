@@ -64,5 +64,7 @@ namespace CycleManager.Services
         Task AddTeamToEvent(int eventId, int teamId);
 
         Task RemoveTeamFromEvent(int eventId, int teamId);
+
+        Task<RenamePoolDto> RenamePoolAsync(RenamePoolDto renamePoolDto);
     }
 }

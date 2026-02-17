@@ -249,5 +249,19 @@ namespace CycleManager.Services
         {
             await _eventRepository.AddTeamToEvent(eventId, teamId);
         }
+
+        public async Task<RenamePoolDto> RenamePoolAsync(RenamePoolDto renamePoolDto)
+        {
+            var pool = await _deelnemersRepository.GetById(renamePoolDto.PoolId);
+            if (pool == null)
+            {
+                return null;
+            }
+
+            pool.TeamName = renamePoolDto.NieuweNaam;
+            await _deelnemersRepository.SaveChangesAsync();
+
+            return renamePoolDto;
+        }
     }
 }

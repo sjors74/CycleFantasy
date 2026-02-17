@@ -1,6 +1,5 @@
 ﻿using CycleManager.Domain.Models;
 using CycleManager.Services.Interfaces;
-using HtmlAgilityPack;
 using Microsoft.Extensions.Logging;
 using Microsoft.Playwright;
 
@@ -18,53 +17,59 @@ namespace CycleManager.Services
 
         public async Task<List<int>> ScrapeDropoutBibsAsync(string url)
         {
-            var web = new HtmlWeb();
-            var doc = await web.LoadFromWebAsync(url);
-
             var dropoutBibs = new List<int>();
 
-            // Zoek alle UL's waarvan de class begint met 'startlist'
-            var ulNodes = doc.DocumentNode.SelectNodes("//ul[starts-with(@class, 'startlist')]");
-            if (ulNodes == null)
+            using var playwright = await Playwright.CreateAsync();
+            await using var browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
             {
-                _logger.LogWarning("Geen startlist UL's gevonden.");
-                return dropoutBibs;
-            }
+                Headless = false
+            });
 
-            foreach (var ul in ulNodes)
+            var page = await browser.NewPageAsync();
+
+            try
             {
-                var liNodes = ul.SelectNodes(".//li");
-                if (liNodes == null)
-                    continue;
-
-                foreach (var li in liNodes)
+                await page.GotoAsync(url, new PageGotoOptions
                 {
-                    var ridersContDiv = li.SelectSingleNode(".//div[contains(@class, 'ridersCont')]");
-                    if (ridersContDiv == null)
-                        continue;
+                    WaitUntil = WaitUntilState.NetworkIdle,
+                    Timeout = 60000
+                });
 
-                    var innerUl = ridersContDiv.SelectSingleNode(".//ul");
-                    if (innerUl == null)
-                        continue;
+                // Wacht tot de startlist zichtbaar is
+                await page.WaitForSelectorAsync("ul[class^='startlist']", new PageWaitForSelectorOptions
+                {
+                    Timeout = 10000
+                });
 
-                    var dropoutLis = innerUl.SelectNodes(".//li[contains(@class, 'dropout')]");
-                    if (dropoutLis == null)
-                        continue;
+                // Selecteer direct alle dropout bib spans
+                var bibElements = await page.QuerySelectorAllAsync(
+                    "ul[class^='startlist'] li.dropout span.bib"
+                );
 
-                    foreach (var dropoutLi in dropoutLis)
+                foreach (var element in bibElements)
+                {
+                    var text = (await element.InnerTextAsync())?.Trim();
+
+                    if (int.TryParse(text, out var bibNr))
                     {
-                        var bibSpan = dropoutLi.SelectSingleNode(".//span[contains(@class, 'bib')]");
-                        if (bibSpan != null && int.TryParse(bibSpan.InnerText.Trim(), out var bibNr))
-                        {
-                            dropoutBibs.Add(bibNr);
-                        }
+                        dropoutBibs.Add(bibNr);
                     }
                 }
+
+                _logger.LogInformation("Aantal dropout bibs gevonden: {Count}", dropoutBibs.Count);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Fout bij scrapen van dropout bibs.");
+            }
+            finally
+            {
+                await browser.CloseAsync();
             }
 
-            _logger.LogInformation("Aantal dropout bibs gevonden: {Count}", dropoutBibs.Count);
             return dropoutBibs;
         }
+
 
         public async Task<List<ScrapedCompetitor>> ScrapeCompetitorsAsync(string url, int teamId, int year)
         {

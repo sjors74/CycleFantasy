@@ -39,18 +39,33 @@
                                             <div class="accordion-item" id="accordion-deelnemer-@deelnemer.Id">
                                                 <h2 class="accordion-header" id="@headingId">
                                                     <button class="d-flex justify-content-between align-items-center accordion-button collapsed px-3 py-2"
-                                                         data-bs-toggle="collapse"
-                                                         data-bs-target="#@collapseDlnId"
-                                                         aria-expanded="false"
-                                                         aria-controls="@collapseDlnId"
-                                                         role="button">
-                                                        <div>
-                                                            <div class="fw-bold">@deelnemer.PoolNaam</div>
+                                                            data-bs-toggle="collapse"
+                                                            data-bs-target="#@collapseDlnId"
+                                                            aria-expanded="false"
+                                                            aria-controls="@collapseDlnId"
+                                                            type="button">
+
+                                                        <!-- Links: poolnaam + renners count -->
+                                                        <div class="d-flex flex-column">
+                                                            <span class="pool-name fw-bold" id="pool-name-@deelnemer.Id">@deelnemer.PoolNaam</span>
                                                             <div class="text-muted small">@deelnemer.Renners.Count renners geselecteerd</div>
                                                         </div>
-                                                    </button>
 
+                                                        <!-- Rechts: pencil -->
+                                                        @if (evt.CanSubscribe)
+                                                        {
+                                                            <span class="edit-pool-btn text-dark ms-3"
+                                                                  style="cursor:pointer; display:flex; align-items:center;"
+                                                                  data-id="@deelnemer.Id"
+                                                                  data-name="@deelnemer.PoolNaam"
+                                                                  onclick="openRenameModal(this); event.stopPropagation();">
+                                                                <i class="bi bi-pencil"></i>
+                                                            </span>
+                                                        }
+                                                    </button>
                                                 </h2>
+
+
                                                 <div id="@collapseDlnId"
                                                 class="accordion-collapse collapse"
                                                 aria-labelledby="@headingId"
@@ -101,7 +116,6 @@
                                                                                         }
                                                                                      }
                                                                                 </div>
-                                                                                @* <div class="col-md-4 text-muted">@renner.TeamName</div> *@
                                                                                 <div class="col-md-2 text-end">@renner.Punten</div>
                                                                             </div>
                                                                         </li>
@@ -156,4 +170,91 @@
             </ul>
             }
     </div>
+    <div class="modal fade" id="editPoolModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Pool hernoemen</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="renamePoolId" name="poolId" />
+
+                    <div class="mb-3">
+                        <label class="form-label">Nieuwe naam</label>
+                        <input type="text" class="form-control" id="renamePoolName" name="nieuweNaam" required />
+                        <div class="text-danger small mt-1 d-none" id="renameError"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        Annuleren
+                    </button>
+                    <button type="button" class="btn btn-primary" id="savePoolNameBtn">
+                        Opslaan
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+
+        var modalElement = document.getElementById('editPoolModal');
+        var modal = bootstrap.Modal.getOrCreateInstance(modalElement);
+
+        // Pencil click
+        window.openRenameModal = function(el) {
+            var id = el.getAttribute("data-id");
+            var name = el.getAttribute("data-name");
+
+            document.getElementById("renamePoolId").value = id;
+            document.getElementById("renamePoolName").value = name;
+            document.getElementById("renameError").classList.add("d-none");
+
+            modal.show();
+        };
+
+        // Opslaan knop
+        document.getElementById("savePoolNameBtn").addEventListener("click", async function () {
+
+            var poolId = document.getElementById("renamePoolId").value;
+            var newName = document.getElementById("renamePoolName").value.trim();
+            var errorDiv = document.getElementById("renameError");
+
+            if (!newName) {
+                errorDiv.textContent = "Naam mag niet leeg zijn.";
+                errorDiv.classList.remove("d-none");
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/event/renamepool`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        PoolId: parseInt(poolId),
+                        NieuweNaam: newName
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error("Serverfout");
+                }
+
+                // Update UI
+                document.getElementById("pool-name-" + poolId).textContent = newName;
+
+                modal.hide();
+            }
+            catch (err) {
+                errorDiv.textContent = "Er ging iets mis.";
+                errorDiv.classList.remove("d-none");
+            }
+        });
+    });
+</script>
+
