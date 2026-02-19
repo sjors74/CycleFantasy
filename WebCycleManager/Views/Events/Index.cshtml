@@ -16,8 +16,9 @@
             <th>@Html.DisplayName("Jaar")</th>
             <th>@Html.DisplayName("Startdatum")</th>
             <th>@Html.DisplayName("Einddatum")</th>
-            <th>@Html.DisplayName("Actief")</th>
-            <th>@Html.DisplayName("Show podium")</th>
+            <th class="text-center icon-col" title="@Html.DisplayName("Actief")"><i class="bi bi-check-circle"></i></th>
+            <th class="text-center icon-col" title="@Html.DisplayName("Inschrijven?")"><i class="bi bi-pencil-square"></i></th>
+            <th class="text-center icon-col" title="@Html.DisplayName("Podium?")"><i class="bi bi-trophy"></i></th>
             <th colspan="2" class="text-center">Acties</th>
         </tr>
     </thead>
@@ -29,7 +30,7 @@
                 <td>@item.Year</td>
                 <td>@item.StartDate.ToString("dd-MM-yyyy")</td>
                 <td>@item.EndDate.ToString("dd-MM-yyyy")</td>
-                <td>
+                <td class="text-center icon-col">
                     @if (item.IsActive)
                     {
                         <i class="bi bi-check-circle text-success" title="Actief"></i>
@@ -39,7 +40,17 @@
                         <i class="bi bi-x-circle text-danger" title="Niet actief"></i>
                     }
                 </td>
-                <td>
+                <td class="text-center icon-col">
+                    @if (item.CanSubscribe)
+                    {
+                        <i class="bi bi-check-circle text-success" title="Je kunt inschrijven"></i>
+                    }
+                    else
+                    {
+                        <i class="bi bi-x-circle text-danger" title="Je kunt niet inschrijven"></i>
+                    }
+                </td>
+                <td class="text-center icon-col">
                     @if (item.ShowPodium)
                     {
                         <i class="bi bi-check-circle text-success" title="Podium wordt getoond"></i>

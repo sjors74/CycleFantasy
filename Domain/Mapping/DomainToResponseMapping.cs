@@ -33,17 +33,22 @@ namespace Domain.Mapping
                 .ForMember(c => c.Teams, o => o.Ignore());
 
             CreateMap<CompetitorsInEvent, CompetitorDto>()
-                .ForMember(c => c.CountryShort, d => d.MapFrom(s => s.CompetitorInTeam.Competitor.Country.CountryNameShort))
-                .ForMember(d => d.CompetitorId, o => o.Ignore())
-                .ForMember(d => d.FirstName, o => o.Ignore())
-                .ForMember(d => d.LastName, o => o.Ignore())
-                .ForMember(d => d.PcsName, o => o.Ignore())
+                .ForMember(d => d.CompetitorId,
+                    o => o.MapFrom(s => s.CompetitorInTeam.Competitor.CompetitorId))
+                .ForMember(d => d.FirstName,
+                    o => o.MapFrom(s => s.CompetitorInTeam.Competitor.FirstName))
+                .ForMember(d => d.LastName,
+                    o => o.MapFrom(s => s.CompetitorInTeam.Competitor.LastName))
+                .ForMember(d => d.PcsName,
+                    o => o.MapFrom(s => s.CompetitorInTeam.Competitor.PcsName))
+                .ForMember(d => d.CountryShort,
+                    o => o.MapFrom(s => s.CompetitorInTeam.Competitor.Country.CountryNameShort))
                 .ForMember(d => d.ScraperName, o => o.Ignore())
                 .ForMember(d => d.Punten, o => o.Ignore())
                 .ForMember(d => d.CurrentTeamName, o => o.Ignore())
                 .ForMember(d => d.IsNationalChampion, o => o.Ignore())
                 .ForMember(d => d.Teams, o => o.Ignore())
-                .ForMember(d => d.CompetitorInTeamId, o => o.Ignore())
+                //.ForMember(d => d.CompetitorInTeamId, o => o.Ignore())
                 .ForMember(d => d.EventNumber, o => o.Ignore())
                 .ForMember(d => d.InSelectie, o => o.Ignore());
 

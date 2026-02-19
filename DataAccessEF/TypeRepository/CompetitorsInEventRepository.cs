@@ -41,15 +41,19 @@ namespace DataAccessEF.TypeRepository
         {
             var competitorsInEvent = context.CompetitorsInEvent
                 .Include(cie => cie.CompetitorInTeam)
-                    .ThenInclude(t => t.Team)
+                    .ThenInclude(cit => cit.Competitor)
                         .ThenInclude(c => c.Country)
-                .Include(c => c.CompetitorInTeam)
-                        .ThenInclude(cit => cit.Team)
+                .Include(cie => cie.CompetitorInTeam)
+                    .ThenInclude(cit => cit.Team)
                 .Where(cie => cie.EventId == eventId);
 
-            var randomCompetitorsList = _randomizer(competitorsInEvent).Take(number).ToList();
-            return await Task.FromResult(randomCompetitorsList);          
+            var randomCompetitorsList = _randomizer(competitorsInEvent)
+                .Take(number)
+                .ToList();
+
+            return await Task.FromResult(randomCompetitorsList);
         }
+
 
         public static List<t> GetRandomElements<t>(IEnumerable<t> list, int elementsCount)
         {
