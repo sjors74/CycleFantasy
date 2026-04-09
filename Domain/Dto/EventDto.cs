@@ -14,6 +14,7 @@ namespace Domain.Dto
         public bool ShowPodium { get; set; }
         public List<StageResultDto>? Stages { get; set; }
         public List<DeelnemerDto>? Deelnemers { get; set; }
+        public bool IsActive { get; set; }
 
     }
 }

@@ -31,7 +31,7 @@ namespace CycleManager.Services
             {
                 await page.GotoAsync(url, new PageGotoOptions
                 {
-                    WaitUntil = WaitUntilState.NetworkIdle,
+                    WaitUntil = WaitUntilState.DOMContentLoaded,
                     Timeout = 60000
                 });
 
@@ -86,7 +86,7 @@ namespace CycleManager.Services
 
                 await page.GotoAsync(nameUrl, new PageGotoOptions
                 {
-                    WaitUntil = WaitUntilState.NetworkIdle,
+                    WaitUntil = WaitUntilState.DOMContentLoaded,
                     Timeout = 30000
                 });
 
@@ -179,7 +179,7 @@ namespace CycleManager.Services
             {
                 await page.GotoAsync(url, new PageGotoOptions
                 {
-                    WaitUntil = WaitUntilState.NetworkIdle,
+                    WaitUntil = WaitUntilState.DOMContentLoaded,
                     Timeout = 30000
                 });
 

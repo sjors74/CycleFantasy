@@ -11,5 +11,9 @@ namespace Domain.Dto
         public List<ResultDto> Renners { get; set; } = [];
         public bool IsIngeschreven { get; set; }
         public bool CanSubscribe { get; set; }
+
+        public bool CanCreatePool { get; set; }
+
+        public bool IsReadOnly { get; set; }
     }
 }

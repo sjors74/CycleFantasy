@@ -101,74 +101,66 @@ namespace WebCycle.Controllers
         [HttpGet("{userid}/user")]
         public async Task<IActionResult> GetEventByUserId(string userid)
         {
-            var allEvents = await _eventService.GetAllEvents();
-            var allEventsForUser = await _eventService.GetEventsByUserId(userid);
+            // 1️⃣ Haal alles op
+            var allEvents = await _eventService.GetAllEvents();            // domain Event
+            var userEventDtos = await _eventService.GetEventsByUserId(userid); // DTO EventForUserDto
+
             var nu = DateTime.UtcNow;
 
-            var activeWithUser = allEventsForUser
-                .Where(e => e.StartDate <= nu && e.EndDate >= nu);
+            // 2️⃣ Map allEvents naar DTO
+            var allEventDtos = _mapper.Map<List<EventForUserDto>>(allEvents);
 
-            var activeWithoutUser = allEvents
-                .Where(e => e.StartDate <= nu && e.EndDate >= nu
-                    && !allEventsForUser.Any(ue => ue.EventId == e.EventId)
-                    && e.CanSubscribe);
+            // 3️⃣ EventIds van de user voor IsIngeschreven
+            var userEventIds = new HashSet<int>(userEventDtos.Select(e => e.EventId));
 
-            var activeWithoutUserDtos = _mapper
-                .Map<IEnumerable<EventForUserDto>>(activeWithoutUser);
-
-            var activeDtos = activeWithUser
-                .Concat(activeWithoutUserDtos)
+            // --------------------------
+            // ACTUEEL: actieve events + eigen pools
+            // --------------------------
+            var activeDtos = allEventDtos
+                .Where(e => e.IsActive)
+                .Concat(userEventDtos.Where(e => e.IsActive))
+                .GroupBy(e => e.EventId)
+                .Select(g => g.First())
                 .ToList();
 
-            var futureEvents = allEvents
-                .Where(e => e.StartDate > nu)
+            // --------------------------
+            // TOEKOMSTIG: subscribe-events + eigen pools
+            // --------------------------
+            var futureDtos = allEventDtos
+                .Where(e => e.CanSubscribe)
+                .Concat(userEventDtos.Where(e => e.CanSubscribe))
+                .GroupBy(e => e.EventId)
+                .Select(g => g.First())
                 .ToList();
-            var futureWithUser = allEventsForUser
-                .Where(e => e.StartDate > nu)
-                .ToList();
-            var historicWithUser = allEventsForUser
+
+            // --------------------------
+            // HISTORISCH: alleen user events in het verleden
+            // --------------------------
+            var historicDtos = userEventDtos
                 .Where(e => e.EndDate < nu)
                 .ToList();
 
-            var futureAllDtos = _mapper.Map<List<EventForUserDto>>(futureEvents);
-            var futureWithUserDtos = _mapper.Map<List<EventForUserDto>>(futureWithUser);
-            var historicDtos = _mapper.Map<List<EventForUserDto>>(historicWithUser);
-
-            var userEventIds = new HashSet<int>(allEventsForUser.Select(e => e.EventId));
-
-            foreach (var dto in activeDtos)
+            // --------------------------
+            // Flags instellen
+            // --------------------------
+            void ApplyUserState(List<EventForUserDto> list, bool canCreatePool, bool readOnly)
             {
-                dto.UserId = userid;
-                dto.IsIngeschreven = userEventIds.Contains(dto.EventId);
+                foreach (var dto in list)
+                {
+                    dto.UserId = userid;
+                    dto.IsIngeschreven = userEventIds.Contains(dto.EventId);
+                    dto.CanCreatePool = canCreatePool;
+                    dto.IsReadOnly = readOnly;
+                }
             }
 
-            foreach (var dto in futureWithUserDtos)
-            {
-                dto.UserId = userid;
-                dto.IsIngeschreven = true;
-            }
+            ApplyUserState(activeDtos, true, false);   // editable
+            ApplyUserState(futureDtos, true, false);   // editable
+            ApplyUserState(historicDtos, false, true); // readonly
 
-            var notIngeschrevenDtos = futureAllDtos
-                    .Where(d => !userEventIds.Contains(d.EventId))
-                    .ToList();
-
-            foreach (var dto in notIngeschrevenDtos)
-            {
-                dto.UserId = userid;
-                dto.IsIngeschreven = false;
-            }
-
-            // historic: user was enrolled
-            foreach (var dto in historicDtos)
-            {
-                dto.UserId = userid;
-                dto.IsIngeschreven = true;
-            }
-
-            var futureDtos = futureWithUserDtos
-                .Concat(notIngeschrevenDtos)
-                .ToList();
-
+            // --------------------------
+            // Result
+            // --------------------------
             var result = new EventViewDto
             {
                 ActieveEvenementen = activeDtos,
