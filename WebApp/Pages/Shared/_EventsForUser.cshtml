@@ -181,6 +181,7 @@
 <script>
     document.addEventListener("DOMContentLoaded", function () {
         var modalElement = document.getElementById('editPoolModal');
+        if (!modalElement) return;
         var modal = bootstrap.Modal.getOrCreateInstance(modalElement);
 
         window.openRenameModal = function(el) {

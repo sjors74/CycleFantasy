@@ -120,7 +120,7 @@ namespace WebCycle.Controllers
                 .Where(e => e.IsActive)
                 .Concat(userEventDtos.Where(e => e.IsActive))
                 .GroupBy(e => e.EventId)
-                .Select(g => g.First())
+                .Select(g => g.FirstOrDefault(e => e.Deelnemers != null && e.Deelnemers.Any()) ?? g.First())
                 .ToList();
 
             // --------------------------
@@ -130,7 +130,7 @@ namespace WebCycle.Controllers
                 .Where(e => e.CanSubscribe)
                 .Concat(userEventDtos.Where(e => e.CanSubscribe))
                 .GroupBy(e => e.EventId)
-                .Select(g => g.First())
+                .Select(g => g.FirstOrDefault(e => e.Deelnemers != null && e.Deelnemers.Any()) ?? g.First())
                 .ToList();
 
             // --------------------------

@@ -79,7 +79,7 @@ namespace WebApp.Pages.Account
             if (result.IsSuccessStatusCode)
             {
                 // Optioneel: Feedback bericht bij succes
-                return RedirectToPage("/Account/Profiel", new { userId });
+                return RedirectToPage("/Account/Profiel");
             }
             else
             {
