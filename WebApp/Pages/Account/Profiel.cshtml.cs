@@ -31,9 +31,7 @@ namespace WebApp.Pages.Account
         [BindProperty]
         public int CurrentEventId { get; set; }
 
-        public List<EventForUserDto> ActueleEvenementen { get; set; } = [];
-        public List<EventForUserDto> ToekomstigeEvenementen { get; set; } = [];
-        public List<EventForUserDto> HistorischeEvenementen { get; set; } = [];
+        public List<EventForUserDto> AllEvents { get; set; } = [];
         public async Task OnGetAsync()
         {
             if(User.Identity != null && User.Identity.IsAuthenticated)
@@ -41,15 +39,14 @@ namespace WebApp.Pages.Account
                 var client = _clientFactory.CreateClient();
                 var apiBaseUrl = _configuration["ClientSettings:ApiBaseUrl"];
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                var response = await client.GetFromJsonAsync<EventViewDto>($"{apiBaseUrl}/api/event/{userId}/user");
+                var response = await client.GetFromJsonAsync<List<EventForUserDto>>($"{apiBaseUrl}/api/event/{userId}/user");
                 if (response == null)
                 {
                     return;
                 }
 
-                ActueleEvenementen = response.ActieveEvenementen ?? new();
-                ToekomstigeEvenementen = response.ToekomstigeEvenementen ?? new();
-                HistorischeEvenementen = response.HistorischeEvenementen ?? new();
+                
+                AllEvents = response ?? new List<EventForUserDto>();
             }
         }
 

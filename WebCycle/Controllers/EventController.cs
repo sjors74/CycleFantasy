@@ -101,74 +101,22 @@ namespace WebCycle.Controllers
         [HttpGet("{userid}/user")]
         public async Task<IActionResult> GetEventByUserId(string userid)
         {
-            // 1️⃣ Haal alles op
             var allEvents = await _eventService.GetAllEvents();            // domain Event
             var userEventDtos = await _eventService.GetEventsByUserId(userid); // DTO EventForUserDto
-
-            var nu = DateTime.UtcNow;
-
-            // 2️⃣ Map allEvents naar DTO
             var allEventDtos = _mapper.Map<List<EventForUserDto>>(allEvents);
-
-            // 3️⃣ EventIds van de user voor IsIngeschreven
-            var userEventIds = new HashSet<int>(userEventDtos.Select(e => e.EventId));
-
-            // --------------------------
-            // ACTUEEL: actieve events + eigen pools
-            // --------------------------
-            var activeDtos = allEventDtos
-                .Where(e => e.IsActive)
-                .Concat(userEventDtos.Where(e => e.IsActive))
-                .GroupBy(e => e.EventId)
-                .Select(g => g.FirstOrDefault(e => e.Deelnemers != null && e.Deelnemers.Any()) ?? g.First())
-                .ToList();
-
-            // --------------------------
-            // TOEKOMSTIG: subscribe-events + eigen pools
-            // --------------------------
-            var futureDtos = allEventDtos
-                .Where(e => e.CanSubscribe)
-                .Concat(userEventDtos.Where(e => e.CanSubscribe))
-                .GroupBy(e => e.EventId)
-                .Select(g => g.FirstOrDefault(e => e.Deelnemers != null && e.Deelnemers.Any()) ?? g.First())
-                .ToList();
-
-            // --------------------------
-            // HISTORISCH: alleen user events in het verleden
-            // --------------------------
-            var historicDtos = userEventDtos
-                .Where(e => e.EndDate < nu)
-                .ToList();
-
-            // --------------------------
-            // Flags instellen
-            // --------------------------
-            void ApplyUserState(List<EventForUserDto> list, bool canCreatePool, bool readOnly)
-            {
-                foreach (var dto in list)
+            var userEventsLookup = userEventDtos.ToDictionary(e => e.EventId);
+            var combinedEvents = allEventDtos
+                .Select(e =>
                 {
-                    dto.UserId = userid;
-                    dto.IsIngeschreven = userEventIds.Contains(dto.EventId);
-                    dto.CanCreatePool = canCreatePool;
-                    dto.IsReadOnly = readOnly;
-                }
-            }
+                    if (userEventsLookup.TryGetValue(e.EventId, out var userEvt))
+                    {
+                        e.Deelnemers = userEvt.Deelnemers ?? new List<DeelnemerDto>();
+                    }
+                    return e;
+                })
+                .ToList();
 
-            ApplyUserState(activeDtos, true, false);   // editable
-            ApplyUserState(futureDtos, true, false);   // editable
-            ApplyUserState(historicDtos, false, true); // readonly
-
-            // --------------------------
-            // Result
-            // --------------------------
-            var result = new EventViewDto
-            {
-                ActieveEvenementen = activeDtos,
-                ToekomstigeEvenementen = futureDtos,
-                HistorischeEvenementen = historicDtos
-            };
-
-            return Ok(result);
+            return Ok(combinedEvents);
         }
 
         [HttpGet("{id}/teams-with-renners")]

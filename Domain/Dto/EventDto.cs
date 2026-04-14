@@ -13,7 +13,7 @@ namespace Domain.Dto
         public string? ColorName { get; set; }
         public bool ShowPodium { get; set; }
         public List<StageResultDto>? Stages { get; set; }
-        public List<DeelnemerDto>? Deelnemers { get; set; }
+        public List<DeelnemerDto>? Deelnemers { get; set; } = new();
         public bool IsActive { get; set; }
 
     }
