@@ -107,9 +107,12 @@ namespace WebCycleManager.Controllers
                     .Select(t => new
                     {
                         CompetitorId = t.CompetitorInTeamId,
-                        CompetitorName = c.CompetitorName ?? "(naam onbekend)"
+                        CompetitorName = c.CompetitorName ?? "(naam onbekend)",
+                        LastName = c.LastName ?? "(naam onbekend)",
+                        FirstName = c.FirstName ?? "(naam onbekend)"
                     }))
-                .OrderBy(x => x.CompetitorName)
+                .OrderBy(x => x.LastName)
+                .ThenBy(x => x.FirstName)
                 .ToList();
 
             // ViewBag data vullen

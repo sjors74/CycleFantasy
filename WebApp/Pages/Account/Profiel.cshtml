@@ -11,24 +11,8 @@
                 {
                     @await Html.PartialAsync("_EventsForUser", new EventListViewModel
                     {
-                        Evenementen = Model.ActueleEvenementen,
-                        Titel = "Actuele evenementen",
-                        InlineText = "actuele",
-                        ShowLinkToevoegen = false
-                    })
-                    @await Html.PartialAsync("_EventsForUser", new EventListViewModel
-                    {
-                       Evenementen = Model.ToekomstigeEvenementen,
-                       Titel = "Toekomstige evenementen",
-                       InlineText = "toekomstige",
-                       ShowLinkToevoegen = true
-                    })
-                    @await Html.PartialAsync("_EventsForUser", new EventListViewModel
-                    {
-                        Evenementen = Model.HistorischeEvenementen,
-                        Titel = "Evenementen in het verleden",
-                        InlineText = "historische",
-                        ShowLinkToevoegen = false
+                        AllEvents = Model.AllEvents,
+                                Titel = "Evenementen"
                     })
                 }
             </div>

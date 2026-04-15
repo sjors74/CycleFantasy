@@ -109,3 +109,10 @@ body {
     flex-shrink: 0;
     border-top: 1px solid #dee2e6;
 }
+
+/* show same sized icons */
+.icon-col {
+    width: 60px;
+    min-width: 60px;
+    max-width: 60px;
+}

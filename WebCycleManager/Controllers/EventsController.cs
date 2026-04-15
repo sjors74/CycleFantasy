@@ -16,16 +16,19 @@ namespace WebCycleManager.Controllers
         private IStageService _stageService;
         private IResultService _resultService;
         private IConfigurationService _configurationService;
+        private readonly IScoreService _scoreService;
 
         public EventsController(IEventService eventService, ITeamService teamService,
             IStageService stageService, IResultService resultService, 
-            IConfigurationService configurationService)
+            IConfigurationService configurationService,
+            IScoreService scoreService)
         {
             _eventService = eventService;
             _teamService = teamService;
             _stageService = stageService;
             _resultService = resultService;
             _configurationService = configurationService;
+            _scoreService = scoreService;
         }
 
         // GET: Events
@@ -254,6 +257,25 @@ namespace WebCycleManager.Controllers
             return PartialView("_ManageStagesPartial", model);
         }
 
+        // POST: Events/RecalculateScores/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> RecalculateScores(int id)
+        {
+            try
+            {
+                await _scoreService.RecalculateEventScoresAsync(id);
+                TempData["SuccessMessage"] = "Scores recalculated successfully.";
+            }
+            catch (Exception ex)
+            {
+                // log as needed (ILogger not injected here — add if you want logging)
+                TempData["ErrorMessage"] = "Error recalculating scores: " + ex.Message;
+            }
+
+            return RedirectToAction("Edit", new { id });
+        }
+
         public EventItemViewModel CreateViewModel(Event @event)
         {
             var vm = new EventItemViewModel
@@ -269,6 +291,7 @@ namespace WebCycleManager.Controllers
                 CountryCode = @event.CountryCode,
                 IsActive = @event.IsActive,
                 ShowPodium = @event.ShowPodium,
+                CanSubscribe = @event.CanSubscribe,
                 ConfigurationId = @event.ConfigurationId,
                 StagesInEvent = @event.Stages?.Count ?? 0,
                 SelectedTeamsCount = @event.EventTeams?.Count ?? 0
@@ -295,6 +318,7 @@ namespace WebCycleManager.Controllers
                 @event.ColorName = vm.ColorName;
                 @event.IsActive = vm.IsActive;
                 @event.ShowPodium = vm.ShowPodium;
+                @event.CanSubscribe = vm.CanSubscribe;
                 @event.ConfigurationId = vm.ConfigurationId;
 
                 return @event;

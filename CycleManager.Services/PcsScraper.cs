@@ -1,6 +1,5 @@
 ﻿using CycleManager.Domain.Models;
 using CycleManager.Services.Interfaces;
-using HtmlAgilityPack;
 using Microsoft.Extensions.Logging;
 using Microsoft.Playwright;
 
@@ -16,124 +15,61 @@ namespace CycleManager.Services
             _browser = browser;
         }
 
-        public async Task<List<ScrapedStageResult>> ScrapeStageResultsAsync(string url, int topN, int eventId)
-        {
-            var web = new HtmlWeb();
-            var doc = await web.LoadFromWebAsync(url);
-
-            var results = new List<ScrapedStageResult>();
-            int validCount = 0;
-
-            var table = doc.DocumentNode.SelectSingleNode("//table[contains(@class,'results')]");
-            if (table == null)
-            {
-                _logger.LogWarning("Geen resultaten-tabel gevonden op URL: {Url}", url);
-                return results;
-            }
-
-            var rows = table.SelectNodes(".//tr");
-            if(rows == null)
-            {
-                _logger.LogWarning("Geen rijen gevonden in resultaten-tabel.");
-                return results;
-            }
-           
-            //foreach (var row in rows.Skip(1)) // skip header
-            foreach (var row in rows)
-            {
-                var rowClass = row.GetAttributeValue("class", "").ToLowerInvariant();
-                var cols = row.SelectNodes(".//td");
-
-                if (cols == null)
-                    continue;
-
-                if(cols.Count == 2 && cols[1].GetAttributeValue("colspan", "") == "23")
-                {
-                    var note = cols[1].InnerText.Trim();
-                    if (note.Contains("relegated", StringComparison.OrdinalIgnoreCase))
-                    {
-                        _logger.LogInformation("Relegated info gevonden: {Note}", note);
-                    }
-                    continue;
-                }
-
-                if(cols.Count < 9)
-                    continue;
-
-                if (!int.TryParse(cols[0].InnerText.Trim(), out var posNr))
-                    continue;
-
-                var bib = int.TryParse(cols[3].InnerText.Trim(), out var bibNr) ? bibNr : 0;
-                var team = cols[8].InnerText.Trim();
-                var riderCell = cols[7].SelectSingleNode(".//a");
-                var rider = riderCell?.InnerText.Trim() ?? "(onbekend)";
-                var result = new ScrapedStageResult
-                {
-                    EventId = eventId,
-                    Position = posNr,
-                    RiderName = rider,
-                    TeamName = team,
-                    BibNumber = bib
-                };
-                results.Add(result);
-                validCount++;
-
-                if(validCount >= topN)
-                    break;
-            }
-
-            _logger.LogInformation("Scraping voltooid. Aantal geldige resultaten: {Count}", results.Count);
-            return results;
-        }
         public async Task<List<int>> ScrapeDropoutBibsAsync(string url)
         {
-            var web = new HtmlWeb();
-            var doc = await web.LoadFromWebAsync(url);
-
             var dropoutBibs = new List<int>();
 
-            // Zoek alle UL's waarvan de class begint met 'startlist'
-            var ulNodes = doc.DocumentNode.SelectNodes("//ul[starts-with(@class, 'startlist')]");
-            if (ulNodes == null)
+            using var playwright = await Playwright.CreateAsync();
+            await using var browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
             {
-                _logger.LogWarning("Geen startlist UL's gevonden.");
-                return dropoutBibs;
-            }
+                Headless = false
+            });
 
-            foreach (var ul in ulNodes)
+            var page = await browser.NewPageAsync();
+
+            try
             {
-                var liNodes = ul.SelectNodes(".//li");
-                if (liNodes == null)
-                    continue;
-
-                foreach (var li in liNodes)
+                await page.GotoAsync(url, new PageGotoOptions
                 {
-                    var ridersContDiv = li.SelectSingleNode(".//div[contains(@class, 'ridersCont')]");
-                    if (ridersContDiv == null)
-                        continue;
+                    WaitUntil = WaitUntilState.DOMContentLoaded,
+                    Timeout = 60000
+                });
 
-                    var innerUl = ridersContDiv.SelectSingleNode(".//ul");
-                    if (innerUl == null)
-                        continue;
+                // Wacht tot de startlist zichtbaar is
+                await page.WaitForSelectorAsync("ul[class^='startlist']", new PageWaitForSelectorOptions
+                {
+                    Timeout = 10000
+                });
 
-                    var dropoutLis = innerUl.SelectNodes(".//li[contains(@class, 'dropout')]");
-                    if (dropoutLis == null)
-                        continue;
+                // Selecteer direct alle dropout bib spans
+                var bibElements = await page.QuerySelectorAllAsync(
+                    "ul[class^='startlist'] li.dropout span.bib"
+                );
 
-                    foreach (var dropoutLi in dropoutLis)
+                foreach (var element in bibElements)
+                {
+                    var text = (await element.InnerTextAsync())?.Trim();
+
+                    if (int.TryParse(text, out var bibNr))
                     {
-                        var bibSpan = dropoutLi.SelectSingleNode(".//span[contains(@class, 'bib')]");
-                        if (bibSpan != null && int.TryParse(bibSpan.InnerText.Trim(), out var bibNr))
-                        {
-                            dropoutBibs.Add(bibNr);
-                        }
+                        dropoutBibs.Add(bibNr);
                     }
                 }
+
+                _logger.LogInformation("Aantal dropout bibs gevonden: {Count}", dropoutBibs.Count);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Fout bij scrapen van dropout bibs.");
+            }
+            finally
+            {
+                await browser.CloseAsync();
             }
 
-            _logger.LogInformation("Aantal dropout bibs gevonden: {Count}", dropoutBibs.Count);
             return dropoutBibs;
         }
+
 
         public async Task<List<ScrapedCompetitor>> ScrapeCompetitorsAsync(string url, int teamId, int year)
         {
@@ -150,7 +86,7 @@ namespace CycleManager.Services
 
                 await page.GotoAsync(nameUrl, new PageGotoOptions
                 {
-                    WaitUntil = WaitUntilState.NetworkIdle,
+                    WaitUntil = WaitUntilState.DOMContentLoaded,
                     Timeout = 30000
                 });
 
@@ -231,5 +167,86 @@ namespace CycleManager.Services
                 await context.CloseAsync();
             }
         }
+
+        public async Task<List<ScrapedStageResult>> ScrapeStageResultsAsync(string url, int topN, int eventId)
+        {
+            var results = new List<ScrapedStageResult>();
+
+            var context = await _browser.NewContextAsync();
+            var page = await context.NewPageAsync();
+
+            try
+            {
+                await page.GotoAsync(url, new PageGotoOptions
+                {
+                    WaitUntil = WaitUntilState.DOMContentLoaded,
+                    Timeout = 30000
+                });
+
+                var tableSelector = "table tbody tr";
+
+                await page.WaitForSelectorAsync(tableSelector, new()
+                {
+                    State = WaitForSelectorState.Attached,
+                    Timeout = 15000
+                });
+
+                var rows = await page.QuerySelectorAllAsync(tableSelector);
+
+                int validCount = 0;
+
+                foreach (var row in rows)
+                {
+                    var cols = await row.QuerySelectorAllAsync("td");
+                    if (cols == null || cols.Count < 5)
+                        continue;
+
+                    // Position
+                    var posText = (await cols[0].InnerTextAsync()).Trim();
+                    if (!int.TryParse(posText, out var position))
+                        continue;
+
+                    // Bib
+                    var bibText = (await cols[3].InnerTextAsync()).Trim();
+                    int.TryParse(bibText, out var bib);
+
+                    // Rider
+                    var riderElement = await cols[7].QuerySelectorAsync("a");
+                    var rider = riderElement == null
+                        ? ""
+                        : (await riderElement.InnerTextAsync()).Trim();
+
+                    if (string.IsNullOrWhiteSpace(rider))
+                        continue;
+
+                    // Team
+                    var teamElement = await cols[8].QuerySelectorAsync("a");
+                    var team = teamElement == null
+                        ? (await cols[8].InnerTextAsync()).Trim()
+                        : (await teamElement.InnerTextAsync()).Trim();
+
+                    results.Add(new ScrapedStageResult
+                    {
+                        EventId = eventId,
+                        Position = position,
+                        RiderName = rider,
+                        TeamName = team,
+                        BibNumber = bib
+                    });
+
+                    validCount++;
+                    if (validCount >= topN)
+                        break;
+                }
+
+                return results;
+            }
+            finally
+            {
+                await page.CloseAsync();
+                await context.CloseAsync();
+            }
+        }
+
     }
 }

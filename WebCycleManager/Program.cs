@@ -48,7 +48,10 @@ builder.Services.AddDbContext<ApplicationDbContext>(x =>
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
-builder.Services.AddAutoMapper(typeof(DomainToResponseMappingProfile));
+builder.Services.AddAutoMapper(cfg =>
+{
+    cfg.AddProfile<DomainToResponseMappingProfile>();
+});
 builder.Services.AddScoped<ICompetitorRepository, CompetitorRepository>();
 builder.Services.AddScoped<ICompetitorInTeamRepository, CompetitorInTeamRepository>();
 builder.Services.AddScoped<ICompetitorsInEventRepository, CompetitorsInEventRepository>();

@@ -31,9 +31,7 @@ namespace WebApp.Pages.Account
         [BindProperty]
         public int CurrentEventId { get; set; }
 
-        public List<EventForUserDto> ActueleEvenementen { get; set; } = [];
-        public List<EventForUserDto> ToekomstigeEvenementen { get; set; } = [];
-        public List<EventForUserDto> HistorischeEvenementen { get; set; } = [];
+        public List<EventForUserDto> AllEvents { get; set; } = [];
         public async Task OnGetAsync()
         {
             if(User.Identity != null && User.Identity.IsAuthenticated)
@@ -41,15 +39,14 @@ namespace WebApp.Pages.Account
                 var client = _clientFactory.CreateClient();
                 var apiBaseUrl = _configuration["ClientSettings:ApiBaseUrl"];
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                var response = await client.GetFromJsonAsync<EventViewDto>($"{apiBaseUrl}/api/event/{userId}/user");
+                var response = await client.GetFromJsonAsync<List<EventForUserDto>>($"{apiBaseUrl}/api/event/{userId}/user");
                 if (response == null)
                 {
                     return;
                 }
 
-                ActueleEvenementen = response.ActieveEvenementen ?? new();
-                ToekomstigeEvenementen = response.ToekomstigeEvenementen ?? new();
-                HistorischeEvenementen = response.HistorischeEvenementen ?? new();
+                
+                AllEvents = response ?? new List<EventForUserDto>();
             }
         }
 
@@ -79,7 +76,7 @@ namespace WebApp.Pages.Account
             if (result.IsSuccessStatusCode)
             {
                 // Optioneel: Feedback bericht bij succes
-                return RedirectToPage("/Account/Profiel", new { userId });
+                return RedirectToPage("/Account/Profiel");
             }
             else
             {
@@ -88,5 +85,50 @@ namespace WebApp.Pages.Account
                 return Page();
             }
         }
+
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> OnPostRenamePoolAsync([FromBody] RenamePoolDto request)
+        {
+            if (string.IsNullOrWhiteSpace(request.NieuweNaam))
+            {
+                return new JsonResult(new { success = false, message = "De poolnaam mag niet leeg zijn." });
+            }
+
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            var dto = new
+            {
+                PoolId = request.PoolId,
+                NieuweNaam = request.NieuweNaam.Trim(),
+                UserId = userId
+            };
+
+            var content = new StringContent(
+                JsonSerializer.Serialize(dto),
+                Encoding.UTF8,
+                "application/json");
+
+            var client = _clientFactory.CreateClient();
+            var apiBaseUrl = _configuration["ClientSettings:ApiBaseUrl"];
+
+            var result = await client.PutAsync(
+                $"{apiBaseUrl}/api/event/renamepool",
+                content);
+
+            if (result.IsSuccessStatusCode)
+            {
+                return new JsonResult(new { success = true });
+            }
+            else
+            {
+                return new JsonResult(new
+                {
+                    success = false,
+                    message = "Er is iets misgegaan bij het hernoemen van de pool."
+                });
+            }
+        }
+
+
     }
 }

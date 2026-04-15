@@ -66,8 +66,32 @@ window.ModalHelper = (function () {
             try {
                 const response = await fetch(form.action, {
                     method: 'POST',
-                    body: new FormData(form)
+                    body: new FormData(form),
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
                 });
+
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    const data = await response.json();
+
+                    if (data.success) {
+                        const modalEl = container.closest('.modal');
+                        if (modalEl) {
+                            const model = bootstrap.Modal.getInstance(modalEl);
+                            model.hide();
+                        }
+
+                        if (data.redirectUrl) {
+                            window.location.href = data.redirectUrl;
+                        }
+                        return;
+                    }
+
+                    Swal.fire('Fout', data.message || 'Opslaan mislukt', 'error');
+                    return;
+                }
 
                 const html = await response.text();
 

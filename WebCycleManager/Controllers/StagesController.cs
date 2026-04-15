@@ -57,28 +57,26 @@ namespace WebCycleManager.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> CreateAjax(
-            [Bind(Prefix = "NewStage")] StageCreateViewModel stage)
+        public async Task<IActionResult> CreateAjax(ManageStageViewModel model)
         {
-            if(IsEmptyStage(stage))
+            // Work with the nested StageCreateViewModel that the form posts as NewStage.*
+            var stage = model?.NewStage ?? new StageCreateViewModel { EventId = model?.EventStages?.EventId ?? 0 };
+
+            // Empty submission?
+            if (IsEmptyStage(stage))
             {
-                var model = await BuildManageStagesViewModel(
-                    stage.EventId, stage, "Geen stage ingevoerd."
-                    );
-
-                Console.WriteLine("Returning _ManageStagesPartial with model: " +
-                $"EventId={model.EventStages.EventId}, Stages={model.EventStages.Stages.Count()}");
-
-                // Return partial met errors
-                return PartialView("~/Views/Events/_ManageStagesPartial.cshtml", model);
+                var vm = await BuildManageStagesViewModel(stage.EventId, stage, "Geen stage ingevoerd.");
+                return PartialView("~/Views/Events/_ManageStagesPartial.cshtml", vm);
             }
 
+            // Validation
             if (!ModelState.IsValid)
             {
-                var model = await BuildManageStagesViewModel(stage.EventId, stage);
-                return PartialView("~/Views/Events/_ManageStagesPartial.cshtml", model);
+                var vm = await BuildManageStagesViewModel(stage.EventId, stage);
+                return PartialView("~/Views/Events/_ManageStagesPartial.cshtml", vm);
             }
 
+            // Persist
             await _stageService.AddStage(new Stage
             {
                 StageName = stage.StageName,
@@ -92,7 +90,6 @@ namespace WebCycleManager.Controllers
             });
 
             var successModel = await BuildManageStagesViewModel(stage.EventId);
-
             return PartialView("~/Views/Events/_ManageStagesPartial.cshtml", successModel);
         }
 
@@ -161,8 +158,15 @@ namespace WebCycleManager.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> EditAjax(StageViewModel model)
         {
+            bool isAjax = Request.Headers["X-Requested-With"] == "XMLHttpRequest"
+                || Request.Headers["Accept"].Any(h => h.Contains("application/json"));
             if (!ModelState.IsValid)
-                return PartialView("_EditStagePartial", model);
+            {
+                if (isAjax)
+                    return PartialView("_EditStagePartial", model);
+
+                return PartialView("EditStagePartial", model);
+            }
 
             var stage = await _stageService.GetStageById(model.StageId);
             if (stage == null) return NotFound();
@@ -177,19 +181,28 @@ namespace WebCycleManager.Controllers
 
             await _stageService.UpdateStage(stage);
 
-            return Json(new { 
-                success = true,
-                stage = new
+            if (isAjax)
+            {
+                return Json(new
                 {
-                    id = stage.Id,
-                    date = stage.StageDate.ToString("dd-MM-yyyy"),
-                    name = stage.StageName,
-                    start = stage.StartLocation,
-                    finish = stage.FinishLocation,
-                    noscore = stage.NoScore,
-                    noscoredescription = stage.NoScoreDescription
-                }
-            });
+                    success = true,
+                    stage = new
+                    {
+                        id = stage.Id,
+                        date = stage.StageDate.ToString("dd-MM-yyyy"),
+                        name = stage.StageName,
+                        start = stage.StartLocation,
+                        finish = stage.FinishLocation,
+                        noscore = stage.NoScore,
+                        noscoredescription = stage.NoScoreDescription
+                    }
+                });
+            }
+            else
+            {
+                var modelPartial = await BuildManageStagesViewModel(stage.EventId);
+                return PartialView("~/Views/Events/_ManageStagesPartial.cshtml", modelPartial);
+            }
         }
 
         [HttpPost]

@@ -1,5 +1,7 @@
 ﻿@model EventItemViewModel
-
+@{
+    var eventId = Model?.Id ?? ViewBag.Id;
+}
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h3 class="mb-0">@Model.EventNameDescription</h3>
     <div class="d-flex gap-2">
@@ -19,8 +21,15 @@
             Etappes beheren
             <span class="badge bg-light text-dark ms-2">@Model.StagesInEvent</span>
         </a>
+        <form id="recalculateForm" asp-action="RecalculateScores" method="post" asp-route-id="@Model.Id" class="d-inline ms-2">
+            @Html.AntiForgeryToken()
+            <button id="recalculateButton" type="submit" class="btn btn-outline-warning" title="Recalculate pooled scores for this event">
+                <i class="bi bi-arrow-repeat"></i> Recalculate scores
+            </button>
+        </form>
     </div>
 </div>
+
 <form asp-action="Edit">
     <input type="hidden" asp-for="Id" />
     <div class="card mb-3 shadow-sm">
@@ -83,6 +92,10 @@
                     <label for="isActive" class="form-check-label">@Html.DisplayNameFor(m => m.IsActive)</label>
                 </div>
                 <div class="col-md-6 form-check mt-3">
+                    <input type="checkbox" asp-for="CanSubscribe" class="form-check-input" id="canSubscribe" />
+                    <label for="canSubscribe" class="form-check-label">@Html.DisplayNameFor(m => m.CanSubscribe)</label>
+                </div>
+                <div class="col-md-6 form-check mt-3">
                     <input type="checkbox" asp-for="ShowPodium" class="form-check-input" id="showPodium" />
                     <label for="showPodium" class="form-check-label">@Html.DisplayNameFor(m => m.ShowPodium)</label>
                 </div>
@@ -99,5 +112,39 @@
 @section Scripts {
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
+
+        <script>
+            (function () {
+                var form = document.getElementById('recalculateForm');
+                if (!form) return;
+
+                form.addEventListener('submit', function (e) {
+                    e.preventDefault();
+
+                    // Fallback to native confirm if SweetAlert2 isn't available
+                    if (typeof Swal === 'undefined') {
+                        if (!confirm('Recalculate all pooled scores for this event? This may take a few seconds.')) return;
+                        form.submit();
+                        return;
+                    }
+
+                    Swal.fire({
+                        title: 'Recalculate scores?',
+                        text: 'Recalculate all pooled scores for this event. This will overwrite existing totals and may take a few seconds.',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonText: 'Yes, recalculate',
+                        cancelButtonText: 'Cancel'
+                    }).then(function (result) {
+                        if (result.isConfirmed) {
+                            // disable button to avoid double submit
+                            var btn = form.querySelector('button[type="submit"]');
+                            if (btn) { btn.disabled = true; btn.classList.add('disabled'); }
+                            form.submit();
+                        }
+                    });
+                });
+            })();
+        </script>
     }
 }

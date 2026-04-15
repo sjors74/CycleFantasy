@@ -96,8 +96,13 @@ namespace CycleManager.Services
         {
             var events = await _deelnemersRepository.GetEventsByUserId(userId);
             var eventsForUserDto = new List<EventForUserDto>();
-            foreach(var ev in events)
+
+            foreach (var ev in events)
             {
+                // fetch scores once per event (efficiency)
+                var totalScores = await _resultService.GetTotalScoresByEventIdAsync(ev.EventId);
+                var stageScores = await _resultService.GetScoresByEventIdAsync(ev.EventId);
+
                 var deelnemers = new List<DeelnemerDto>();
 
                 foreach (var gce in ev.GameCompetitorEvents)
@@ -121,17 +126,26 @@ namespace CycleManager.Services
                             CompetitorInTeamId = renner.CompetitorsInEvent.CompetitorInTeam.Id
                         });
                     }
+
+                    // compute participant totals from the pre-fetched lists
+                    var total = totalScores.FirstOrDefault(s => s.GameCompetitorEventId == gce.Id);
+                    var lastStageScore = stageScores
+                        .Where(s => s.GameCompetitorEventId == gce.Id)
+                        .OrderByDescending(s => s.StageId)
+                        .FirstOrDefault();
+
                     deelnemers.Add(new DeelnemerDto
                     {
                         Id = gce.Id,
                         PoolNaam = gce.TeamName,
                         DeelnemerNaam = $"{gce.User.FirstName} {gce.User.LastName}",
-                        Renners = renners
+                        Renners = renners,
+                        Punten = total?.TotalScore ?? 0,
+                        LaatsteScore = lastStageScore?.Score ?? 0
                     });
-
                 }
-                eventsForUserDto.Add(
-                new EventForUserDto
+
+                eventsForUserDto.Add(new EventForUserDto
                 {
                     EventId = ev.EventId,
                     EventName = ev.EventName,
@@ -140,11 +154,12 @@ namespace CycleManager.Services
                     Slogan = ev.Slogan,
                     CountryCode = ev.CountryCode,
                     ColorName = ev.CountryCode,
+                    CanSubscribe = ev.CanSubscribe,
                     UserId = userId,
-                    Deelnemers = deelnemers 
+                    Deelnemers = deelnemers
                 });
-                
             }
+
             return eventsForUserDto;
         }
 
@@ -233,6 +248,20 @@ namespace CycleManager.Services
         public async Task AddTeamToEvent(int eventId, int teamId)
         {
             await _eventRepository.AddTeamToEvent(eventId, teamId);
+        }
+
+        public async Task<RenamePoolDto> RenamePoolAsync(RenamePoolDto renamePoolDto)
+        {
+            var pool = await _deelnemersRepository.GetById(renamePoolDto.PoolId);
+            if (pool == null)
+            {
+                return null;
+            }
+
+            pool.TeamName = renamePoolDto.NieuweNaam;
+            await _deelnemersRepository.SaveChangesAsync();
+
+            return renamePoolDto;
         }
     }
 }

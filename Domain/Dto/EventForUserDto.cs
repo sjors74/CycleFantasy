@@ -1,6 +1,4 @@
 ﻿using CycleManager.Domain.Dto;
-using Domain.Models;
-using System.ComponentModel;
 
 namespace Domain.Dto
 {
@@ -10,5 +8,27 @@ namespace Domain.Dto
         public int CompetitorInEventId { get; set; }
         public List<ResultDto> Renners { get; set; } = [];
         public bool IsIngeschreven { get; set; }
+        public bool CanSubscribe { get; set; }
+
+        public bool CanCreatePool { get; set; }
+
+        public bool IsReadOnly { get; set; }
+
+        public string? Category
+        {
+            get
+            {
+                var now = DateTime.UtcNow;
+                var isFuture = StartDate > now;
+
+                if (isFuture)
+                    return "toekomst";
+
+                if (IsActive)
+                    return "actueel";
+
+                return "historisch";
+            }
+        }
     }
 }
