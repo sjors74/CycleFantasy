@@ -2,8 +2,8 @@ using Domain.Context;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Configuration.AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true);
-
+builder.Configuration.AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true)
+    .AddEnvironmentVariables();
 if (builder.Environment.IsEnvironment("Test"))
 {
     var apiUrl = builder.Configuration["ClientSettings:ApiBaseUrl"];

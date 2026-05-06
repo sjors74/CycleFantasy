@@ -1,4 +1,4 @@
-﻿let API_BASE_URL = window.__config?.apiBaseUrl || "https://localhost:44302";
+﻿let API_BASE_URL = window.__config.apiBaseUrl;
 let FLAGS_BASE_URL = window.__config?.flagsBaseUrl || "https://flagcdn.com";
 
 async function loadConfig() {

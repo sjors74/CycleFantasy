@@ -18,9 +18,12 @@
     @RenderSection("Styles", required: false)
     <script>
         // Injecteer hier de juiste API URL van de server
-        window.API_BASE_URL = "@(Configuration["ClientSettings:ApiBaseUrl"] ?? "https://localhost:44302")";
-        window.FLAGS_BASE_URL = "@(Configuration["ClientSettings:FlagsBaseUrl"] ?? "https://flagcdn.com")";
-        console.log("Injected API URL:", window.API_BASE_URL);
+        window.__config = {
+            apiBaseUrl: "@Configuration["ClientSettings:ApiBaseUrl"]",
+            flagsBaseUrl: "@Configuration["ClientSettings:FlagsBaseUrl"]"
+        };
+
+        console.log("Injected API URL:", window.__config.apiBaseUrl);
     </script>
 </head>
 <body class="@ViewData["BodyClass"]">
