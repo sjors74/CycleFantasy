@@ -27,13 +27,21 @@ var builder = WebApplication.CreateBuilder(args);
 // Playwright setup
 builder.Services.AddSingleton<IBrowser>(sp =>
 {
+    var chromePath = Directory.GetFiles("/ms-playwright", "chrome", SearchOption.AllDirectories).FirstOrDefault();
+
+    if (chromePath == null)
+    {
+        throw new Exception("Chrome executable not found.");
+    }
     var playwright = Playwright.CreateAsync().GetAwaiter().GetResult();
     return playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
     {
-        Headless = false,
+        Headless = true,
+        ExecutablePath = chromePath,
         Args = new[]
         {
-            "--disable-blink-features=AutomationControlled"
+            "--no-sandbox",
+            "--disable-dev-shm-usage"
         }
     }).GetAwaiter().GetResult();
 });
