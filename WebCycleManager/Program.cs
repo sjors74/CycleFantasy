@@ -98,9 +98,10 @@ builder.Services.AddScoped<IPcsScraper, PcsScraper>();
 builder.Services.AddScoped<IScoreService, ScoreService>();
 builder.Services.AddScoped<IAdminScraperService, AdminScraperService>();
 builder.Services.AddScoped<INewsService, NewsService>();
-builder.Services.AddScoped<IScrapeScheduleService, ScrapeScheduleService>();
+builder.Services.AddScoped<IScrapeScheduleService, EventScrapeJobRegistrationService>();
 builder.Services.AddScoped<IEventScrapeSchedulerService, EventScrapeSchedulerService>();
 builder.Services.AddScoped<IScrapeOrchestratorService, ScrapeOrchestratorService>();
+builder.Services.AddScoped<IDropoutOrchestratorService, DropoutOrchestratorService>();
 
 builder.Services.AddControllersWithViews()
     .AddDataAnnotationsLocalization(options =>

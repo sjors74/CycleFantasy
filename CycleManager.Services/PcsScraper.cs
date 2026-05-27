@@ -7,43 +7,54 @@ namespace CycleManager.Services
 {
     public class PcsScraper : IPcsScraper
     {
-        private readonly IBrowser _browser;
-        private readonly ILogger<PcsScraper> _logger;
-        public PcsScraper(ILogger<PcsScraper> logger, IBrowser browser)
-        {
-            _logger = logger;
-            _browser = browser;
-        }
+            private readonly IBrowser _browser;
+            private readonly ILogger<PcsScraper> _logger;
+
+            public PcsScraper(ILogger<PcsScraper> logger, IBrowser browser)
+            {
+                _logger = logger;
+                _browser = browser;
+            }
 
         public async Task<List<int>> ScrapeDropoutBibsAsync(string url)
         {
             var dropoutBibs = new List<int>();
 
-            using var playwright = await Playwright.CreateAsync();
-            await using var browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
+            var context = await _browser.NewContextAsync(new()
             {
-                Headless = false
+                UserAgent =
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
+                    "AppleWebKit/537.36 (KHTML, like Gecko) " +
+                    "Chrome/124.0.0.0 Safari/537.36",
+
+                ViewportSize = new ViewportSize
+                {
+                    Width = 1920,
+                    Height = 1080
+                },
+
+                Locale = "nl-NL"
             });
 
-            var page = await browser.NewPageAsync();
+            var page = await context.NewPageAsync();
 
             try
             {
-                await page.GotoAsync(url, new PageGotoOptions
+                await page.GotoAsync(url, new()
                 {
-                    WaitUntil = WaitUntilState.DOMContentLoaded,
+                    WaitUntil = WaitUntilState.NetworkIdle,
                     Timeout = 60000
                 });
 
-                // Wacht tot de startlist zichtbaar is
-                await page.WaitForSelectorAsync("ul[class^='startlist']", new PageWaitForSelectorOptions
+                // Wacht op echte startlist
+                await page.WaitForSelectorAsync("ul.startlist_v4", new()
                 {
-                    Timeout = 10000
+                    Timeout = 30000
                 });
 
-                // Selecteer direct alle dropout bib spans
+                // Pak dropout bibs
                 var bibElements = await page.QuerySelectorAllAsync(
-                    "ul[class^='startlist'] li.dropout span.bib"
+                    "li.dropout span.bib"
                 );
 
                 foreach (var element in bibElements)
@@ -56,20 +67,31 @@ namespace CycleManager.Services
                     }
                 }
 
-                _logger.LogInformation("Aantal dropout bibs gevonden: {Count}", dropoutBibs.Count);
+                _logger.LogInformation(
+                    "Aantal dropout bibs gevonden: {Count}",
+                    dropoutBibs.Count
+                );
+            }
+            catch (TimeoutException)
+            {
+                _logger.LogWarning(
+                    "Geen startlist/dropouts gevonden voor {Url}",
+                    url
+                );
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Fout bij scrapen van dropout bibs.");
+                _logger.LogError(ex,
+                    "Fout bij scrapen van dropout bibs.");
             }
             finally
             {
-                await browser.CloseAsync();
+                await page.CloseAsync();
+                await context.CloseAsync();
             }
 
             return dropoutBibs;
         }
-
 
         public async Task<List<ScrapedCompetitor>> ScrapeCompetitorsAsync(string url, int teamId, int year)
         {
