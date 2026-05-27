@@ -6,11 +6,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CycleManager.Services
 {
-    public class ScrapeScheduleService : IScrapeScheduleService
+    public class EventScrapeJobRegistrationService : IScrapeScheduleService
     {
         private readonly ApplicationDbContext _db;
 
-        public ScrapeScheduleService(ApplicationDbContext db)
+        public EventScrapeJobRegistrationService(ApplicationDbContext db)
         {
             _db = db;
         }
@@ -44,6 +44,21 @@ namespace CycleManager.Services
                     {
                         TimeZone = timezone
                     });
+
+                RecurringJob.RemoveIfExists($"event-dropout-{e.EventId}");
+
+                RecurringJob.AddOrUpdate<IDropoutOrchestratorService>(
+                    $"event-dropout-{e.EventId}",
+                    x => x.RunDailyDropoutScrapeAsync(
+                        e.EventId,
+                        e.EventCode,
+                        e.EventYear),
+                    "0 14,16,18 * * *",
+                    new RecurringJobOptions
+                    {
+                        TimeZone = timezone
+                    });
+
             }
         }
     }
