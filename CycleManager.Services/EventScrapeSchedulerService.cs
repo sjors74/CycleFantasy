@@ -68,7 +68,7 @@ namespace CycleManager.Services
             {
                 await _orchestrator.RunStageScrapeAsync(
                     stage.EventId,
-                    stage.Event.EventName,
+                    stage.Event.EventCode,
                     stage.Id,
                     int.Parse(stage.StageName),
                     stage.Event.EventYear);
