@@ -7,6 +7,7 @@ using DataAccessEF.TypeRepository;
 using Domain.Context;
 using Domain.Interfaces;
 using Domain.Mapping;
+using Hangfire;
 using Humanizer.Localisation;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -27,13 +28,27 @@ var builder = WebApplication.CreateBuilder(args);
 // Playwright setup
 builder.Services.AddSingleton<IBrowser>(sp =>
 {
-    var playwright = Playwright.CreateAsync().GetAwaiter().GetResult();
+    var playwright = Playwright.CreateAsync()
+        .GetAwaiter()
+        .GetResult();
+
+    string? chromePath = null;
+
+    if (Directory.Exists("/ms-playwright"))
+    {
+        chromePath = Directory
+            .GetFiles("/ms-playwright", "chrome", SearchOption.AllDirectories)
+            .FirstOrDefault();
+    }
+
     return playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
     {
-        Headless = false,
+        Headless = true,
+        ExecutablePath = chromePath, // null lokaal = default Playwright browser
         Args = new[]
         {
-            "--disable-blink-features=AutomationControlled"
+            "--no-sandbox",
+            "--disable-dev-shm-usage"
         }
     }).GetAwaiter().GetResult();
 });
@@ -83,6 +98,10 @@ builder.Services.AddScoped<IPcsScraper, PcsScraper>();
 builder.Services.AddScoped<IScoreService, ScoreService>();
 builder.Services.AddScoped<IAdminScraperService, AdminScraperService>();
 builder.Services.AddScoped<INewsService, NewsService>();
+builder.Services.AddScoped<IScrapeScheduleService, ScrapeScheduleService>();
+builder.Services.AddScoped<IEventScrapeSchedulerService, EventScrapeSchedulerService>();
+builder.Services.AddScoped<IScrapeOrchestratorService, ScrapeOrchestratorService>();
+
 builder.Services.AddControllersWithViews()
     .AddDataAnnotationsLocalization(options =>
     {
@@ -99,6 +118,12 @@ builder.Services.AddHttpClient<IApiClient, ApiClient>((serviceProvider, client) 
     var apiSettings = serviceProvider.GetRequiredService<IOptions<ApiSettings>>().Value;
     client.BaseAddress = new Uri(apiSettings.BaseUrl);
 });
+
+builder.Services.AddHangfire(config =>
+    config.UseSqlServerStorage(
+        builder.Configuration.GetConnectionString("CycleDb")));
+
+builder.Services.AddHangfireServer();
 
 var app = builder.Build();
 
@@ -117,9 +142,20 @@ app.UseRouting();
 
 app.UseAuthorization();
 
+app.UseHangfireDashboard();
+
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
+
+using (var scope = app.Services.CreateScope())
+{
+    var scheduler = scope.ServiceProvider
+        .GetRequiredService<IScrapeScheduleService>();
+
+    await scheduler.RegisterSchedulesAsync();
+}
+
 
 app.Run();
 
