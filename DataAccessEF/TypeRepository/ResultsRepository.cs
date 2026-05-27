@@ -215,6 +215,7 @@ namespace DataAccessEF.TypeRepository
                 .AsNoTracking()
                 .Include(s => s.Event)
                 .ThenInclude(e => e.Configuration)
+                .ThenInclude(c => c.ConfigurationItems)
                 .FirstOrDefaultAsync(s => s.Id == stageId);
         }
 

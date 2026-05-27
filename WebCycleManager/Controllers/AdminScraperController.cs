@@ -1,6 +1,7 @@
 ﻿using CycleManager.Domain.Dto;
 using CycleManager.Services;
 using CycleManager.Services.Interfaces;
+using Hangfire;
 using Microsoft.AspNetCore.Mvc;
 
 namespace WebCycleManager.Controllers
@@ -33,10 +34,15 @@ namespace WebCycleManager.Controllers
 
             int.TryParse(stage.StageName, out var stageNumber);
 
-            await _scraperService.RunAsync(eventId, eventName, stageNumber, year);
-            await _scoreService.UpdateScoresForStageAsync(eventId, stageId);
+            BackgroundJob.Enqueue<IScrapeOrchestratorService>(x =>
+                x.RunStageScrapeAsync(
+                    eventId,
+                    eventName,
+                    stageId,
+                    stageNumber,
+                    year));
 
-            TempData["Success"] = "Scrape voltooid.";
+            TempData["Success"] = "Scrape aangemaakt.";
             return RedirectToAction("Details", "Events", new { id = eventId });
         }
 

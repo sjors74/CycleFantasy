@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+﻿using CycleManager.Domain.Models;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
 namespace Domain.Models
@@ -20,6 +21,9 @@ namespace Domain.Models
         public int EventId { get; set; }
         public bool NoScore { get; set; }
         public string? NoScoreDescription { get; set; }
+        public ScrapeStatus ScrapeStatus { get; set; }
+        public DateTime? LastScrapeAttempt { get; set; }
+        public DateTime? LastSuccessfulScrape { get; set; }
         public virtual Event Event{ get; set; } 
         public virtual ICollection<Result> Results { get; set; } = [];
     }

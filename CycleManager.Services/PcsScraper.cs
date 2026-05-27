@@ -185,11 +185,20 @@ namespace CycleManager.Services
 
                 var tableSelector = "table tbody tr";
 
-                await page.WaitForSelectorAsync(tableSelector, new()
+                try
                 {
-                    State = WaitForSelectorState.Attached,
-                    Timeout = 15000
-                });
+                    await page.WaitForSelectorAsync(tableSelector, new()
+                    {
+                        State = WaitForSelectorState.Attached,
+                        Timeout = 15000
+                    });
+                }
+                catch(TimeoutException)
+                {
+                    _logger.LogInformation("Nog geen resultaten beschikbaar op {Url}", url);
+
+                    return results;
+                }
 
                 var rows = await page.QuerySelectorAllAsync(tableSelector);
 
