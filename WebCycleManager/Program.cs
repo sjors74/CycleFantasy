@@ -8,6 +8,7 @@ using Domain.Context;
 using Domain.Interfaces;
 using Domain.Mapping;
 using Hangfire;
+using Hangfire.Dashboard;
 using Humanizer.Localisation;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -143,7 +144,10 @@ app.UseRouting();
 
 app.UseAuthorization();
 
-app.UseHangfireDashboard();
+app.UseHangfireDashboard("/hangfire", new DashboardOptions
+{
+    Authorization = new[] { new AllowAllDashboardAuthorizationFilter() }
+});
 
 app.MapControllerRoute(
     name: "default",
@@ -178,3 +182,8 @@ app.MapGet("/competitors", async (IPcsScraper scraper, string team, int teamId, 
 
 // Alleen nodig voor integratietests
 public partial class Program { }
+
+public class AllowAllDashboardAuthorizationFilter : IDashboardAuthorizationFilter
+{
+    public bool Authorize(DashboardContext context) => true;
+}

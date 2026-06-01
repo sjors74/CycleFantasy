@@ -194,68 +194,80 @@ namespace CycleManager.Services
         {
             var results = new List<ScrapedStageResult>();
 
-            var context = await _browser.NewContextAsync();
+            var context = await _browser.NewContextAsync(new()
+            {
+                UserAgent =
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
+                    "AppleWebKit/537.36 (KHTML, like Gecko) " +
+                    "Chrome/124.0.0.0 Safari/537.36",
+
+                ViewportSize = new ViewportSize
+                {
+                    Width = 1920,
+                    Height = 1080
+                },
+
+                Locale = "nl-NL"
+            });
+
             var page = await context.NewPageAsync();
 
             try
             {
                 await page.GotoAsync(url, new PageGotoOptions
                 {
-                    WaitUntil = WaitUntilState.DOMContentLoaded,
-                    Timeout = 30000
+                    WaitUntil = WaitUntilState.NetworkIdle,
+                    Timeout = 60000
                 });
 
-                var tableSelector = "table tbody tr";
+                await page.WaitForTimeoutAsync(8000);
 
-                try
-                {
-                    await page.WaitForSelectorAsync(tableSelector, new()
-                    {
-                        State = WaitForSelectorState.Attached,
-                        Timeout = 15000
-                    });
-                }
-                catch(TimeoutException)
-                {
-                    _logger.LogInformation("Nog geen resultaten beschikbaar op {Url}", url);
-
-                    return results;
-                }
-
-                var rows = await page.QuerySelectorAllAsync(tableSelector);
-
+                var rows = page.Locator("table.results tbody tr");
+                int count = await rows.CountAsync();
                 int validCount = 0;
 
-                foreach (var row in rows)
+                for (int i = 0; i < count; i++)
                 {
-                    var cols = await row.QuerySelectorAllAsync("td");
-                    if (cols == null || cols.Count < 5)
+                    var row = rows.Nth(i);
+                    var cols = row.Locator("td");
+                    int colCount = await cols.CountAsync();
+                    if (colCount < 5)
                         continue;
 
+
                     // Position
-                    var posText = (await cols[0].InnerTextAsync()).Trim();
+                    var posText = (await cols.Nth(0).InnerTextAsync()).Trim();
                     if (!int.TryParse(posText, out var position))
                         continue;
 
                     // Bib
-                    var bibText = (await cols[3].InnerTextAsync()).Trim();
+                    var bibText = (await cols.Nth(3).InnerTextAsync()).Trim();
                     int.TryParse(bibText, out var bib);
 
-                    // Rider
-                    var riderElement = await cols[7].QuerySelectorAsync("a");
-                    var rider = riderElement == null
-                        ? ""
-                        : (await riderElement.InnerTextAsync()).Trim();
+                    var rider = (await cols
+                        .Nth(7)
+                        .Locator("a")
+                        .InnerTextAsync())
+                        .Trim();
 
                     if (string.IsNullOrWhiteSpace(rider))
                         continue;
 
                     // Team
-                    var teamElement = await cols[8].QuerySelectorAsync("a");
-                    var team = teamElement == null
-                        ? (await cols[8].InnerTextAsync()).Trim()
-                        : (await teamElement.InnerTextAsync()).Trim();
+                    var teamCell = cols.Nth(8);
 
+                    var teamLink = teamCell.Locator("a");
+
+                    string team;
+
+                    if (await teamLink.CountAsync() > 0)
+                    {
+                        team = (await teamLink.InnerTextAsync()).Trim();
+                    }
+                    else
+                    {
+                        team = (await teamCell.InnerTextAsync()).Trim();
+                    }
                     results.Add(new ScrapedStageResult
                     {
                         EventId = eventId,
