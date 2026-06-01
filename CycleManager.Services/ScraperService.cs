@@ -63,6 +63,10 @@ namespace CycleManager.Services
 
             var nieuweScrape = await ScrapeStageResultsAsync(url, topLimit, eventId);
 
+            _logger.LogInformation(
+                 "Scraper returned {Count} results",    
+                nieuweScrape.Count);
+
             foreach (var scraped in nieuweScrape)
             {
                 _db.ScrapedStageResults.Add(new ScrapedStageResult
@@ -78,6 +82,15 @@ namespace CycleManager.Services
             }
 
             await _db.SaveChangesAsync();
+
+            var scrapedCount = await _db.ScrapedStageResults
+                .CountAsync(x =>
+                    x.EventId == eventId &&
+                    x.StageId == stageNumber);
+
+            _logger.LogInformation(
+                "Stored {Count} scraped results",
+                scrapedCount);
 
             // =========================================
             // 4. Alles vooraf ophalen (GEEN N+1)
