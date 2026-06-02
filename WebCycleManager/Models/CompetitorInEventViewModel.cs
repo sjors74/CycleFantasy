@@ -13,6 +13,7 @@ namespace WebCycleManager.Models
         public List<CompetitorInEventViewModel> Competitors { get; set; }
         public IEnumerable<SelectListItem> Teams { get; set; } = new List<SelectListItem>();
         public int? FilterTeam { get; set; } = 0;
+        public int TotalCompetitors { get; set; }
         public string EventNameLong
         {
             get
@@ -27,6 +28,7 @@ namespace WebCycleManager.Models
             EventName = eventName;
             EventYear = eventYear;
             EventId = eventId;
+            TotalCompetitors = competitors?.Count ?? 0;
         }
     }
 }

@@ -9,5 +9,6 @@ namespace CycleManager.Domain.Interfaces
     public interface IEventScrapeSchedulerService
     {
         Task RunEventScrapeAsync(int eventId);
+        Task RunStartlistSyncAsync(int eventId);
     }
 }

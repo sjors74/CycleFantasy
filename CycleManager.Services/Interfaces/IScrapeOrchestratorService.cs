@@ -8,5 +8,8 @@
             int stageId,
             int stageNumber,
             int year);
+
+        Task RefreshStartlistAsync(int eventId);
+
     }
 }

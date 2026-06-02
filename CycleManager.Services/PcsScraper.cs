@@ -1,4 +1,5 @@
-﻿using CycleManager.Domain.Models;
+﻿using CycleManager.Domain.Dto;
+using CycleManager.Domain.Models;
 using CycleManager.Services.Interfaces;
 using Microsoft.Extensions.Logging;
 using Microsoft.Playwright;
@@ -280,6 +281,133 @@ namespace CycleManager.Services
                     validCount++;
                     if (validCount >= topN)
                         break;
+                }
+
+                return results;
+            }
+            finally
+            {
+                await page.CloseAsync();
+                await context.CloseAsync();
+            }
+        }
+
+        public async Task<List<ScrapedStartlistEntry>> ScrapeStartlistAsync(string url)
+        {
+            var results = new List<ScrapedStartlistEntry>();
+
+            var context = await _browser.NewContextAsync(new()
+            {
+                UserAgent =
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
+                    "AppleWebKit/537.36 (KHTML, like Gecko) " +
+                    "Chrome/124.0.0.0 Safari/537.36",
+
+                ViewportSize = new ViewportSize
+                {
+                    Width = 1920,
+                    Height = 1080
+                },
+
+                Locale = "nl-NL"
+            });
+
+            var page = await context.NewPageAsync();
+
+            try
+            {
+                await page.GotoAsync(url, new PageGotoOptions
+                {
+                    WaitUntil = WaitUntilState.NetworkIdle,
+                    Timeout = 60000
+                });
+
+                // PCS laadt soms nog wat dynamisch in
+                await page.WaitForTimeoutAsync(3000);
+
+                var teamSelector = "li.slxl_iv";
+
+                await page.WaitForSelectorAsync(teamSelector, new()
+                {
+                    Timeout = 15000
+                });
+
+                var teams = page.Locator(teamSelector);
+
+                var teamCount = await teams.CountAsync();
+
+                for (int t = 0; t < teamCount; t++)
+                {
+                    var team = teams.Nth(t);
+
+                    // Teamnaam
+                    var teamName = "";
+
+                    var teamLink = team.Locator("a.team");
+
+                    if (await teamLink.CountAsync() > 0)
+                    {
+                        teamName =
+                            (await teamLink.InnerTextAsync()).Trim();
+                    }
+
+                    // Renners binnen team
+                    var riders = team.Locator("div.ridersCont ul li");
+
+                    var riderCount = await riders.CountAsync();
+
+                    for (int r = 0; r < riderCount; r++)
+                    {
+                        var rider = riders.Nth(r);
+
+                        // BIB
+                        int? bib = null;
+
+                        var bibLocator = rider.Locator("span.bib");
+
+                        if (await bibLocator.CountAsync() > 0)
+                        {
+                            var bibText =
+                                (await bibLocator.InnerTextAsync()).Trim();
+
+                            if (int.TryParse(bibText, out var parsedBib))
+                            {
+                                bib = parsedBib;
+                            }
+                        }
+
+                        // Rider link
+                        var riderLink = rider.Locator("a");
+
+                        if (await riderLink.CountAsync() == 0)
+                            continue;
+
+                        var riderName =
+                            (await riderLink.InnerTextAsync()).Trim();
+
+                        if (string.IsNullOrWhiteSpace(riderName))
+                            continue;
+
+                        var href =
+                            await riderLink.GetAttributeAsync("href");
+
+                        string riderSlug = "";
+
+                        if (!string.IsNullOrWhiteSpace(href))
+                        {
+                            riderSlug = href
+                                .Replace("rider/", "")
+                                .Trim('/');
+                        }
+
+                        results.Add(new ScrapedStartlistEntry
+                        {
+                            RiderName = riderName,
+                            PcsName = riderSlug,
+                            TeamName = teamName,
+                            BibNumber = bib
+                        });
+                    }
                 }
 
                 return results;

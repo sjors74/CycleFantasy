@@ -1,4 +1,5 @@
-﻿using CycleManager.Domain.Models;
+﻿using CycleManager.Domain.Dto;
+using CycleManager.Domain.Models;
 using CycleManager.Services.Helpers;
 using CycleManager.Services.Interfaces;
 using CycleManager.Services.Settings;
@@ -373,6 +374,177 @@ namespace CycleManager.Services
             await _db.SaveChangesAsync();
         }
 
+
+        /// <summary>
+        /// </summary>
+        /// <param name="eventId"></param>
+        /// <param name="scrapedEntries"></param>
+        /// <returns></returns>
+        public async Task SyncStartlistAsync(int eventId, List<ScrapedStartlistEntry> scrapedEntries)
+        {
+            var eventEntity = await _db.Events
+                .FirstOrDefaultAsync(e => e.EventId == eventId);  
+
+            if (eventEntity == null) 
+                throw new Exception($"Event {eventId} niet gevonden");
+
+            var eventYear = eventEntity.EventYear;
+
+            var competitorInTeams = await _db.CompetitorInTeams
+                .Include(cit => cit.Competitor)
+                .Include(cit => cit.Team)
+                .Where(cit => cit.Year == eventYear)
+                .ToListAsync();
+
+            var existingEntries = await _db.CompetitorsInEvent
+                .Where(cie => cie.EventId == eventId)
+                .ToListAsync();
+
+            var existingLookup = existingEntries
+                .ToDictionary(e => e.CompetitorInTeamId);
+
+
+            var byPcsAndTeam = 
+                competitorInTeams
+                .Where(x =>
+                    !string.IsNullOrWhiteSpace(x.Competitor.PcsName) && 
+                    !string.IsNullOrWhiteSpace(x.Team.PcsName))
+                .GroupBy(x =>
+                    $"{x.Competitor.PcsName.ToLower()}|{x.Team.PcsName.ToLower()}")
+                .ToDictionary(g => g.Key, g => g.First());
+
+            var byPcs = 
+                competitorInTeams
+                .Where(x =>
+                !string.IsNullOrWhiteSpace(x.Competitor.PcsName))
+                .GroupBy(x =>
+                    x.Competitor.PcsName.ToLower())
+                .ToDictionary(g => g.Key, g => g.First());
+
+            var byNameAndTeam = 
+                competitorInTeams
+                .GroupBy(x =>
+                    $"{NormalizeName($"{x.Competitor.LastName} {x.Competitor.FirstName}")}|{NormalizeName(x.Team.CurrentTeamName)}")
+                .ToDictionary(g => g.Key, g => g.First());
+
+            var byName = 
+                competitorInTeams
+                .GroupBy(x =>
+                    NormalizeName($"{x.Competitor.LastName} {x.Competitor.FirstName}"))
+                .ToDictionary(g => g.Key, g => g.First());
+
+            var processedCompetitorInTeamIds =
+                new HashSet<int>();
+
+            int added = 0;
+            int updated = 0;
+            int unmatched = 0;
+
+            foreach (var scraped in scrapedEntries)
+            {
+                if(string.IsNullOrWhiteSpace(scraped.TeamPcsName))
+                {
+                    _logger.LogWarning(
+                        "Missing TeamPcsName for rider: {Rider} ({Pcs})",
+                        scraped.RiderName,
+                        scraped.PcsName);
+                }
+
+                var competitorInTeam = FindCompetitorInTeam(scraped, byPcsAndTeam, byPcs, byNameAndTeam, byName);
+
+                if (competitorInTeam == null)
+                {
+                    unmatched++;
+
+                    _logger.LogWarning(
+                        "Geen match voor: {Rider} ({PcsName})",
+                        scraped.RiderName,
+                        scraped.PcsName);
+
+                    continue;
+                }
+
+                processedCompetitorInTeamIds.Add(competitorInTeam.Id);
+
+                if (string.IsNullOrWhiteSpace(
+                    competitorInTeam.Competitor.PcsName)
+                    && !string.IsNullOrWhiteSpace(scraped.PcsName))
+                {
+                    competitorInTeam.Competitor.PcsName = scraped.PcsName;
+                }
+
+                if (existingLookup.TryGetValue(
+                    competitorInTeam.Id,
+                    out var existing))
+                {
+                    existing.EventNumber = scraped.BibNumber ?? 0;
+                    existing.InSelectie = true;
+                    existing.OutOfCompetition = false;
+
+                    updated++;
+                }
+                else
+                {
+                    _db.CompetitorsInEvent.Add(new CompetitorsInEvent
+                    {
+                        EventId = eventId,
+                        CompetitorInTeamId = competitorInTeam.Id,
+                        EventNumber = scraped.BibNumber ?? 0,
+                        InSelectie = true,
+                        OutOfCompetition = false
+                    });
+
+                    added++;
+                }
+            }
+
+            var obsoleteEntries = existingEntries
+                .Where(e => !processedCompetitorInTeamIds.Contains(e.CompetitorInTeamId))
+                .ToList();
+
+            if (obsoleteEntries.Any())
+            {
+                _db.CompetitorsInEvent.RemoveRange(obsoleteEntries);
+            }
+
+            await _db.SaveChangesAsync();
+            _logger.LogInformation(
+                "Startlist sync EventId {EventId}: toegevoegd={Added}, bijgewerkt={Updated}, verwijderd={Removed}, unmatched={Unmatched}",
+                eventId,
+                added,
+                updated,
+                obsoleteEntries.Count,
+                unmatched);
+
+        }
+
+        public async Task RefreshStartlistAsync(int eventId)
+        {
+            var eventEntity = await _db.Events
+                .FirstOrDefaultAsync(e => e.EventId == eventId);
+
+            if (eventEntity == null)
+                throw new Exception($"Event {eventId} niet gevonden");
+
+            var url =
+                $"https://www.procyclingstats.com/race/{eventEntity.EventCode}/{eventEntity.EventYear}/startlist";
+
+            _logger.LogInformation(
+                "Startlist synchronisatie gestart voor EventId {EventId}",
+                eventId);
+
+            var scrapedEntries = await _pcsScraper.ScrapeStartlistAsync(url);
+
+            _logger.LogInformation(
+                "{Count} renners gescrapet",
+                scrapedEntries.Count);
+
+            await SyncStartlistAsync(
+                eventId,
+                scrapedEntries);
+        }
+
+
         private Task<List<ScrapedStageResult>> ScrapeStageResultsAsync(string url, int topN, int eventId)
         {
             return _pcsScraper.ScrapeStageResultsAsync(url, topN, eventId);
@@ -391,6 +563,64 @@ namespace CycleManager.Services
                 ci.ConfigurationId == configuratieId);
 
             return configurationItem?.Id ?? 0;
+        }
+
+        private static string NormalizeName(string name)
+        {
+            return name
+                .Trim()
+                .ToLowerInvariant()
+                .Replace("-", "")
+                .Replace(" ", "");
+        }
+
+        private CompetitorInTeam? FindCompetitorInTeam(
+            ScrapedStartlistEntry scraped,
+            Dictionary<string, CompetitorInTeam> byPcsAndTeam,
+            Dictionary<string, CompetitorInTeam> byPcs,
+            Dictionary<string, CompetitorInTeam> byNameAndTeam,
+            Dictionary<string, CompetitorInTeam> byName)
+        {
+            // 1. PCS Rider + Team
+
+            if (!string.IsNullOrWhiteSpace(scraped.PcsName) &&
+                !string.IsNullOrWhiteSpace(scraped.TeamPcsName))
+            {
+                var key =
+                    $"{scraped.PcsName.ToLower()}|{scraped.TeamPcsName.ToLower()}";
+
+                if (byPcsAndTeam.TryGetValue(key, out var match))
+                    return match;
+            }
+
+            // 2. PCS Rider
+
+            if (!string.IsNullOrWhiteSpace(scraped.PcsName))
+            {
+                if (byPcs.TryGetValue(
+                        scraped.PcsName.ToLower(),
+                        out var match))
+                    return match;
+            }
+
+            // 3. Naam + Team
+
+            var nameTeamKey =
+                $"{NormalizeName(scraped.RiderName)}|{NormalizeName(scraped.TeamName)}";
+
+            if (byNameAndTeam.TryGetValue(
+                    nameTeamKey,
+                    out var nameTeamMatch))
+                return nameTeamMatch;
+
+            // 4. Naam
+
+            if (byName.TryGetValue(
+                    NormalizeName(scraped.RiderName),
+                    out var nameMatch))
+                return nameMatch;
+
+            return null;
         }
     }
 }

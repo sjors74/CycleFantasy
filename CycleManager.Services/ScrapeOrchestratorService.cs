@@ -34,5 +34,10 @@ namespace CycleManager.Services
                 eventId,
                 stageId);
         }
+
+        public async Task RefreshStartlistAsync(int eventId)
+        {
+            await _scraperService.RefreshStartlistAsync(eventId);
+        }
     }
 }
