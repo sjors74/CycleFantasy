@@ -1,4 +1,5 @@
-﻿using CycleManager.Domain.Models;
+﻿using CycleManager.Domain.Dto;
+using CycleManager.Domain.Models;
 using CycleManager.Services.Interfaces;
 using Domain.Context;
 using Domain.Models;
@@ -46,6 +47,11 @@ namespace CycleManager.Tests.Integration.Helpers
             await _db.SaveChangesAsync();
         }
 
+        public Task RefreshStartlistAsync(int eventId)
+        {
+            throw new NotImplementedException();
+        }
+
         public Task RunAsync(int eventId, string eventName, int year, int stageNumber)
         {
             throw new NotImplementedException();
@@ -84,6 +90,11 @@ namespace CycleManager.Tests.Integration.Helpers
         }
 
         public Task RunDropoutsAsync(int eventId, string eventName, int year)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task SyncStartlistAsync(int eventId, List<ScrapedStartlistEntry> scrapedEntries)
         {
             throw new NotImplementedException();
         }

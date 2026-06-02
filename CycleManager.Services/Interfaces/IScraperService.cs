@@ -1,4 +1,6 @@
-﻿namespace CycleManager.Services.Interfaces
+﻿using CycleManager.Domain.Dto;
+
+namespace CycleManager.Services.Interfaces
 {
     public interface IScraperService
     {
@@ -6,5 +8,8 @@
         Task RunDropoutsAsync(int eventId, string eventName, int year);
         Task RunCompetitorsAsync(int teamId, int year);
         Task ImportScrapedCompetitorsAsync();
+        Task SyncStartlistAsync(int eventId, List<ScrapedStartlistEntry> scrapedEntries);
+
+        Task RefreshStartlistAsync(int eventId);
     }
 }

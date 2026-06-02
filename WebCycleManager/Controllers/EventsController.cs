@@ -2,6 +2,7 @@
 using CycleManager.Services;
 using CycleManager.Services.Interfaces;
 using Domain.Models;
+using Hangfire;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -255,6 +256,17 @@ namespace WebCycleManager.Controllers
             };
 
             return PartialView("_ManageStagesPartial", model);
+        }
+
+        [HttpPost]
+        public IActionResult ManageRenners(int eventId)
+        {
+            BackgroundJob.Enqueue<IScraperService>(
+                x => x.RefreshStartlistAsync(eventId));
+
+            TempData["Success"] = "Startlist synchronisatie gestart.";
+
+            return RedirectToAction("Index", "CompetitorsInEvents", new { eventId = eventId });
         }
 
         // POST: Events/RecalculateScores/5

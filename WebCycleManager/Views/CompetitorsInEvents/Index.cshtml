@@ -4,6 +4,19 @@
     <h3 class="mb-0">Renners @Model.EventNameLong</h3>
     <div class="d-flex gap-2">
         <a asp-action="Index" asp-controller="Events" class="btn btn-outline-secondary">Terug naar evenement</a>
+        <form id="syncRennersForm" asp-action="ManageRenners"
+              asp-controller="Events"
+              method="post">
+
+            <input type="hidden"
+                   name="eventId"
+                   value="@Model.EventId" />
+
+            <button type="submit"
+                    class="btn btn-outine-primary">
+                Renners synchroniseren
+            </button>
+        </form>
         <a asp-action="Create" asp-route-eventId="@Model.EventId" asp-route-FilterTeam="@Model.FilterTeam" class="btn btn-success">
             <i class="bi bi-plus-circle"></i> Voeg renner(s) toe
         </a>
@@ -74,3 +87,44 @@
         window.location.href = "/CompetitorsInEvents/Index?eventId=" + eventId + "&FilterTeam=" + searchTeam;
     }
 </script> 
+<script>
+   (function () {
+    // =========================
+    // RENNERS SYNCHRONISEREN
+    // =========================
+    var syncForm = document.getElementById('syncRennersForm');
+    if (syncForm) {
+
+        syncForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            if (typeof Swal === 'undefined') {
+                if (!confirm('Startlist synchroniseren vanaf PCS? Bestaande deelnemers worden bijgewerkt.')) return;
+                syncForm.submit();
+                return;
+            }
+
+            Swal.fire({
+                title: 'Renners synchroniseren?',
+                text: 'De actuele startlijst wordt opgehaald vanaf PCS. Deelnemers en rugnummers worden bijgewerkt.',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Ja, synchroniseren',
+                cancelButtonText: 'Annuleren'
+            }).then(function (result) {
+
+                if (result.isConfirmed) {
+
+                    var btn = syncForm.querySelector('button[type="submit"]');
+                    if (btn) {
+                        btn.disabled = true;
+                        btn.classList.add('disabled');
+                    }
+
+                    syncForm.submit();
+                }
+            });
+        });
+    }
+  })();
+</script>
