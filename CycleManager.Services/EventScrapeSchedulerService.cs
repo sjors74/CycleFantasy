@@ -4,11 +4,6 @@ using CycleManager.Services.Interfaces;
 using Domain.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace CycleManager.Services
 {
@@ -102,6 +97,27 @@ namespace CycleManager.Services
             }
 
             await _db.SaveChangesAsync();
+        }
+
+        public async Task RunStartlistSyncAsync(int eventId)
+        {
+            try
+            {
+                await _orchestrator.RefreshStartlistAsync(eventId);
+
+                _logger.LogInformation(
+                    "Startlist sync succesvol voor EventId {EventId}",
+                    eventId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "Fout tijdens startlist sync voor EventId {EventId}",
+                    eventId);
+
+                throw;
+            }
         }
     }
 }

@@ -28,37 +28,72 @@ namespace CycleManager.Services
                 timezone = TimeZoneInfo.FindSystemTimeZoneById("Europe/Amsterdam");
             }
 
+            var today = DateTime.UtcNow.Date;
+
             var events = await _db.Events
                         .Where(e => e.IsActive)
                         .ToListAsync();
 
             foreach (var e in events)
             {
-                RecurringJob.RemoveIfExists($"event-scraper-{e.EventId}");
+                if (e.StartDate <= today && e.EndDate >= today.AddDays(-1))
+                {
+                    RecurringJob.RemoveIfExists($"event-scraper-{e.EventId}");
 
-                RecurringJob.AddOrUpdate<IEventScrapeSchedulerService>(
-                    $"event-scraper-{e.EventId}",
-                    x => x.RunEventScrapeAsync(e.EventId),
-                    "*/5 * * * *",
-                    new RecurringJobOptions
-                    {
-                        TimeZone = timezone
-                    });
+                    RecurringJob.AddOrUpdate<IEventScrapeSchedulerService>(
+                        $"event-scraper-{e.EventId}",
+                        x => x.RunEventScrapeAsync(e.EventId),
+                        "*/5 * * * *",
+                        new RecurringJobOptions
+                        {
+                            TimeZone = timezone
+                        });
+                }
+                else
+                {
+                    RecurringJob.RemoveIfExists($"event-scraper-{e.EventId}");
+                }
 
-                RecurringJob.RemoveIfExists($"event-dropout-{e.EventId}");
+                if (e.StartDate <= today && e.EndDate >= today)
+                {
+                    RecurringJob.RemoveIfExists($"event-dropout-{e.EventId}");
 
-                RecurringJob.AddOrUpdate<IDropoutOrchestratorService>(
-                    $"event-dropout-{e.EventId}",
-                    x => x.RunDailyDropoutScrapeAsync(
-                        e.EventId,
-                        e.EventCode,
-                        e.EventYear),
-                    "0 14,16,18 * * *",
-                    new RecurringJobOptions
-                    {
-                        TimeZone = timezone
-                    });
+                    RecurringJob.AddOrUpdate<IDropoutOrchestratorService>(
+                        $"event-dropout-{e.EventId}",
+                        x => x.RunDailyDropoutScrapeAsync(
+                            e.EventId,
+                            e.EventCode,
+                            e.EventYear),
+                        "0 14,16,18 * * *",
+                        new RecurringJobOptions
+                        {
+                            TimeZone = timezone
+                        });
+                }
+                else
+                {
+                    RecurringJob.RemoveIfExists($"event-dropout-{e.EventId}");
+                }
 
+                if (e.StartDate >= today.AddDays(-3) &&
+                    e.StartDate <= today.AddDays(30))
+                {
+                    RecurringJob.RemoveIfExists(
+                        $"event-startlist-{e.EventId}");
+
+                    RecurringJob.AddOrUpdate<IEventScrapeSchedulerService>(
+                        $"event-startlist-{e.EventId}",
+                        x => x.RunStartlistSyncAsync(e.EventId),
+                        "0 6 * * *",
+                        new RecurringJobOptions
+                        {
+                            TimeZone = timezone
+                        });
+                }
+                else
+                {
+                    RecurringJob.RemoveIfExists($"event-startlist-{e.EventId}");
+                }
             }
         }
     }

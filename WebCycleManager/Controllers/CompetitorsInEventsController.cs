@@ -55,7 +55,7 @@ namespace WebCycleManager.Controllers
                     EventName = currentEvent.EventName,
                     OutOfCompetition = d.OutOfCompetition,
                     InSelection = d.InSelectie,
-                    TeamId = team?.TeamId ?? 0
+                    TeamId = team?.TeamId ?? 0,
                 };
             })
             .OrderBy(x => x.EventNumber)
