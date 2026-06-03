@@ -1,0 +1,202 @@
+﻿@using CycleManager.Domain.Dto
+@using Domain.Dto
+@model EventForUserDto
+
+@{
+    var collapseId = $"event-{Model.EventId}";
+}
+
+<div class="accordion-item">
+
+    <h2 class="accordion-header">
+        <button class="accordion-button collapsed"
+                type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#@collapseId">
+
+            <div>
+                <strong>@Model.EventName</strong><br />
+                <small>
+                    @Model.StartDate.ToString("dd MMM yyyy") -
+                    @Model.EndDate.ToString("dd MMM yyyy")
+                </small>
+            </div>
+
+        </button>
+    </h2>
+
+    <div id="@collapseId"
+         class="accordion-collapse collapse">
+
+        <div class="accordion-body">
+
+            <div class="fw-bold mb-2">
+                Je pools
+            </div>
+
+            <div class="accordion"
+                 id="pools-@Model.EventId">
+
+                @if (Model.Deelnemers != null &&
+                                Model.Deelnemers.Any(d => d.Id > 0))
+                {
+                    foreach (var deelnemer in Model.Deelnemers)
+                    {
+                        var poolId =
+                        $"pool-{Model.EventId}-{deelnemer.Id}";
+
+                        <div class="accordion-item">
+
+                            <h2 class="accordion-header">
+
+                                <button class="accordion-button collapsed"
+                                        type="button"
+                                        data-bs-toggle="collapse"
+                                        data-bs-target="#@poolId">
+
+                                    <div>
+                                        <strong>
+                                            @deelnemer.PoolNaam
+                                        </strong>
+                                        <br />
+
+                                        <small class="text-muted">
+                                            @deelnemer.Renners.Count renners geselecteerd
+                                        </small>
+                                    </div>
+
+                                </button>
+
+                            </h2>
+
+                            <div id="@poolId"
+                                 class="accordion-collapse collapse"
+                                 data-bs-parent="#pools-@Model.EventId">
+
+                                <div class="accordion-body">
+
+                                    @if (!Model.IsReadOnly &&
+                                                                Model.CanCreatePool)
+                                    {
+                                        <div class="d-flex justify-content-end mb-2">
+
+                                            <a class="btn btn-primary btn-sm"
+                                               href="/Selectie?EvenementId=@Model.EventId&DeelnemerId=@deelnemer.Id">
+                                                Bewerk je team
+                                            </a>
+
+                                            <button class="btn btn-danger btn-sm ms-2"
+                                                    onclick="verwijderDeelnemer(@deelnemer.Id)">
+                                                Verwijder
+                                            </button>
+
+                                        </div>
+                                    }
+
+                                    @if (deelnemer.Renners != null &&
+                                                                deelnemer.Renners.Any())
+                                    {
+                                        <table class="table table-sm align-middle mb-0">
+
+                                            <tbody>
+
+                                                @foreach (var renner in deelnemer.Renners)
+                                                {
+                                                    <tr>
+
+                                                        <td style="width:30px;">
+                                                            <img style="width:16px"
+                                                                 src="https://flagcdn.com/24x18/@(renner.CountryShort?.ToLower() ?? "unknown").png" />
+                                                        </td>
+
+                                                        <td class="fw-semibold small">
+                                                            @($"{renner.FirstName} {renner.LastName}")
+                                                        </td>
+
+                                                        <td class="text-muted small">
+                                                            @renner.CurrentTeamName
+                                                        </td>
+
+                                                        <td class="text-end fw-bold small"
+                                                            style="width:60px;">
+                                                            @renner.Punten
+                                                        </td>
+
+                                                    </tr>
+                                                }
+
+                                            </tbody>
+
+                                        </table>
+                                    }
+                                    else
+                                    {
+                                        <p class="text-muted">
+                                            Geen renners geselecteerd.
+                                        </p>
+                                    }
+
+                                </div>
+
+                            </div>
+
+                        </div>
+                    }
+                }
+
+                @if (!(Model.Deelnemers?.Any() ?? false) &&
+                                !Model.IsReadOnly)
+                {
+                    <p class="text-muted">
+                        Je hebt nog geen pools aangemaakt.
+                    </p>
+                }
+
+            </div>
+
+            @if (!Model.IsReadOnly &&
+                        Model.CanCreatePool)
+            {
+                <div class="mt-3">
+
+                    <button class="btn btn-outline-primary"
+                            type="button"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#createPool-@Model.EventId">
+
+                        + Pool aanmaken
+
+                    </button>
+
+                    <div class="collapse mt-2"
+                         id="createPool-@Model.EventId">
+
+                        <form method="post"
+                              asp-page-handler="CreatePool">
+
+                            <input type="hidden"
+                                   name="CurrentEventId"
+                                   value="@Model.EventId" />
+
+                            <input type="text"
+                                   class="form-control mb-2"
+                                   name="poolNaam"
+                                   placeholder="Pool naam"
+                                   required />
+
+                            <button class="btn btn-primary btn-sm">
+                                Toevoegen
+                            </button>
+
+                        </form>
+
+                    </div>
+
+                </div>
+            }
+
+        </div>
+
+    </div>
+
+</div>

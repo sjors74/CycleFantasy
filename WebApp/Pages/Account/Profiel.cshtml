@@ -1,5 +1,6 @@
 ﻿@page
 @using WebApp.Pages.ViewModels
+@using CycleManager.Domain.Dto
 @model WebApp.Pages.Account.ProfielModel
 @{
 }
@@ -9,11 +10,8 @@
             <div class="list-group w-100">
                 @if (User.Identity.IsAuthenticated)
                 {
-                    @await Html.PartialAsync("_EventsForUser", new EventListViewModel
-                    {
-                        AllEvents = Model.AllEvents,
-                                Titel = "Evenementen"
-                    })
+                    @await Html.PartialAsync("_EventsForUser", Model.Dashboard)
+
                 }
             </div>
         </div>

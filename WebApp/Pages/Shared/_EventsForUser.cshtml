@@ -1,6 +1,6 @@
-﻿@using Domain.Dto
-@using WebApp.Pages.ViewModels
-@model EventListViewModel
+﻿@using CycleManager.Domain.Dto
+@using Domain.Dto
+@model EventDashboardDto
 
 <div class="card shadow-sm mt-4">
     <div class="card-header bg-secondary text-white">
@@ -9,7 +9,9 @@
 
     <div class="card-body">
 
-        @if (!Model.AllEvents.Any())
+        @if ((Model.Actueel == null || !Model.Actueel.Any()) &&
+                (Model.Toekomst == null || !Model.Toekomst.Any()) &&
+                (Model.Historisch == null || !Model.Historisch.Any()))
         {
             <p class="text-muted">Er zijn momenteel geen evenementen.</p>
         }
@@ -17,262 +19,68 @@
         {
             <!-- TABS -->
             <ul class="nav nav-tabs mb-3" id="eventTabs">
+
                 <li class="nav-item">
-                    <button class="nav-link active" data-filter="actueel">Actueel</button>
+                    <button class="nav-link active"
+                            data-bs-toggle="tab"
+                            data-bs-target="#actueel">
+                        Actueel
+                    </button>
                 </li>
+
                 <li class="nav-item">
-                    <button class="nav-link" data-filter="toekomst">Toekomstig</button>
+                    <button class="nav-link"
+                            data-bs-toggle="tab"
+                            data-bs-target="#toekomst">
+                        Toekomst
+                    </button>
                 </li>
+
                 <li class="nav-item">
-                    <button class="nav-link" data-filter="historisch">Historisch</button>
+                    <button class="nav-link"
+                            data-bs-toggle="tab"
+                            data-bs-target="#historisch">
+                        Historisch
+                    </button>
                 </li>
+
             </ul>
 
-            <!-- ACCORDION -->
-            <div class="accordion" id="eventsAccordion">
+            <!-- TAB CONTENT -->
+            <div class="tab-content">
 
-                @foreach (var evt in Model.AllEvents)
-                {
-                    <span style="display:none">
-                        @evt.EventName - @evt.Category
-                    </span>
-                    var collapseId = $"event-{evt.EventId}";
+                <!-- ACTUEEL -->
+                <div class="tab-pane fade show active" id="actueel">
 
-                    <div class="accordion-item event-item"
-                         data-category="@evt.Category">
+                    @foreach (var evt in Model.Actueel)
+                    {
+                        @await Html.PartialAsync("_EventAccordion", evt)
+                    }
 
-                        <!-- HEADER -->
-                        <h2 class="accordion-header">
-                            <button class="accordion-button collapsed"
-                                    type="button"
-                                    data-bs-toggle="collapse"
-                                    data-bs-target="#@collapseId">
+                </div>
 
-                                <div>
-                                    <strong>@evt.EventName</strong><br />
-                                    <small>
-                                        @evt.StartDate.ToString("dd MMM yyyy") -
-                                        @evt.EndDate.ToString("dd MMM yyyy")
-                                    </small>
-                                </div>
+                <!-- TOEKOMST -->
+                <div class="tab-pane fade" id="toekomst">
 
-                            </button>
-                        </h2>
+                    @foreach (var evt in Model.Toekomst)
+                    {
+                        @await Html.PartialAsync("_EventAccordion", evt)
+                    }
 
-                        <!-- BODY -->
-                        <div id="@collapseId"
-                             class="accordion-collapse collapse"
-                             data-bs-parent="#eventsAccordion">
+                </div>
 
-                            <div class="accordion-body">
+                <!-- HISTORISCH -->
+                <div class="tab-pane fade" id="historisch">
 
-                                <div class="fw-bold mb-2">Je pools</div>
+                    @foreach (var evt in Model.Historisch)
+                    {
+                        @await Html.PartialAsync("_EventAccordion", evt)
+                    }
 
-                                <!-- POOLS ACCORDION -->
-                                <div class="accordion" id="pools-@evt.EventId">
-
-                                    @if (evt.Deelnemers != null && evt.Deelnemers.Any(d => d.Id > 0))
-                                    {
-                                        foreach (var deelnemer in evt.Deelnemers)
-                                        {
-                                            var poolId = $"pool-{evt.EventId}-{deelnemer.Id}";
-
-                                            <div class="accordion-item">
-
-                                                <h2 class="accordion-header">
-                                                    <button class="accordion-button collapsed"
-                                                            type="button"
-                                                            data-bs-toggle="collapse"
-                                                            data-bs-target="#@poolId">
-
-                                                        <div>
-                                                            <strong>@deelnemer.PoolNaam</strong><br />
-                                                            <small class="text-muted">
-                                                                @deelnemer.Renners.Count renners geselecteerd
-                                                            </small>
-                                                        </div>
-
-                                                    </button>
-                                                </h2>
-
-                                                <div id="@poolId"
-                                                     class="accordion-collapse collapse"
-                                                     data-bs-parent="#pools-@evt.EventId">
-
-                                                    <div class="accordion-body">
-
-                                                        @if (!evt.IsReadOnly && evt.CanCreatePool)
-                                                        {
-                                                            <div class="d-flex justify-content-end mb-2">
-                                                                <a class="btn btn-primary btn-sm"
-                                                                   href="/Selectie?EvenementId=@evt.EventId&DeelnemerId=@deelnemer.Id">
-                                                                    Bewerk je team
-                                                                </a>
-
-                                                                <button class="btn btn-danger btn-sm ms-2"
-                                                                        onclick="verwijderDeelnemer(@deelnemer.Id)">
-                                                                    Verwijder
-                                                                </button>
-                                                            </div>
-                                                        }
-
-                                                        @if (deelnemer.Renners != null && deelnemer.Renners.Any())
-                                                        {
-                                                            <table class="table table-sm align-middle mb-0">
-
-                                                                <tbody>
-                                                                    @foreach (var renner in deelnemer.Renners)
-                                                                    {
-                                                                        <tr>
-
-                                                                            <!-- vlag -->
-                                                                            <td style="width:30px;">
-                                                                                <img style="width:16px"
-                                                                                     src="https://flagcdn.com/24x18/@(renner.CountryShort?.ToLower() ?? "unknown").png" />
-                                                                            </td>
-
-                                                                            <!-- naam -->
-                                                                            <td class="fw-semibold small">
-                                                                                @($"{renner.FirstName} {renner.LastName}")
-                                                                            </td>
-
-                                                                            <!-- team -->
-                                                                            <td class="text-muted small">
-                                                                                @renner.CurrentTeamName
-                                                                            </td>
-
-                                                                            <!-- punten -->
-                                                                            <td class="text-end fw-bold small" style="width:60px;">
-                                                                                @renner.Punten
-                                                                            </td>
-
-                                                                        </tr>
-                                                                    }
-                                                                </tbody>
-
-                                                            </table>
-                                                        }
-                                                        else
-                                                        {
-                                                            <p class="text-muted">Geen renners geselecteerd.</p>
-                                                        }
-
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        }
-                                    }
-
-                                    <!-- GEEN POOLS MELDING -->
-                                    @if (!(evt.Deelnemers?.Any() ?? false) && !evt.IsReadOnly)
-                                    {
-                                        <p class="text-muted">Je hebt nog geen pools aangemaakt.</p>
-                                    }
-
-                                </div>
-
-                                <!-- POOL AANMAKEN -->
-                                @if (!evt.IsReadOnly && evt.CanCreatePool)
-                                {
-                                    <div class="mt-3">
-
-                                        <button class="btn btn-outline-primary"
-                                                type="button"
-                                                data-bs-toggle="collapse"
-                                                data-bs-target="#createPool-@evt.EventId">
-                                            + Pool aanmaken
-                                        </button>
-
-                                        <div class="collapse mt-2" id="createPool-@evt.EventId">
-
-                                            <form method="post" asp-page-handler="CreatePool">
-
-                                                <input type="hidden"
-                                                       name="CurrentEventId"
-                                                       value="@evt.EventId" />
-
-                                                <input type="text"
-                                                       class="form-control mb-2"
-                                                       name="poolNaam"
-                                                       placeholder="Pool naam"
-                                                       required />
-
-                                                <button class="btn btn-primary btn-sm">Toevoegen</button>
-
-                                            </form>
-
-                                        </div>
-                                    </div>
-                                }
-
-                            </div>
-                        </div>
-                    </div>
-                }
+                </div>
 
             </div>
         }
 
     </div>
 </div>
-<script>
-    document.addEventListener("DOMContentLoaded", function () {
-
-        const tabs = document.querySelectorAll(".nav-link");
-        const items = document.querySelectorAll("[data-category]");
-
-        function applyFilter(filter) {
-            if (!filter) return;
-
-            const normalizedFilter = filter.toLowerCase().trim();
-
-            items.forEach(item => {
-                const category = (item.dataset.category || "").toLowerCase().trim();
-
-                if (category === normalizedFilter) {
-                    item.style.display = "";
-                } else {
-                    item.style.display = "none";
-                }
-            });
-        }
-
-        function setActiveTab(tab) {
-            tabs.forEach(t => t.classList.remove("active"));
-            tab.classList.add("active");
-        }
-
-        function closeBootstrapTabs() {
-            // sluit eventueel open collapse/accordions binnen tabs
-            document.querySelectorAll(".collapse.show").forEach(el => {
-                const instance = bootstrap.Collapse.getInstance(el);
-                if (instance) {
-                    instance.hide();
-                } else {
-                    new bootstrap.Collapse(el, { toggle: false }).hide();
-                }
-            });
-        }
-
-        tabs.forEach(tab => {
-            tab.addEventListener("click", function () {
-
-                const filter = this.dataset.filter;
-
-                setActiveTab(this);
-                applyFilter(filter);
-                closeBootstrapTabs();
-            });
-        });
-
-        // 🔥 INITIAL LOAD
-        const defaultTab = document.querySelector(".nav-link.active");
-        const defaultFilter = defaultTab?.dataset.filter;
-
-        if (defaultTab) {
-            setActiveTab(defaultTab);
-        }
-
-        applyFilter(defaultFilter);
-    });
-</script>

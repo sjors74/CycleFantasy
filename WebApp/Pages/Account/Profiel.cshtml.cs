@@ -31,7 +31,7 @@ namespace WebApp.Pages.Account
         [BindProperty]
         public int CurrentEventId { get; set; }
 
-        public List<EventForUserDto> AllEvents { get; set; } = [];
+        public EventDashboardDto Dashboard { get; set; }
         public async Task OnGetAsync()
         {
             if(User.Identity != null && User.Identity.IsAuthenticated)
@@ -39,14 +39,10 @@ namespace WebApp.Pages.Account
                 var client = _clientFactory.CreateClient();
                 var apiBaseUrl = _configuration["ClientSettings:ApiBaseUrl"];
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                var response = await client.GetFromJsonAsync<List<EventForUserDto>>($"{apiBaseUrl}/api/event/{userId}/user");
-                if (response == null)
-                {
-                    return;
-                }
+                var dashboard = await client.GetFromJsonAsync<EventDashboardDto>($"{apiBaseUrl}/api/event/{userId}/dashboard");
 
-                
-                AllEvents = response ?? new List<EventForUserDto>();
+
+                Dashboard = dashboard;
             }
         }
 
