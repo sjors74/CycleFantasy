@@ -16,13 +16,15 @@ namespace WebCycle.Controllers
         private readonly IEventService _eventService;
         private readonly IResultService _resultService;
         private readonly IGameCompetitorInEventService _deelnemerService;
+        private readonly IEventDashboardService _eventDashboardService;
         private readonly ITeamService _teamService;
         private readonly IMapper _mapper;
 
-        public EventController(IEventService eventService, IGameCompetitorInEventService deelnemerService, ITeamService teamService, IResultService resultService, IMapper mapper)
+        public EventController(IEventService eventService, IGameCompetitorInEventService deelnemerService, IEventDashboardService eventDashboardService, ITeamService teamService, IResultService resultService, IMapper mapper)
         {
             _eventService = eventService;
             _deelnemerService = deelnemerService;
+            _eventDashboardService = eventDashboardService;
             _resultService = resultService;
             _teamService = teamService;
             this._mapper = mapper;
@@ -117,6 +119,13 @@ namespace WebCycle.Controllers
                 .ToList();
 
             return Ok(combinedEvents);
+        }
+
+        [HttpGet("{userId}/dashboard")]
+        public async Task<IActionResult> GetDashboard(string userId)
+        {
+            var result = await _eventDashboardService.GetDashboardAsync(userId);
+            return Ok(result);
         }
 
         [HttpGet("{id}/teams-with-renners")]
