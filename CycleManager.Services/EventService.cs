@@ -178,7 +178,7 @@ namespace CycleManager.Services
                 });
             }
 
-            await _picksRepository.CreateGamePicksAsync(gamePicks);
+            await _picksRepository.CreateGamePicksAsync(selectie.DeelnemerId, gamePicks);
         }
 
         public async Task<DeelnemerDto> CreatePoolAsync(DeelnemerDto deelnemerDto)

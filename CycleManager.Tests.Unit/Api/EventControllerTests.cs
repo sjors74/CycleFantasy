@@ -8,6 +8,7 @@ using Domain.Interfaces;
 using Domain.Models;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore.SqlServer.Storage.Internal;
 using Moq;
 using WebCycle.Controllers;
 
@@ -22,6 +23,7 @@ namespace CycleManager.Tests.Unit.Api
             var mockEventService = new Mock<IEventService>();
             var mockResultService = new Mock<IResultService>();
             var mockMapper = new Mock<IMapper>();
+            var mockDashboardService = new Mock<IEventDashboardService>();
             var mockDeelnemerService = new Mock<IGameCompetitorInEventService>();
             var mockTeamService = new Mock<ITeamService>();
 
@@ -70,6 +72,7 @@ namespace CycleManager.Tests.Unit.Api
             var controller = new EventController(
                 mockEventService.Object,
                 mockDeelnemerService.Object,
+                mockDashboardService.Object,
                 mockTeamService.Object,
                 mockResultService.Object,
                 mockMapper.Object
@@ -94,6 +97,7 @@ namespace CycleManager.Tests.Unit.Api
             //arrange
             var mockEventService = new Mock<IEventService>();
             var mockDeelnemerService = new Mock<IGameCompetitorInEventService>();
+            var mockDashboardService = new Mock<IEventDashboardService>();
             var mockTeamService = new Mock<ITeamService>();
             var mockResultService = new Mock<IResultService>();
             var mockMapper = new Mock<IMapper>();
@@ -154,6 +158,7 @@ namespace CycleManager.Tests.Unit.Api
             var controller = new EventController(
                 mockEventService.Object,
                 mockDeelnemerService.Object,
+                mockDashboardService.Object,
                 mockTeamService.Object,
                 mockResultService.Object,
                 mockMapper.Object);
@@ -192,11 +197,12 @@ namespace CycleManager.Tests.Unit.Api
             var mockTeamService = new Mock<ITeamService>();
             var mockResultService = new Mock<IResultService>();
             var mockMapper = new Mock<IMapper>();
+            var mockDashboardService = new Mock<IEventDashboardService>();
 
             mockEventService.Setup(s => s.GetEventById(99))
                 .ReturnsAsync((Event?)null);
 
-            var controller = new EventController(mockEventService.Object, mockDeelnemerService.Object, mockTeamService.Object, mockResultService.Object, mockMapper.Object);
+            var controller = new EventController(mockEventService.Object, mockDeelnemerService.Object, mockDashboardService.Object, mockTeamService.Object, mockResultService.Object, mockMapper.Object);
 
             //act
             var result = await controller.GetEvent(99);
@@ -213,6 +219,7 @@ namespace CycleManager.Tests.Unit.Api
             var mockEventRepo = new Mock<IEventRepository>();
             var mockScoreRepo = new Mock<IScoreRepository>();
             var mockEventService = new Mock<IEventService>();
+            var mockDashboardService = new Mock<IEventDashboardService>();
             var mockDeelnemerService = new Mock<IGameCompetitorInEventService>();
             var mockTeamService = new Mock<ITeamService>();
             var mockResultService = new Mock<IResultService>();
@@ -225,6 +232,7 @@ namespace CycleManager.Tests.Unit.Api
             var controller = new EventController(
                 mockEventService.Object,
                 mockDeelnemerService.Object,
+                mockDashboardService.Object,
                 mockTeamService.Object,
                 mockResultService.Object,
                 mockMapper.Object
@@ -257,8 +265,10 @@ namespace CycleManager.Tests.Unit.Api
             var controller = new EventController(
                 mockEventService.Object,
                 new Mock<IGameCompetitorInEventService>().Object,
+                new Mock<IEventDashboardService>().Object,
                 new Mock<ITeamService>().Object,
                 new Mock<IResultService>().Object,
+
                 new Mock<IMapper>().Object
             );
 
@@ -288,6 +298,7 @@ namespace CycleManager.Tests.Unit.Api
             var controller = new EventController(
                 mockEventService.Object,
                 new Mock<IGameCompetitorInEventService>().Object,
+                new Mock<IEventDashboardService>().Object,
                 new Mock<ITeamService>().Object,
                 new Mock<IResultService>().Object,
                 new Mock<IMapper>().Object
@@ -315,6 +326,7 @@ namespace CycleManager.Tests.Unit.Api
             var controller = new EventController(
                 mockEventService.Object,
                 new Mock<IGameCompetitorInEventService>().Object,
+                new Mock<IEventDashboardService>().Object,
                 new Mock<ITeamService>().Object,
                 new Mock<IResultService>().Object,
                 new Mock<IMapper>().Object
@@ -366,6 +378,7 @@ namespace CycleManager.Tests.Unit.Api
             var controller = new EventController(
                 mockEventService.Object,
                 Mock.Of<IGameCompetitorInEventService>(),
+                Mock.Of<IEventDashboardService>(),
                 Mock.Of<ITeamService>(),
                 Mock.Of<IResultService>(),
                 mockMapper.Object
@@ -440,6 +453,7 @@ namespace CycleManager.Tests.Unit.Api
             var controller = new EventController(
                 mockEventService.Object,
                 Mock.Of<IGameCompetitorInEventService>(),
+                Mock.Of<IEventDashboardService>(),
                 Mock.Of<ITeamService>(),
                 Mock.Of<IResultService>(),
                 Mock.Of<IMapper>()
@@ -466,6 +480,7 @@ namespace CycleManager.Tests.Unit.Api
             var controller = new EventController(
                 mockEventService.Object,
                 Mock.Of<IGameCompetitorInEventService>(),
+                Mock.Of<IEventDashboardService>(),
                 Mock.Of<ITeamService>(),
                 Mock.Of<IResultService>(),
                 Mock.Of<IMapper>()
@@ -492,6 +507,7 @@ namespace CycleManager.Tests.Unit.Api
             var controller = new EventController(
                 mockEventService.Object,
                 Mock.Of<IGameCompetitorInEventService>(),
+                Mock.Of<IEventDashboardService>(),
                 Mock.Of<ITeamService>(),
                 Mock.Of<IResultService>(),
                 Mock.Of<IMapper>()
@@ -551,6 +567,7 @@ namespace CycleManager.Tests.Unit.Api
             var controller = new EventController(
                 Mock.Of<IEventService>(),
                 Mock.Of<IGameCompetitorInEventService>(),
+                Mock.Of<IEventDashboardService>(),
                 mockTeamService.Object,
                 Mock.Of<IResultService>(),
                 Mock.Of<IMapper>()
@@ -582,6 +599,7 @@ namespace CycleManager.Tests.Unit.Api
             var controller = new EventController(
                 Mock.Of<IEventService>(),
                 Mock.Of<IGameCompetitorInEventService>(),
+                Mock.Of<IEventDashboardService>(),
                 mockTeamService.Object,
                 Mock.Of<IResultService>(),
                 Mock.Of<IMapper>()
@@ -602,6 +620,7 @@ namespace CycleManager.Tests.Unit.Api
             var controller = new EventController(
                 mockEventService.Object,
                 Mock.Of<IGameCompetitorInEventService>(),
+                Mock.Of<IEventDashboardService>(),
                 Mock.Of<ITeamService>(),
                 Mock.Of<IResultService>(),
                 Mock.Of<IMapper>()
@@ -627,6 +646,7 @@ namespace CycleManager.Tests.Unit.Api
             var controller = new EventController(
                 mockEventService.Object,
                 Mock.Of<IGameCompetitorInEventService>(),
+                Mock.Of<IEventDashboardService>(),
                 Mock.Of<ITeamService>(),
                 Mock.Of<IResultService>(),
                 Mock.Of<IMapper>()
@@ -654,6 +674,7 @@ namespace CycleManager.Tests.Unit.Api
             var controller = new EventController(
                 mockEventService.Object,
                 Mock.Of<IGameCompetitorInEventService>(),
+                Mock.Of<IEventDashboardService>(),
                 Mock.Of<ITeamService>(),
                 Mock.Of<IResultService>(),
                 Mock.Of<IMapper>()
@@ -676,6 +697,7 @@ namespace CycleManager.Tests.Unit.Api
             var controller = new EventController(
                 mockEventService.Object,
                 Mock.Of<IGameCompetitorInEventService>(),
+                Mock.Of<IEventDashboardService>(),
                 Mock.Of<ITeamService>(),
                 Mock.Of<IResultService>(),
                 Mock.Of<IMapper>()
@@ -704,6 +726,7 @@ namespace CycleManager.Tests.Unit.Api
             var controller = new EventController(
                 mockEventService.Object,
                 Mock.Of<IGameCompetitorInEventService>(),
+                Mock.Of<IEventDashboardService>(),
                 Mock.Of<ITeamService>(),
                 Mock.Of<IResultService>(),
                 Mock.Of<IMapper>()
@@ -732,6 +755,7 @@ namespace CycleManager.Tests.Unit.Api
             var controller = new EventController(
                 mockEventService.Object,
                 Mock.Of<IGameCompetitorInEventService>(),
+                Mock.Of<IEventDashboardService>(),
                 Mock.Of<ITeamService>(),
                 Mock.Of<IResultService>(),
                 Mock.Of<IMapper>()
@@ -753,6 +777,7 @@ namespace CycleManager.Tests.Unit.Api
             var controller = new EventController(
                 mockEventService.Object,
                 Mock.Of<IGameCompetitorInEventService>(),
+                Mock.Of<IEventDashboardService>(),
                 Mock.Of<ITeamService>(),
                 Mock.Of<IResultService>(),
                 Mock.Of<IMapper>()
@@ -778,6 +803,7 @@ namespace CycleManager.Tests.Unit.Api
             var controller = new EventController(
                 mockEventService.Object,
                 Mock.Of<IGameCompetitorInEventService>(),
+                Mock.Of<IEventDashboardService>(),
                 Mock.Of<ITeamService>(),
                 Mock.Of<IResultService>(),
                 Mock.Of<IMapper>()
@@ -805,6 +831,7 @@ namespace CycleManager.Tests.Unit.Api
             var controller = new EventController(
                 mockEventService.Object,
                 Mock.Of<IGameCompetitorInEventService>(),
+                Mock.Of<IEventDashboardService>(),
                 Mock.Of<ITeamService>(),
                 Mock.Of<IResultService>(),
                 Mock.Of<IMapper>()
@@ -831,6 +858,7 @@ namespace CycleManager.Tests.Unit.Api
             var controller = new EventController(
                 mockEventService.Object,
                 Mock.Of<IGameCompetitorInEventService>(),
+                Mock.Of<IEventDashboardService>(),
                 Mock.Of<ITeamService>(),
                 Mock.Of<IResultService>(),
                 Mock.Of<IMapper>()
@@ -855,6 +883,7 @@ namespace CycleManager.Tests.Unit.Api
             var controller = new EventController(
                 mockEventService.Object,
                 Mock.Of<IGameCompetitorInEventService>(),
+                Mock.Of<IEventDashboardService>(),
                 Mock.Of<ITeamService>(),
                 Mock.Of<IResultService>(),
                 Mock.Of<IMapper>()

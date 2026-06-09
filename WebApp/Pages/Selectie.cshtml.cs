@@ -21,18 +21,20 @@ namespace WebApp.Pages
         [BindProperty(SupportsGet = true)]
         public int EvenementId { get; set; }
 
-        [BindProperty]
-        public string SelectedRidersJson { get; set; } = "";
-
         [BindProperty(SupportsGet = true)]
         public int DeelnemerId { get; set; }
 
-        public List<int> SelectedRiders { get; set; } = [];
+        [BindProperty(SupportsGet = true)]
+        public int PageIndex { get; set; }
 
         [BindProperty]
-        public int StartIndex { get; set; }
+        public string SelectedRidersJson { get; set; } = "";
+
+        public List<int> SelectedRiders { get; set; } = new();
 
         private const string SessionKey = "SelectedRiders";
+
+        private const int PageSize = 3;
 
         public SelectieModel(HttpClient httpClient, IConfiguration configuration, ILogger<SelectieModel> logger)
         {
@@ -43,86 +45,79 @@ namespace WebApp.Pages
 
         public void OnGet()
         {
-            var savedIds = GetSavedRiders();
-            SaveSelectedRidersToSession(savedIds);
-            LoadTeams(); // Doe een fetch naar [api/event/id/teams-with-renners")]
-            StartIndex = 0;
-            VisibleTeams = AllTeams.Take(3).ToList();
-            SelectedRiders = GetSelectedRidersFromSession();
+
+            LoadTeams();
+
+            SelectedRiders = GetSavedRiders();
+
+            SelectedRidersJson = JsonSerializer.Serialize(SelectedRiders);
+
+            VisibleTeams = AllTeams.Skip(PageIndex * PageSize).Take(PageSize).ToList();
         }
 
         public void OnPost(string action)
         {
             LoadTeams();
-            VisibleTeams = AllTeams.Skip(StartIndex).Take(3).ToList();
 
-            if (!string.IsNullOrEmpty(SelectedRidersJson))
-            {
-                SelectedRiders = JsonSerializer.Deserialize<List<int>>(SelectedRidersJson) ?? new List<int>();
-            }
+            SelectedRiders =
+    JsonSerializer.Deserialize<List<int>>(SelectedRidersJson)
+    ?? new();
 
-            var currentSelection = GetSelectedRidersFromSession();
+            if (action == "next") PageIndex++;
+            if (action == "previous") PageIndex--;
 
-            foreach (var id in SelectedRiders)
-            {
-                if (!currentSelection.Contains(id))
-                    currentSelection.Add(id);
-            }
+            ModelState.Remove(nameof(PageIndex));
 
-            var visibleRiderIds = VisibleTeams.SelectMany(t => t.Renners.Select(r => r.CompetitorInTeamId)).ToList();
-            currentSelection.RemoveAll(id => visibleRiderIds.Contains(id) && !SelectedRiders.Contains(id));
+            if (PageIndex < 0) PageIndex = 0;
 
-            SaveSelectedRidersToSession(currentSelection);
+            var maxPage = (int)Math.Ceiling((double)AllTeams.Count / PageSize) - 1;
 
-            if (action == "next")
-                StartIndex += 3;
-            else if (action == "previous")
-                StartIndex -= 3;
 
-            if (StartIndex < 0) StartIndex = 0;
+            if (PageIndex > maxPage)
+                PageIndex = maxPage;
 
-            int pageSize = 3;
-            int maxPage = (AllTeams.Count + pageSize - 1) / pageSize - 1; // aantal pagina's - 1
-            int maxStartIndex = maxPage * pageSize;
+            VisibleTeams = AllTeams
+                .Skip(PageIndex * PageSize)
+                .Take(PageSize)
+                .ToList();
 
-            if (StartIndex > maxStartIndex)
-                StartIndex = maxStartIndex;
+            SelectedRidersJson =
+    JsonSerializer.Serialize(SelectedRiders);
 
-            VisibleTeams = AllTeams.Skip(StartIndex).Take(3).ToList();
-
-            SelectedRiders = GetSelectedRidersFromSession();
         }
 
         public async Task<IActionResult> OnPostBevestigenAsync()
         {
-            if (!string.IsNullOrEmpty(SelectedRidersJson))
+
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            var selectedIds = JsonSerializer.Deserialize<List<int>>(SelectedRidersJson) ?? new List<int>();
+            var dto = new
             {
-                var selectedIds = JsonSerializer.Deserialize<List<int>>(SelectedRidersJson) ?? [];
-                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                var dto = new
-                {
-                    UserId = userId,
-                    RennerIds = selectedIds,
-                    EventId = EvenementId,
-                    DeelnemerId
-                };
+                UserId = userId,
+                RennerIds = selectedIds, 
+                EventId = EvenementId,
+                DeelnemerId
+            };
 
-                var content = new StringContent(JsonSerializer.Serialize(dto), Encoding.UTF8, "application/json");
-                var apiBaseUrl = _configuration["ClientSettings:ApiBaseUrl"];
-                var response = await _httpClient.PostAsync($"{apiBaseUrl}/api/event/selectie", content);
+            var content = new StringContent(
+                JsonSerializer.Serialize(dto),
+                Encoding.UTF8,
+                "application/json");
 
-                if (response.IsSuccessStatusCode)
-                {
-                    return RedirectToPage("/Account/Profiel", new { userId = dto.UserId });
-                }
+            var apiBaseUrl = _configuration["ClientSettings:ApiBaseUrl"];
 
-                ModelState.AddModelError(string.Empty, "Opslaan mislukt.");
-            }
+            var response = await _httpClient.PostAsync(
+                $"{apiBaseUrl}/api/event/selectie",
+                content);
 
-            // Herladen indien fout
-            LoadTeams();
-            VisibleTeams = AllTeams.Skip(StartIndex).Take(3).ToList();
-            SelectedRiders = GetSelectedRidersFromSession();
+            if (response.IsSuccessStatusCode)
+                return RedirectToPage("/Account/Profiel", new { userId });
+
+            ModelState.AddModelError("", "Opslaan mislukt.");
+
+            //LoadTeams();
+
             return Page();
         }
 

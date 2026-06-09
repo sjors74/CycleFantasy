@@ -45,9 +45,10 @@ namespace DataAccessEF.TypeRepository
                         .ThenInclude(c => c.Country)
                 .Include(cie => cie.CompetitorInTeam)
                     .ThenInclude(cit => cit.Team)
-                .Where(cie => cie.EventId == eventId);
+                .Where(cie => cie.EventId == eventId)
+                .ToListAsync();
 
-            var randomCompetitorsList = _randomizer(competitorsInEvent)
+            var randomCompetitorsList = _randomizer(await competitorsInEvent)
                 .Take(number)
                 .ToList();
 

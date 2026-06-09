@@ -20,7 +20,7 @@ namespace CycleManager.Domain.Interfaces
         /// <returns></returns>
         Task<IEnumerable<GameCompetitorEventPick>> GetCompetitorEventPicksById(int id);
 
-        Task CreateGamePicksAsync(List<GameCompetitorEventPick> picks);
+        Task CreateGamePicksAsync(int GameCompetitorEventId, List<GameCompetitorEventPick> picks);
 
         Task RemovePickFromEvent(int id);
 

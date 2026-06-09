@@ -55,12 +55,9 @@ namespace DataAccessEF.TypeRepository
             return picks;
         }
 
-        public async Task CreateGamePicksAsync(List<GameCompetitorEventPick> picks)
+        public async Task CreateGamePicksAsync(int gameCompetitorEventId, List<GameCompetitorEventPick> picks)
         {
-            if(picks == null || !picks.Any())
-                return;
-
-            var gameCompetitorEventId = picks.First().GameCompetitorEventId;
+            picks ??= new();
 
             // Maak een HashSet van actuele picks (vanuit frontend)
             var incomingPickIds = picks
@@ -89,15 +86,8 @@ namespace DataAccessEF.TypeRepository
             // Pas wijzigingen toe
             context.GameCompetitorEventPicks.RemoveRange(toDelete);
             await context.GameCompetitorEventPicks.AddRangeAsync(newPicks);
-
-            try
-            {
-                var changes = await context.SaveChangesAsync();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Er is een fout opgetreden: {ex.Message}");
-            }
+            await context.SaveChangesAsync();
+            
         }
 
         public async Task RemovePickFromEvent(int id)
