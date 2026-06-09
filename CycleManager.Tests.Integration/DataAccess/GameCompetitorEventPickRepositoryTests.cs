@@ -142,7 +142,7 @@ namespace CycleManager.Tests.Integration.DataAccess
                 new GameCompetitorEventPick { GameCompetitorEventId = 1, CompetitorsInEventId = 2 } // nieuwe pick
             };
 
-            await repo.CreateGamePicksAsync(newPicks);
+            await repo.CreateGamePicksAsync(gameEvent.Id, newPicks);
 
             var saved = context.GameCompetitorEventPicks.ToList();
             saved.Should().HaveCount(1);
@@ -194,9 +194,10 @@ namespace CycleManager.Tests.Integration.DataAccess
         {
             using var context = CreateContext();
             var repo = new GameCompetitorEventPickRepository(context);
+            var gameCompetitorEvent = new GameCompetitorEvent { Id = 1, UserId = "abc" };
 
             // Act
-            await repo.CreateGamePicksAsync(new List<GameCompetitorEventPick>());
+            await repo.CreateGamePicksAsync(gameCompetitorEvent.Id, new List<GameCompetitorEventPick>());
 
             // Assert: er gebeurt niets, geen fout, geen nieuwe records
             context.GameCompetitorEventPicks.Should().BeEmpty();

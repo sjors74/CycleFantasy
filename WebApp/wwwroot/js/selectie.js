@@ -1,33 +1,40 @@
 ﻿const MAX_SELECTED = 15;
-let selected = [];
+
+window.state = window.state || {};
+window.state.selected =
+    JSON.parse(document.getElementById("SelectedRidersJson").value || "[]");
+
+
+function getSelected() {
+    return window.state.selected || [];
+}
+
+function setSelected(selected) {
+    window.state.selected = selected;
+}
 
 function updateUI() {
-    const headerCount = document.getElementById("riderCountHeader");
+
+    const selected = getSelected();
+    const max = 15;
+
     const hiddenInput = document.getElementById("SelectedRidersJson");
-    const checkboxes = document.querySelectorAll(".renner-checkbox");
-    const message = document.getElementById("maxSelectedMessage");
-    const suggestieBtn = document.getElementById("suggestieBtn");
+    const header = document.getElementById("riderCountHeader");
 
-    if (headerCount) headerCount.innerText = selected.length;
-    if (hiddenInput) hiddenInput.value = JSON.stringify(selected);
+    hiddenInput.value = JSON.stringify(selected);
+    header.innerText = selected.length;
 
-    const opMax = selected.length >= MAX_SELECTED;
+    const atMax = selected.length >= max;
 
-    checkboxes.forEach(cb => {
+    document.querySelectorAll(".renner-checkbox").forEach(cb => {
+
         const id = parseInt(cb.value);
-        const isGeselecteerd = selected.includes(id);
 
-        cb.checked = isGeselecteerd;
-        cb.disabled = opMax && !isGeselecteerd;
+        cb.checked = selected.includes(id);
+
+        cb.disabled = atMax && !cb.checked;
+
     });
-
-    if (message) {
-        message.style.display = opMax ? "block" : "none";
-    }
-
-    if (suggestieBtn) {
-        suggestieBtn.disabled = selected.length >= MAX_SELECTED;
-    }
 }
 
 function checkboxHandler(e) {
@@ -53,100 +60,64 @@ function registerCheckboxEvents() {
     });
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-    const hiddenInput = document.getElementById("SelectedRidersJson");
-    if (hiddenInput && hiddenInput.value) {
-        try {
-            selected = JSON.parse(hiddenInput.value);
-        } catch {
-            selected = [];
-        }
+document.addEventListener("change", function (e) {
+
+    if (!e.target.classList.contains("renner-checkbox"))
+        return;
+
+    const id = parseInt(e.target.value);
+
+    let selected = getSelected();
+
+    if (e.target.checked) {
+
+        if (!selected.includes(id))
+            selected.push(id);
+
+    } else {
+
+        selected = selected.filter(x => x !== id);
     }
 
-    registerCheckboxEvents();
+    setSelected(selected);
     updateUI();
-
-    document.querySelectorAll('.show-more-btn').forEach(btn => {
-        btn.addEventListener('click', async () => {
-            const teamId = btn.dataset.teamId;
-            const eventId = btn.dataset.eventId;
-            const loadedIds = btn.dataset.loadedIds
-                .split(',')
-                .map(id => parseInt(id))
-                .filter(id => !isNaN(id));
-
-            const formData = new FormData();
-            formData.append('teamId', teamId);
-            formData.append('eventId', eventId);
-            loadedIds.forEach(id => formData.append('alreadyLoadedIds', id));
-
-            const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
-            if (token) {
-                formData.append('__RequestVerificationToken', token);
-            }
-
-            const response = await fetch('?handler=LaadMeerRenners', {
-                method: 'POST',
-                body: formData
-            });
-
-            if (!response.ok) {
-                const errorText = await response.text();
-                console.error("Server error:", errorText);
-                return;
-            }
-
-            const renners = await response.json();
-            const container = document.getElementById(`team-${teamId}-extra-renners`);
-            const currentSelectedCount = selected.length;
-
-            renners.forEach(renner => {
-                const formCheck = document.createElement('div');
-                formCheck.className = 'form-check mb-1';
-
-                const input = document.createElement('input');
-                input.type = 'checkbox';
-                input.className = 'form-check-input renner-checkbox';
-                input.value = renner.competitorInTeamId;
-                input.checked = selected.includes(renner.competitorInTeamId);
-
-                if (currentSelectedCount >= MAX_SELECTED && !selected.includes(renner.competitorInTeamId)) {
-                    input.disabled = true;
-                }
-                const label = document.createElement('label');
-                label.className = 'form-check-label';
-                label.textContent = renner.competitorName;
-
-                formCheck.appendChild(input);
-                formCheck.appendChild(label);
-                container.appendChild(formCheck);
-            });
-
-            btn.style.display = 'none';
-            registerCheckboxEvents();
-        });
-    });
 });
 
+
 export async function voegWillekeurigeRennersToe(eventId) {
-    const nogNodig = 15 - selected.length;
+    let selected = getSelected();
+    const selectedSet = new Set(selected);
+
+    const nogNodig = 15 - selected.length;        
+
     if (nogNodig <= 0) return;
 
     try {
-        const response = await fetch(`${API_BASE_URL}/api/CompetitorsInEvent/${eventId}/${nogNodig}`);
-        const randomRenners = await response.json();
+        const response = await fetch(`${API_BASE_URL}/api/CompetitorsInEvent/${eventId}/40`);
+        const candidates = await response.json();
+        console.log("candidates", candidates.length);
 
-        const extra = randomRenners.filter(r =>
-            !selected.includes(r.competitorId)
-        );
+        let available = candidates.filter(r =>
+            !selectedSet.has(r.competitorInTeamId));
 
-        const toeTeVoegen = extra.slice(0, nogNodig);
-        const nieuweIds = toeTeVoegen.map(r => r.competitorInTeamId);
-        selected = [...selected, ...nieuweIds];
+        for (let i = available.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [available[i], available[j]] = [available[j], available[i]];
+        }
+
+        const toeTeVoegen = available.slice(0, nogNodig);
+
+        selected = [
+            ...selected,
+            ...toeTeVoegen.map(r => r.competitorInTeamId)
+        ];
+
+        setSelected([...new Set(selected)]);
+
+        console.log("nieuwe selectie", getSelected().length);
 
         updateUI();
-        const hiddenInput = document.getElementById("SelectedRidersJson");
-        hiddenInput.value = JSON.stringify(selected);
+
     } catch (err) {
         console.error("Fout bij ophalen willekeurige renners:", err);
     }

@@ -4,13 +4,17 @@
 @{
     int pageSize = 3;
 }
-<h2 id="pageTitle">Renners-selectie (<span id="riderCountHeader">0</span> van 15)</h2>
+<h2>Renners-selectie (<span id="riderCountHeader">@Model.SelectedRiders.Count</span> van 15)</h2>
 <form method="post" id="selectForm">
     @Html.AntiForgeryToken()
-    <input type="hidden" asp-for="StartIndex" value="@Model.StartIndex" />
-    <input type="hidden" asp-for="SelectedRidersJson" id="SelectedRidersJson" name="SelectedRidersJson" value='@JsonSerializer.Serialize(Model.SelectedRiders)' />
     <input type="hidden" asp-for="EvenementId" />
     <input type="hidden" asp-for="DeelnemerId" />
+    <input type="hidden" asp-for="PageIndex" />
+
+    <input type="hidden"
+           id="SelectedRidersJson"
+           name="SelectedRidersJson"
+           value='@JsonSerializer.Serialize(Model.SelectedRiders)' />
 
     <div class="top-buttons mb-4 d-flex justify-content-center gap-2">
         <button type="submit" asp-page-handler="Bevestigen" class="btn btn-primary">Bevestig selectie</button>
@@ -20,118 +24,157 @@
 
     <!-- Navigatie boven de teams -->
     <div class="d-flex justify-content-between mb-3">
+
         <button type="submit"
                 name="action"
                 value="previous"
-                class="btn btn-outline-primary"
-        @(Model.StartIndex == 0 ? "disabled" : "")>
+                class="btn btn-outline-primary">
             ← Vorige
         </button>
 
         <button type="submit"
                 name="action"
                 value="next"
-                class="btn btn-outline-primary"
-        @(Model.StartIndex + pageSize >= Model.AllTeams.Count ? "disabled" : "")>
+                class="btn btn-outline-primary">
             Volgende →
         </button>
+
     </div>
 
     <div class="row g-4">
         @foreach (var team in Model.VisibleTeams)
         {
-            var maxTonen = 10;
-            var geselecteerd = team.Renners.Where(r => r.InSelectie).ToList();
-            var nietGeselecteerd = team.Renners.Where(r => !r.InSelectie).ToList();
-            var aantalGeselecteerd = geselecteerd.Count;
-            var aantalNogVrij = maxTonen - aantalGeselecteerd;
-
-            var getoondeRenners = team.Renners
-            .OrderByDescending(r => Model.SelectedRiders.Contains(r.CompetitorInTeamId)) // gekozen renners eerst
-            .Take(maxTonen)
-            .ToList();
-
-            var getoondeGeselecteerdDoorTeam = getoondeRenners.Where(r => r.InSelectie).ToList();
-            var getoondeNietGeselecteerdDoorTeam = getoondeRenners.Where(r => !r.InSelectie).ToList();
-
+            var initialIds = team.Renners
+                .Select(r => r.CompetitorInTeamId)
+                .ToList();
             <div class="col-md-4 d-flex">
-                <div class="card w-100 d-flex flex-column p-3 h-100 shadow-sm">
+                <div class="card w-100 d-flex flex-column p-3 h-100 shadow-sm"
+                     data-team-id="@team.Id">
+
                     <h5 class="card-title">@team.Naam</h5>
 
-                    <div class="flex-grow-1 d-flex flex-column justify-content-between">
-                        <div>
-                            @if (getoondeGeselecteerdDoorTeam.Any())
-                            {
-                                <strong class="d-block mb-2">Geselecteerd</strong>
-                                <div class="mb-3">
-                                    @foreach (var renner in getoondeGeselecteerdDoorTeam)
-                                    {
-                                        <div class="form-check mb-1">
-                                            <input type="checkbox" 
-                                                class="form-check-input renner-checkbox"
-                                                   value="@renner.CompetitorInTeamId"
-                                                   @if (Model.SelectedRiders.Contains(renner.CompetitorInTeamId))
-                                                   {
-                                                       <text>checked</text>
-                                                   } />
-            
-                                            <label class="form-check-label">
-                                                @if (!string.IsNullOrEmpty(renner.PcsName))
-                                                {
-                                                    var pcsUrl = $"https://www.procyclingstats.com/rider/{renner.PcsName}";
-                                                    <a href="@pcsUrl"
-                                                       target="_blank"
-                                                       rel="noopener noreferrer">
-                                                        @(renner.FirstName + " " + renner.LastName)
-                                                    </a>
-                                                }
-                                                else
-                                                {
-                                                    @($"{renner.FirstName} {renner.LastName}")
-                                                }
-                                            </label>
-                                        </div>
-                                    }
-                                </div>
-                            }
+                    <div class="flex-grow-1">
 
-                            @if (getoondeNietGeselecteerdDoorTeam.Any())
+                        <!-- ONLY SELECTED -->
+                        @if (team.Renners.Any())
+                        {
+                            <strong class="d-block mb-2 selected-header">
+                                Geselecteerd
+                            </strong>
+
+                            @foreach (var renner in team.Renners)
                             {
-                                <strong class="d-block mb-2">Niet geselecteerd</strong>
-                                <div class="mb-3">
-                                    @foreach (var renner in getoondeNietGeselecteerdDoorTeam)
-                                    {
-                                        <div class="form-check mb-1">
-                                            <input type="checkbox" class="form-check-input renner-checkbox" value="@renner.CompetitorInTeamId"
-                                                   @(Model.SelectedRiders.Contains(renner.CompetitorInTeamId) ? "checked" : "") />
-                                            <label class="form-check-label">
-                                                @renner.FirstName @renner.LastName
-                                            </label>
-                                        </div>
-                                    }
+                                var isMax = Model.SelectedRiders.Count >= 15;
+                                var isChecked = Model.SelectedRiders.Contains(renner.CompetitorInTeamId);
+
+                                <div class="form-check mb-1">
+
+                                    <input type="checkbox"
+                                           class="form-check-input renner-checkbox"
+                                           value="@renner.CompetitorInTeamId"
+                                           @(isChecked ? "checked" : "")
+                                           @((isMax && !isChecked) ? "disabled" : "") />
+
+                                    <span class="rider-name">
+                                        @renner.FirstName @renner.LastName
+                                    </span>
+
                                 </div>
                             }
-                        </div>
-                        <div class="mt-auto">
-                            <button type="button" 
-                                    class="btn btn-outline-primary w-100 show-more-btn"
-                                    data-team-id="@team.Id"
-                                    data-event-id="@Model.EvenementId"
-                                    data-loaded-ids='@string.Join(",", getoondeRenners.Select(r => r.CompetitorInTeamId))'>
-                                Meer...
-                            </button>
-                            <div id="team-@team.Id-extra-renners"></div>
-                        </div>
+                        }
+
+                        <!-- EXTRA NOT YET LOADED -->
+                        <div class="team-extra"></div>
+
                     </div>
+
+                    <div class="mt-auto">
+                        <button type="button"
+                                class="btn btn-outline-primary w-100 show-more-btn"
+                                data-team-id="@team.Id"
+                                data-loaded-ids="@string.Join(",", initialIds)"
+                                data-expanded="false">
+                            Meer...
+                        </button>
+                    </div>
+
                 </div>
             </div>
         }
     </div>
+    
 </form>
 @section Scripts {
     <script type="module">
         import { voegWillekeurigeRennersToe } from '/js/selectie.js';
         window.voegWillekeurigeRennersToe = voegWillekeurigeRennersToe;
+    </script>
+    <script>
+        document.addEventListener("click", async (e) => {
+
+            const btn = e.target.closest(".show-more-btn");
+            if (!btn) return;
+
+            const card = btn.closest(".card");
+            const container = card.querySelector(".team-extra");
+
+            const isExpanded = btn.dataset.expanded === "true";
+            const teamId = btn.dataset.teamId;
+
+            const selectedIds = Array.from(
+                document.querySelectorAll(".renner-checkbox:checked")
+            ).map(x => parseInt(x.value));
+
+            // COLLAPSE
+            if (isExpanded) {
+                container.innerHTML = "";
+                btn.textContent = "Meer...";
+                btn.dataset.expanded = "false";
+                return;
+            }
+
+            // EXPAND
+            btn.textContent = "Laden...";
+            btn.dataset.expanded = "true";
+
+            const response = await fetch(
+                `${API_BASE_URL}/api/event/team/${teamId}/teams-with-more-renners`
+            );
+
+            const riders = await response.json();
+
+            const zichtbaarIds = new Set(
+                Array.from(
+                    card.querySelectorAll(".renner-checkbox")
+                ).map(cb => parseInt(cb.value))
+            );
+
+        const notSelected = riders
+            .filter(r => !zichtbaarIds.has(r.competitorInTeamId))
+            .sort((a, b) => a.lastName.localeCompare(b.lastName));
+
+        container.innerHTML = `
+            <strong class="d-block mb-2 not-selected-header">
+                Niet geselecteerd
+            </strong>
+
+            ${notSelected.map(r => `
+                <div class="form-check mb-1">
+
+                    <input type="checkbox"
+                           class="form-check-input renner-checkbox"
+                           value="${r.competitorInTeamId}" />
+
+                    <span class="rider-name">
+                        ${r.firstName} ${r.lastName}
+                    </span>
+
+                </div>
+            `).join("")}
+        `;
+
+        btn.textContent = "Minder...";
+        });
     </script>
 
 }

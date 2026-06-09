@@ -81,7 +81,7 @@ async function fetchDataAndRenderTiles(retries = 3, delay = 1000) {
                         <h3>${event.eventName}</h3>
                         <p><strong>Start:</strong> ${formatDate(event.startDate)}<br>
                         <strong>Einde:</strong> ${formatDate(event.endDate)}</p>
-                        <p class="text-muted">${daysText}</p>
+                        <p class="days-muted">${daysText}</p>
                  `;
 
                 // Click-handler
