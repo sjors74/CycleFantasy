@@ -116,6 +116,13 @@ namespace CycleManager.Services
                     "Fout tijdens startlist sync voor EventId {EventId}",
                     eventId);
 
+                if (ex.InnerException != null)
+                {
+                    _logger.LogError(
+                        "InnerException: {Message}",
+                        ex.InnerException.Message);
+                }
+
                 throw;
             }
         }

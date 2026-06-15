@@ -14,6 +14,7 @@ namespace Domain.Dto
         public string EventNumber { get; set; } = string.Empty;
         public int Punten { get; set; }
         public bool InSelectie { get; set; } = false;
+        public bool RemovedFromStartlist { get; set; } = false;
         public string CurrentTeamName { get; set; } = string.Empty;
         public bool IsNationalChampion { get; set; } = false;
         public string CompetitorName => $"{FirstName} {LastName}";

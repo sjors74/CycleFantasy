@@ -18,8 +18,8 @@ namespace Domain.Models
         public string FilterTeam { get; set; } = string.Empty;
         public int EventNumber { get; set; }
         public bool OutOfCompetition { get; set;} = false;
-
         public bool InSelectie { get; set; } = false;
+        public bool RemovedFromStartList { get; set; }
 
         public virtual ICollection<GameCompetitorEventPick> GameCompetitorEventPicks { get; set; } = [];
 

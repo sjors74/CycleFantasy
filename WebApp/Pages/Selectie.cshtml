@@ -53,6 +53,20 @@
 
                     <h5 class="card-title">@team.Naam</h5>
 
+                    @if (team.Renners.Any(r => r.RemovedFromStartlist))
+                    {
+                        <div class="alert alert-warning py-2 mb-3">
+                            <strong>Niet meer op de startlijst:</strong>
+
+                            @foreach (var renner in team.Renners.Where(r => r.RemovedFromStartlist))
+                            {
+                                <div>
+                                    @renner.FirstName @renner.LastName
+                                </div>
+                            }
+                        </div>
+                    }
+
                     <div class="flex-grow-1">
 
                         <!-- ONLY SELECTED -->
@@ -75,9 +89,19 @@
                                            @(isChecked ? "checked" : "")
                                            @((isMax && !isChecked) ? "disabled" : "") />
 
-                                    <span class="rider-name">
+
+                                    <label class="form-check-label">
+
                                         @renner.FirstName @renner.LastName
-                                    </span>
+
+                                        @if (renner.RemovedFromStartlist)
+                                        {
+                                            <span class="badge bg-danger ms-2">
+                                                Niet op startlijst
+                                            </span>
+                                        }
+
+                                    </label>
 
                                 </div>
                             }
