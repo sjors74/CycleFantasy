@@ -50,7 +50,9 @@ namespace Domain.Mapping
                 .ForMember(d => d.Teams, o => o.Ignore())
                 //.ForMember(d => d.CompetitorInTeamId, o => o.Ignore())
                 .ForMember(d => d.EventNumber, o => o.Ignore())
-                .ForMember(d => d.InSelectie, o => o.Ignore());
+                .ForMember(d => d.InSelectie, o => o.Ignore())
+                .ForMember(d => d.RemovedFromStartlist, o => o.Ignore());
+
 
             CreateMap<GameCompetitorEvent, DeelnemerCreateDto>().ReverseMap();
 

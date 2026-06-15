@@ -136,7 +136,8 @@ namespace DataAccessEF.TypeRepository
                             LastName = cie.CompetitorInTeam.Competitor.LastName,
                             PcsName = competitor.PcsName,
                             CountryShort = competitor.Country.CountryNameShort,
-                            InSelectie = cie.InSelectie
+                            InSelectie = cie.InSelectie,
+                            RemovedFromStartlist = cie.RemovedFromStartList
                         };
                     }).ToList()
             }).ToList();

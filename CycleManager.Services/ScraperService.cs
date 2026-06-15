@@ -480,6 +480,7 @@ namespace CycleManager.Services
                     existing.EventNumber = scraped.BibNumber ?? 0;
                     existing.InSelectie = true;
                     existing.OutOfCompetition = false;
+                    existing.RemovedFromStartList = false;
 
                     updated++;
                 }
@@ -491,7 +492,8 @@ namespace CycleManager.Services
                         CompetitorInTeamId = competitorInTeam.Id,
                         EventNumber = scraped.BibNumber ?? 0,
                         InSelectie = true,
-                        OutOfCompetition = false
+                        OutOfCompetition = false,
+                        RemovedFromStartList = false
                     });
 
                     added++;
@@ -504,7 +506,16 @@ namespace CycleManager.Services
 
             if (obsoleteEntries.Any())
             {
-                _db.CompetitorsInEvent.RemoveRange(obsoleteEntries);
+                foreach (var entry in obsoleteEntries)
+                {
+                    entry.InSelectie = false;
+                    entry.RemovedFromStartList = true;
+                    entry.EventNumber = 0;
+
+                    _logger.LogInformation(
+                       "Renner verwijderd van startlijst: CompetitorInTeamId={CompetitorInTeamId}",
+                        entry.CompetitorInTeamId);
+                }
             }
 
             await _db.SaveChangesAsync();

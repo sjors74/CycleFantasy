@@ -325,14 +325,14 @@ namespace CycleManager.Services
                 // PCS laadt soms nog wat dynamisch in
                 await page.WaitForTimeoutAsync(3000);
 
-                var teamSelector = "li.slxl_iv";
-
-                await page.WaitForSelectorAsync(teamSelector, new()
+                // Wacht op de startlijst-container
+                await page.WaitForSelectorAsync("ul.startlist_v4", new()
                 {
                     Timeout = 15000
                 });
 
-                var teams = page.Locator(teamSelector);
+                // Teams zitten direct onder ul.startlist_v4
+                var teams = page.Locator("ul.startlist_v4 > li");
 
                 var teamCount = await teams.CountAsync();
 
@@ -342,6 +342,7 @@ namespace CycleManager.Services
 
                     // Teamnaam
                     var teamName = "";
+                    string teamPcsName = "";
 
                     var teamLink = team.Locator("a.team");
 
@@ -349,10 +350,23 @@ namespace CycleManager.Services
                     {
                         teamName =
                             (await teamLink.InnerTextAsync()).Trim();
+
+                        var teamHref =
+                            await teamLink.GetAttributeAsync("href");
+
+                        if (!string.IsNullOrWhiteSpace(teamHref))
+                        {
+                            teamPcsName = teamHref
+                                .Replace("team/", "")
+                                .Trim('/');
+                        }
                     }
 
-                    // Renners binnen team
-                    var riders = team.Locator("div.ridersCont ul li");
+                    
+                    
+
+                    // Renners binnen dit team
+                    var riders = team.Locator(".ridersCont > ul > li");
 
                     var riderCount = await riders.CountAsync();
 
@@ -363,7 +377,7 @@ namespace CycleManager.Services
                         // BIB
                         int? bib = null;
 
-                        var bibLocator = rider.Locator("span.bib");
+                        var bibLocator = rider.Locator(".bib");
 
                         if (await bibLocator.CountAsync() > 0)
                         {
@@ -377,7 +391,10 @@ namespace CycleManager.Services
                         }
 
                         // Rider link
-                        var riderLink = rider.Locator("a");
+                        var riderLink = rider.Locator("a[href^='rider/']");
+
+                        if (!await riderLink.IsVisibleAsync())
+                            continue;
 
                         if (await riderLink.CountAsync() == 0)
                             continue;
@@ -405,13 +422,72 @@ namespace CycleManager.Services
                             RiderName = riderName,
                             PcsName = riderSlug,
                             TeamName = teamName,
+                            TeamPcsName = teamPcsName,
                             BibNumber = bib
                         });
                     }
                 }
 
+                _logger.LogInformation(
+                    "PCS startlist scraping voltooid. {RiderCount} renners gevonden.",
+                    results.Count);
+
+                // Controle op dubbele renners binnen hetzelfde team
+                var duplicateRiders = results
+                    .GroupBy(x => new { x.TeamName, x.PcsName })
+                    .Where(g => g.Count() > 1)
+                    .ToList();
+
+                foreach (var duplicate in duplicateRiders)
+                {
+                    _logger.LogWarning(
+                        "Dubbele renner gevonden. Team={Team} Rider={Rider} Aantal={Count}",
+                        duplicate.Key.TeamName,
+                        duplicate.Key.PcsName,
+                        duplicate.Count());
+                }
+
+                // Controle op dubbele startnummers binnen hetzelfde team
+                var duplicateBibs = results
+                    .Where(x => x.BibNumber.HasValue)
+                    .GroupBy(x => new { x.TeamName, x.BibNumber })
+                    .Where(g => g.Count() > 1)
+                    .ToList();
+
+                foreach (var duplicate in duplicateBibs)
+                {
+                    var riders = string.Join(
+                        ", ",
+                        duplicate.Select(x => x.RiderName));
+
+                    _logger.LogWarning(
+                        "Dubbel startnummer gevonden. Team={Team} Bib={Bib} Renners={Riders}",
+                        duplicate.Key.TeamName,
+                        duplicate.Key.BibNumber,
+                        riders);
+                }
+
                 return results;
             }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "Fout tijdens scrapen van PCS startlist: {Url}",
+                    url);
+
+                // Extra debug-info
+                _logger.LogInformation("Huidige URL: {Url}", page.Url);
+
+                await page.ScreenshotAsync(new()
+                {
+                    Path = $"pcs-startlist-error-{DateTime.UtcNow:yyyyMMddHHmmss}.png",
+                    FullPage = true
+                });
+
+                throw;
+            }
+
             finally
             {
                 await page.CloseAsync();
