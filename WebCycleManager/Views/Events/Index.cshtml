@@ -1,53 +1,124 @@
-﻿@model IEnumerable<Domain.Models.Event>
+﻿@model EventViewModel
 
-@{
-    ViewData["Title"] = "Index";
-}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="mb-0">Evenementen</h3>
 
-<h1>Evenement</h1>
+    <div class="d-flex align-items-center gap-2">
 
-<p>
-    <a asp-action="Create">Maak nieuw evenement</a>
-</p>
-<table class="table">
-    <thead>
+        <a asp-action="Create" class="btn btn-success">
+            <i class="bi bi-plus-circle"></i> Maak evenement aan
+        </a>
+
+        <form method="get" class="d-flex align-items-center gap-2 mb-0">
+            <select asp-for="SelectedYear"
+                    asp-items="Model.Years"
+                    name="year"
+                    class="form-select"
+                    onchange="this.form.submit()">
+            </select>
+
+            <select asp-for="IsActiveFilter"
+                    asp-items="Model.ActiveFilters"
+                    name="isActiveFilter"
+                    style="width:200px"
+                    class="form-select"
+                    onchange="this.form.submit()">
+            </select>
+        </form>
+
+    </div>
+</div>
+
+@if (Model.Events.Any())
+{
+<table class="table table-hover align-middle">
+    <thead class="table-light">
         <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.EventName)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.EventYear)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.StartDate)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.EndDate)
-            </th>
-            <th></th>
+            <th>@Html.DisplayName("Naam")</th>
+            <th>@Html.DisplayName("Jaar")</th>
+            <th>@Html.DisplayName("Startdatum")</th>
+            <th>@Html.DisplayName("Einddatum")</th>
+            <th class="text-center icon-col" title="@Html.DisplayName("Actief")"><i class="bi bi-check-circle"></i></th>
+            <th class="text-center icon-col" title="@Html.DisplayName("Inschrijven?")"><i class="bi bi-pencil-square"></i></th>
+            <th class="text-center icon-col" title="@Html.DisplayName("Podium?")"><i class="bi bi-trophy"></i></th>
+            <th colspan="2" class="text-center">Acties</th>
         </tr>
     </thead>
     <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.EventName)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.EventYear)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.StartDate)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.EndDate)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.EventId">Bewerk</a> |
-                <a asp-action="Details" asp-route-id="@item.EventId">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.EventId">Verwijder</a>
-            </td>
-        </tr>
-}
+        @foreach (var item in Model.Events)
+        {
+            <tr>
+                <td>@item.Name</td>
+                <td>@item.Year</td>
+                <td>@item.StartDate.ToString("dd-MM-yyyy")</td>
+                <td>@item.EndDate.ToString("dd-MM-yyyy")</td>
+                <td class="text-center icon-col">
+                    @if (item.IsActive)
+                    {
+                        <i class="bi bi-check-circle text-success" title="Actief"></i>
+                    }
+                    else
+                    {
+                        <i class="bi bi-x-circle text-danger" title="Niet actief"></i>
+                    }
+                </td>
+                <td class="text-center icon-col">
+                    @if (item.CanSubscribe)
+                    {
+                        <i class="bi bi-check-circle text-success" title="Je kunt inschrijven"></i>
+                    }
+                    else
+                    {
+                        <i class="bi bi-x-circle text-danger" title="Je kunt niet inschrijven"></i>
+                    }
+                </td>
+                <td class="text-center icon-col">
+                    @if (item.ShowPodium)
+                    {
+                        <i class="bi bi-check-circle text-success" title="Podium wordt getoond"></i>
+                    }
+                    else
+                    {
+                        <i class="bi bi-x-circle text-danger" title="Podium wordt niet getoond"></i>
+                    }
+                </td>
+                <td>
+                    <div class="d-flex gap-2">
+                        <a asp-action="Edit" asp-route-id="@item.Id" title="Bewerken" aria-label="Bewerken">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                        <a asp-action="Details" asp-route-id="@item.Id" title="Details" aria-label="Details">
+                            <i class="bi bi-eye"></i>
+                        </a>
+                        <a asp-action="Delete" asp-route-id="@item.Id" title="Verwijderen" aria-label="Verwijderen">
+                            <i class="bi bi-trash"></i>
+                        </a>
+                    </div>
+                </td>
+                <td>
+                    <div class="d-flex gap-2">
+                        <a asp-controller="CompetitorsInEvents" asp-route-eventId="@item.Id" asp-action="Index" title="Renners" aria-label="Renners">
+                            <i class="bi bi-bicycle"></i>
+                        </a>
+                        <a asp-controller="Points" asp-route-eventId="@item.Id" asp-action="Index" title="Punten" aria-label="Punten">
+                            <i class="bi bi-123"></i>
+                        </a>
+                        @if (item.IsActive)
+                        {
+                            <a asp-controller="GameCompetitorEvents" asp-route-eventId="@item.Id" asp-action="Index" title="Deelnemers" aria-label="Deelnemers">
+                                <i class="bi bi-people"></i>
+                            </a>
+                        }
+                    </div>
+                </td>
+            </tr>
+        }
     </tbody>
 </table>
+}
+else
+{
+    <p class="text-muted mt-3">
+        Geen evenementen gevonden voor de geselecteerde filters.
+    </p>
+}

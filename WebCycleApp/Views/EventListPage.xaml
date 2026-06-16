@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="WebCycleApp.Views.EventListPage"
+             xmlns:local="clr-namespace:WebCycleApp.ViewModels"
+             Title="EventListPage">
+    <CollectionView ItemsSource="{Binding CompetitorsCollection}">
+        <CollectionView.ItemTemplate>
+            <DataTemplate>
+                <VerticalStackLayout BackgroundColor="DarkGoldenrod" Spacing="2">
+                    <Button 
+                        Text="{Binding CompetitorName}"  
+                        FontSize="30" 
+                        TextColor="Black"  BackgroundColor="DarkGray" >
+                    </Button>
+                    <!--<Label
+                        Text="{Binding CountryId}"
+                        FontSize="10"
+                        TextColor="Black" VerticalTextAlignment="Start"
+                        />-->
+                    <BoxView Color="Black" HeightRequest="2"></BoxView>
+                </VerticalStackLayout>
+            </DataTemplate>
+        </CollectionView.ItemTemplate>
+    </CollectionView>
+</ContentPage>

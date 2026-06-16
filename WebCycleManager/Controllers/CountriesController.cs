@@ -1,32 +1,30 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
-using Domain.Context;
+﻿using CycleManager.Services.Interfaces;
 using Domain.Models;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using WebCycleManager.Models;
 
 namespace WebCycleManager.Controllers
 {
     public class CountriesController : Controller
     {
-        private readonly DatabaseContext _context;
+        private readonly ICountryService _countryService;
+        private readonly ICompetitorService _competitorService;
 
-        public CountriesController(DatabaseContext context)
+        public CountriesController(ICompetitorService competitorService, ICountryService countryService)
         {
-            _context = context;
+            _countryService = countryService;
+            _competitorService = competitorService;
         }
 
         // GET: Countries
         public async Task<IActionResult> Index()
         {
             var countryViewModel = new List<CountryViewModel>();
-            foreach(var country in  await _context.Country.OrderBy(c => c.CountryNameLong).ToListAsync())
+            var countries = await _countryService.GetAll();
+            foreach(var country in  countries.OrderBy(c => c.CountryNameLong))
             {
-                var competitorsCount = _context.Competitors.Where(c => c.CountryId == country.CountryId).ToList().Count;
+                var competitorsCount = await _competitorService.GetCompetitorsByCountry(country.CountryId);
                 countryViewModel.Add(new CountryViewModel
                 {
                     Id = country.CountryId,
@@ -41,13 +39,12 @@ namespace WebCycleManager.Controllers
         // GET: Countries/Details/5
         public async Task<IActionResult> Details(int? id)
         {
-            if (id == null || _context.Country == null)
+            if (id == null)
             {
                 return NotFound();
             }
 
-            var country = await _context.Country
-                .FirstOrDefaultAsync(m => m.CountryId == id);
+            var country = await _countryService.GetById((int)id);
             if (country == null)
             {
                 return NotFound();
@@ -71,8 +68,7 @@ namespace WebCycleManager.Controllers
         {
             if (ModelState.IsValid)
             {
-                _context.Add(country);
-                await _context.SaveChangesAsync();
+                await _countryService.Create(country);
                 return RedirectToAction(nameof(Index));
             }
             return View(country);
@@ -81,12 +77,12 @@ namespace WebCycleManager.Controllers
         // GET: Countries/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
-            if (id == null || _context.Country == null)
+            if (id == null)
             {
                 return NotFound();
             }
 
-            var country = await _context.Country.FindAsync(id);
+            var country = await _countryService.GetById((int)id);
             if (country == null)
             {
                 return NotFound();
@@ -110,12 +106,11 @@ namespace WebCycleManager.Controllers
             {
                 try
                 {
-                    _context.Update(country);
-                    await _context.SaveChangesAsync();
+                    await _countryService.Update(country);
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!CountryExists(country.CountryId))
+                    if (!await CountryExists(country.CountryId))
                     {
                         return NotFound();
                     }
@@ -132,13 +127,12 @@ namespace WebCycleManager.Controllers
         // GET: Countries/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
-            if (id == null || _context.Country == null)
+            if (id == null)
             {
                 return NotFound();
             }
 
-            var country = await _context.Country
-                .FirstOrDefaultAsync(m => m.CountryId == id);
+            var country = await _countryService.GetById((int)id);
             if (country == null)
             {
                 return NotFound();
@@ -152,23 +146,19 @@ namespace WebCycleManager.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            if (_context.Country == null)
-            {
-                return Problem("Entity set 'DatabaseContext.Countries'  is null.");
-            }
-            var country = await _context.Country.FindAsync(id);
+            var country =  await  _countryService.GetById((int)id);
             if (country != null)
             {
-                _context.Country.Remove(country);
+                await _countryService.Delete(country);
             }
             
-            await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
-        private bool CountryExists(int id)
+        private async Task<bool> CountryExists(int id)
         {
-          return (_context.Country?.Any(e => e.CountryId == id)).GetValueOrDefault();
+            var country = await _countryService.GetById(id);
+            return country  != null;
         }
     }
 }

@@ -1,0 +1,19 @@
+﻿@using Microsoft.AspNetCore.Authentication
+@using Microsoft.AspNetCore.Authorization
+
+<a class="btn btn-outline-dark position-absolute top-0 start-0 m-2" asp-page="/Index">Home</a>
+@if (User.Identity?.IsAuthenticated == true)
+{
+    <span class="me-2 text-muted small">Welkom, @User.Identity.Name</span>
+
+    <a class="btn btn-outline-primary" asp-page="/Account/Profiel">Profiel</a>
+
+    <form method="post" asp-page="/Account/Logout" asp-antiforgery="true" class="d-inline">
+        <button type="submit" class="btn btn-outline-danger">Uitloggen</button>
+    </form>
+}
+else
+{
+    <a class="btn btn-outline-dark" asp-page="/Account/Login">Inloggen</a>
+    <a class="btn btn-primary" asp-page="/Account/Register">Registreren</a>
+}

@@ -1,53 +1,117 @@
-﻿@model EventViewModel
+﻿@using CycleManager.Domain.ViewModel
+@model EventDetailsViewModel
 
-@{
-    ViewData["Title"] = "Details";
-}
+<div class="mb-4 d-flex justify-content-between align-items-center">
+    <h1 class="mb-0">@Model.EventName</h1>
 
-<h1>@Model.Name (van @Model.StartDate.ToString("dd-MMMM") tot @Model.EndDate.ToString("dd-MMMM") @Model.Year)</h1>
+    <div class="d-flex align-items-center gap-2">
+        @if (Model.StagesInEvent > 0)
+        {
+            <span class="btn btn-outline-secondary disabled" title="Aantal etappes">@Model.StagesInEvent</span>
+        }
+        @if (!string.IsNullOrWhiteSpace(Model.EventCode))
+        {
+            <a class="btn btn-primary @(Model.StagesInEvent == 0 ? "disabled" : "")"
+               title="Scrape dropouts"
+               asp-controller="AdminScraper"
+               asp-action="ScrapeDropouts"
+               asp-route-eventId="@Model.EventId"
+               asp-route-eventName="@Model.EventCode"
+               asp-route-year="@Model.StartDate?.Year">
+                <i class="bi bi-person-x"></i>
+            </a>
+        }
+    </div>
+</div>
 
-<div>
-    <hr />
-    <h5>Etappes (@Model.StagesInEvent)</h5>
-    <table class="table">
-        <thead>
+@if (Model.StagesInEvent > 0)
+{
+    <table class="table table-hover align-middle">
+        <thead class="table-light">
             <tr>
-                <th>
-                    @Html.DisplayNameFor(model => model.Stages.FirstOrDefault().StageName)
-                </th>
-                <th>
-                    @Html.DisplayNameFor(model => model.Stages.FirstOrDefault().StartLocation)
-                </th>
-                <th>
-                    @Html.DisplayNameFor(model => model.Stages.FirstOrDefault().FinishLocation)
-                </th>
-                <th></th>
+                <th>Etappe</th>
+                <th>Van</th>
+                <th>Naar</th>
+                <th>Acties</th>
+                <th>Uitslag / Posities</th>
+                <th>Scrape</th>
             </tr>
         </thead>
         <tbody>
             @foreach (var item in Model.Stages)
             {
                 <tr>
+                    <td>@item.StageName</td>
+                    <td>@item.StartLocation</td>
+                    <td>@item.FinishLocation</td>
                     <td>
-                        @Html.DisplayFor(modelItem => item.StageName)
+                        <div class="d-flex gap-2">
+                            <a href="#"
+                               data-bs-toggle="modal"
+                               data-bs-target="#editStageModal"
+                               data-url="@Url.Action("EditStage", "Stages", new { id = item.StageId })">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+
+                            <a asp-controller="Stages" asp-action="Delete" asp-route-id="@item.StageId" title="Verwijder">
+                                <i class="bi bi-trash"></i>
+                            </a>
+                        </div>
                     </td>
                     <td>
-                        @Html.DisplayFor(modelItem => item.StartLocation)
+                        <a asp-controller="Results" asp-action="Index" asp-route-stageId="@item.StageId" title="Uitslag" class="text-decoration-none">
+                            <i class="bi bi-card-list"></i>
+                        </a>
+                        <span title="Aantal posities">@item.AantalPosities</span>
                     </td>
                     <td>
-                        @Html.DisplayFor(modelItem => item.FinishLocation)
-                    </td>
-                    <td>
-                        <a asp-controller="Stages" asp-action="Edit" asp-route-id="@item.Id">Wijzig</a> |
-                        <a asp-controller="Stages" asp-action="Details" asp-route-id="@item.Id">Details</a> |
-                        <a asp-controller="Stages" asp-action="Delete" asp-route-id="@item.Id">Verwijder</a>
+                        @if (!string.IsNullOrWhiteSpace(Model.EventCode))
+                        {
+                            <a class="btn btn-primary @(item.NoScore ? "disabled" : "")"
+                               title="Scrape resultaten"
+                               asp-controller="AdminScraper"
+                               asp-action="ScrapeAndPair"
+                               asp-route-stageId="@item.StageId"
+                               asp-route-eventId="@Model.EventId"
+                               asp-route-eventName="@Model.EventCode"
+                               asp-route-year="@Model.StartDate?.Year">
+                                <i class="bi bi-cloud-arrow-down"></i>
+                            </a>
+                        }
                     </td>
                 </tr>
             }
         </tbody>
     </table>
+}
+else
+{
+    <div class="card border-0 shadow-sm my-4 text-center text-muted">
+        <div class="card-body">
+            <i class="bi bi-flag-fill display-6 mb-2"></i>
+            <p class="mb-0">Er zijn nog geen etappes toegevoegd aan dit evenement.</p>
+        </div>
+    </div>
+}
+
+<div class="mt-3 d-flex justify-content-between gap-2">
+    <a asp-action="Index" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Terug naar de lijst
+    </a>
+    <a asp-action="Edit" asp-route-id="@Model?.EventId" class="btn btn-outline-primary">
+        <i class="bi bi-pencil"></i> Bewerk
+    </a>
 </div>
-<div>
-    <a asp-action="Edit" asp-route-id="@Model?.Id">Bewerk</a> |
-    <a asp-action="Index">Terug naar de lijst</a>
-</div>
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+<script src="~/js/modals.js"></script>
+
+<script>
+    // Setup modals
+    document.addEventListener("DOMContentLoaded", function() {
+        ModalHelper.setupModal('editStageModal', 'editStageModalContent');
+    });
+</script>
+}

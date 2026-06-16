@@ -1,0 +1,54 @@
+﻿@page
+@model RegisterModel
+@{
+    ViewData["Title"] = "Registreren";
+    var passwordInputId = "password";
+}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-secondary text-white">
+                    <h4>Registreren</h4>
+                </div>
+                <div class="card-body">
+                    <form id="registerForm" method="post">
+                        <div class="form-group">
+                            <label asp-for="Input.FirstName"></label>
+                            <input asp-for="Input.FirstName" class="form-control" />
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="Input.LastName"></label>
+                            <input asp-for="Input.LastName" class="form-control" />
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="Input.Email"></label>
+                            <input asp-for="Input.Email" class="form-control" />
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="Input.Password"></label>
+                            <input asp-for="Input.Password" type="password" id="@passwordInputId" class="form-control" />
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="Input.ConfirmPassword"></label>
+                            <input asp-for="Input.ConfirmPassword" type="password" class="form-control" />
+                        </div>
+                        <partial name="_PasswordCheckerPartial" model="passwordInputId" />
+                        <button type="submit" class="btn btn-primary mt-3">Registreer</button>
+                    </form>
+                    @if(!string.IsNullOrEmpty(Model.Message))
+                    {
+                        <div class="alert alert-danger mt-3">@Model.Message</div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts{
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        attachPasswordChecker("@passwordInputId");
+    </script>
+}

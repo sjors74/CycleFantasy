@@ -1,49 +1,159 @@
-﻿@model Domain.Models.Event
-
+﻿@model EventItemViewModel
 @{
-    ViewData["Title"] = "Edit";
+    var eventId = Model?.Id ?? ViewBag.Id;
 }
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="mb-0">@Model.EventNameDescription</h3>
+    <div class="d-flex gap-2">
+        <a href="#"
+           class="btn btn-outline-secondary"
+           data-bs-toggle="modal"
+           data-bs-target="#manageTeamsModal"
+           data-url="@Url.Action("ManageTeams", "Events", new { id = Model.Id })">
+            Teams beheren
+            <span class="badge bg-light text-dark ms-2">@Model.SelectedTeamsCount</span>
+        </a>
+        <a href="#"
+           class="btn btn-outline-primary"
+           data-bs-toggle="modal"
+           data-bs-target="#manageStagesModal"
+           data-url="@Url.Action("ManageStages", "Events", new { eventid = Model.Id })">
+            Etappes beheren
+            <span class="badge bg-light text-dark ms-2">@Model.StagesInEvent</span>
+        </a>
 
-<h1>Bewerk</h1>
-
-<h4>Evenement</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <form asp-action="Edit">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <input type="hidden" asp-for="EventId" />
-            <div class="form-group">
-                <label asp-for="EventName" class="control-label"></label>
-                <input asp-for="EventName" class="form-control" />
-                <span asp-validation-for="EventName" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="EventYear" class="control-label"></label>
-                <input asp-for="EventYear" class="form-control" />
-                <span asp-validation-for="EventYear" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="StartDate" class="control-label"></label>
-                <input asp-for="StartDate" class="form-control" />
-                <span asp-validation-for="StartDate" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="EndDate" class="control-label"></label>
-                <input asp-for="EndDate" class="form-control" />
-                <span asp-validation-for="EndDate" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Opslaan" class="btn btn-primary" />
-            </div>
+         <form id="recalculateForm" asp-action="RecalculateScores" method="post" asp-route-id="@Model.Id" class="d-inline ms-2">
+            @Html.AntiForgeryToken()
+            <button id="recalculateButton" type="submit" class="btn btn-outline-warning" title="Recalculate pooled scores for this event">
+                <i class="bi bi-arrow-repeat"></i> Recalculate scores
+            </button>
         </form>
     </div>
 </div>
 
-<div>
-    <a asp-action="Index">Terug naar de lijst</a>
-</div>
+<form asp-action="Edit">
+    <input type="hidden" asp-for="Id" />
+    <div class="card mb-3 shadow-sm">
+        <div class="card-header fw-bold">Algemene gegevens</div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label asp-for="Name" class="form-label"></label>
+                    <input asp-for="Name" class="form-control" />
+                    <span asp-validation-for="Name" class="text-danger"></span>
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="Year" class="form-label"></label>
+                    <input asp-for="Year" class="form-control" />
+                    <span asp-validation-for="Year" class="text-danger"></span>
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="Code" class="form-label"></label>
+                    <input asp-for="Code" class="form-control" />
+                    <span asp-validation-for="Code" class="text-danger"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="StartDate" class="form-label"></label>
+                    <input asp-for="StartDate" class="form-control" />
+                    <span asp-validation-for="StartDate" class="text-danger"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="EndDate" class="form-label"></label>
+                    <input asp-for="EndDate" class="form-control" />
+                    <span asp-validation-for="EndDate" class="text-danger"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="ConfigurationId" class="form-label"></label>
+                    <select asp-for="ConfigurationId" class="form-select" asp-items="ViewBag.ConfigurationId"></select>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="card mb-3 shadow-sm">
+        <div class="card-header fw-bold">Visuele instellingen</div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label asp-for="Slogan" class="form-label"></label>
+                    <input asp-for="Slogan" class="form-control" />
+                    <span asp-validation-for="Slogan" class="text-danger"></span>
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="CountryCode" class="form-label"></label>
+                    <input asp-for="CountryCode" class="form-control" />
+                    <span asp-validation-for="CountryCode" class="text-danger"></span>
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="ColorName" class="form-label"></label>
+                    <input type="color" asp-for="ColorName" class="form-control" />
+                    <span asp-validation-for="ColorName" class="text-danger"></span>
+                </div>
+                <div class="col-md-6 form-check mt-3">
+                    <input type="checkbox" asp-for="IsActive" class="form-check-input" id="isActive" />
+                    <label for="isActive" class="form-check-label">@Html.DisplayNameFor(m => m.IsActive)</label>
+                </div>
+                <div class="col-md-6 form-check mt-3">
+                    <input type="checkbox" asp-for="CanSubscribe" class="form-check-input" id="canSubscribe" />
+                    <label for="canSubscribe" class="form-check-label">@Html.DisplayNameFor(m => m.CanSubscribe)</label>
+                </div>
+                <div class="col-md-6 form-check mt-3">
+                    <input type="checkbox" asp-for="ShowPodium" class="form-check-input" id="showPodium" />
+                    <label for="showPodium" class="form-check-label">@Html.DisplayNameFor(m => m.ShowPodium)</label>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="d-flex justify-content-between align-items-center mt-4">
+            <a asp-action="Index" class="btn btn-outline-secondary">Terug naar de lijst</a>
+            <button type="submit" class="btn btn-primary me-2">Opslaan</button>
+    </div>
+</form>
 
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <script>
+        (function () {
+
+            // =========================
+            // RECALCULATE FORM
+            // =========================
+            var recalcForm = document.getElementById('recalculateForm');
+            if (recalcForm) {
+
+                recalcForm.addEventListener('submit', function (e) {
+                    e.preventDefault();
+
+                    if (typeof Swal === 'undefined') {
+                        if (!confirm('Recalculate all pooled scores for this event? This may take a few seconds.')) return;
+                        recalcForm.submit();
+                        return;
+                    }
+
+                    Swal.fire({
+                        title: 'Recalculate scores?',
+                        text: 'Recalculate all pooled scores for this event. This will overwrite existing totals and may take a few seconds.',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonText: 'Yes, recalculate',
+                        cancelButtonText: 'Cancel'
+                    }).then(function (result) {
+
+                        if (result.isConfirmed) {
+
+                            var btn = recalcForm.querySelector('button[type="submit"]');
+                            if (btn) {
+                                btn.disabled = true;
+                                btn.classList.add('disabled');
+                            }
+
+                            recalcForm.submit();
+                        }
+                    });
+                });
+            }
+        })();
+    </script>
 }

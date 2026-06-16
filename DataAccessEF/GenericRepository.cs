@@ -1,15 +1,17 @@
 ﻿using Domain.Context;
 using Domain.Interfaces;
+using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
+using System.Runtime.CompilerServices;
 
 namespace DataAccessEF
 {
     public class GenericRepository<T> : IGenericRepository<T> where T : class
     {
-        protected readonly DatabaseContext context;
-        public GenericRepository(DatabaseContext context) 
+        protected readonly ApplicationDbContext context;
+        public GenericRepository(ApplicationDbContext context)
         {
-            this.context = context;
+            this.context = context ?? throw new ArgumentNullException(nameof(context));
         }
 
         public void Add(T entity)
@@ -22,29 +24,42 @@ namespace DataAccessEF
             context.Set<T>().AddRange(entities);
         }
 
-        public IEnumerable<T> Find(Expression<Func<T, bool>> expression)
+        public async Task<IEnumerable<T>> Find(Expression<Func<T, bool>> expression)
         {
-            return context.Set<T>().Where(expression);
+            return await context.Set<T>().Where(expression).ToListAsync();
         }
 
-        public IEnumerable<T> GetAll()
+        public async Task<IEnumerable<T>> GetAll()
         {
-            return context.Set<T>().ToList();
+            return await context.Set<T>().ToListAsync();
         }
 
-        public T GetById(int id)
+        public async Task<T> GetById(int id)
         {
-            return context.Set<T>().Find(id);
+            return await context.Set<T>().FindAsync(id);
         }
 
         public void Remove(T entity)
         {
+            if (entity == null || !context.Set<T>().Contains(entity))
+                return;
+
             context.Set<T>().Remove(entity);
         }
 
         public void RemoveRange(IEnumerable<T> entities)
         {
             context.Set<T>().RemoveRange(entities);
+        }
+
+        public void Update(T entity)
+        {
+            context.Set<T>().Update(entity);
+        }
+
+        public async Task SaveChangesAsync()
+        {
+            await context.SaveChangesAsync();
         }
     }
 }

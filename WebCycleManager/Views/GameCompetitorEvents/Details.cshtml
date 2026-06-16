@@ -1,0 +1,120 @@
+﻿@model GameCompetitorInEventViewModel
+<form method="post" asp-controller="GameCompetitorEvents" asp-action="Details">
+    <input type="hidden" name="EventId" value="@Model.EventId" />
+    <input type="hidden" name="GameCompetitorInEventId" value="@Model.GameCompetitorInEventId" />
+    <div>
+        <h4>@Model.TeamName (@Model.Score punten)</h4>
+        <hr />
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Naam</th>
+                    <th>Achternaam</th>
+                    <th>Score</th>
+                    <th>Status</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (int i = 0; i < Model.CompetitorsInEvent.Count; i++)
+                {
+                    var pick = Model.CompetitorsInEvent[i];
+                    <input type="hidden" asp-for="CompetitorsInEvent[@i].PickId" />
+                    <tr id="pickRow_@pick.PickId">
+                        <td>@if(pick.PickId > 0)
+                            {
+                                @pick.FirstName
+                                 <input type="hidden" asp-for="CompetitorsInEvent[@i].SelectedCompetitorId" />
+                            }
+                            else
+                            {
+                                <select asp-for="CompetitorsInEvent[@i].SelectedCompetitorId"
+                                        class="form-select"
+                                        asp-items="pick.Competitors">
+                                    <option value="">-- Selecteer --</option>
+                                </select>
+                            }
+                        </td>
+                        <td>@(pick.PickId > 0 ? pick.LastName : "")</td>
+                        <td>@(pick.PickId > 0 ? pick.Score.ToString() : "")</td>
+                        <td>
+                            @if (pick.PickId > 0)
+                            {
+                                if (pick.IsOutOfCompetition)
+                                {
+                                    <i class="bi bi-x-circle text-danger" title="Uitgevallen"></i>
+                                }
+                                else
+                                {
+                                    <i class="bi bi-check-circle text-success" title="Actief"></i>
+                                }
+                            }
+                        </td>
+                        <td>
+                            @if (pick.PickId > 0) // Alleen bestaande picks kunnen verwijderd worden
+                            {
+                                <button type="button" class="btn btn-sm btn-outline-danger deletePickBtn"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#deletePickModal"
+                                    data-pickid="@pick.PickId"
+                                >
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <div class="mt-3 d-flex justify-content-between">
+        <a asp-action="Index" asp-route-eventId="@Model.EventId" class="btn btn-outline-secondary">Terug naar de lijst</a>
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary">Opslaan</button>
+            <a asp-action="FillList"
+               asp-controller="GameCompetitorEvents"
+               asp-route-id="@Model.GameCompetitorInEventId"
+               asp-route-picks="@Model.NumberOfPicks"
+               asp-route-eventId="@Model.EventId"
+               class="btn btn-outline-primary">
+                Vul lijst
+            </a>
+        </div>
+    </div>
+</form>
+@await Html.PartialAsync("_DeletePickModal", new DeletePickModalViewModel())
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+        $(document).ready(function () {
+
+        var pickIdToDelete;
+        // Wanneer iemand op de prullenbak klikt
+        $('.deletePickBtn').click(function () {
+            pickIdToDelete = $(this).data('pickid');
+            $('#confirmDeletePick').data('pickid', pickIdToDelete);
+        });
+
+        // Bevestig verwijderen
+        $('#confirmDeletePick').click(function () {
+            var id = $(this).data('pickid');
+            var token = $('input[name="__RequestVerificationToken"]').val();
+
+            $.ajax({
+                url: '/GameCompetitorEvents/DeletePick',
+                type: 'POST',
+                data: { 
+                    __RequestVerificationToken: token,
+                    pickId: id 
+                },
+                success: function () {
+                    $('#deletePickModal').modal('hide');
+                    $('#pickRow_' + id).fadeOut(300, function () { $(this).remove(); });
+                },
+                error: function () {
+                    alert('Er is iets misgegaan bij het verwijderen.');
+                }
+            });
+        });
+    });
+</script>

@@ -1,0 +1,34 @@
+﻿@page
+@model WebApp.Pages.EventModel
+<div class="event-header">
+    <div class="event-motto">
+        <span class="quote">"</span><div  id="slogan"></div><span class="quote">"</span>
+    </div>
+    <h1 id="eventName"></h1>
+    <div id="event-id" data-event-id="@Model.EventId"></div>
+    <p class="event-dates">Van <span  id="startDate"></span> tot <span id="endDate"></span></p>
+    <div class="progress-container">
+        <div class="progress-bar" id="progress-bar"></div>
+    </div>
+    <div class="steps-wrapper">
+        <div class="steps" id="steps-container"></div>
+        <button id="top15-button" title="Bekijk top 15" aria-label="Top15">⭐</button>
+    </div>
+</div>
+
+<div class="card shadow-sm mt-4">
+    <div class="card-header bg-secondary text-white">
+        <h5 class="mb-0">Deelnemers</h5>
+    </div>
+    <div class="card-body">
+        <div id="podium-container" class="podium"></div>
+        <ul class="list-group list-group-flush" id="deelnemer-list"></ul>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        window._suppressAutoLoaderToggle = true;
+    </script>
+    <script type="module" src="~/js/event.js" asp-append-version="true"></script>
+}

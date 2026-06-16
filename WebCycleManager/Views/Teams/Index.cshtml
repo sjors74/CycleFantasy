@@ -1,47 +1,289 @@
-﻿@model IEnumerable<TeamViewModel>
+﻿@using CycleManager.Domain.ViewModel
+@model IEnumerable<TeamViewModel>
 
-@{
-    ViewData["Title"] = "Index";
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="mb-0">UCI World- & Proteams</h1>
+
+    <div class="d-flex gap-2">
+        <a asp-action="Create" class="btn btn-success">
+            <i class="bi bi-plus-circle"></i> Maak team aan
+        </a>
+        <div class="position-relative d-inline-block">
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#confirmImportModal" @(ViewBag.HasUnprocessedScraped ? "" : "disabled")>
+                <i class="bi bi-person-x"></i> Update renners
+            </button>
+            @if(ViewBag.UnprocessedScrapedCount > 0)
+            {
+                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="min-width: 1.5rem; height: 1.5rem; display: flex; align-items: center; justify-content:center; font-size: 0.75rem;">
+                    @ViewBag.UnprocessedScrapedCount
+                </span>
+            }
+        </div>
+    </div>
+</div>
+
+<div style="max-height: 70vh; overflow-y: auto; margin-top: 20px;">
+    <table class="table table-striped table-hover align-middle">
+        <thead class="table-light">
+            <tr>
+                <th>Naam</th>
+                <th>Land</th>
+                <th>Aantal renners</th>
+                <th>PcsName</th>
+                <th></th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var team in Model) 
+        {
+            <tr>
+                <td>@team.TeamName</td>
+                <td>@team.CountryNameShort</td>
+                <td>@team.CompetitorsInTeam</td>
+                <td>@team.PcsName</td>
+                <td>
+                         @if(!string.IsNullOrWhiteSpace(team.PcsName))
+                         {
+                         <button class="btn btn-primary btn-sm"
+                            data-bs-toggle="modal"
+                            data-bs-target="#scrapeModal"
+                            data-teamid="@team.Id"
+                            data-teamname="@team.TeamName">
+                             <i class="bi bi-cloud-download"></i> Scrape renners
+                         </button>
+                     }
+                </td>
+                    <td>
+                        <div class="btn-group" role="group">
+                            <a asp-action="Edit" asp-route-id="@team.Id" class="btn btn-sm btn-outline-primary" title="Wijzig">
+                                <i class="bi bi-pencil-square"></i>
+                            </a>
+                            <a asp-action="Details" asp-route-id="@team.Id" class="btn btn-sm btn-outline-secondary" title="Details">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                            <a asp-action="Delete" asp-route-id="@team.Id" class="btn btn-sm btn-outline-danger" title="Verwijder">
+                                <i class="bi bi-trash"></i>
+                            </a>
+                        </div>
+                    </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>
+<!-- modal -->
+<div class="modal fade" id="scrapeModal" tabindex="-1" aria-labelledby="scrapeModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="scrapeForm">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="scrapeModalLabel">Renners scrapen</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Sluiten"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="TeamId" name="TeamId" />
+                    <p id="scrapeText"></p>
+
+                    <div class="form-group">
+                        <label for="Year">Jaar</label>
+                        <select id="Year" name="Year" class="form-select"></select>
+                    </div>
+
+                    <!-- loader-->
+                    <div id="scrapeLoader" class="text-center my-3" style="display:none;">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Scrapen bezig...</span>
+                        </div>
+                        <p class="mt-2">Scrapen bezig...</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuleren</button>
+                    <button type="submit" class="btn btn-primary">Scrapen</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="confirmImportModal" tabindex="-1" aria-labelledby="confirmImportModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="importForm">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="importModalLabel">Renners updaten</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    Weet je zeker dat je de renners wilt updaten?
+                    <div id="importLoader" class="text-center my-3" style="display:none;">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Updaten bezig...</span>
+                        </div>
+                        <p class="mt-2">Updaten bezig...</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuleren</button>
+                    <button type="submit" class="btn btn-primary">Ja, update de renners</button>
+               </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!-- toast -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1055">
+    <div id="scrapeToast" class="toast align-items-center text-bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body">
+                Scrape succesvol uitgevoerd!
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+</div>
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1055">
+    <div id="importToast" class="toast align-items-center text-bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body">
+                Renners succesvol geüpdatet!
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+</div>
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const scrapeModal = document.getElementById('scrapeModal');
+            const yearSelect = document.getElementById('Year');
+            const scrapeText = document.getElementById('scrapeText');
+            const teamIdInput = document.getElementById('TeamId');
+            const scrapeForm = document.getElementById('scrapeForm');
+            const loader = document.getElementById('scrapeLoader');
+            const toastEl = document.getElementById('scrapeToast');
+            const toast = new bootstrap.Toast(toastEl);
+
+            if(!scrapeModal) {
+                console.warn("Scrape modal niet gevonden!");
+                return;
+            }
+            scrapeModal.addEventListener('show.bs.modal', function (event) {
+                console.log("Modal wordt geopend...");
+
+                const button = event.relatedTarget;
+                if(!button) {
+                    console.warn("Geen trigger button gevonden.");
+                    return;
+                }
+
+                const teamName = button.getAttribute('data-teamname');
+                const teamId = button.getAttribute('data-teamid');
+
+                console.log("TeamName:", teamName, "TeamId:", teamId);
+
+                // Zet hidden field
+                teamIdInput.value = teamId;
+
+                // Tekst invullen
+                scrapeText.textContent = `Renners scrapen voor team "${teamName}" voor jaar:`;
+
+                // Dropdown vullen
+                const currentYear = new Date().getFullYear();
+                yearSelect.innerHTML = "";
+                for (let y = currentYear; y <= currentYear + 3; y++) {
+                    const opt = document.createElement("option");
+                    opt.value = y;
+                    opt.text = y;
+                    yearSelect.appendChild(opt);
+                }
+            });
+
+            //Form submit
+            scrapeForm.addEventListener("submit", async function (e) {
+                e.preventDefault();
+                loader.style.display = "block";
+
+                const teamId = teamIdInput.value;
+                const year = yearSelect.value;
+
+                try {
+                    const response = await fetch('@Url.Action("ScrapeCompetitors", "AdminScraper")',{
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ teamId, year })
+                    });
+
+                    if(response.ok) {
+                        //modal sluiten
+                        const modal = bootstrap.Modal.getInstance(scrapeModal);
+                        modal.hide();
+
+                        //toast tonen
+                        loader.style.display = "none";
+                        toast.show();
+                        toastEl.addEventListener('shown.bs.toast', () => {
+                            const modal = bootstrap.Modal.getInstance(scrapeModal);
+                            modal.hide();
+                        });
+                        setTimeout(() => location.reload(), 1500);
+                    } else {
+                        alert("Scrapen mislukt: " + response.statusText);
+                    } 
+                } catch(err) {
+                    console.error(err);
+                        alert("Er ging iets mis tijdens het scrapen.");
+                } finally {
+                    loader.style.display = "none";
+                }
+            });
+        });
+    </script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // Elements
+            const importModal = document.getElementById('confirmImportModal');
+            const importForm = document.getElementById('importForm');
+            const importLoader = document.getElementById('importLoader');
+            const importToastEl = document.getElementById('importToast');
+            const importToast = new bootstrap.Toast(importToastEl);
+
+            if (importForm) {
+                importForm.addEventListener("submit", async function (e) {
+                    e.preventDefault();
+                    importLoader.style.display = "block";
+
+                    try {
+                        const response = await fetch('@Url.Action("ImportScrapedCompetitors", "AdminScraper")', {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" }
+                        });
+
+                        if (response.ok) {
+                            // modal sluiten
+                            const modal = bootstrap.Modal.getInstance(importModal);
+                            if (modal) {
+                                modal.hide();
+                            }
+                            // toast tonen
+                            importLoader.style.display = "none";
+                            importToast.show();
+                            importToastEl.addEventListener('shown.bs.toast', () => {
+                                const modal = bootstrap.Modal.getInstance(importModal);
+                                modal.hide();
+                            });
+                            setTimeout(() => location.reload(), 1500);
+                        } else {
+                            alert("Updaten mislukt: " + response.statusText);
+                        }
+                    } catch (err) {
+                        console.error(err);
+                        alert("Er ging iets mis tijdens het updaten.");
+                    } finally {
+                        importLoader.style.display = "none";
+                    }
+                });
+            }
+        });
+    </script>
 }
-
-<h1>UCI World- & Proteams</h1>
-
-<p>
-    <a asp-action="Create">Maak team aan</a>
-</p>
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.TeamName)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.CountryNameShort)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.CompetitorsInTeam)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.TeamName)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.CountryNameShort)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.CompetitorsInTeam)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.Id">Wijzig</a> |
-                <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.Id">Verwijder</a>
-            </td>
-        </tr>
-}
-    </tbody>
-</table>

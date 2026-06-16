@@ -1,0 +1,84 @@
+﻿@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="/css/styles.css" />
+    <link rel="stylesheet" href="/css/event.css" />
+    <link rel="stylesheet" href="/css/selectie.css" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+    @RenderSection("Styles", required: false)
+    <script>
+        // Injecteer hier de juiste API URL van de server
+        window.__config = {
+            apiBaseUrl: "@Configuration["ClientSettings:ApiBaseUrl"]",
+            flagsBaseUrl: "@Configuration["ClientSettings:FlagsBaseUrl"]"
+        };
+
+        console.log("Injected API URL:", window.__config.apiBaseUrl);
+    </script>
+</head>
+<body class="@ViewData["BodyClass"]">
+    <header>
+        <nav class="navbar navbar-expand navbar-custom fixed-top px-3 py-2">
+            <div class="container-fluid">
+                <div class="d-flex align-items-center ms-auto">
+                   <partial name="_MenuPartial" />
+                </div>
+            </div>
+        </nav>
+    </header>
+    <main class="container">
+        @RenderBody()
+    </main>
+    <script>
+        // Laat de loader altijd direct zien, nog vóór scripts actief zijn
+        document.addEventListener("DOMContentLoaded", () => {
+            const loader = document.getElementById("global-loader");
+            if (loader) loader.style.display = 'flex';
+        });
+    </script>
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/js/config.js" asp-append-version="true"></script>
+    <script src="~/js/init.js" asp-append-version="true"></script>
+    <script src="~/js/passwordchecker.js" asp-append-version="true"></script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+
+    <div id="global-loader" class="loader-container">
+        <div class="spinner-wrapper">
+            <!-- Draaiende ring -->
+            <div class="spinner-ring"></div>
+            <div class="loader-icon">
+                <div class="bicycle-wrapper">
+                    <div class="bicycle">🚴‍♂️</div>
+                </div>
+            </div>
+        </div>
+        <div class="loader-text">Laden...</div>
+    </div>
+    <div class="modal fade" id="newsModal" tabindex="-1" aria-labelledby="newsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-news">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="newsModalTitle">Nieuwsbericht</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Sluiten"></button>
+                </div>
+                <div class="modal-body" id="newsModalBody">
+                    <!-- Wordt gevuld met JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

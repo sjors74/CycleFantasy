@@ -1,0 +1,59 @@
+﻿@model List<GameCompetitorInEventViewModel>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3>Stand deelnemers</h3>
+    <div class="d-flex gap-2">
+        <a asp-action="Index" asp-controller="Events" class="btn btn-outline-secondary">Terug naar evenement</a>
+        <a asp-action="Create" asp-route-eventId="@ViewData["EventId"]" class="btn btn-success">
+            <i class="bi bi-plus-circle"></i> Maak nieuw
+        </a>
+    </div>
+</div>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayName("Teamnaam")
+            </th>
+            <th>
+                @Html.DisplayName("Deelnemernaam")
+            </th>
+            <th>
+                @Html.DisplayName("Score")
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model.OrderByDescending(c => c.Score).ThenBy(c => c.TeamName)) {
+    <tr>
+        <td>
+            @Html.DisplayFor(modelItem => item.TeamName)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.GameCompetitorName)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.Score)
+        </td>
+        <td class="text-end">
+            <div class="btn-group" role="group">
+                <a asp-action="Edit" asp-route-id="@item.Id"
+                    class="btn btn-sm btn-outline-primary" title="Wijzig">
+                    <i class="bi bi-pencil-square"></i>
+                </a>
+                <a asp-action="Details" asp-route-id="@item.Id" asp-route-eventId="@item.EventId"
+                    class="btn btn-sm btn-outline-secondary" title="Details">
+                    <i class="bi bi-eye"></i>
+                </a>
+                <a asp-action="Delete" asp-route-id="@item.Id"
+                    class="btn btn-sm btn-outline-danger" title="Verwijder">
+                    <i class="bi bi-trash"></i>
+                </a>
+            </div>
+        </td>
+    </tr>
+}
+    </tbody>
+</table>

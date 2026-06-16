@@ -1,0 +1,283 @@
+﻿
+.event-header {
+    padding: 1rem;
+    background-color: #f0f0f0;
+    border-left: 5px solid #ff4081;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    position: relative;
+}
+
+.event-header h1 {
+    font-size: 2rem;
+    color: #333;
+}
+
+.event-dates {
+    margin: 5px 0 0;
+    color: #666;
+    font-style: italic;
+}
+
+.event-motto {
+    position: absolute;
+    padding: 0.3rem 0.6rem;
+    border-radius: 4px;
+    font-size: 3rem;
+    font-style: italic;
+    top: 0;
+    right: 0;
+    color: #ff4081;
+    display:flex;
+    align-items: center;
+    text-align: right;
+}
+
+.event-motto .quote{
+        font-size: 2.5rem;
+        margin: 0 10px;
+    }
+
+.event-menu {
+    margin-top: 15px;
+    align-self: flex-end;
+}
+
+.event-menu a {
+    margin-left: 15px;
+    text-decoration: none;
+    color: #007acc;
+    font-weight: bold;
+}
+
+.hidden {
+    display: none;
+}
+
+/* Stijl voor de leegte in de tabel wanneer er geladen wordt */
+.loading {
+    text-align: center;
+    color: #999;
+    font-style: italic;
+    padding: 20px;
+}
+
+
+/*  stages in event (progress bar) */
+.progress-label {
+    font-size: 16px;
+    margin-bottom: 10px;
+}
+
+.progress-container {
+    width: 100%;
+    background-color: #e0e0e0;
+    border-radius: 4px;
+    height: 6px;
+    margin-bottom: 30px;
+}
+
+.progress-bar {
+    height: 100%;
+    border-radius: 4px;
+    background-color: #ff4081;
+    width: 0%;
+    transition: width 0.5s ease;
+}
+
+.steps {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.step {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background-color: #ccc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+    transition: background-color 0.3s;
+}
+
+    .step.completed {
+        background-color: #4caf50;
+    }
+
+    .step.noscore {
+        background-color: #ff4081;
+    }
+
+        .step.noscore a {
+            color: inherit;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+    .step.placeholder {
+        background: #e0e0e0;
+        animation: pulse 1.2s infinite;
+        color: transparent;
+    }
+
+    .step.completed a {
+        color: inherit; /* Neemt de kleur over van de ouder */
+        text-decoration: none; /* Verwijdert de onderstreping */
+        cursor: pointer;
+    }
+
+.steps-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+#top15-button {
+    font-size: 24px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+    #top15-button:hover {
+        transform: scale(1.2);
+    }
+
+.spinner {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #4caf50;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 20px auto;
+}
+
+/*podium 2-1-3 */
+.podium {
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    gap: 1rem;
+    height: 180px;
+}
+
+    .podium .place {
+        position: relative;
+        width: 100%;
+        max-width: 600px;
+        margin: 0 auto;
+        word-break: break-word;
+        color: white;
+        padding: 0.5rem;
+        border-radius: 10px 10px 0 0;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+    }
+
+.place-1 {
+    background: gold;
+    height: 140px;
+}
+
+.place-2 {
+    background: silver;
+    height: 100px;
+}
+
+.place-3 {
+    background: #cd7f32;
+    height: 80px;
+}
+
+.plaats-badge {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    background: #343a40;
+    color: white;
+    font-weight: bold;
+    font-size: 1.2rem;
+    padding: 0.25rem 0.6rem;
+    border-radius: 50%;
+    z-index: 10;
+    box-shadow: 0 0 6px rgba(0, 0, 0, 0.3);
+}
+
+.place-1 .plaats-badge {
+    background: gold;
+    color: black;
+}
+
+.place-2 .plaats-badge {
+    background: silver;
+    color: black;
+}
+
+.place-3 .plaats-badge {
+    background: #cd7f32;
+    color: white;
+}
+
+.place.active {
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.4);
+    outline: 3px solid #343a40;
+}
+
+.nc-badge
+{
+    font-size: 0.65em;
+    font-weight: bold;
+    color: #d4af37;
+    margin-left: 2px;
+    vertical-align: super;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}
+
+@media (max-width: 768px) {
+    .event-motto {
+        display: none;
+    }
+
+    #steps-container {
+        display: none;
+    }
+
+    .podium .place {
+        width: 100px;
+        font-size: 0.85rem;
+    }
+}

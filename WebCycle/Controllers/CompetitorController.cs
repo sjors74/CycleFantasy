@@ -1,6 +1,7 @@
-﻿using Domain.Interfaces;
-using Domain.Models;
-using Microsoft.AspNetCore.Http;
+﻿using CycleManager.Domain.Dto;
+using CycleManager.Services.Interfaces;
+using Domain.Dto;
+using Domain.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace WebCycle.Controllers
@@ -9,17 +10,57 @@ namespace WebCycle.Controllers
     [ApiController]
     public class CompetitorController : ControllerBase
     {
-        private readonly IUnitOfWork unitOfWork;
+        private readonly ICompetitorService _competitorService;
 
-        public CompetitorController(IUnitOfWork unitOfWork)
+        public CompetitorController(ICompetitorRepository competitorRepository, ICompetitorService competitorService)
         {
-            this.unitOfWork = unitOfWork;
+            _competitorService = competitorService;
         }
         [HttpGet]
-        public IEnumerable<Competitor> GetAllCompetitors()
+        public async Task<IActionResult> GetCompetitors()
         {
-            var competitors = unitOfWork.Competitor.GetAll();
-            return competitors;
+            try
+            {
+                var competitors = await _competitorService.GetAllCompetitors(DateTime.Now.Year) ?? new List<CompetitorDto>();
+                return Ok(competitors);
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, "Fout bij het ophalen van renners.");
+            }
         }
+
+        [HttpGet("{id}", Name = "GetCompetitorById")]
+        public async Task<IActionResult> GetById(int id) 
+        {
+            try
+            {
+                var competitor = await _competitorService.GetCompetitorById(id);
+                if (competitor == null)
+                    return NotFound();
+
+                return Ok(competitor);
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, "Fout bij ophalen van renner.");
+            }
+            
+        }
+
+        [HttpGet("{id}/team", Name = "GetCompetitorsByTeamId")]
+        public async Task<IActionResult> GetByTeamId(int id, int year)
+        {
+            try
+            {
+                var competitors = await _competitorService.GetByTeamId(id, year) ?? new List<CompetitorInTeamDto>();
+                return Ok(competitors);
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, "Fout bij ophalen van renners/team.");
+            }
+        }
+
     }
 }

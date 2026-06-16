@@ -1,0 +1,45 @@
+﻿@model WebCycleManager.Models.StageViewModel
+
+<form asp-action="EditAjax" asp-controller="Stages" method="post" id="editStageForm">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="StageId" />
+    <input type="hidden" asp-for="EventId" />
+
+    <div class="row g-3">
+        <div class="col-md-4">
+            <label asp-for="StageDate" class="form-label"></label>
+            <input asp-for="StageDate" min="@Model.StageDateMin" max="@Model.StageDateMax" class="form-control" type="date" />
+        </div>
+        <div class="col-md-4">
+            <label asp-for="StageName" class="form-label"></label>
+            <input asp-for="StageName" class="form-control" />
+        </div>
+        <div class="col-md-4">
+            <label asp-for="StageOrder" class="form-label"></label>
+            <input asp-for="StageOrder" class="form-control" />
+        </div>
+        <div class="col-md-6">
+            <label asp-for="StartLocation" class="form-label"></label>
+            <input asp-for="StartLocation" class="form-control" />
+        </div>
+        <div class="col-md-6">
+            <label asp-for="FinishLocation" class="form-label"></label>
+            <input asp-for="FinishLocation" class="form-control" />
+        </div>
+
+        <!-- NoScore + Description -->
+        <div class="col-12 d-flex align-items-start mt-2">
+            <div class="form-check me-3">
+                <input asp-for="NoScore" class="form-check-input" type="checkbox" id="noScoreCheck" />
+                <label class="form-check-label" for="noScoreCheck">
+                    @Html.DisplayNameFor(m => m.NoScore)
+                </label>
+            </div>
+
+            <div id="noScoreDescriptionWrapper" style="display:@(Model.NoScore ? "block" : "none"); flex:1;">
+                <textarea asp-for="NoScoreDescription" class="form-control" placeholder="Waarom geen score?" rows="3"></textarea>
+            </div>
+        </div>
+    </div>
+
+</form>

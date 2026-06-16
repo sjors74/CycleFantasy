@@ -1,0 +1,45 @@
+﻿@model CycleManager.Domain.Dto.DeelnemerDeleteDto
+<h1>Verwijder</h1>
+<div class="alert alert-warning">
+    <h4 class="alert-heading">Weet je het zeker?</h4>
+    <p>
+        Je staat op het punt om de volgende deelnemer definitief te verwijderen:
+    </p>
+    <hr>
+    <dl class="row mb-0">
+        <dt class="col-sm-3">Naam deelnemer</dt>
+        <dd class="col-sm-9">@Model.TeamName</dd>
+    </dl>
+</div>
+<form asp-action="Delete" method="post" class="mt-3">
+    <input type="hidden" asp-for="Id" />
+    <input type="hidden" asp-for="EventId" />
+    <div class="d-flex justify-content-between">
+        <a asp-action="Index" asp-route-eventId="@Model.EventId" class="btn btn-outline-secondary">Annuleren</a>
+        <button type="submit" class="btn btn-danger">
+            <i class="bi bi-trash"></i> Verwijder
+        </button>
+    </div>
+</form>
+@* <h1>Verwijder</h1>
+<h3>Weet je zeker dat je deze deelnemer wilt verwijderen?</h3>
+<div>
+    <hr />
+    <dl class="row">
+        <dt class = "col-sm-2">Team</dt>
+        <dd class = "col-sm-10">@Model.TeamName</dd>
+
+        <dt class = "col-sm-2">Gebruiker</dt>
+        <dd class = "col-sm-10">@Model.UserName</dd>
+
+        <dt class = "col-sm-2">Evenement</dt>
+        <dd class = "col-sm-10">@Model.EventName</dd>
+    </dl>
+    
+    <form asp-action="DeleteConfirmed" method="post">
+        <input type="hidden" asp-for="Id" />
+        <input type="hidden" asp-for="EventId" />
+        <input type="submit" value="Verwijder" class="btn btn-danger" /> |
+        <a asp-action="Index" asp-route-eventId="@Model.EventId">Terug naar de lijst</a>
+    </form>
+</div> *@

@@ -1,0 +1,115 @@
+﻿@page "/Top15"
+@model WebApp.Pages.Top15Model
+@{
+    ViewData["Title"] = "Top15 renners";
+}
+<div id="event-id" data-event-id="@Model.EventId"></div>
+<div class="etappe-knoppen-container">
+    <a id="terug-naar-event" href="#" class="btn etappe-knop">← Terug</a>
+    <div id="navigatie-links" class="etappe-knop-groep"></div>
+</div>
+<div class="event-header etappe-header">
+    <h1 id="etappe-title"></h1>
+    <div class="event-dates" id="etappe-datum"></div>
+</div>
+
+<table class="resultaten-tabel">
+    <thead>
+        <tr>
+            <th>Positie</th>
+            <th>Naam</th>
+            <th>Team</th>
+            <th>Punten</th>
+        </tr>
+    </thead>
+    <tbody id="renner-lijst">
+        <!-- rijen worden via JS toegevoegd -->
+    </tbody>
+</table>
+<script>
+    document.addEventListener("DOMContentLoaded", async () => {
+    const el = document.getElementById("event-id");
+    if (!el) return;
+
+    const eventId = el.dataset.eventId;
+    if (!eventId) {
+        console.error("eventId niet gevonden in DOM");
+        return;
+    }
+
+    const terugLink = document.getElementById("terug-naar-event");
+    terugLink.href = `/Event?eventId=${eventId}`;
+
+    await loadTop15(eventId);
+});
+
+ async function loadTop15(eventId) {
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/Results/top15/${eventId}`);
+            if (!response.ok) throw new Error("Fout bij ophalen top 15");
+
+            const top15 = await response.json();
+            const tbody = document.getElementById("renner-lijst");
+            tbody.innerHTML = "";
+
+            if (top15.length === 0) {
+                const tr = document.createElement("tr");
+                const td = document.createElement("td");
+                td.colSpan = 4; // aantal kolommen van de tabel
+                td.className = "text-muted text-center";
+                td.textContent = "Er zijn nog geen uitslagen bekend.";
+                tr.appendChild(td);
+                tbody.appendChild(tr);
+                return;
+            }
+
+            top15.forEach(renner => {
+                const tr = document.createElement("tr");
+
+                const tdRank = document.createElement("td");
+                tdRank.textContent = renner.position;
+
+                const tdName = document.createElement("td");
+                tdName.textContent = renner.competitorName;
+
+                const tdTeam = document.createElement("td");
+                tdTeam.textContent = renner.competitorTeam;
+
+                const tdPoints = document.createElement("td");
+                tdPoints.textContent = renner.points;
+
+                tr.appendChild(tdRank);
+                tr.appendChild(tdName);
+                tr.appendChild(tdTeam);
+                tr.appendChild(tdPoints);
+
+                tbody.appendChild(tr);
+            });
+
+        } catch (error) {
+            console.error("Fout bij ophalen top 15:", error);
+        }
+    }
+    document.addEventListener("DOMContentLoaded", () => {
+        const eventId = parseInt(localStorage.getItem("eventId"));
+        
+        const rennerTable = document.getElementById("renner-lijst");
+        if (rennerTable && eventId) {
+            loadTop15(eventId);
+        }
+
+        const eventJson = localStorage.getItem("events");
+        let event = null;
+        
+
+        if (eventJson) {
+            const events = JSON.parse(eventJson);
+            event = events.find(e => e.eventId == eventId);
+        }
+
+        if(event) {
+            document.getElementById("etappe-title").textContent = `Top15 – Renners - ${event.eventName}`;
+        }
+    });
+
+</script>

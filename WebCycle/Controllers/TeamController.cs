@@ -1,4 +1,4 @@
-﻿using Domain.Interfaces;
+﻿using CycleManager.Services.Interfaces;
 using Domain.Models;
 using Microsoft.AspNetCore.Mvc;
 
@@ -8,22 +8,27 @@ namespace WebCycle.Controllers
     [ApiController]
     public class TeamController : ControllerBase
     {
-        private readonly IUnitOfWork unitOfWork;
-        public TeamController(IUnitOfWork unitOfWork)
+        private readonly ITeamService _teamService;
+        public TeamController(ITeamService teamService)
         {
-            this.unitOfWork = unitOfWork;
+            _teamService = teamService;
         }
 
         [HttpGet]
-        public IEnumerable<Team> GetAllTeams()
+        public async Task<ActionResult<IEnumerable<Team>>> GetAllTeams()
         {
-            return unitOfWork.Team.GetAll();
+            var teams = await _teamService.GetAllTeams();
+            return Ok(teams);
         }
 
         [HttpGet("{id}", Name = "Get")]
-        public Team GetTeam(int id) 
+        public async Task<ActionResult<Team>> GetTeam(int id) 
         {
-            return unitOfWork.Team.GetById(id);
+            var team = await _teamService.GetTeamById(id);
+            if (team == null)
+                return NotFound();
+
+            return Ok(team);
         }
     }
 }

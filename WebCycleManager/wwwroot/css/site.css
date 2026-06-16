@@ -16,3 +16,103 @@ html {
 body {
   margin-bottom: 60px;
 }
+
+.autocomplete-items {
+    position: absolute;
+    border: 2px solid #999;
+    border-top: none;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 99;
+    background-color: white;
+    width: 250px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.autocomplete-item {
+    padding: 10px 14px;
+    cursor: pointer;
+    border-bottom: 1px solid #ddd;
+}
+
+    .autocomplete-item:last-child {
+        border-bottom: none; /* geen lijn onder de laatste */
+    }
+
+    .autocomplete-item:hover {
+        background-color: #f8f8f8;
+    }
+
+.btn.disabled, .btn:disabled {
+    background-color: #6c757d !important; /* Bootstrap secondary grey */
+    border-color: #6c757d !important;
+    color: #fff !important;
+    opacity: 1 !important; /* voorkomt dat het te licht wordt */
+    pointer-events: none; /* niet klikbaar */
+}
+
+/* Geen grijze achtergrond bij readonly, geen schaduw */
+.input-group .form-control[readonly] {
+    background-color: transparent; /* of white als je expliciet wit wilt */
+    box-shadow: none;
+}
+
+/* Zorg dat de input in de input-group kan krimpen zodat de knop naast blijft */
+.input-group .form-control {
+    min-width: 0; /* cruciaal voor flexbox overflow/linebreak issues */
+}
+
+/* Optioneel: knop niet laten schalen */
+.input-group .btn {
+    flex: 0 0 auto;
+}
+
+.table thead th {
+    position: sticky;
+    top: 0;
+    background: #f8f9fa; /* Bootstrap light background */
+    z-index: 2;
+}
+
+.form-check-lg .form-check-input {
+    width: 1.5rem;
+    height: 1.5rem;
+}
+
+.form-check-lg .form-check-label {
+    font-size: 1.25rem;
+    margin-left: 0.5rem;
+}
+
+/* Modal maximaal 90% van viewport */
+.modal-dialog {
+    max-height: 90vh;
+}
+
+.modal-content {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+/* Body scrollt als inhoud te groot wordt */
+.modal-body {
+    flex: 1 1 auto; /* groeit om ruimte tussen header/footer te vullen */
+    overflow-y: auto; /* scroll bij overflow */
+    padding: 1rem; /* eventueel wat ruimte binnen de body */
+}
+
+/* Footer blijft altijd onderaan */
+.modal-footer {
+    flex-shrink: 0;
+    border-top: 1px solid #dee2e6;
+}
+
+/* show same sized icons */
+.icon-col {
+    width: 60px;
+    min-width: 60px;
+    max-width: 60px;
+}

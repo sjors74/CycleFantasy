@@ -1,5 +1,6 @@
-﻿using Domain.Interfaces;
-using Domain.Models;
+﻿using AutoMapper;
+using CycleManager.Services.Interfaces;
+using Domain.Dto;
 using Microsoft.AspNetCore.Mvc;
 
 
@@ -9,16 +10,55 @@ namespace WebCycle.Controllers
     [ApiController]
     public class CompetitorsInEventController : ControllerBase
     {
-        private readonly IUnitOfWork unitOfWork;
-        public CompetitorsInEventController(IUnitOfWork unitOfWork)
+        private readonly ICompetitorInEventService _competitorInEventService;
+        private readonly IMapper _mapper;
+
+        public CompetitorsInEventController(ICompetitorInEventService competitorInEventService, IMapper mapper)
         {
-            this.unitOfWork = unitOfWork;
+            _competitorInEventService = competitorInEventService;
+            this._mapper = mapper;
         }
 
         [HttpGet("{id}", Name = "GetCompetitorsByEventId")]
-        public IEnumerable<CompetitorsInEvent> GetAll() //to do: make a custom method for eventId in repository
+        public async Task<IActionResult> GetById(int id)
         {
-            return unitOfWork.CompetitorsInEvent.GetAll();
+            try
+            {
+                var c = await _competitorInEventService.GetCompetitorById(id);
+                if (c == null)
+                    return NotFound();
+
+                var competitorsResponse = _mapper.Map<CompetitorDto>(c);
+                return Ok(competitorsResponse);
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, "Er ging iets mis bij het ophalen van de renner.");
+            }
+        }
+
+        /// <summary>
+        /// Gat a random number of competitors in a list 
+        /// </summary>
+        /// <param name="id">eventId</param>
+        /// <param name="number">#</param>
+        /// <returns></returns>
+        [HttpGet("{id}/{number}", Name = "GetRandomCompetitorsByEventId")]
+        public async Task<IActionResult> GetRandomById(int id, int number)
+        {
+            try
+            {
+                var competitors = await _competitorInEventService.GetRandomNumberofCompetitors(id, number);
+                if (competitors == null || !competitors.Any())
+                    return NotFound($"Geen renners gevonden voor eventId {id}.");
+
+                var competitorsResponse = _mapper.Map<List<CompetitorDto>>(competitors);
+                return Ok(competitorsResponse);
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, "Er is een fout opgetreden bij het ophalen van de renners.");
+            }
         }
     }
 }

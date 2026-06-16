@@ -1,0 +1,40 @@
+﻿@page
+@using WebApp.Pages.ViewModels
+@using CycleManager.Domain.Dto
+@model WebApp.Pages.Account.ProfielModel
+@{
+}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col=md-3">
+            <div class="list-group w-100">
+                @if (User.Identity.IsAuthenticated)
+                {
+                    @await Html.PartialAsync("_EventsForUser", Model.Dashboard)
+
+                }
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Verwijder Bevestiging Modal -->
+<div class="modal fade" id="verwijderModal" tabindex="-1" aria-labelledby="verwijderModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="verwijderModalLabel">Bevestig verwijdering</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Sluiten"></button>
+            </div>
+            <div class="modal-body">
+                Weet je zeker dat je deze deelnemer wilt verwijderen?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuleer</button>
+                <button type="button" class="btn btn-danger" id="bevestigVerwijderBtn">Verwijder</button>
+            </div>
+        </div>
+    </div>
+</div>
+@section Scripts {
+    <script src="~/js/profiel.js" asp-append-version="true"></script>
+}

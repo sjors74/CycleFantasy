@@ -1,7 +1,7 @@
-﻿using System.ComponentModel;
+﻿using CycleManager.Domain.Models;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Text.Json.Serialization;
 
 namespace Domain.Models
 {
@@ -9,18 +9,27 @@ namespace Domain.Models
     {
         [Key]
         public int CompetitorId { get; set; }
+        
         [DisplayName("Voornaam")]
         public string FirstName { get; set; } = string.Empty;
         [DisplayName("Achternaam")]
         public string LastName { get; set; } = string.Empty;
-        [DisplayName("Team")]
-        public int TeamId { get; set; }
+        public string PcsName { get; set; } = string.Empty;
+        public string? ScraperName { get; set; }
         [DisplayName("Land")]
         public int CountryId { get; set; }
-        [NotMapped]
-        public virtual Team? Team { get; set; }
-        [NotMapped]
         [DisplayName("Land")]
-        public virtual Country? Country { get; set; }
+        public Country? Country { get; set; }
+        public virtual ICollection<CompetitorInTeam> CompetitorInTeams { get; set; } = [];
+
+        [NotMapped]
+        [DisplayName("Naam")]
+        public string CompetitorName
+        {
+            get
+            {
+                return $"{FirstName} {LastName}";
+            }
+        }
     }
 }

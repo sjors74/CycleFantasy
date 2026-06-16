@@ -1,0 +1,22 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["BodyClass"] = "index-page";
+    ViewData["Title"] = "Home page";
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/index.css" asp-append-version="true" />
+}
+<div class="hero">
+    <div class="hero-overlay">
+        <h1>Welkom bij Toermanager</h1>
+        <p class="lead">Stel je wielerteam samen en speel mee in één van de pools!</p>
+    </div>
+</div>
+<div id="container" class="tile-container"></div>
+@section Scripts {
+    <script>
+        window._suppressAutoLoaderToggle = true;
+    </script>
+    <script src="~/js/index.js" asp-append-version="true"></script>
+}

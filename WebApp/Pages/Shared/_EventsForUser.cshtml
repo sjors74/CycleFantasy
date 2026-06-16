@@ -1,0 +1,86 @@
+﻿@using CycleManager.Domain.Dto
+@using Domain.Dto
+@model EventDashboardDto
+
+<div class="card shadow-sm mt-4">
+    <div class="card-header bg-secondary text-white">
+        <h5 class="mb-0">@Model.Titel</h5>
+    </div>
+
+    <div class="card-body">
+
+        @if ((Model.Actueel == null || !Model.Actueel.Any()) &&
+                (Model.Toekomst == null || !Model.Toekomst.Any()) &&
+                (Model.Historisch == null || !Model.Historisch.Any()))
+        {
+            <p class="text-muted">Er zijn momenteel geen evenementen.</p>
+        }
+        else
+        {
+            <!-- TABS -->
+            <ul class="nav nav-tabs mb-3" id="eventTabs">
+
+                <li class="nav-item">
+                    <button class="nav-link active"
+                            data-bs-toggle="tab"
+                            data-bs-target="#actueel">
+                        Actueel
+                    </button>
+                </li>
+
+                <li class="nav-item">
+                    <button class="nav-link"
+                            data-bs-toggle="tab"
+                            data-bs-target="#toekomst">
+                        Toekomst
+                    </button>
+                </li>
+
+                <li class="nav-item">
+                    <button class="nav-link"
+                            data-bs-toggle="tab"
+                            data-bs-target="#historisch">
+                        Historisch
+                    </button>
+                </li>
+
+            </ul>
+
+            <!-- TAB CONTENT -->
+            <div class="tab-content">
+
+                <!-- ACTUEEL -->
+                <div class="tab-pane fade show active" id="actueel">
+
+                    @foreach (var evt in Model.Actueel)
+                    {
+                        @await Html.PartialAsync("_EventAccordion", evt)
+                    }
+
+                </div>
+
+                <!-- TOEKOMST -->
+                <div class="tab-pane fade" id="toekomst">
+
+                    @foreach (var evt in Model.Toekomst)
+                    {
+                        @await Html.PartialAsync("_EventAccordion", evt)
+                    }
+
+                </div>
+
+                <!-- HISTORISCH -->
+                <div class="tab-pane fade" id="historisch">
+
+                    @foreach (var evt in Model.Historisch)
+                    {
+                        @await Html.PartialAsync("_EventAccordion", evt)
+                    }
+
+                </div>
+
+            </div>
+        }
+
+    </div>
+</div>

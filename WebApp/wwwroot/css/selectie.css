@@ -1,0 +1,86 @@
+﻿@media (min-width: 768px) {
+    .top-buttons {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    .teams-grid {
+        display: grid;
+        grid-template-columns: 1fr 3fr 1fr;
+        gap: 10px;
+        align-items: start;
+    }
+
+    .teams-container {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+    }
+
+    .in-selectie {
+        font-weight: 600;
+    }
+
+    .niet-in-selectie {
+        font-weight: 200;
+    }
+
+    .prev-button,
+    .next-button {
+        display: flex;
+        align-items: start;
+        padding-top: 30px; /* zorgt dat ze iets lager beginnen */
+    }
+
+    .label-link {
+        color: inherit;
+        text-decoration: none;
+        cursor: pointer;
+        transition: opacity 0.2s;
+    }
+
+        .label-link:hover {
+            opacity: 0.7;
+        }
+
+    .rider-name {
+        font-weight: 500;
+    }
+}
+@media (max-width: 767px) {
+    .top-buttons {
+        text-align: center;
+        margin-bottom: 15px;
+    }
+
+    .teams-grid {
+        display: block;
+    }
+
+    .teams-container {
+        display: block;
+    }
+
+    .team-box {
+        margin-bottom: 10px;
+    }
+
+    .prev-button,
+    .next-button {
+        text-align: center;
+        margin-top: 15px;
+    }
+    .label-link {
+        color: inherit;
+        text-decoration: none;
+        cursor: pointer;
+        transition: opacity 0.2s;
+    }
+
+        .label-link:hover {
+            opacity: 0.7;
+        }
+    .rider-name {
+        font-weight: 500;
+    }
+}

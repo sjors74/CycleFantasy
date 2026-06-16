@@ -1,85 +1,127 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using CycleManager.Services;
+using CycleManager.Services.Interfaces;
+using Domain.Models;
+using Hangfire;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using Domain.Context;
-using Domain.Models;
 using WebCycleManager.Models;
 
 namespace WebCycleManager.Controllers
 {
     public class EventsController : Controller
     {
-        private readonly DatabaseContext _context;
+        private IEventService _eventService;
+        private ITeamService _teamService;
+        private IStageService _stageService;
+        private IResultService _resultService;
+        private IConfigurationService _configurationService;
+        private readonly IScoreService _scoreService;
 
-        public EventsController(DatabaseContext context)
+        public EventsController(IEventService eventService, ITeamService teamService,
+            IStageService stageService, IResultService resultService, 
+            IConfigurationService configurationService,
+            IScoreService scoreService)
         {
-            _context = context;
+            _eventService = eventService;
+            _teamService = teamService;
+            _stageService = stageService;
+            _resultService = resultService;
+            _configurationService = configurationService;
+            _scoreService = scoreService;
         }
 
         // GET: Events
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(int? year, bool? isActiveFilter)
         {
-              return _context.Events != null ? 
-                          View(await _context.Events
-                          .OrderByDescending(e => e.EventYear)
-                          .ThenBy(e => e.StartDate)
-                          .ToListAsync()) :
-                          Problem("Entity set 'DatabaseContext.Events'  is null.");
+            var vm = new EventViewModel();
+            year ??= DateTime.Now.Year;
+
+            var allEventsList = (await _eventService.GetAllEvents()).ToList();
+            var allYears = allEventsList
+                .Select(e => e.EventYear)
+                .Distinct()
+                .OrderByDescending(y => y)
+                .ToList();
+
+            vm.Years = allYears.Select(y => new SelectListItem
+            {
+                Value = y.ToString(),
+                Text = y.ToString()
+            })
+            .ToList();
+
+            vm.SelectedYear = year.Value;
+            vm.IsActiveFilter = isActiveFilter;
+
+            vm.ActiveFilters =
+                [
+                new SelectListItem
+                {
+                    Value = "",
+                    Text = "Alle evenementen"
+                },
+                new SelectListItem
+                {
+                    Value = "true",
+                    Text = "Actief"
+                },
+                new SelectListItem
+                {
+                    Value = "false",
+                    Text = "Inactief"
+                }
+                ];
+
+            var allEvents = await _eventService.GetAllEvents();
+            var query = allEvents.Where(e => e.EventYear == year);
+
+            if(isActiveFilter.HasValue)
+            {
+                query = query.Where(e => e.IsActive == isActiveFilter.Value);
+            }
+
+            var events = query.ToList();
+
+            foreach (var e in events)
+            {
+                vm.Events.Add(CreateViewModel(e));
+            }
+
+            return View(vm);
         }
 
         // GET: Events/Details/5
         public async Task<IActionResult> Details(int? id)
         {
-            if (id == null || _context.Events == null)
-            {
+            if (id is not int eventId)
                 return NotFound();
-            }
 
-            var @event = await _context.Events
-                .FirstOrDefaultAsync(m => m.EventId == id);
-            if (@event == null)
-            {
+            var vm = await _eventService.GetEventDetailsViewModelById(eventId);
+
+            if (vm == null)
                 return NotFound();
-            }
-            var stagesList = new List<Stage>();
-            foreach (var stage in _context.Stages.Where(e => e.EventId.Equals(@event.EventId)).OrderBy(c => c.StageOrder))
-            {
-                stagesList.Add(stage);
-            }
-            var eventViewModel = new EventViewModel
-            {
-                Id = @event.EventId,
-                Name = @event.EventName,
-                Year = @event.EventYear,
-                StartDate = (DateTime)@event.StartDate,
-                EndDate = (DateTime)@event.EndDate,
-                Stages = stagesList,
-                StagesInEvent = stagesList.Count
-            };
-            return View(eventViewModel);
+
+            return View(vm);
         }
 
         // GET: Events/Create
-        public IActionResult Create()
+        public async Task<ActionResult> Create()
         {
+            var configurations = await _configurationService.GetAllConfigurations();
+            ViewData["ConfigurationId"] = new SelectList(configurations, "Id", "ConfigurationType");
             return View();
         }
 
         // POST: Events/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("EventId,EventName,EventYear,StartDate,EndDate")] Event @event)
+        public async Task<IActionResult> Create(EventItemViewModel @event)
         {
             if (ModelState.IsValid)
             {
-                _context.Add(@event);
-                await _context.SaveChangesAsync();
+                var e = await CreateFromViewModel(@event);
+                await  _eventService.Create(e);
                 return RedirectToAction(nameof(Index));
             }
             return View(@event);
@@ -88,70 +130,72 @@ namespace WebCycleManager.Controllers
         // GET: Events/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
-            if (id == null || _context.Events == null)
+            if (id == null)
             {
                 return NotFound();
             }
 
-            var @event = await _context.Events.FindAsync(id);
+            var @event = await _eventService.GetEventById((int)id);
             if (@event == null)
             {
                 return NotFound();
             }
-            return View(@event);
+            var vm = CreateViewModel(@event);
+            var configurations = await _configurationService.GetAllConfigurations();
+            ViewData["ConfigurationId"] = new SelectList(configurations, "Id", "ConfigurationType");
+            return View(vm);
         }
 
         // POST: Events/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("EventId,EventName,EventYear,StartDate,EndDate")] Event @event)
+        public async Task<IActionResult> Edit(int? id, EventItemViewModel @event)
         {
-            if (id != @event.EventId)
+            if (id == null || id <= 0)
             {
-                return NotFound();
+                ModelState.AddModelError("Id", "Ongeldig of ontbrekend ID.");
+                return View(@event ?? new EventItemViewModel());
             }
 
-            if (ModelState.IsValid)
+            if (@event == null || id != @event.Id)
             {
-                try
-                {
-                    _context.Update(@event);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!EventExists(@event.EventId))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
+                ModelState.AddModelError("Id", "Het opgegeven ID komt niet overeen met het model.");
+                return View(@event ?? new EventItemViewModel());
+            }
+
+            if (!ModelState.IsValid)
+                return View(@event);
+
+            try
+            {
+                var e = await CreateFromViewModel(@event);
+                await _eventService.Update(e);
                 return RedirectToAction(nameof(Index));
             }
-            return View(@event);
+            catch (DbUpdateConcurrencyException)
+            {
+                if (await _eventService.GetEventById(@event.Id) == null)
+                    return NotFound();
+                throw;
+            }
         }
 
         // GET: Events/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
-            if (id == null || _context.Events == null)
+            if (id == null)
             {
                 return NotFound();
             }
 
-            var @event = await _context.Events
-                .FirstOrDefaultAsync(m => m.EventId == id);
+            var @event = await _eventService.GetEventById((int)id);
             if (@event == null)
             {
                 return NotFound();
             }
 
-            return View(@event);
+            var vm = CreateViewModel(@event);
+            return View(vm);
         }
 
         // POST: Events/Delete/5
@@ -159,23 +203,189 @@ namespace WebCycleManager.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            if (_context.Events == null)
-            {
-                return Problem("Entity set 'DatabaseContext.Events'  is null.");
-            }
-            var @event = await _context.Events.FindAsync(id);
+            var @event = await _eventService.GetEventById(id);
             if (@event != null)
             {
-                _context.Events.Remove(@event);
+                await _eventService.Delete(@event);
             }
             
-            await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
-        private bool EventExists(int id)
+        [HttpGet]
+        public async Task<IActionResult> ManageTeams(int id)
         {
-          return (_context.Events?.Any(e => e.EventId == id)).GetValueOrDefault();
+            var eventEntity = await _eventService.GetEventById(id);
+            if(eventEntity == null) return NotFound();
+
+            var allTeams = await _teamService.GetAllTeams();
+
+            var model = new EventTeamsViewModel
+            {
+                EventId = eventEntity.EventId,
+                EventName = eventEntity.EventName,
+                Teams = allTeams.Select(t => new TeamSelection
+                {
+                    TeamId = t.TeamId,
+                    TeamName = t.CurrentTeamName,
+                    IsSelected = eventEntity.EventTeams.Any(et => et.TeamId == t.TeamId)
+                })
+                .OrderByDescending(t => t.IsSelected)
+                .ThenBy(t => t.TeamName)
+                .ToList()
+            };
+
+            return PartialView("_ManageTeamsPartial",model);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ManageTeams(EventTeamsViewModel vm)
+        {
+            if (!ModelState.IsValid)
+            {
+                return Json(new { success = false, message = "Er is een fout opgetreden." });
+            }
+            var eventEntity = await _eventService.GetEventById(vm.EventId);
+            if (eventEntity == null)
+            {
+                return Json(new { success = false, message = "Evenement niet gevonden" });
+            }
+
+            var currentTeamIds = eventEntity.EventTeams
+                .Select(et => et.TeamId)
+                .ToList();
+
+            var selectedTeamIds = vm.Teams
+                .Where(t => t.IsSelected)
+                .Select(t => t.TeamId)
+                .ToList();
+
+            var teamsToAdd = selectedTeamIds.Except(currentTeamIds);
+            var teamsToRemove = currentTeamIds.Except(selectedTeamIds);
+
+            foreach (var teamId in teamsToAdd)
+            {
+                await _eventService.AddTeamToEvent(vm.EventId, teamId);
+            }
+
+            foreach(var teamId in teamsToRemove)
+            {
+                await _eventService.RemoveTeamFromEvent(vm.EventId, teamId);
+            }
+
+            return Json(new
+            {
+                success = true,
+                redirectUrl = Url.Action("Edit", new { id = vm.EventId })
+            });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ManageStages(int eventId)
+        {
+            var eventEntity = await _eventService.GetEventById(eventId);
+            if (eventEntity == null) return NotFound();
+
+            var stages = await _stageService.GetStagesByEventId(eventId);
+
+            var model = new ManageStageViewModel
+            {
+                EventStages = new EventStagesViewModel
+                {
+                    EventId = eventId,
+                    EventName = eventEntity.EventName,
+                    EventStartDate = eventEntity.StartDate ?? DateTime.Today,
+                    EventEndDate = eventEntity.EndDate ?? DateTime.Today.AddDays(1),
+                    Stages = stages
+                },
+                NewStage = new StageCreateViewModel { EventId = eventId }
+            };
+
+            return PartialView("_ManageStagesPartial", model);
+        }
+
+        [HttpPost]
+        public IActionResult ManageRenners(int eventId)
+        {
+            BackgroundJob.Enqueue<IScraperService>(
+                x => x.RefreshStartlistAsync(eventId));
+
+            TempData["Success"] = "Startlist synchronisatie gestart.";
+
+            return RedirectToAction("Index", "CompetitorsInEvents", new { eventId = eventId });
+        }
+
+        // POST: Events/RecalculateScores/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> RecalculateScores(int id)
+        {
+            try
+            {
+                await _scoreService.RecalculateEventScoresAsync(id);
+                TempData["SuccessMessage"] = "Scores recalculated successfully.";
+            }
+            catch (Exception ex)
+            {
+                // log as needed (ILogger not injected here — add if you want logging)
+                TempData["ErrorMessage"] = "Error recalculating scores: " + ex.Message;
+            }
+
+            return RedirectToAction("Edit", new { id });
+        }
+
+        public EventItemViewModel CreateViewModel(Event @event)
+        {
+            var vm = new EventItemViewModel
+            {
+                Id = @event.EventId,
+                Name = @event.EventName,
+                Code = @event.EventCode,
+                Year = @event.EventYear,
+                StartDate = @event.StartDate.HasValue ? (DateTime)@event.StartDate : DateTime.MinValue,
+                EndDate = @event.EndDate.HasValue ? (DateTime)@event.EndDate : DateTime.MaxValue,
+                Slogan = @event.Slogan,
+                ColorName = @event.ColorName,
+                CountryCode = @event.CountryCode,
+                IsActive = @event.IsActive,
+                ShowPodium = @event.ShowPodium,
+                CanSubscribe = @event.CanSubscribe,
+                ConfigurationId = @event.ConfigurationId,
+                StagesInEvent = @event.Stages?.Count ?? 0,
+                SelectedTeamsCount = @event.EventTeams?.Count ?? 0
+            };
+            return vm;
+        }
+
+        public async Task<Event> CreateFromViewModel(EventItemViewModel vm)
+        {
+            var @event = await _eventService.GetEventById(vm.Id);
+            try
+            {
+                if (@event == null)
+                {
+                    @event = new Event();
+                }
+                @event.EventName = vm.Name;
+                @event.EventCode = vm.Code;
+                @event.EventYear = vm.Year;
+                @event.StartDate = vm.StartDate;
+                @event.EndDate = vm.EndDate;
+                @event.Slogan = vm.Slogan;
+                @event.CountryCode = vm.CountryCode;
+                @event.ColorName = vm.ColorName;
+                @event.IsActive = vm.IsActive;
+                @event.ShowPodium = vm.ShowPodium;
+                @event.CanSubscribe = vm.CanSubscribe;
+                @event.ConfigurationId = vm.ConfigurationId;
+
+                return @event;
+                        
+            }
+            catch
+            {
+                throw;
+            }
         }
     }
 }

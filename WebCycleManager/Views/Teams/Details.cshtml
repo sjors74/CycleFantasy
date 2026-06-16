@@ -1,62 +1,89 @@
-﻿@model WebCycleManager.Models.TeamViewModel
+﻿@model WebCycleManager.Models.TeamDetailsViewModel
 
-@{
-    ViewData["Title"] = "Details";
-}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">@Model.TeamName (@Model.Country)</h2>
 
-<h1>Details</h1>
-
-<div>
-    <h4>Team</h4>
-    <hr />
-    <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.TeamName)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.TeamName)
-        </dd>
-    </dl>
-    <h5>Renners (@Model.CompetitorsInTeam)</h5>
-    <table class="table">
-        <thead>
-            <tr>
-                <th>
-                    @Html.DisplayNameFor(model => model.Competitors.FirstOrDefault().FirstName)
-                </th>
-                <th>
-                    @Html.DisplayNameFor(model => model.Competitors.FirstOrDefault().LastName)
-                </th>
-                <th>
-                    @Html.DisplayNameFor(model => model.Competitors.FirstOrDefault().Land)
-                </th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var item in Model.Competitors)
-            {
-                <tr>
-                    <td>
-                        @Html.DisplayFor(modelItem => item.FirstName)
-                    </td>
-                    <td>
-                        @Html.DisplayFor(modelItem => item.LastName)
-                    </td>
-                    <td>
-                        @Html.DisplayFor(modelItem => item.Land)
-                    </td>
-                    <td>
-                        <a asp-controller="Competitors" asp-action="Edit" asp-route-id="@item.CompetitorId">Wijzig</a> |
-                        <a asp-controller="Competitors" asp-action="Details" asp-route-id="@item.CompetitorId">Details</a> |
-                        <a asp-controller="Competitors" asp-action="Delete" asp-route-id="@item.CompetitorId">Verwijder</a>
-                    </td>
-                </tr>
-           }
-        </tbody>
-    </table>
+    <ul class="nav nav-tabs">
+        @foreach (var year in Model.AvailableYears)
+        {
+            <li class="nav-item">
+                <a class="nav-link @(year == Model.SelectedYear ? "active" : "")"
+                   asp-action="Details"
+                   asp-route-id="@Model.TeamId"
+                   asp-route-year="@year">
+                    @year
+                </a>
+            </li>
+        }
+    </ul>
 </div>
-<div>
-    <a asp-action="Edit" asp-route-id="@Model?.Id">Wijzig</a> |
-    <a asp-action="Index">Terug naar de lijst</a>
+
+<div class="d-flex gap-3">
+    <!-- linker helft -->
+    <div class="flex-fill">
+        <table class="table table-striped table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Naam</th>
+                    <th>Land</th>
+                    <th class="text-center">🏆</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @{
+                    var half = (int)Math.Ceiling(Model.Competitors.Count() / 2.0);
+                    var leftSide = Model.Competitors.Take(half);
+                }
+                @foreach (var c in leftSide)
+                {
+                    <tr>
+                        <td>@c.FirstName @c.LastName</td>
+                        <td>@c.Land</td>
+                        <td class="text-center">@((c.IsNationalChampion) ? "🏆" : "")</td>
+                        <td class="text-end">
+                            <a asp-controller="Competitors" asp-action="Edit" asp-route-id="@c.CompetitorId" asp-route-id="@c.CompetitorId" asp-route-returnUrl="@(Context.Request.Path + Context.Request.QueryString)" class="text-muted" title="Bewerken">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <!-- rechter helft -->
+    <div class="flex-fill">
+        <table class="table table-striped table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Naam</th>
+                    <th>Land</th>
+                    <th class="text-center">🏆</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @{
+                    var rightSide = Model.Competitors.Skip(half);
+                }
+                @foreach (var c in rightSide)
+                {
+                    <tr>
+                        <td>@c.FirstName @c.LastName</td>
+                        <td>@c.Land</td>
+                        <td class="text-center">@((c.IsNationalChampion) ? "🏆" : "")</td>
+                        <td class="text-end">
+                            <a asp-controller="Competitors" asp-action="Edit" asp-route-id="@c.CompetitorId" asp-route-returnUrl="@(Context.Request.Path + Context.Request.QueryString)" class="text-muted" title="Bewerken">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+<div class="d-flex justify-content-between align-items-center mt-4">
+    <a asp-action="Index" class="btn btn-outline-secondary">Terug naar de lijst</a>
 </div>
