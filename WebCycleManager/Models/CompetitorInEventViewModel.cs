@@ -14,6 +14,9 @@ namespace WebCycleManager.Models
         public IEnumerable<SelectListItem> Teams { get; set; } = new List<SelectListItem>();
         public int? FilterTeam { get; set; } = 0;
         public int TotalCompetitors { get; set; }
+        public int ActiveCompetitors => Competitors.Count(c => c.InSelection);
+        public int RemovedCompetitors => Competitors.Count(c => c.RemovedFromStartlist);
+
         public string EventNameLong
         {
             get

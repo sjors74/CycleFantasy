@@ -1,5 +1,4 @@
 ﻿using System.ComponentModel;
-using System.ComponentModel.DataAnnotations;
 
 namespace WebCycleManager.Models
 {
@@ -31,6 +30,7 @@ namespace WebCycleManager.Models
         public bool InSelection { get; set; } = false;
         [DisplayName("Uitgevallen")]
         public bool OutOfCompetition { get; set; } = false;
+        public bool RemovedFromStartlist { get; set; } = false;
         public int TeamId { get; set; }
     }
 
