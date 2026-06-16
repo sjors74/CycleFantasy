@@ -25,7 +25,7 @@ namespace WebCycleManager.Controllers
         }
 
         // GET: CompetitorsInEvents
-        public async Task<IActionResult> Index(int eventId, int? FilterTeam = 0)
+        public async Task<IActionResult> Index(int eventId, int? FilterTeam = 0, bool ShowRemovedFromStartList = false)
         {
             var deelnemers = await _competitorInEventService.GetCompetitors(eventId);
 
@@ -35,6 +35,14 @@ namespace WebCycleManager.Controllers
                     .Where(t => t.CompetitorInTeam.Team.TeamId == FilterTeam)
                     .ToList();
             }
+
+            if (!ShowRemovedFromStartList)
+            {
+                deelnemers = deelnemers
+                    .Where(d => !d.RemovedFromStartList)
+                    .ToList();
+            }
+
             var currentEvent = await _eventService.GetEventById(eventId);
             if (currentEvent == null) return NotFound();
 
@@ -78,7 +86,8 @@ namespace WebCycleManager.Controllers
                     Value = t.TeamId.ToString(),
                     Text = t.CurrentTeamName
                 }),
-                FilterTeam = FilterTeam ?? 0
+                FilterTeam = FilterTeam ?? 0,
+                ShowRemovedFromStartlist = ShowRemovedFromStartList
             };
             return View(vm);
         }
@@ -231,6 +240,7 @@ namespace WebCycleManager.Controllers
                     competitorInEvent.EventNumber = vm.EventNumber;
                     competitorInEvent.OutOfCompetition = vm.OutOfCompetition;
                     competitorInEvent.InSelectie = vm.InSelection;
+                    competitorInEvent.RemovedFromStartList = vm.RemovedFromStartlist;
                     await _competitorInEventService.Update(competitorInEvent);
                 }
                 catch(Exception)
@@ -333,7 +343,8 @@ namespace WebCycleManager.Controllers
                 LastName = competitor?.LastName ?? string.Empty,
                 TeamId = team?.TeamId ?? 0,
                 OutOfCompetition = competitorsInEvent.OutOfCompetition,
-                InSelection = competitorsInEvent.InSelectie
+                InSelection = competitorsInEvent.InSelectie,
+                RemovedFromStartlist = competitorsInEvent.RemovedFromStartList
             };
 
             return vm;

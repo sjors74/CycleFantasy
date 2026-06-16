@@ -16,6 +16,7 @@ namespace WebCycleManager.Models
         public int TotalCompetitors { get; set; }
         public int ActiveCompetitors => Competitors.Count(c => c.InSelection);
         public int RemovedCompetitors => Competitors.Count(c => c.RemovedFromStartlist);
+        public bool ShowRemovedFromStartlist { get; set; }
 
         public string EventNameLong
         {

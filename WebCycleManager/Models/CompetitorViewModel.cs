@@ -30,6 +30,7 @@ namespace WebCycleManager.Models
         public bool InSelection { get; set; } = false;
         [DisplayName("Uitgevallen")]
         public bool OutOfCompetition { get; set; } = false;
+        [DisplayName("Verwijderd van startlijst")]
         public bool RemovedFromStartlist { get; set; } = false;
         public int TeamId { get; set; }
     }

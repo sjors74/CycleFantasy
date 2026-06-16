@@ -24,26 +24,55 @@
 </div>
 
 <div class="d-flex align-items-center gap-3 mb-3">
-    <form asp-action="Index" method="get" name="CompetitorsInEvents">
-        <select asp-for="FilterTeam"
-            asp-items="Model.Teams" 
-             class="form-select form-select-sm"
-             onchange="SelectedIndexChanged(this.value)">
-            <option>Selecteer team</option>
-        </select>
-    </form>
-    <h4 class="mb-0 d-flex gap-2">
-        <span class="badge bg-primary">
-            @Model.ActiveCompetitors
-        </span>
 
-        @if (Model.RemovedCompetitors > 0)
-        {
-            <span class="badge bg-danger">
-                @Model.RemovedCompetitors
+    <form method="get" class="d-flex align-items-center gap-3 mb-0">
+
+        <input type="hidden"
+               name="eventId"
+               value="@Model.EventId" />
+
+        <select asp-for="FilterTeam"
+                asp-items="Model.Teams"
+                name="FilterTeam"
+                class="form-select"
+                onchange="this.form.submit()">
+            <option value="0">Alle teams</option>
+        </select>
+
+        <h4 class="mb-0 d-flex gap-2">
+
+            <span class="badge bg-primary">
+                @Model.ActiveCompetitors
             </span>
-        }
-    </h4>
+
+            @if (Model.RemovedCompetitors > 0)
+            {
+                <span class="badge bg-danger">
+                    @Model.RemovedCompetitors
+                </span>
+            }
+
+        </h4>
+
+        <div class="form-check mb-0 d-flex align-items-center">
+
+            <input class="form-check-input me-2"
+                   type="checkbox"
+                   id="showRemoved"
+                   name="ShowRemovedFromStartList"
+                   value="true"
+                   @(Model.ShowRemovedFromStartlist ? "checked" : "")
+                   onchange="this.form.submit()" />
+
+            <label class="form-check-label text-nowrap"
+                   for="showRemoved">
+                Toon verwijderd
+            </label>
+
+        </div>
+
+    </form>
+
 </div>
 
 <div style="max-height: calc(100vh - 250px); overflow-y:auto;">
@@ -54,6 +83,7 @@
                 <th>Renner</th>
                 <th>@Html.DisplayName("Team")</th>
                 <th>In selectie</th>
+                <th>Verwijderd</th>
                 <th>@Html.DisplayName("Uitgevallen")</th>
                 <th></th>
             </tr>
@@ -68,6 +98,12 @@
                         @if (item.InSelection)
                         {
                             <i class="bi bi-check-circle text-success" title="in selectie"></i>
+                        }
+                    </td>
+                    <td>
+                        @if (item.RemovedFromStartlist)
+                        {
+                            <i class="bi bi-check-circle text-success" title="van startlijst verwijderd"></i>
                         }
                     </td>
                     <td>
