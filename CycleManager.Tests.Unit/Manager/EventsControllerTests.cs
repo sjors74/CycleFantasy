@@ -59,7 +59,7 @@ namespace CycleManager.Tests.Unit.Manager
             _eventServiceMock.Setup(s => s.GetAllEvents())
                 .ReturnsAsync(events);
 
-            var result = await _controller.Index();
+            var result = await _controller.Index(null, null);
 
             var view = Assert.IsType<ViewResult>(result);
             var model = Assert.IsType<EventViewModel>(view.Model);
