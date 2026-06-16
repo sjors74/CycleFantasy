@@ -32,10 +32,17 @@
             <option>Selecteer team</option>
         </select>
     </form>
-    <h4 class="mb-0">
+    <h4 class="mb-0 d-flex gap-2">
         <span class="badge bg-primary">
-            @Model.TotalCompetitors
+            @Model.ActiveCompetitors
         </span>
+
+        @if (Model.RemovedCompetitors > 0)
+        {
+            <span class="badge bg-danger">
+                @Model.RemovedCompetitors
+            </span>
+        }
     </h4>
 </div>
 

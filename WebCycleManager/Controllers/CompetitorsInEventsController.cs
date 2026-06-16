@@ -55,6 +55,7 @@ namespace WebCycleManager.Controllers
                     EventName = currentEvent.EventName,
                     OutOfCompetition = d.OutOfCompetition,
                     InSelection = d.InSelectie,
+                    RemovedFromStartlist = d.RemovedFromStartList,
                     TeamId = team?.TeamId ?? 0,
                 };
             })
