@@ -1,5 +1,4 @@
-﻿using CycleManager.Domain.Models;
-using CycleManager.Services;
+﻿using CycleManager.Services;
 using CycleManager.Services.Interfaces;
 using Domain.Models;
 using Hangfire;
@@ -33,15 +32,62 @@ namespace WebCycleManager.Controllers
         }
 
         // GET: Events
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(int? year, bool? isActiveFilter)
         {
             var vm = new EventViewModel();
-            var events = await _eventService.GetAllEvents();
+            year ??= DateTime.Now.Year;
+
+            var allEventsList = (await _eventService.GetAllEvents()).ToList();
+            var allYears = allEventsList
+                .Select(e => e.EventYear)
+                .Distinct()
+                .OrderByDescending(y => y)
+                .ToList();
+
+            vm.Years = allYears.Select(y => new SelectListItem
+            {
+                Value = y.ToString(),
+                Text = y.ToString()
+            })
+            .ToList();
+
+            vm.SelectedYear = year.Value;
+            vm.IsActiveFilter = isActiveFilter;
+
+            vm.ActiveFilters =
+                [
+                new SelectListItem
+                {
+                    Value = "",
+                    Text = "Alle evenementen"
+                },
+                new SelectListItem
+                {
+                    Value = "true",
+                    Text = "Actief"
+                },
+                new SelectListItem
+                {
+                    Value = "false",
+                    Text = "Inactief"
+                }
+                ];
+
+            var allEvents = await _eventService.GetAllEvents();
+            var query = allEvents.Where(e => e.EventYear == year);
+
+            if(isActiveFilter.HasValue)
+            {
+                query = query.Where(e => e.IsActive == isActiveFilter.Value);
+            }
+
+            var events = query.ToList();
 
             foreach (var e in events)
             {
                 vm.Events.Add(CreateViewModel(e));
             }
+
             return View(vm);
         }
 

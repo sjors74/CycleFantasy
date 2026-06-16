@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+﻿using Microsoft.AspNetCore.Mvc.Rendering;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
 namespace WebCycleManager.Models
@@ -6,6 +7,11 @@ namespace WebCycleManager.Models
     public class EventViewModel
     {
         public List<EventItemViewModel> Events { get; set; }
+        public int SelectedYear { get; set; }
+        public bool? IsActiveFilter { get; set; }
+        public List<SelectListItem> Years { get; set; } = [];
+
+        public List<SelectListItem> ActiveFilters { get; set; } = [];
         public EventViewModel()
         {
             Events = new List<EventItemViewModel>();
@@ -43,6 +49,7 @@ namespace WebCycleManager.Models
         public int? ConfigurationId { get; set; }
         public int AantalPosities { get; set; }
         public int SelectedTeamsCount { get; set; }
+
         public string EventNameDescription
         {
             get
