@@ -18,11 +18,12 @@ namespace CycleManager.Services
         private readonly IGameCompetitorEventPickRepository _picksRepository;
         private readonly ICompetitorInEventService _competitorService;
         private readonly IResultService _resultService;
+        private readonly IScrapeScheduleService _scrapeScheduleService;
 
         public EventService(IEventRepository eventRepository, IStageRepository stageRepository, 
             IResultsRepository resultsRepository, IGameCompetitorInEventRepository deelnemersRepository,
             IGameCompetitorEventPickRepository picksRepository, ICompetitorInEventService competitorService, 
-            IResultService resultService)
+            IResultService resultService, IScrapeScheduleService scrapeScheduleService)
         {
             _eventRepository = eventRepository;
             _stageRepository = stageRepository;
@@ -32,18 +33,24 @@ namespace CycleManager.Services
             _competitorService = competitorService;
             _resultService = resultService;
             _resultService = resultService;
+            _scrapeScheduleService = scrapeScheduleService;
+
         }
 
         public async Task Create(Event entity)
         {
             _eventRepository.Add(entity);
             await _eventRepository.SaveChangesAsync();
+
+            await _scrapeScheduleService.RegisterSchedulesAsync();
         }
 
         public async Task Delete(Event entity)
         {
             _eventRepository.Remove(entity);
             await _eventRepository.SaveChangesAsync();
+
+            await _scrapeScheduleService.RegisterSchedulesAsync();
         }
 
         public async Task<IEnumerable<Event>> GetAllEvents()

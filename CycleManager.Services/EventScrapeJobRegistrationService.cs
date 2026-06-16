@@ -76,7 +76,7 @@ namespace CycleManager.Services
                 }
 
                 if (e.StartDate >= today.AddDays(-3) &&
-                    e.StartDate <= today.AddDays(30))
+                    e.StartDate <= today.AddDays(2))
                 {
                     RecurringJob.RemoveIfExists(
                         $"event-startlist-{e.EventId}");
