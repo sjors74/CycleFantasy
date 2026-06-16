@@ -161,6 +161,11 @@ using (var scope = app.Services.CreateScope())
     await scheduler.RegisterSchedulesAsync();
 }
 
+RecurringJob.AddOrUpdate<IScrapeScheduleService>(
+    "job-registration",
+    x => x.RegisterSchedulesAsync(),
+    Cron.Hourly);
+
 
 app.Run();
 
