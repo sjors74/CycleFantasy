@@ -88,6 +88,7 @@ builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddTransient<INewsItemRepository, NewsItemRepository>();
 builder.Services.AddTransient<INewsService, NewsService>();
 builder.Services.AddScoped<IEventDashboardService, EventDashboardService>();
+builder.Services.AddScoped<IScrapeScheduleService, EventScrapeJobRegistrationService>();
 
 builder.Services.AddControllers();
 builder.Services.AddHttpClient();

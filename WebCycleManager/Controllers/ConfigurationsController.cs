@@ -52,6 +52,15 @@ namespace WebCycleManager.Controllers
                     vm.ConfigurationItems.Add(new ConfigurationItemViewModel { Id = item.Id, Position = item.Position, Score = item.Score, ConfigurationId = item.ConfigurationId });
                 }
             }
+
+            if (configuration.Specials != null)
+            {
+                foreach (var special in configuration.Specials)
+                {
+                    vm.ConfigurationItemSpecials.Add(new ConfigurationItemsSpecialViewModel { Id = special.Id, Question = special.Question, Score = special.Score, ConfigurationId = special.ConfigurationId });
+                }
+            }
+
             return View(vm);
         }
 
@@ -97,6 +106,14 @@ namespace WebCycleManager.Controllers
                 foreach (var item in configuration.ConfigurationItems)
                 {
                     vm.ConfigurationItems.Add(new ConfigurationItemViewModel { Id = item.Id, Position = item.Position, Score = item.Score, ConfigurationId = item.ConfigurationId });
+                }
+            }
+
+            if (configuration.Specials != null)
+            {
+                foreach (var special in configuration.Specials)
+                {
+                    vm.ConfigurationItemSpecials.Add(new ConfigurationItemsSpecialViewModel { Id = special.Id, Question = special.Question, Score = special.Score, ConfigurationId = special.ConfigurationId });
                 }
             }
             return View(vm);

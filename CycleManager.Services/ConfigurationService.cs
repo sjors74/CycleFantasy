@@ -8,11 +8,15 @@ namespace CycleManager.Services
     {
         private readonly IConfigurationRepository _configurationRepository;
         private readonly IConfigurationItemRepository _configurationItemRepository;
+        private readonly IConfigurationItemSpecialRepository _configurationItemSpecialRepository;
 
-        public ConfigurationService(IConfigurationRepository configurationRepository, IConfigurationItemRepository configurationItemRepository)
+        public ConfigurationService(IConfigurationRepository configurationRepository, 
+            IConfigurationItemRepository configurationItemRepository,
+            IConfigurationItemSpecialRepository configurationItemSpecialRepository)
         {
             _configurationRepository = configurationRepository;
             _configurationItemRepository = configurationItemRepository;
+            _configurationItemSpecialRepository = configurationItemSpecialRepository;
         }
 
         /// <summary>
@@ -34,6 +38,12 @@ namespace CycleManager.Services
         public async Task<bool> CreateItem(ConfigurationItem entity)
         {
             var success = await _configurationItemRepository.CreateItem(entity);
+            return success;
+        }
+
+        public Task<bool> CreateItemSpecial(ConfigurationItemSpecial entity)
+        {
+            var success = _configurationItemSpecialRepository.CreateItemSpecial(entity);
             return success;
         }
 
@@ -60,6 +70,12 @@ namespace CycleManager.Services
             await _configurationItemRepository.SaveChangesAsync();
         }
 
+        public async Task DeleteItemSpecial(ConfigurationItemSpecial entity)
+        {
+            _configurationItemSpecialRepository.Remove(entity);
+            await _configurationItemSpecialRepository.SaveChangesAsync();
+        }
+
         /// <summary>
         /// Get all configuration-items
         /// </summary>
@@ -67,6 +83,11 @@ namespace CycleManager.Services
         public async Task<IEnumerable<ConfigurationItem>> GetAllConfigurationItems()
         {
             return await _configurationItemRepository.GetAll();
+        }
+
+        public async Task<IEnumerable<ConfigurationItemSpecial>> GetAllConfigurationItemSpecials()
+        {
+            return await _configurationItemSpecialRepository.GetAll();
         }
 
         /// <summary>
@@ -98,6 +119,11 @@ namespace CycleManager.Services
             return _configurationItemRepository.GetById(id);
         }
 
+        public Task<ConfigurationItemSpecial> GetConfigurationItemSpecialById(int id)
+        {
+            return _configurationItemSpecialRepository.GetById(id);
+        }
+
         /// <summary>
         /// Update a configuration and save it
         /// </summary>
@@ -117,6 +143,12 @@ namespace CycleManager.Services
         public async Task<bool> UpdateItem(ConfigurationItem entity)
         {
             var success = await _configurationItemRepository.UpdateItem(entity);
+            return success;
+        }
+
+        public async Task<bool> UpdateItemSpecial(ConfigurationItemSpecial entity)
+        {
+            var success = await _configurationItemSpecialRepository.UpdateItemSpecial(entity);
             return success;
         }
     }
