@@ -438,3 +438,22 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 });
+
+window.addEventListener('load', () => {
+    const completedSteps = document.querySelectorAll('.step.completed');
+
+    if (completedSteps.length > 0) {
+        const currentStep = completedSteps[completedSteps.length - 1];
+        const container = document.querySelector('.steps');
+
+        const left =
+            currentStep.offsetLeft -
+            (container.clientWidth / 2) +
+            (currentStep.clientWidth / 2);
+
+        container.scrollTo({
+            left,
+            behavior: 'smooth'
+        });
+    }
+});
