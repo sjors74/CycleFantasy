@@ -30,7 +30,7 @@ namespace CycleManager.Services
                 .Include(s => s.Event)
                 .Where(s =>
                     s.EventId == eventId &&
-                    s.ScrapeStatus == ScrapeStatus.Pending)
+                    (s.ScrapeStatus == ScrapeStatus.Pending || s.ScrapeStatus == ScrapeStatus.Partial))
                 .OrderBy(s => s.StageOrder)
                 .FirstOrDefaultAsync();
 
