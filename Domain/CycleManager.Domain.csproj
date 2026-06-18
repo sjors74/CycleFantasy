@@ -9,7 +9,6 @@
   <ItemGroup>
     <Folder Include="Contracts\Requests\" />
     <Folder Include="Contracts\Responses\" />
-    <Folder Include="Enums\" />
   </ItemGroup>
 
   <ItemGroup>

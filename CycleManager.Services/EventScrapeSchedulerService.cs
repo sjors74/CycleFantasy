@@ -1,4 +1,5 @@
-﻿using CycleManager.Domain.Interfaces;
+﻿using CycleManager.Domain.Enums;
+using CycleManager.Domain.Interfaces;
 using CycleManager.Domain.Models;
 using CycleManager.Services.Interfaces;
 using Domain.Context;
@@ -68,32 +69,52 @@ namespace CycleManager.Services
                     int.Parse(stage.StageName),
                     stage.Event.EventYear);
 
-                var hasResults = await _db.Results
-                    .AnyAsync(r => r.StageId == stage.Id);
+                var expectedResults = await GetExpectedResultsAsync(stage.Event.ConfigurationId);
 
-                if (hasResults)
+                var actualResults = await _db.Results
+                    .CountAsync(r => r.StageId == stage.Id);
+
+                if (actualResults >= expectedResults)
                 {
                     stage.ScrapeStatus = ScrapeStatus.Completed;
                     stage.LastSuccessfulScrape = DateTime.UtcNow;
 
                     _logger.LogInformation(
-                        "Stage {Stage} succesvol verwerkt",
-                        stage.StageName);
+                        "Stage {Stage} volledig verwerkt ({Actual}/{Expected} resultaten)",
+                        stage.StageName,
+                        actualResults,
+                        expectedResults);
+                }
+                else if (actualResults > 0)
+                {
+                    stage.ScrapeStatus = ScrapeStatus.Partial;
+
+                    _logger.LogInformation(
+                        "Stage {Stage} gedeeltelijk verwerkt ({Actual}/{Expected} resultaten)",
+                        stage.StageName,
+                        actualResults,
+                        expectedResults);
                 }
                 else
                 {
+                    stage.ScrapeStatus = ScrapeStatus.Pending;
+
                     _logger.LogInformation(
-                        "Nog geen resultaten voor stage {Stage}",
-                        stage.StageName);
+                        "Nog geen resultaten voor stage {Stage} (0/{Expected})",
+                        stage.StageName,
+                        expectedResults);
                 }
             }
             catch (Exception ex)
             {
                 stage.ScrapeStatus = ScrapeStatus.Failed;
 
-                _logger.LogError(ex,
-                    "Fout tijdens scrapen stage {Stage}",
+                _logger.LogError(
+                    ex,
+                    "Fout tijdens verwerken van stage {Stage}",
                     stage.StageName);
+
+                throw;
             }
 
             await _db.SaveChangesAsync();
@@ -125,6 +146,17 @@ namespace CycleManager.Services
 
                 throw;
             }
+        }
+
+        private async Task<int> GetExpectedResultsAsync(int? configurationId)
+        {
+            if (configurationId == null)
+            {
+                return 0;
+            }
+
+            return await _db.ConfigurationItems
+                .CountAsync(ci => ci.ConfigurationId == configurationId);
         }
     }
 }
