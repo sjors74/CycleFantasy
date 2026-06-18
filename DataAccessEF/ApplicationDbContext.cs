@@ -26,6 +26,7 @@ namespace Domain.Context
         public DbSet<GameCompetitorEventPick> GameCompetitorEventPicks { get; set; }
         public DbSet<EventTeam> EventTeam { get; set; }
         public DbSet<ScrapedStageResult> ScrapedStageResults { get; set; }
+        public DbSet<StageSpecialResult> StageSpecialResults { get; set; }
         public DbSet<NewsItem> NewsItems { get; set; }
         public DbSet<DeelnemerScore> DeelnemerScores { get; set; }
         public DbSet<DeelnemerPickScore> DeelnemerPickScores { get; set; }

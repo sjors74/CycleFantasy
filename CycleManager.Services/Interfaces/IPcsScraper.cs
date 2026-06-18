@@ -9,5 +9,7 @@ namespace CycleManager.Services.Interfaces
         Task<List<int>> ScrapeDropoutBibsAsync(string url);
         Task<List<ScrapedCompetitor>> ScrapeCompetitorsAsync(string url, int teamId, int year);
         Task<List<ScrapedStartlistEntry>> ScrapeStartlistAsync(string url);
+        Task<List<ScrapedStageSpecialResult>> ScrapeStageSpecialResultsAsync(string url, int eventId, int stageId);
+
     }
 }
