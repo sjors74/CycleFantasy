@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc.Rendering;
+﻿using CycleManager.Domain.Enums;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using System.ComponentModel;
 
 namespace WebCycleManager.Models
@@ -48,5 +50,9 @@ namespace WebCycleManager.Models
         public DateOnly EventEndDate { get; set; }
         public string StageDateMin => EventStartDate.ToString("yyyy-MM-dd");
         public string StageDateMax => EventEndDate.ToString("yyyy-MM-dd");
+
+        public ScrapeStatus ScrapeStatus { get; set; }
+        [ValidateNever]
+        public IEnumerable<SelectListItem> AvailableStatuses { get; set; } = [];
     }
 }

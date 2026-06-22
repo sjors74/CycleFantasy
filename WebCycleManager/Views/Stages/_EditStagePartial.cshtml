@@ -40,6 +40,13 @@
                 <textarea asp-for="NoScoreDescription" class="form-control" placeholder="Waarom geen score?" rows="3"></textarea>
             </div>
         </div>
+        <div class="col-md-4">
+            <label asp-for="ScrapeStatus" class="form-label"></label>
+            <select asp-for="ScrapeStatus"
+                    asp-items="Model.AvailableStatuses"
+                    class="form-select">
+            </select>
+        </div>
     </div>
 
 </form>
