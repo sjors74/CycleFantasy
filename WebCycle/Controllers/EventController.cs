@@ -183,20 +183,31 @@ namespace WebCycle.Controllers
             try
             {
                 await _eventService.SaveSelectie(dto);
+                return Ok();
+            }
+            catch(InvalidOperationException ex)
+            {
+                return BadRequest(ex.Message);
             }
             catch
             {
                 return BadRequest("Er ging iets mis met het opslaan van je pool.");
             }
-            return Ok();
         }
 
         [HttpPost("createpool")]
         public async Task<IActionResult> CreatePool([FromBody] DeelnemerDto dto)
         {
+            var eventInfo = await _eventService.GetEventById(dto.EventId);
+
             if (dto == null)
             {
                 return BadRequest("Deelnemer dto is null.");
+            }
+
+            if (!eventInfo.CanSubscribe)
+            {
+                throw new InvalidOperationException("Inschrijven is gesloten.");
             }
 
             var result = await _eventService.CreatePoolAsync(dto);
@@ -234,10 +245,16 @@ namespace WebCycle.Controllers
         {
             if (string.IsNullOrWhiteSpace(dto.NieuweNaam))
                 return BadRequest("Naam mag niet leeg zijn.");
-
-            await _eventService.RenamePoolAsync(dto);
-
-            return Ok();
+            
+            try
+            {
+                await _eventService.RenamePoolAsync(dto);
+                return Ok();
+            }
+            catch(InvalidOperationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
     }
 }

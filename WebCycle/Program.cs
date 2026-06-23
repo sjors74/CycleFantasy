@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.Playwright;
 using System.Text;
 using WebCycle.Services;
 
@@ -56,6 +57,20 @@ else
                }));
 }
 
+
+//Playwright setup
+builder.Services.AddSingleton<IBrowser>(sp =>
+{
+    var playwright = Playwright.CreateAsync()
+        .GetAwaiter()
+        .GetResult();
+
+    return playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
+    {
+        Headless = true
+    }).GetAwaiter().GetResult();
+});
+
 // -------------------
 // Identity & DI
 // -------------------
@@ -88,6 +103,9 @@ builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddTransient<INewsItemRepository, NewsItemRepository>();
 builder.Services.AddTransient<INewsService, NewsService>();
 builder.Services.AddScoped<IEventDashboardService, EventDashboardService>();
+builder.Services.AddScoped<IScrapeScheduleService, EventScrapeJobRegistrationService>();
+builder.Services.AddScoped<IPcsScraper, PcsScraper>();
+builder.Services.AddScoped<IScraperService, ScraperService>();
 
 builder.Services.AddControllers();
 builder.Services.AddHttpClient();
