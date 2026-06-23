@@ -54,6 +54,23 @@ namespace DataAccessEF.TypeRepository
             };
         }
 
+        public async Task<List<CompetitorScoreDto>> GetCompetitorResultsForEvent(int eventId)
+        {
+            var query =
+                from p in context.GameCompetitorEventPicks
+                where p.GameCompetitorEvent.EventId == eventId
+                join s in context.DeelnemerPickScores
+                    on p.Id equals s.GameCompetitorEventPickId
+                group s by p.CompetitorsInEventId into g
+                select new CompetitorScoreDto
+                {
+                    CompetitorInEventId = g.Key,
+                    TotalScore = g.Sum(x => x.TotalScore)
+                };
+
+            return await query.ToListAsync();
+        }
+
         public async Task<int> GetCompetitorLatestScore(int eventId, int competitorInEventId)
         {
             var configItems = await context.ConfigurationItems.ToListAsync();
