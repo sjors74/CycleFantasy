@@ -73,8 +73,9 @@ namespace CycleManager.Services
                     RecurringJob.RemoveIfExists($"event-dropout-{e.EventId}");
                 }
 
-                if (e.StartDate >= today.AddDays(-3) &&
-                    e.StartDate <= today.AddDays(2))
+                if (e.StartDate is DateTime startDate &&
+                    today >= startDate.AddDays(-14) &&
+                    today <= startDate.AddDays(2))
                 {
                     RecurringJob.RemoveIfExists(
                         $"event-startlist-{e.EventId}");
