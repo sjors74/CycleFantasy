@@ -30,13 +30,11 @@ namespace CycleManager.Services
 
             var today = DateTime.UtcNow.Date;
 
-            var events = await _db.Events
-                        .Where(e => e.IsActive)
-                        .ToListAsync();
+            var events = await _db.Events.ToListAsync();
 
             foreach (var e in events)
             {
-                if (e.StartDate <= today && e.EndDate >= today.AddDays(-1))
+                if (e.IsActive && e.StartDate <= today && e.EndDate >= today.AddDays(-1))
                 {
                     RecurringJob.RemoveIfExists($"event-scraper-{e.EventId}");
 
@@ -54,7 +52,7 @@ namespace CycleManager.Services
                     RecurringJob.RemoveIfExists($"event-scraper-{e.EventId}");
                 }
 
-                if (e.StartDate <= today && e.EndDate >= today)
+                if (e.IsActive && e.StartDate <= today && e.EndDate >= today)
                 {
                     RecurringJob.RemoveIfExists($"event-dropout-{e.EventId}");
 
