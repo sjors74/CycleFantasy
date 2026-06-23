@@ -172,6 +172,19 @@ namespace CycleManager.Services
 
         public async Task SaveSelectie(SelectieDto selectie)
         {
+            var deelnemer = await _deelnemersRepository.GetById(selectie.DeelnemerId);
+            if(deelnemer == null)
+                throw new InvalidOperationException("Pool niet gevonden.");
+
+            var evenement = await _eventRepository.GetEventById(deelnemer.EventId);
+            if (evenement == null) 
+                throw new InvalidOperationException("Evenement niet gevonden.");
+
+            if (!evenement.CanSubscribe)
+            {
+                throw new InvalidOperationException("Inschrijven voor dit evenement is gesloten.");
+            }
+
             var gamePicks = new List<GameCompetitorEventPick>();
             foreach(var geselecteerde_renner in selectie.RennerIds)
             {
@@ -205,9 +218,15 @@ namespace CycleManager.Services
         public async Task DeletePoolAsync(int id)
         {
             var deelnemer = await _deelnemersRepository.GetyCompetitorWithPicksById(id);
+
             if(deelnemer != null)
             {
-                if(deelnemer.Renners.Any())
+                var eventInfo = await _eventRepository.GetEventById(deelnemer.EventId);
+                if(!eventInfo.CanSubscribe)
+                {
+                    throw new InvalidOperationException("Inschrijven is gesloten.");
+                }
+                if (deelnemer.Renners.Any())
                 {
                     _picksRepository.RemoveRange(deelnemer.Renners);
                     await _picksRepository.SaveChangesAsync();
@@ -261,14 +280,30 @@ namespace CycleManager.Services
         {
             var pool = await _deelnemersRepository.GetById(renamePoolDto.PoolId);
             if (pool == null)
-            {
-                return null;
-            }
+                throw new InvalidOperationException("Pool niet gevonden.");
+
+            var evenement = await _eventRepository.GetEventById(pool.EventId);
+            if (!evenement.CanSubscribe)
+                throw new InvalidOperationException("Inschrijving voor dit evenement is gesloten.");
 
             pool.TeamName = renamePoolDto.NieuweNaam;
             await _deelnemersRepository.SaveChangesAsync();
 
             return renamePoolDto;
+        }
+
+        public async Task EnsureCanSubscribeAsync(int eventId)
+        {
+            var ev = await _eventRepository.GetEventById(eventId);
+            if (ev == null)
+            {
+                throw new InvalidOperationException("Evenement niet gevonden.");
+            }
+
+            if (!ev.CanSubscribe)
+            {
+                throw new UnauthorizedAccessException("Inschrijven is gesloten.");
+            }
         }
     }
 }
