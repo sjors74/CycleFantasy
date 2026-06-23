@@ -495,5 +495,9 @@ namespace CycleManager.Services
             }
         }
 
+        public Task<List<ScrapedStageSpecialResult>> ScrapeStageSpecialResultsAsync(string url, int eventId, int stageId)
+        {
+            throw new NotImplementedException();
+        }
     }
 }
