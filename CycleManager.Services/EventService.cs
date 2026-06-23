@@ -106,9 +106,27 @@ namespace CycleManager.Services
 
             foreach (var ev in events)
             {
-                // fetch scores once per event (efficiency)
+                // fetch once per event
                 var totalScores = await _resultService.GetTotalScoresByEventIdAsync(ev.EventId);
                 var stageScores = await _resultService.GetScoresByEventIdAsync(ev.EventId);
+                var competitorScores = await _resultService.GetCompetitorResultsForEvent(ev.EventId);
+
+                // LOOKUPS
+                var scoreLookup = competitorScores.ToDictionary(
+                    x => x.CompetitorInEventId,
+                    x => x.TotalScore);
+
+                var totalLookup = totalScores.ToDictionary(
+                    x => x.GameCompetitorEventId,
+                    x => x.TotalScore);
+
+                var stageLookup = stageScores
+                    .GroupBy(x => x.GameCompetitorEventId)
+                    .ToDictionary(
+                        g => g.Key,
+                        g => g.OrderByDescending(x => x.StageId)
+                              .First()
+                              .Score);
 
                 var deelnemers = new List<DeelnemerDto>();
 
@@ -118,8 +136,12 @@ namespace CycleManager.Services
 
                     foreach (var renner in gce.Renners)
                     {
-                        var results = await _resultService.GetCompetitorResultsByEventId(renner.CompetitorsInEvent.EventId, renner.CompetitorsInEventId);
-                        var punten = results != null ? results.TotalScore : 0;
+                        var punten = scoreLookup.TryGetValue(
+                            renner.CompetitorsInEventId,
+                            out var score)
+                                ? score
+                                : 0;
+
                         renners.Add(new CompetitorDto
                         {
                             FirstName = renner.CompetitorsInEvent.CompetitorInTeam.Competitor.FirstName,
@@ -134,12 +156,9 @@ namespace CycleManager.Services
                         });
                     }
 
-                    // compute participant totals from the pre-fetched lists
-                    var total = totalScores.FirstOrDefault(s => s.GameCompetitorEventId == gce.Id);
-                    var lastStageScore = stageScores
-                        .Where(s => s.GameCompetitorEventId == gce.Id)
-                        .OrderByDescending(s => s.StageId)
-                        .FirstOrDefault();
+                    // FAST LOOKUPS
+                    var total = totalLookup.TryGetValue(gce.Id, out var t) ? t : 0;
+                    var lastStageScore = stageLookup.TryGetValue(gce.Id, out var s) ? s : 0;
 
                     deelnemers.Add(new DeelnemerDto
                     {
@@ -147,8 +166,8 @@ namespace CycleManager.Services
                         PoolNaam = gce.TeamName,
                         DeelnemerNaam = $"{gce.User.FirstName} {gce.User.LastName}",
                         Renners = renners,
-                        Punten = total?.TotalScore ?? 0,
-                        LaatsteScore = lastStageScore?.Score ?? 0
+                        Punten = total,
+                        LaatsteScore = lastStageScore
                     });
                 }
 

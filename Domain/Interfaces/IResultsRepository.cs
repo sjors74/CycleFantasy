@@ -27,6 +27,7 @@ namespace Domain.Interfaces
         /// <param name="eventId"></param>
         /// <param name="competitorInEventId"></param>
         /// <returns></returns>
+        [Obsolete]
         Task<int> GetCompetitorLatestScore(int eventId, int competitorInEventId);
         
         /// <summary>
@@ -52,5 +53,7 @@ namespace Domain.Interfaces
         Task<List<DeelnemerScore>> GetTotalScoresByEventIdAsync(int eventId);
 
         Task<List<PickDetailDto>> GetPickDetailsAsync(int eventId, int gameCompetitorEventId);
+
+        Task<List<CompetitorScoreDto>> GetCompetitorResultsForEvent(int eventId);
     }
 }
