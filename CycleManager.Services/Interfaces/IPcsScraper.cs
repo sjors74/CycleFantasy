@@ -1,4 +1,5 @@
 ﻿using CycleManager.Domain.Dto;
+using CycleManager.Domain.Enums;
 using CycleManager.Domain.Models;
 
 namespace CycleManager.Services.Interfaces
@@ -9,7 +10,15 @@ namespace CycleManager.Services.Interfaces
         Task<List<int>> ScrapeDropoutBibsAsync(string url);
         Task<List<ScrapedCompetitor>> ScrapeCompetitorsAsync(string url, int teamId, int year);
         Task<List<ScrapedStartlistEntry>> ScrapeStartlistAsync(string url);
-        Task<List<ScrapedStageSpecialResult>> ScrapeStageSpecialResultsAsync(string url, int eventId, int stageId);
+        Task<ScrapedStageSpecialResult?> ScrapeClassificationWinnerAsync(
+            string baseUrl,
+            int stageId,
+            QuestionType questionType);
+
+        Task<ScrapedStageSpecialResult?> ScrapeClassificationWinnerWithRetryAsync(
+            string baseUrl,
+            int stageId,
+            QuestionType questionType);
 
     }
 }

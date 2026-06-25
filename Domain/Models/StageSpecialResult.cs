@@ -11,12 +11,12 @@ namespace CycleManager.Domain.Models
 
         public QuestionType QuestionType { get; set; }
 
-        public int CompetitorInEventId { get; set; }
+        public int BibNumber { get; set; }
+
+        public int? CompetitorInEventId { get; set; }
 
         public DateTime ImportedAt { get; set; }
 
-        public virtual Stage Stage { get; set; } = null!;
-
-        public virtual CompetitorsInEvent CompetitorInEvent { get; set; } = null!;
+        public virtual CompetitorsInEvent? CompetitorInEvent { get; set; }
     }
 }

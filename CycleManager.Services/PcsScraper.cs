@@ -1,4 +1,5 @@
 ﻿using CycleManager.Domain.Dto;
+using CycleManager.Domain.Enums;
 using CycleManager.Domain.Models;
 using CycleManager.Services.Interfaces;
 using Microsoft.Extensions.Logging;
@@ -495,9 +496,163 @@ namespace CycleManager.Services
             }
         }
 
-        public Task<List<ScrapedStageSpecialResult>> ScrapeStageSpecialResultsAsync(string url, int eventId, int stageId)
+        public async Task<ScrapedStageSpecialResult?> ScrapeClassificationWinnerAsync(
+            string baseUrl,
+            int stageId,
+            QuestionType questionType)
         {
-            throw new NotImplementedException();
+            var suffix = GetClassificationSuffix(questionType);
+
+            var url = $"{baseUrl}-{suffix}";
+
+            var context = await _browser.NewContextAsync(new()
+            {
+                UserAgent =
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
+                    "AppleWebKit/537.36 (KHTML, like Gecko) " +
+                    "Chrome/124.0.0.0 Safari/537.36",
+
+                ViewportSize = new ViewportSize
+                {
+                    Width = 1920,
+                    Height = 1080
+                },
+
+                Locale = "nl-NL"
+            });
+
+            try
+            {
+                var page = await context.NewPageAsync();
+
+                try
+                {
+                    var bib = await ScrapeWinnerBibAsync(page, url);
+
+                    if (!bib.HasValue)
+                        return null;
+
+                    return new ScrapedStageSpecialResult
+                    {
+                        StageId = stageId,
+                        QuestionType = questionType,
+                        BibNumber = bib.Value
+                    };
+                }
+                finally
+                {
+                    await page.CloseAsync();
+                }
+            }
+            finally
+            {
+                await context.CloseAsync();
+            }
+        }
+
+        public async Task<ScrapedStageSpecialResult?> ScrapeClassificationWinnerWithRetryAsync(
+            string baseUrl,
+            int stageId,
+            QuestionType questionType)
+        {
+            for (var attempt = 1; attempt <= 3; attempt++)
+            {
+                try
+                {
+                    var result = await ScrapeClassificationWinnerAsync(
+                        baseUrl,
+                        stageId,
+                        questionType);
+
+                    if (result != null)
+                        return result;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(
+                        ex,
+                        "Attempt {Attempt} failed for {QuestionType}",
+                        attempt,
+                        questionType);
+                }
+
+                var delaySeconds = attempt * 20;
+
+                _logger.LogInformation(
+                    "Waiting {Delay}s before retrying {QuestionType}",
+                    delaySeconds,
+                    questionType);
+
+                await Task.Delay(TimeSpan.FromSeconds(delaySeconds));
+            }
+
+            _logger.LogWarning(
+                "Unable to scrape {QuestionType} after retries",
+                questionType);
+
+            return null;
+        }
+
+        private async Task<int?> ScrapeWinnerBibAsync(
+            IPage page,
+            string url)
+        {
+            _logger.LogInformation("Navigating to {Url}", url);
+
+            await page.GotoAsync(url, new()
+            {
+                WaitUntil = WaitUntilState.DOMContentLoaded,
+                Timeout = 60000
+            });
+
+            var title = await page.TitleAsync();
+
+            _logger.LogInformation("Page title: {Title}", title);
+
+            if (title.Contains("Just a moment", StringComparison.OrdinalIgnoreCase) ||
+                title.Contains("Even geduld", StringComparison.OrdinalIgnoreCase))
+            {
+                _logger.LogWarning(
+                    "Cloudflare challenge detected for {Url}",
+                    url);
+
+                return null;
+            }
+
+            var bibCells = page.Locator("td.bibs");
+
+            var count = await bibCells.CountAsync();
+
+            _logger.LogInformation(
+                "Found {Count} bib cells",
+                count);
+
+            if (count == 0)
+                return null;
+
+            var bibText = (await bibCells.First.InnerTextAsync()).Trim();
+
+            _logger.LogInformation(
+                "Winner bib = {Bib}",
+                bibText);
+
+            return int.TryParse(bibText, out var bib)
+                ? bib
+                : null;
+        }
+
+        private static string GetClassificationSuffix(
+    QuestionType questionType)
+        {
+            return questionType switch
+            {
+                QuestionType.GC => "gc",
+                QuestionType.Points => "points",
+                QuestionType.KOM => "kom",
+
+                _ => throw new NotSupportedException(
+                    $"QuestionType '{questionType}' is not supported by PCS.")
+            };
         }
     }
 }
