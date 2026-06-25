@@ -1,4 +1,5 @@
-﻿using CycleManager.Domain.Dto;
+﻿using Azure;
+using CycleManager.Domain.Dto;
 using CycleManager.Domain.Enums;
 using CycleManager.Domain.Models;
 using CycleManager.Services.Interfaces;
@@ -594,43 +595,30 @@ namespace CycleManager.Services
         }
 
         private async Task<int?> ScrapeWinnerBibAsync(
-            IPage page,
-            string url)
+    IPage page,
+    string url)
         {
-            _logger.LogInformation("Navigating to {Url}", url);
-
             await page.GotoAsync(url, new()
             {
                 WaitUntil = WaitUntilState.DOMContentLoaded,
                 Timeout = 60000
             });
 
-            var title = await page.TitleAsync();
+            await page.WaitForSelectorAsync("table.results tbody tr");
 
-            _logger.LogInformation("Page title: {Title}", title);
-
-            if (title.Contains("Just a moment", StringComparison.OrdinalIgnoreCase) ||
-                title.Contains("Even geduld", StringComparison.OrdinalIgnoreCase))
-            {
-                _logger.LogWarning(
-                    "Cloudflare challenge detected for {Url}",
-                    url);
-
-                return null;
-            }
-
-            var bibCells = page.Locator("td.bibs");
-
-            var count = await bibCells.CountAsync();
+            var winnerRow = page
+                .Locator("table.results tbody tr")
+                .First;
 
             _logger.LogInformation(
-                "Found {Count} bib cells",
-                count);
+    "Winner row: {Row}",
+    await winnerRow.InnerTextAsync());
 
-            if (count == 0)
-                return null;
+            var bibText = await winnerRow
+                .Locator("td.bibs")
+                .InnerTextAsync();
 
-            var bibText = (await bibCells.First.InnerTextAsync()).Trim();
+            bibText = bibText.Trim();
 
             _logger.LogInformation(
                 "Winner bib = {Bib}",
@@ -653,6 +641,29 @@ namespace CycleManager.Services
                 _ => throw new NotSupportedException(
                     $"QuestionType '{questionType}' is not supported by PCS.")
             };
+        }
+
+        private async Task SaveDebugHtmlAsync(
+    IPage page,
+    QuestionType questionType)
+        {
+            var html = await page.ContentAsync();
+
+            var debugFolder = Path.Combine(
+                AppContext.BaseDirectory,
+                "debug");
+
+            Directory.CreateDirectory(debugFolder);
+
+            var filePath = Path.Combine(
+                debugFolder,
+                $"pcs-{questionType}-{DateTime.Now:yyyyMMdd-HHmmss}.html");
+
+            await File.WriteAllTextAsync(filePath, html);
+
+            _logger.LogInformation(
+                "Saved debug HTML to {Path}",
+                filePath);
         }
     }
 }
