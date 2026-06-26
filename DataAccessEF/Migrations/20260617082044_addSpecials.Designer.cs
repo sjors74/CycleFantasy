@@ -4,6 +4,7 @@ using Domain.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DataAccessEF.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260617082044_addSpecials")]
+    partial class addSpecials
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -215,34 +218,6 @@ namespace DataAccessEF.Migrations
                     b.HasIndex("MatchedCompetitorInEventId");
 
                     b.ToTable("ScrapedStageResults");
-                });
-
-            modelBuilder.Entity("CycleManager.Domain.Models.StageSpecialResult", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<int>("BibNumber")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("CompetitorInEventId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("ImportedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("QuestionType")
-                        .HasColumnType("int");
-
-                    b.Property<int>("StageId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CompetitorInEventId");
-
-                    b.ToTable("StageSpecialResults");
                 });
 
             modelBuilder.Entity("CycleManager.Domain.Models.TeamYear", b =>
@@ -953,15 +928,6 @@ namespace DataAccessEF.Migrations
                     b.Navigation("MatchedCompetitorInEvent");
                 });
 
-            modelBuilder.Entity("CycleManager.Domain.Models.StageSpecialResult", b =>
-                {
-                    b.HasOne("Domain.Models.CompetitorsInEvent", "CompetitorInEvent")
-                        .WithMany()
-                        .HasForeignKey("CompetitorInEventId");
-
-                    b.Navigation("CompetitorInEvent");
-                });
-
             modelBuilder.Entity("CycleManager.Domain.Models.TeamYear", b =>
                 {
                     b.HasOne("Domain.Models.Team", "Team")
@@ -1017,7 +983,7 @@ namespace DataAccessEF.Migrations
             modelBuilder.Entity("Domain.Models.ConfigurationItemSpecial", b =>
                 {
                     b.HasOne("Domain.Models.Configuration", "Configuration")
-                        .WithMany("Specials")
+                        .WithMany()
                         .HasForeignKey("ConfigurationId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1210,8 +1176,6 @@ namespace DataAccessEF.Migrations
             modelBuilder.Entity("Domain.Models.Configuration", b =>
                 {
                     b.Navigation("ConfigurationItems");
-
-                    b.Navigation("Specials");
                 });
 
             modelBuilder.Entity("Domain.Models.Event", b =>

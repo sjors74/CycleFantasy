@@ -3,6 +3,7 @@ using CycleManager.Domain.Interfaces;
 using CycleManager.Domain.Models;
 using CycleManager.Services.Interfaces;
 using Domain.Context;
+using Domain.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -28,6 +29,11 @@ namespace CycleManager.Services
         {
             var stage = await _db.Stages
                 .Include(s => s.Event)
+                    .ThenInclude(e => e.Configuration)
+                        .ThenInclude(c => c.ConfigurationItems)
+                .Include(s => s.Event)
+                    .ThenInclude(e => e.Configuration)
+                        .ThenInclude(c => c.Specials)
                 .Where(s =>
                     s.EventId == eventId &&
                     (s.ScrapeStatus == ScrapeStatus.Pending || s.ScrapeStatus == ScrapeStatus.Partial))
@@ -69,41 +75,8 @@ namespace CycleManager.Services
                     int.Parse(stage.StageName),
                     stage.Event.EventYear);
 
-                var expectedResults = await GetExpectedResultsAsync(stage.Event.ConfigurationId);
+                await EvaluateStageStatusAsync(stage);
 
-                var actualResults = await _db.Results
-                    .CountAsync(r => r.StageId == stage.Id);
-
-                if (actualResults >= expectedResults)
-                {
-                    stage.ScrapeStatus = ScrapeStatus.Completed;
-                    stage.LastSuccessfulScrape = DateTime.UtcNow;
-
-                    _logger.LogInformation(
-                        "Stage {Stage} volledig verwerkt ({Actual}/{Expected} resultaten)",
-                        stage.StageName,
-                        actualResults,
-                        expectedResults);
-                }
-                else if (actualResults > 0)
-                {
-                    stage.ScrapeStatus = ScrapeStatus.Partial;
-
-                    _logger.LogInformation(
-                        "Stage {Stage} gedeeltelijk verwerkt ({Actual}/{Expected} resultaten)",
-                        stage.StageName,
-                        actualResults,
-                        expectedResults);
-                }
-                else
-                {
-                    stage.ScrapeStatus = ScrapeStatus.Pending;
-
-                    _logger.LogInformation(
-                        "Nog geen resultaten voor stage {Stage} (0/{Expected})",
-                        stage.StageName,
-                        expectedResults);
-                }
             }
             catch (Exception ex)
             {
@@ -157,6 +130,69 @@ namespace CycleManager.Services
 
             return await _db.ConfigurationItems
                 .CountAsync(ci => ci.ConfigurationId == configurationId);
+        }
+
+        private async Task EvaluateStageStatusAsync(Stage stage)
+        {
+            var expectedResults =
+                stage.Event?.Configuration?.ConfigurationItems?.Count
+                ?? throw new InvalidOperationException("ConfigurationItems not loaded");
+
+            var expectedSpecials =
+                stage.Event?.Configuration?.Specials?.Count
+                ?? throw new InvalidOperationException("ConfigurationSpecials not loaded");
+
+            var actualResults = await _db.Results
+                .CountAsync(r => r.StageId == stage.Id);
+
+            var actualSpecials = await _db.StageSpecialResults
+                .CountAsync(s => s.StageId == stage.Id);
+
+            var hasAnyData = actualResults > 0 || actualSpecials > 0;
+
+            var resultsComplete = actualResults >= expectedResults;
+            var specialsComplete = actualSpecials >= expectedSpecials;
+
+            // =========================
+            // STATUS LOGICA (verhelderd)
+            // =========================
+
+            if (!hasAnyData)
+            {
+                stage.ScrapeStatus = ScrapeStatus.Pending;
+
+                _logger.LogInformation(
+                    "Stage {StageId} is Pending (no data yet)",
+                    stage.Id);
+
+                return;
+            }
+
+            if (resultsComplete && specialsComplete)
+            {
+                stage.ScrapeStatus = ScrapeStatus.Completed;
+                stage.LastSuccessfulScrape = DateTime.UtcNow;
+
+                _logger.LogInformation(
+                    "Stage {StageId} Completed ({Results}/{ExpectedResults}, {Specials}/{ExpectedSpecials})",
+                    stage.Id,
+                    actualResults,
+                    expectedResults,
+                    actualSpecials,
+                    expectedSpecials);
+
+                return;
+            }
+
+            stage.ScrapeStatus = ScrapeStatus.Partial;
+
+            _logger.LogInformation(
+                "Stage {StageId} Partial ({Results}/{ExpectedResults}, {Specials}/{ExpectedSpecials})",
+                stage.Id,
+                actualResults,
+                expectedResults,
+                actualSpecials,
+                expectedSpecials);
         }
     }
 }

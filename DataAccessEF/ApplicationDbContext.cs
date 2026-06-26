@@ -20,11 +20,13 @@ namespace Domain.Context
         public DbSet<Stage> Stages { get; set; }
         public DbSet<Configuration> Configurations { get; set; }
         public DbSet<ConfigurationItem> ConfigurationItems { get; set; }
+        public DbSet<ConfigurationItemSpecial> ConfigurationItemSpecials { get; set; }
         public DbSet<Result> Results { get; set; }
         public DbSet<GameCompetitorEvent> GameCompetitorsEvent { get; set; }
         public DbSet<GameCompetitorEventPick> GameCompetitorEventPicks { get; set; }
         public DbSet<EventTeam> EventTeam { get; set; }
         public DbSet<ScrapedStageResult> ScrapedStageResults { get; set; }
+        public DbSet<StageSpecialResult> StageSpecialResults { get; set; }
         public DbSet<NewsItem> NewsItems { get; set; }
         public DbSet<DeelnemerScore> DeelnemerScores { get; set; }
         public DbSet<DeelnemerPickScore> DeelnemerPickScores { get; set; }

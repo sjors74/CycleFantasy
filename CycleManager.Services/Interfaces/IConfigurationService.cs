@@ -16,6 +16,11 @@ namespace CycleManager.Services.Interfaces
         Task<bool> UpdateItem(ConfigurationItem entity);
         Task DeleteItem(ConfigurationItem entity);
 
+        Task<IEnumerable<ConfigurationItemSpecial>> GetAllConfigurationItemSpecials();
+        Task<ConfigurationItemSpecial> GetConfigurationItemSpecialById(int id);
+        Task<bool> CreateItemSpecial(ConfigurationItemSpecial entity);
+        Task<bool> UpdateItemSpecial(ConfigurationItemSpecial entity);
+        Task DeleteItemSpecial(ConfigurationItemSpecial entity);
 
     }
 }

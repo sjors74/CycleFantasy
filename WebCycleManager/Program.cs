@@ -73,6 +73,7 @@ builder.Services.AddScoped<ICompetitorInTeamRepository, CompetitorInTeamReposito
 builder.Services.AddScoped<ICompetitorsInEventRepository, CompetitorsInEventRepository>();
 builder.Services.AddScoped<IConfigurationRepository, ConfigurationRepository>(); 
 builder.Services.AddScoped<IConfigurationItemRepository, ConfigurationItemRepository>();
+builder.Services.AddScoped<IConfigurationItemSpecialRepository, ConfigurationItemSpecialRepository>();
 builder.Services.AddScoped<ICountryRepository, CountryRepository>();
 builder.Services.AddScoped<IEventRepository, EventRepository>();
 builder.Services.AddScoped<IResultsRepository, ResultsRepository>();
