@@ -497,15 +497,11 @@ namespace CycleManager.Services
             }
         }
 
-        public async Task<ScrapedStageSpecialResult?> ScrapeClassificationWinnerAsync(
-            string baseUrl,
+        public async Task<ScrapedStageSpecialResult?> ScrapeClassificationWinnerFromUrlAsync(
+            string url,
             int stageId,
             QuestionType questionType)
         {
-            var suffix = GetClassificationSuffix(questionType);
-
-            var url = $"{baseUrl}-{suffix}";
-
             var context = await _browser.NewContextAsync(new()
             {
                 UserAgent =
@@ -528,17 +524,12 @@ namespace CycleManager.Services
 
                 try
                 {
-                    var bib = await ScrapeWinnerBibAsync(page, url);
+                    var result = await ScrapeWinnerAsync(page, url, stageId, questionType);
 
-                    if (!bib.HasValue)
+                    if (result == null)
                         return null;
 
-                    return new ScrapedStageSpecialResult
-                    {
-                        StageId = stageId,
-                        QuestionType = questionType,
-                        BibNumber = bib.Value
-                    };
+                    return result;
                 }
                 finally
                 {
@@ -550,6 +541,40 @@ namespace CycleManager.Services
                 await context.CloseAsync();
             }
         }
+
+        public async Task<ScrapedStageSpecialResult?> ScrapeClassificationWinnerAsync(
+            string baseUrl,
+            int stageId,
+            QuestionType questionType)
+        {
+            var suffix = GetClassificationSuffix(questionType);
+
+            // Eerst de stage-URL proberen
+            var url = $"{baseUrl}-{suffix}";
+
+            var result = await ScrapeClassificationWinnerFromUrlAsync(
+                url,
+                stageId,
+                questionType);
+
+            if (result != null)
+                return result;
+
+            // Fallback: eindklassement
+            var raceUrl = baseUrl[..baseUrl.LastIndexOf("/stage-", StringComparison.Ordinal)];
+
+            url = $"{raceUrl}/{suffix}";
+
+            _logger.LogInformation(
+                "Stage classification not found, trying race classification: {Url}",
+                url);
+
+            return await ScrapeClassificationWinnerFromUrlAsync(
+                url,
+                stageId,
+                questionType);
+        }
+
 
         public async Task<ScrapedStageSpecialResult?> ScrapeClassificationWinnerWithRetryAsync(
             string baseUrl,
@@ -594,39 +619,59 @@ namespace CycleManager.Services
             return null;
         }
 
-        private async Task<int?> ScrapeWinnerBibAsync(
-    IPage page,
-    string url)
+        private async Task<ScrapedStageSpecialResult?> ScrapeWinnerAsync(
+            IPage page,
+            string url,
+            int stageId,
+            QuestionType questionType)
         {
             await page.GotoAsync(url, new()
             {
-                WaitUntil = WaitUntilState.DOMContentLoaded,
+                WaitUntil = WaitUntilState.NetworkIdle,
                 Timeout = 60000
             });
 
-            await page.WaitForSelectorAsync("table.results tbody tr");
+            _logger.LogInformation("Current url: {Url}", page.Url);
 
-            var winnerRow = page
-                .Locator("table.results tbody tr")
+            var tables = page.Locator("table.results");
+
+            var visibleTable = page
+                .Locator("table.results")
+                .Filter(new() { Visible = true });
+    
+            if(await visibleTable.CountAsync() == 0)
+            {
+                _logger.LogInformation("No visible results table found for {Url}", url);
+                return null;
+            }
+
+            var winnerRow = visibleTable
+                .Locator("tbody tr")
                 .First;
 
-            _logger.LogInformation(
-    "Winner row: {Row}",
-    await winnerRow.InnerTextAsync());
+            if (await winnerRow.CountAsync() == 0)
+            {
+                _logger.LogInformation("No winner row found for {Url}", url);
+                return null;
+            }
 
             var bibText = await winnerRow
                 .Locator("td.bibs")
                 .InnerTextAsync();
 
-            bibText = bibText.Trim();
+            if(!int.TryParse(bibText.Trim(), out var bib))
+                return null;
 
-            _logger.LogInformation(
-                "Winner bib = {Bib}",
-                bibText);
+            var riderLink = winnerRow.Locator("td.ridername a");
+            var riderName = await riderLink.InnerTextAsync();
 
-            return int.TryParse(bibText, out var bib)
-                ? bib
-                : null;
+            return new ScrapedStageSpecialResult
+            {
+                StageId = stageId,
+                QuestionType = questionType,
+                BibNumber = bib,
+                RiderName = riderName
+            };
         }
 
         private static string GetClassificationSuffix(
@@ -641,29 +686,6 @@ namespace CycleManager.Services
                 _ => throw new NotSupportedException(
                     $"QuestionType '{questionType}' is not supported by PCS.")
             };
-        }
-
-        private async Task SaveDebugHtmlAsync(
-    IPage page,
-    QuestionType questionType)
-        {
-            var html = await page.ContentAsync();
-
-            var debugFolder = Path.Combine(
-                AppContext.BaseDirectory,
-                "debug");
-
-            Directory.CreateDirectory(debugFolder);
-
-            var filePath = Path.Combine(
-                debugFolder,
-                $"pcs-{questionType}-{DateTime.Now:yyyyMMdd-HHmmss}.html");
-
-            await File.WriteAllTextAsync(filePath, html);
-
-            _logger.LogInformation(
-                "Saved debug HTML to {Path}",
-                filePath);
         }
     }
 }

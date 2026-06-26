@@ -11,12 +11,12 @@ namespace CycleManager.Services.Interfaces
         Task<List<ScrapedCompetitor>> ScrapeCompetitorsAsync(string url, int teamId, int year);
         Task<List<ScrapedStartlistEntry>> ScrapeStartlistAsync(string url);
         Task<ScrapedStageSpecialResult?> ScrapeClassificationWinnerAsync(
-            string baseUrl,
+            string url,
             int stageId,
             QuestionType questionType);
 
         Task<ScrapedStageSpecialResult?> ScrapeClassificationWinnerWithRetryAsync(
-            string baseUrl,
+            string url,
             int stageId,
             QuestionType questionType);
 

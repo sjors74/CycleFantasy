@@ -128,16 +128,15 @@ namespace CycleManager.Services
     .Where(x => x.StageId == stage.Id)
     .ToListAsync();
 
-            _db.StageSpecialResults.RemoveRange(existingSpecials);
-
             var mapped = specialResults.Select(x => new StageSpecialResult
             {
                 StageId = stage.Id,
                 BibNumber = x.BibNumber,
                 ImportedAt = DateTime.Now,
                 QuestionType  = x.QuestionType
-            });
+            }).ToList();
 
+            _db.StageSpecialResults.RemoveRange(existingSpecials);
             _db.StageSpecialResults.AddRange(mapped);
 
             await _db.SaveChangesAsync();
@@ -220,6 +219,18 @@ namespace CycleManager.Services
                         _db.Results.Add(newResult);
                         resultByCompetitorId[match.Id] = newResult;
                     }
+                }
+            }
+
+            foreach(var special in mapped)
+            {
+                if(competitorByBib.TryGetValue(special.BibNumber, out var competitor))
+                {
+                    special.CompetitorInEventId = competitor.Id;
+                }
+                else
+                {
+                    _logger.LogWarning("No competitor found for special {QuestionType}, bib {BibNumber}", special.QuestionType, special.BibNumber);
                 }
             }
 

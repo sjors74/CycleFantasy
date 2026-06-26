@@ -1,10 +1,12 @@
 ﻿namespace CycleManager.Domain.Models
 {
+    [Obsolete("This enum is deprecated. Newer version in Domain/Enums")]
     public enum ScrapeStatus
     {
         Pending = 0,
-        Completed = 1,
-        Failed = 2,
-        Skipped = 3
+        Partial = 1,
+        Completed = 2,
+        Failed = 3,
+        Skipped = 4
     }
 }
