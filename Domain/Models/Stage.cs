@@ -1,4 +1,4 @@
-﻿using CycleManager.Domain.Models;
+﻿using CycleManager.Domain.Enums;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 

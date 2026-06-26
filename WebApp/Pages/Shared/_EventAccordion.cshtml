@@ -75,8 +75,7 @@
 
                                 <div class="accordion-body">
 
-                                    @if (!Model.IsReadOnly &&
-                                                                Model.CanCreatePool)
+                                    @if (Model.CanCreatePool)
                                     {
                                         <div class="d-flex justify-content-end mb-2">
                                             <a class="btn btn-primary btn-sm"
@@ -144,7 +143,7 @@
                 }
 
                 @if (!(Model.Deelnemers?.Any() ?? false) &&
-                                !Model.IsReadOnly)
+                                Model.CanCreatePool)
                 {
                     <p class="text-muted">
                         Je hebt nog geen pools aangemaakt.
@@ -153,8 +152,7 @@
 
             </div>
 
-            @if (!Model.IsReadOnly &&
-                        Model.CanCreatePool)
+            @if (Model.CanCreatePool)
             {
                 <div class="mt-3">
 

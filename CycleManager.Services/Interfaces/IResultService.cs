@@ -67,5 +67,7 @@ namespace CycleManager.Services.Interfaces
         Task RecalculateEventScoresAsync(int eventId);
 
         Task<List<PickDetailDto>> GetPickDetailsAsync(int eventId, int competitorInEventId);
+
+        Task<List<CompetitorScoreDto>> GetCompetitorResultsForEvent(int eventId);
     }
 }

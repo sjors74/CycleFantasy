@@ -1,6 +1,5 @@
-﻿namespace CycleManager.Domain.Models
+﻿namespace CycleManager.Domain.Enums
 {
-    [Obsolete("This enum is deprecated. Newer version in Domain/Enums")]
     public enum ScrapeStatus
     {
         Pending = 0,

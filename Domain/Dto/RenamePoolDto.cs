@@ -3,6 +3,6 @@
     public class RenamePoolDto
     {
         public int PoolId { get; set; }
-        public string NieuweNaam { get; set; }
+        public string NieuweNaam { get; set; } = string.Empty;
     }
 }

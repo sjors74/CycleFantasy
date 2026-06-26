@@ -539,7 +539,6 @@ namespace CycleManager.Services
                 {
                     existing.EventNumber = scraped.BibNumber ?? 0;
                     existing.InSelectie = true;
-                    existing.OutOfCompetition = false;
                     existing.RemovedFromStartList = false;
 
                     updated++;

@@ -1,4 +1,5 @@
-﻿using CycleManager.Domain.Interfaces;
+﻿using CycleManager.Domain.Enums;
+using CycleManager.Domain.Interfaces;
 using CycleManager.Domain.Models;
 using CycleManager.Services.Interfaces;
 using Domain.Context;
@@ -35,7 +36,7 @@ namespace CycleManager.Services
                         .ThenInclude(c => c.Specials)
                 .Where(s =>
                     s.EventId == eventId &&
-                    s.ScrapeStatus == ScrapeStatus.Pending)
+                    (s.ScrapeStatus == ScrapeStatus.Pending || s.ScrapeStatus == ScrapeStatus.Partial))
                 .OrderBy(s => s.StageOrder)
                 .FirstOrDefaultAsync();
 
@@ -81,9 +82,12 @@ namespace CycleManager.Services
             {
                 stage.ScrapeStatus = ScrapeStatus.Failed;
 
-                _logger.LogError(ex,
-                    "Fout tijdens scrapen stage {Stage}",
+                _logger.LogError(
+                    ex,
+                    "Fout tijdens verwerken van stage {Stage}",
                     stage.StageName);
+
+                throw;
             }
 
             await _db.SaveChangesAsync();
@@ -115,6 +119,17 @@ namespace CycleManager.Services
 
                 throw;
             }
+        }
+
+        private async Task<int> GetExpectedResultsAsync(int? configurationId)
+        {
+            if (configurationId == null)
+            {
+                return 0;
+            }
+
+            return await _db.ConfigurationItems
+                .CountAsync(ci => ci.ConfigurationId == configurationId);
         }
 
         private async Task EvaluateStageStatusAsync(Stage stage)

@@ -10,21 +10,9 @@ namespace Domain.Dto
         public bool IsIngeschreven { get; set; }
         public bool CanSubscribe { get; set; }
 
-        public bool CanCreatePool
-        {
-            get
-            {
-                return Category == "toekomst";
-            }
-        }
+        public bool CanCreatePool => CanSubscribe;
 
-        public bool IsReadOnly
-        {
-            get
-            {
-                return Category != "toekomst";
-            }
-        }
+        public bool IsReadOnly => !CanSubscribe;
 
         public string? Category
         {
