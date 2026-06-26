@@ -1,4 +1,6 @@
-﻿using CycleManager.Services.Interfaces;
+﻿using CycleManager.Domain.Enums;
+using CycleManager.Domain.Models;
+using CycleManager.Services.Interfaces;
 using Domain.Context;
 using Domain.Models;
 using Microsoft.EntityFrameworkCore;
@@ -30,6 +32,34 @@ namespace CycleManager.Services
                     r => r.ConfigurationItem.Score
                 );
 
+            // =========================================
+            // Configuratie van specials
+            // =========================================
+            var specialConfiguration = await _context.Events
+                .Where(e => e.EventId == eventId)
+                .SelectMany(e => e.Configuration.Specials)
+                .ToDictionaryAsync(
+                    s => s.Question,
+                    s => s.Score);
+
+            // =========================================
+            // Gescrapete speciale klassementen
+            // =========================================
+            var stageSpecialResults = await _context.StageSpecialResults
+                .Where(x =>
+                    x.StageId == stageId &&
+                    x.CompetitorInEventId != null)
+                .ToListAsync();
+
+            var stageSpecialLookup = stageSpecialResults.ToLookup(
+                 x => x.CompetitorInEventId!.Value);
+
+            var specialScorePerPick = await UpdateSpecialScoresAsync(stageId, deelnemers, stageSpecialLookup, specialConfiguration);
+
+            /// =========================================
+            /// Normale rsultaten
+            /// =========================================
+            /// 
             var existingStagePickScores = await _context.DeelnemerStagePickScores
                 .Where(s => s.StageId == stageId)
                 .ToDictionaryAsync(s => s.GameCompetitorEventPickId);
@@ -61,7 +91,11 @@ namespace CycleManager.Services
 
                 foreach (var pick in deelnemer.Renners)
                 {
-                    int newPickScore = resultsLookup.TryGetValue(pick.CompetitorsInEventId, out var s) ? s : 0;
+                    int stageScore =  resultsLookup.TryGetValue(pick.CompetitorsInEventId, out var score) ? score : 0;
+
+                    int specialScore = specialScorePerPick.TryGetValue(pick.Id, out var special) ? special : 0;
+
+                    int newPickScore = stageScore + specialScore;  
                     newStageTotalForDeelnemer += newPickScore;
 
                     existingStagePickScores.TryGetValue(pick.Id, out var prevStagePickEntry);
@@ -130,9 +164,9 @@ namespace CycleManager.Services
                 }
             }
 
-            if (newStagePickScores.Any()) _context.DeelnemerStagePickScores.AddRange(newStagePickScores);
-            if (newPickTotals.Any()) _context.DeelnemerPickScores.AddRange(newPickTotals);
-            if (newStageScores.Any()) _context.DeelnemerStageScores.AddRange(newStageScores);
+            if(newStagePickScores.Any()) _context.DeelnemerStagePickScores.AddRange(newStagePickScores);
+            if(newPickTotals.Any()) _context.DeelnemerPickScores.AddRange(newPickTotals);
+            if(newStageScores.Any()) _context.DeelnemerStageScores.AddRange(newStageScores);
 
             // flush changes so DB reflects updated pick totals / snapshots
             await _context.SaveChangesAsync();
@@ -317,6 +351,76 @@ namespace CycleManager.Services
 
             await _context.SaveChangesAsync();
             await tx.CommitAsync();
+        }
+
+        private async Task<Dictionary<int, int>> UpdateSpecialScoresAsync(
+            int stageId, 
+            List<GameCompetitorEvent> deelnemers, 
+            ILookup<int, StageSpecialResult> stageSpecialLookup,  
+            Dictionary<QuestionType, int> specialConfiguration)
+        {
+            var existingScores = await _context.DeelnemerStagePickSpecialScores
+                .Where(x => x.StageId == stageId)
+                .ToListAsync();
+
+            var existingLookup = existingScores.ToDictionary(
+                x => (x.GameCompetitorEventPickId, x.QuestionType));
+
+            var newScores = new List<DeelnemerStagePickSpecialScore>();
+
+            // Resultaat dat teruggaat naar UpdateScoresForStageAsync
+            var specialScorePerPick = new Dictionary<int, int>();
+
+            foreach (var deelnemer in deelnemers)
+            {
+                foreach (var pick in deelnemer.Renners)
+                {
+                    var totalSpecialScore = 0;
+
+                    foreach (var special in stageSpecialLookup[pick.CompetitorsInEventId])
+                    {
+                        if (!specialConfiguration.TryGetValue(
+                                special.QuestionType,
+                                out var score))
+                        {
+                            continue;
+                        }
+
+                        totalSpecialScore += score;
+
+                        var key = (pick.Id, special.QuestionType);
+
+                        if (existingLookup.TryGetValue(key, out var existing))
+                        {
+                            existing.Score = score;
+                            existing.LastUpdated = DateTime.UtcNow;
+                        }
+                        else
+                        {
+                            newScores.Add(new DeelnemerStagePickSpecialScore
+                            {
+                                Id = Guid.NewGuid(),
+                                GameCompetitorEventPickId = pick.Id,
+                                StageId = stageId,
+                                QuestionType = special.QuestionType,
+                                Score = score,
+                                LastUpdated = DateTime.UtcNow
+                            });
+                        }
+                    }
+
+                    specialScorePerPick[pick.Id] = totalSpecialScore;
+                }
+            }
+
+            if (newScores.Any())
+            {
+                _context.DeelnemerStagePickSpecialScores.AddRange(newScores);
+            }
+
+            await _context.SaveChangesAsync();
+
+            return specialScorePerPick;
         }
     }
 }
