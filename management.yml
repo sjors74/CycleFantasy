@@ -8,6 +8,10 @@ trigger:
       - WebCycleManager/**
       - Dockerfile
       - pipelines/management.yml
+    
+    exclude:
+        - README.md
+        - docs/**
 
 pool:
   vmImage: 'ubuntu-latest'
