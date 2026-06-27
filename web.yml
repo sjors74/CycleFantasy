@@ -18,17 +18,21 @@ steps:
     packageType: 'sdk'
     version: '8.x'
 
+# 2.5 DEBUG LOGGING
+- script: dir
+  displayName: "Show repo root"
+
 # 3. Restore
-- script: dotnet restore repos/CycleFantasy/CycleFantasy.sln
+- script: dotnet restore CycleFantasy.sln
   displayName: 'Restore'
 
 # 4. Build solution
-- script: dotnet build repos/CycleFantasy/CycleFantasy.sln --configuration $(buildConfiguration) --no-restore
+- script: dotnet build CycleFantasy.sln --configuration $(buildConfiguration) --no-restore
   displayName: 'Build'
 
 # 5. Publish WebApp project
 - script: >
-    dotnet publish repos/CycleFantasy/WebApp/WebApp.csproj
+    dotnet publish WebApp/WebApp.csproj
     -c $(buildConfiguration)
     -o $(Build.ArtifactStagingDirectory)/web
   displayName: 'Publish WebApp'
