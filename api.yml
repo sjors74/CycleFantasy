@@ -1,0 +1,49 @@
+trigger:
+- master
+
+pool:
+  vmImage: 'windows-latest'
+
+variables:
+  buildConfiguration: 'Release'
+
+steps:
+
+# 1. Checkout repo
+- checkout: self
+
+# 2. .NET SDK
+- task: UseDotNet@2
+  inputs:
+    packageType: 'sdk'
+    version: '8.x'
+
+# 3. Restore solution
+- script: dotnet restore CycleFantasy.sln
+  displayName: 'Restore'
+
+# 4. Build solution
+- script: dotnet build CycleFantasy.sln --configuration $(buildConfiguration) --no-restore
+  displayName: 'Build'
+
+# 5. Publish API project
+- script: >
+    dotnet publish WebCycleApi/WebCycleApi.csproj
+    -c $(buildConfiguration)
+    -o $(Build.ArtifactStagingDirectory)/api
+  displayName: 'Publish API'
+
+# 6. ZIP (best practice voor App Service)
+- task: ArchiveFiles@2
+  inputs:
+    rootFolderOrFile: '$(Build.ArtifactStagingDirectory)/api'
+    includeRootFolder: false
+    archiveType: zip
+    archiveFile: '$(Build.ArtifactStagingDirectory)/api.zip'
+
+# 7. Deploy to Azure App Service
+- task: AzureWebApp@1
+  inputs:
+    azureSubscription: 'azure-cyclefantasy-prod'
+    appName: 'WebCycleApi20250508145015'
+    package: '$(Build.ArtifactStagingDirectory)/api.zip'
