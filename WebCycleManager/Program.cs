@@ -9,7 +9,6 @@ using Domain.Interfaces;
 using Domain.Mapping;
 using Hangfire;
 using Hangfire.Dashboard;
-using Humanizer.Localisation;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -44,7 +43,7 @@ builder.Services.AddSingleton<IBrowser>(sp =>
 
     return playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
     {
-        Headless = true,
+        Headless = false,
         ExecutablePath = chromePath, // null lokaal = default Playwright browser
         Args = new[]
         {
