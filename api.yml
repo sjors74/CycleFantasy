@@ -30,7 +30,7 @@ stages:
       displayName: Build
 
     - script: >
-        dotnet publish WebCycleApi/WebCycleApi.csproj
+        dotnet publish WebCycle/WebCycleApi.csproj
         -c $(buildConfiguration)
         -o $(Build.ArtifactStagingDirectory)/api
       displayName: Publish API
