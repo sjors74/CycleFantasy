@@ -10,6 +10,8 @@ namespace Domain.Models
         public string ConfigurationType { get; set; } = string.Empty;
         [JsonIgnore]
         public virtual ICollection<ConfigurationItem>? ConfigurationItems { get; set; }
+        [JsonIgnore]
+        public virtual ICollection<ConfigurationItemSpecial>? Specials { get; set; }
 
     }
 }

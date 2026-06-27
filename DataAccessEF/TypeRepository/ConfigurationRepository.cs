@@ -15,6 +15,7 @@ namespace DataAccessEF.TypeRepository
         {
             return await context.Configurations
                 .Include(c => c.ConfigurationItems)
+                .Include(c => c.Specials)
                 .FirstOrDefaultAsync(c => c.Id == id);
         }
     }

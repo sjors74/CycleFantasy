@@ -1,4 +1,6 @@
-﻿using CycleManager.Domain.Dto;
+﻿using Azure;
+using CycleManager.Domain.Dto;
+using CycleManager.Domain.Enums;
 using CycleManager.Domain.Models;
 using CycleManager.Services.Interfaces;
 using Microsoft.Extensions.Logging;
@@ -495,5 +497,195 @@ namespace CycleManager.Services
             }
         }
 
+        public async Task<ScrapedStageSpecialResult?> ScrapeClassificationWinnerFromUrlAsync(
+            string url,
+            int stageId,
+            QuestionType questionType)
+        {
+            var context = await _browser.NewContextAsync(new()
+            {
+                UserAgent =
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
+                    "AppleWebKit/537.36 (KHTML, like Gecko) " +
+                    "Chrome/124.0.0.0 Safari/537.36",
+
+                ViewportSize = new ViewportSize
+                {
+                    Width = 1920,
+                    Height = 1080
+                },
+
+                Locale = "nl-NL"
+            });
+
+            try
+            {
+                var page = await context.NewPageAsync();
+
+                try
+                {
+                    var result = await ScrapeWinnerAsync(page, url, stageId, questionType);
+
+                    if (result == null)
+                        return null;
+
+                    return result;
+                }
+                finally
+                {
+                    await page.CloseAsync();
+                }
+            }
+            finally
+            {
+                await context.CloseAsync();
+            }
+        }
+
+        public async Task<ScrapedStageSpecialResult?> ScrapeClassificationWinnerAsync(
+            string baseUrl,
+            int stageId,
+            QuestionType questionType)
+        {
+            var suffix = GetClassificationSuffix(questionType);
+
+            // Eerst de stage-URL proberen
+            var url = $"{baseUrl}-{suffix}";
+
+            var result = await ScrapeClassificationWinnerFromUrlAsync(
+                url,
+                stageId,
+                questionType);
+
+            if (result != null)
+                return result;
+
+            // Fallback: eindklassement
+            var raceUrl = baseUrl[..baseUrl.LastIndexOf("/stage-", StringComparison.Ordinal)];
+
+            url = $"{raceUrl}/{suffix}";
+
+            _logger.LogInformation(
+                "Stage classification not found, trying race classification: {Url}",
+                url);
+
+            return await ScrapeClassificationWinnerFromUrlAsync(
+                url,
+                stageId,
+                questionType);
+        }
+
+
+        public async Task<ScrapedStageSpecialResult?> ScrapeClassificationWinnerWithRetryAsync(
+            string baseUrl,
+            int stageId,
+            QuestionType questionType)
+        {
+            for (var attempt = 1; attempt <= 3; attempt++)
+            {
+                try
+                {
+                    var result = await ScrapeClassificationWinnerAsync(
+                        baseUrl,
+                        stageId,
+                        questionType);
+
+                    if (result != null)
+                        return result;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(
+                        ex,
+                        "Attempt {Attempt} failed for {QuestionType}",
+                        attempt,
+                        questionType);
+                }
+
+                var delaySeconds = attempt * 20;
+
+                _logger.LogInformation(
+                    "Waiting {Delay}s before retrying {QuestionType}",
+                    delaySeconds,
+                    questionType);
+
+                await Task.Delay(TimeSpan.FromSeconds(delaySeconds));
+            }
+
+            _logger.LogWarning(
+                "Unable to scrape {QuestionType} after retries",
+                questionType);
+
+            return null;
+        }
+
+        private async Task<ScrapedStageSpecialResult?> ScrapeWinnerAsync(
+            IPage page,
+            string url,
+            int stageId,
+            QuestionType questionType)
+        {
+            await page.GotoAsync(url, new()
+            {
+                WaitUntil = WaitUntilState.NetworkIdle,
+                Timeout = 60000
+            });
+
+            _logger.LogInformation("Current url: {Url}", page.Url);
+
+            var tables = page.Locator("table.results");
+
+            var visibleTable = page
+                .Locator("table.results")
+                .Filter(new() { Visible = true });
+    
+            if(await visibleTable.CountAsync() == 0)
+            {
+                _logger.LogInformation("No visible results table found for {Url}", url);
+                return null;
+            }
+
+            var winnerRow = visibleTable
+                .Locator("tbody tr")
+                .First;
+
+            if (await winnerRow.CountAsync() == 0)
+            {
+                _logger.LogInformation("No winner row found for {Url}", url);
+                return null;
+            }
+
+            var bibText = await winnerRow
+                .Locator("td.bibs")
+                .InnerTextAsync();
+
+            if(!int.TryParse(bibText.Trim(), out var bib))
+                return null;
+
+            var riderLink = winnerRow.Locator("td.ridername a");
+            var riderName = await riderLink.InnerTextAsync();
+
+            return new ScrapedStageSpecialResult
+            {
+                StageId = stageId,
+                QuestionType = questionType,
+                BibNumber = bib,
+                RiderName = riderName
+            };
+        }
+
+        private static string GetClassificationSuffix(
+    QuestionType questionType)
+        {
+            return questionType switch
+            {
+                QuestionType.GC => "gc",
+                QuestionType.Points => "points",
+                QuestionType.KOM => "kom",
+
+                _ => throw new NotSupportedException(
+                    $"QuestionType '{questionType}' is not supported by PCS.")
+            };
+        }
     }
 }

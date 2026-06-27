@@ -1,0 +1,23 @@
+﻿@model ConfigurationItemsSpecialViewModel
+<h1>Verwijder configuratie-item-special</h1>
+<div class="alert alert-warning">
+    <h4 class="alert-heading">Weet je het zeker?</h4>
+    <p>
+        Je staat op het punt om de volgende configuratie-item-special definitief te verwijderen:
+    </p>
+    <hr>
+    <dl class="row mb-0">
+        <dt class="col-sm-3">Vraag</dt>
+        <dd class="col-sm-9">@Model.Question / @Model.Score punten</dd>
+    </dl>
+</div>
+<form asp-action="Delete" method="post" class="mt-3">
+    <input type="hidden" asp-for="Id" />
+
+    <div class="d-flex justify-content-between">
+        <a asp-controller="Configurations" asp-action="Details" asp-route-id="@Model.ConfigurationId" class="btn btn-outline-secondary">Annuleren</a>
+        <button type="submit" class="btn btn-danger">
+            <i class="bi bi-trash"></i> Verwijder
+        </button>
+    </div>
+</form>

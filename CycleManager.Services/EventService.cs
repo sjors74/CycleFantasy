@@ -106,9 +106,27 @@ namespace CycleManager.Services
 
             foreach (var ev in events)
             {
-                // fetch scores once per event (efficiency)
+                // fetch once per event
                 var totalScores = await _resultService.GetTotalScoresByEventIdAsync(ev.EventId);
                 var stageScores = await _resultService.GetScoresByEventIdAsync(ev.EventId);
+                var competitorScores = await _resultService.GetCompetitorResultsForEvent(ev.EventId);
+
+                // LOOKUPS
+                var scoreLookup = competitorScores.ToDictionary(
+                    x => x.CompetitorInEventId,
+                    x => x.TotalScore);
+
+                var totalLookup = totalScores.ToDictionary(
+                    x => x.GameCompetitorEventId,
+                    x => x.TotalScore);
+
+                var stageLookup = stageScores
+                    .GroupBy(x => x.GameCompetitorEventId)
+                    .ToDictionary(
+                        g => g.Key,
+                        g => g.OrderByDescending(x => x.StageId)
+                              .First()
+                              .Score);
 
                 var deelnemers = new List<DeelnemerDto>();
 
@@ -118,8 +136,12 @@ namespace CycleManager.Services
 
                     foreach (var renner in gce.Renners)
                     {
-                        var results = await _resultService.GetCompetitorResultsByEventId(renner.CompetitorsInEvent.EventId, renner.CompetitorsInEventId);
-                        var punten = results != null ? results.TotalScore : 0;
+                        var punten = scoreLookup.TryGetValue(
+                            renner.CompetitorsInEventId,
+                            out var score)
+                                ? score
+                                : 0;
+
                         renners.Add(new CompetitorDto
                         {
                             FirstName = renner.CompetitorsInEvent.CompetitorInTeam.Competitor.FirstName,
@@ -134,12 +156,9 @@ namespace CycleManager.Services
                         });
                     }
 
-                    // compute participant totals from the pre-fetched lists
-                    var total = totalScores.FirstOrDefault(s => s.GameCompetitorEventId == gce.Id);
-                    var lastStageScore = stageScores
-                        .Where(s => s.GameCompetitorEventId == gce.Id)
-                        .OrderByDescending(s => s.StageId)
-                        .FirstOrDefault();
+                    // FAST LOOKUPS
+                    var total = totalLookup.TryGetValue(gce.Id, out var t) ? t : 0;
+                    var lastStageScore = stageLookup.TryGetValue(gce.Id, out var s) ? s : 0;
 
                     deelnemers.Add(new DeelnemerDto
                     {
@@ -147,8 +166,8 @@ namespace CycleManager.Services
                         PoolNaam = gce.TeamName,
                         DeelnemerNaam = $"{gce.User.FirstName} {gce.User.LastName}",
                         Renners = renners,
-                        Punten = total?.TotalScore ?? 0,
-                        LaatsteScore = lastStageScore?.Score ?? 0
+                        Punten = total,
+                        LaatsteScore = lastStageScore
                     });
                 }
 
@@ -172,6 +191,19 @@ namespace CycleManager.Services
 
         public async Task SaveSelectie(SelectieDto selectie)
         {
+            var deelnemer = await _deelnemersRepository.GetById(selectie.DeelnemerId);
+            if(deelnemer == null)
+                throw new InvalidOperationException("Pool niet gevonden.");
+
+            var evenement = await _eventRepository.GetEventById(deelnemer.EventId);
+            if (evenement == null) 
+                throw new InvalidOperationException("Evenement niet gevonden.");
+
+            if (!evenement.CanSubscribe)
+            {
+                throw new InvalidOperationException("Inschrijven voor dit evenement is gesloten.");
+            }
+
             var gamePicks = new List<GameCompetitorEventPick>();
             foreach(var geselecteerde_renner in selectie.RennerIds)
             {
@@ -205,9 +237,15 @@ namespace CycleManager.Services
         public async Task DeletePoolAsync(int id)
         {
             var deelnemer = await _deelnemersRepository.GetyCompetitorWithPicksById(id);
+
             if(deelnemer != null)
             {
-                if(deelnemer.Renners.Any())
+                var eventInfo = await _eventRepository.GetEventById(deelnemer.EventId);
+                if(!eventInfo.CanSubscribe)
+                {
+                    throw new InvalidOperationException("Inschrijven is gesloten.");
+                }
+                if (deelnemer.Renners.Any())
                 {
                     _picksRepository.RemoveRange(deelnemer.Renners);
                     await _picksRepository.SaveChangesAsync();
@@ -261,14 +299,30 @@ namespace CycleManager.Services
         {
             var pool = await _deelnemersRepository.GetById(renamePoolDto.PoolId);
             if (pool == null)
-            {
-                return null;
-            }
+                throw new InvalidOperationException("Pool niet gevonden.");
+
+            var evenement = await _eventRepository.GetEventById(pool.EventId);
+            if (!evenement.CanSubscribe)
+                throw new InvalidOperationException("Inschrijving voor dit evenement is gesloten.");
 
             pool.TeamName = renamePoolDto.NieuweNaam;
             await _deelnemersRepository.SaveChangesAsync();
 
             return renamePoolDto;
+        }
+
+        public async Task EnsureCanSubscribeAsync(int eventId)
+        {
+            var ev = await _eventRepository.GetEventById(eventId);
+            if (ev == null)
+            {
+                throw new InvalidOperationException("Evenement niet gevonden.");
+            }
+
+            if (!ev.CanSubscribe)
+            {
+                throw new UnauthorizedAccessException("Inschrijven is gesloten.");
+            }
         }
     }
 }

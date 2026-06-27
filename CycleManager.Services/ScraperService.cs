@@ -94,6 +94,54 @@ namespace CycleManager.Services
                 scrapedCount);
 
             // =========================================
+            // 3b. Special classifications scrapen
+            // =========================================
+
+            var configuredSpecials = await _db.Events
+    .Where(e => e.EventId == eventId)
+    .SelectMany(e => e.Configuration.Specials)
+    .ToListAsync();
+
+            var specialResults = new List<ScrapedStageSpecialResult>();
+
+            var baseUrl =
+                $"https://www.procyclingstats.com/race/{eventName}/{year}/stage-{stageNumber}";
+
+            foreach (var special in configuredSpecials)
+            {
+                var result =
+                    await _pcsScraper.ScrapeClassificationWinnerWithRetryAsync(
+                        baseUrl,
+                        stage.Id,
+                        special.Question);
+
+                if (result != null)
+                {
+                    specialResults.Add(result);
+                }
+
+                // extra rust tussen classificaties
+                await Task.Delay(TimeSpan.FromSeconds(20));
+            }
+
+            var existingSpecials = await _db.StageSpecialResults
+    .Where(x => x.StageId == stage.Id)
+    .ToListAsync();
+
+            var mapped = specialResults.Select(x => new StageSpecialResult
+            {
+                StageId = stage.Id,
+                BibNumber = x.BibNumber,
+                ImportedAt = DateTime.Now,
+                QuestionType  = x.QuestionType
+            }).ToList();
+
+            _db.StageSpecialResults.RemoveRange(existingSpecials);
+            _db.StageSpecialResults.AddRange(mapped);
+
+            await _db.SaveChangesAsync();
+
+            // =========================================
             // 4. Alles vooraf ophalen (GEEN N+1)
             // =========================================
             var scrapedResults = await _db.ScrapedStageResults
@@ -171,6 +219,18 @@ namespace CycleManager.Services
                         _db.Results.Add(newResult);
                         resultByCompetitorId[match.Id] = newResult;
                     }
+                }
+            }
+
+            foreach(var special in mapped)
+            {
+                if(competitorByBib.TryGetValue(special.BibNumber, out var competitor))
+                {
+                    special.CompetitorInEventId = competitor.Id;
+                }
+                else
+                {
+                    _logger.LogWarning("No competitor found for special {QuestionType}, bib {BibNumber}", special.QuestionType, special.BibNumber);
                 }
             }
 
@@ -479,7 +539,6 @@ namespace CycleManager.Services
                 {
                     existing.EventNumber = scraped.BibNumber ?? 0;
                     existing.InSelectie = true;
-                    existing.OutOfCompetition = false;
                     existing.RemovedFromStartList = false;
 
                     updated++;

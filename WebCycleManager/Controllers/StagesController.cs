@@ -1,4 +1,5 @@
-﻿using CycleManager.Services;
+﻿using CycleManager.Domain.Enums;
+using CycleManager.Services;
 using CycleManager.Services.Interfaces;
 using Domain.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -149,7 +150,14 @@ namespace WebCycleManager.Controllers
                     : DateOnly.MinValue,
                 EventEndDate = stage.Event?.EndDate.HasValue == true
                     ? DateOnly.FromDateTime(stage.Event.EndDate.Value)
-                    : DateOnly.MaxValue
+                    : DateOnly.MaxValue,
+                ScrapeStatus = stage.ScrapeStatus,
+                AvailableStatuses = Enum.GetValues<ScrapeStatus>()
+                .Select(x => new SelectListItem
+                {
+                    Value = x.ToString(),
+                    Text = x.ToString()
+                })
             };
             return PartialView("_EditStagePartial", vm);
         }
@@ -178,6 +186,7 @@ namespace WebCycleManager.Controllers
             stage.FinishLocation = model.FinishLocation;
             stage.NoScore = model.NoScore;
             stage.NoScoreDescription = model.NoScoreDescription;
+            stage.ScrapeStatus = model.ScrapeStatus;
 
             await _stageService.UpdateStage(stage);
 
@@ -234,6 +243,13 @@ namespace WebCycleManager.Controllers
                 EventId = stage.EventId,
                 EventName = stage.Event == null ? string.Empty : stage.Event.EventName,                
                 EventYear = stage.Event == null ? int.MinValue : stage.Event.EventYear,
+                ScrapeStatus = stage.ScrapeStatus,
+                AvailableStatuses = Enum.GetValues<ScrapeStatus>()
+                    .Select(x => new SelectListItem
+                    {
+                        Value = x.ToString(),
+                        Text = x.ToString()
+                    })
             };
             return vm;
         }
@@ -256,6 +272,7 @@ namespace WebCycleManager.Controllers
                 stage.NoScore = vm.NoScore;
                 stage.NoScoreDescription = vm.NoScoreDescription;
                 stage.EventId = vm.EventId;
+                stage.ScrapeStatus = vm.ScrapeStatus;  
 
                 return stage;
             }

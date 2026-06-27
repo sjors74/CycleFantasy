@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc.Rendering;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
+using System.Globalization;
 
 namespace WebCycleManager.Models
 {
@@ -54,8 +55,9 @@ namespace WebCycleManager.Models
         {
             get
             {
-                return $"{Name} (van {StartDate.ToString("dd-MMMM")} tot {EndDate.ToString("dd-MMMM")} {Year})";
+                return $"{Name} (van {StartDate.ToString("dd-MMMM", CultureInfo.GetCultureInfo("nl-NL"))} tot {EndDate.ToString("dd-MMMM", CultureInfo.GetCultureInfo("nl-NL"))} {Year})";
             }
+
         }
         public bool HasStages
         {
