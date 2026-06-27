@@ -1,5 +1,13 @@
-trigger:
-- master
+resources:
+  pipelines:
+  - pipeline: api
+    source: CycleFantasy-API
+    trigger:
+      branches:
+        include:
+        - master
+
+trigger: none
 
 pool:
   vmImage: 'windows-latest'

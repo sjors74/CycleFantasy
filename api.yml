@@ -7,43 +7,43 @@ pool:
 variables:
   buildConfiguration: 'Release'
 
-steps:
+stages:
 
-# 1. Checkout repo
-- checkout: self
+- stage: BuildAndDeployAPI
+  displayName: Build and Deploy API
 
-# 2. .NET SDK
-- task: UseDotNet@2
-  inputs:
-    packageType: 'sdk'
-    version: '8.x'
+  jobs:
+  - job: BuildDeploy
+    steps:
 
-# 3. Restore solution
-- script: dotnet restore CycleFantasy.sln
-  displayName: 'Restore'
+    - checkout: self
 
-# 4. Build solution
-- script: dotnet build CycleFantasy.sln --configuration $(buildConfiguration) --no-restore
-  displayName: 'Build'
+    - task: UseDotNet@2
+      inputs:
+        packageType: 'sdk'
+        version: '8.x'
 
-# 5. Publish API project
-- script: >
-    dotnet publish WebCycleApi/WebCycleApi.csproj
-    -c $(buildConfiguration)
-    -o $(Build.ArtifactStagingDirectory)/api
-  displayName: 'Publish API'
+    - script: dotnet restore CycleFantasy.sln
+      displayName: Restore
 
-# 6. ZIP (best practice voor App Service)
-- task: ArchiveFiles@2
-  inputs:
-    rootFolderOrFile: '$(Build.ArtifactStagingDirectory)/api'
-    includeRootFolder: false
-    archiveType: zip
-    archiveFile: '$(Build.ArtifactStagingDirectory)/api.zip'
+    - script: dotnet build CycleFantasy.sln --configuration $(buildConfiguration) --no-restore
+      displayName: Build
 
-# 7. Deploy to Azure App Service
-- task: AzureWebApp@1
-  inputs:
-    azureSubscription: 'azure-cyclefantasy-prod'
-    appName: 'WebCycleApi20250508145015'
-    package: '$(Build.ArtifactStagingDirectory)/api.zip'
+    - script: >
+        dotnet publish WebCycleApi/WebCycleApi.csproj
+        -c $(buildConfiguration)
+        -o $(Build.ArtifactStagingDirectory)/api
+      displayName: Publish API
+
+    - task: ArchiveFiles@2
+      inputs:
+        rootFolderOrFile: '$(Build.ArtifactStagingDirectory)/api'
+        includeRootFolder: false
+        archiveType: zip
+        archiveFile: '$(Build.ArtifactStagingDirectory)/api.zip'
+
+    - task: AzureWebApp@1
+      inputs:
+        azureSubscription: 'azure-cyclefantasy-prod'
+        appName: 'WebCycleApi20250508145015'
+        package: '$(Build.ArtifactStagingDirectory)/api.zip'
