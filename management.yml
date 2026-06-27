@@ -1,0 +1,57 @@
+trigger:
+  branches:
+    include:
+      - master
+
+  paths:
+    include:
+      - WebCycleManager/**
+      - Dockerfile
+      - pipelines/management.yml
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  imageRepository: 'cyclemanager'
+  containerRegistry: 'cyclingregistry123.azurecr.io'
+  dockerRegistryServiceConnection: 'cyclingregistry123'
+  azureSubscription: 'azure-cyclefantasy-prod'
+  resourceGroup: 'rg_cycledb'
+  containerAppName: 'cyclingapp'
+  tag: '$(Build.BuildId)'
+
+steps:
+
+# Checkout source
+- checkout: self
+
+# Build + Push Docker image
+- task: Docker@2
+  displayName: 'Build and Push Docker image'
+
+  inputs:
+    command: buildAndPush
+    repository: $(imageRepository)
+    dockerfile: Dockerfile
+    buildContext: .
+    containerRegistry: $(dockerRegistryServiceConnection)
+
+    tags: |
+      $(tag)
+      latest
+
+# Update Azure Container App
+- task: AzureCLI@2
+  displayName: 'Deploy Container App'
+
+  inputs:
+    azureSubscription: $(azureSubscription)
+    scriptType: bash
+    scriptLocation: inlineScript
+
+    inlineScript: |
+      az containerapp update \
+        --name $(containerAppName) \
+        --resource-group $(resourceGroup) \
+        --image $(containerRegistry)/$(imageRepository):$(tag)
