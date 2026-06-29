@@ -145,7 +145,7 @@ namespace CycleManager.Services
             var actualResults = await _db.Results
                 .CountAsync(r => r.StageId == stage.Id);
 
-            var actualSpecials = await _db.StageSpecialResults
+            var actualSpecials = await _db.ScrapedSpecialResults
                 .CountAsync(s => s.StageId == stage.Id);
 
             var hasAnyData = actualResults > 0 || actualSpecials > 0;

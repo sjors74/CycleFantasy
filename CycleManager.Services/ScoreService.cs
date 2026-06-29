@@ -45,7 +45,7 @@ namespace CycleManager.Services
             // =========================================
             // Gescrapete speciale klassementen
             // =========================================
-            var stageSpecialResults = await _context.StageSpecialResults
+            var stageSpecialResults = await _context.ScrapedSpecialResults
                 .Where(x =>
                     x.StageId == stageId &&
                     x.CompetitorInEventId != null)
@@ -53,6 +53,10 @@ namespace CycleManager.Services
 
             var stageSpecialLookup = stageSpecialResults.ToLookup(
                  x => x.CompetitorInEventId!.Value);
+
+            //TODO: check this, because I think this is not right. Over here you should check the specialResults-table, instead of the ScrapedSpecialResults-table.
+            //The ScrapedSpecialResults-table is only used for the scraping, and the specialResults-table is used for the actual scoring.
+            //So you should check the specialResults-table, and not the ScrapedSpecialResults-table.
 
             var specialScorePerPick = await UpdateSpecialScoresAsync(stageId, deelnemers, stageSpecialLookup, specialConfiguration);
 
@@ -356,7 +360,7 @@ namespace CycleManager.Services
         private async Task<Dictionary<int, int>> UpdateSpecialScoresAsync(
             int stageId, 
             List<GameCompetitorEvent> deelnemers, 
-            ILookup<int, StageSpecialResult> stageSpecialLookup,  
+            ILookup<int, ScrapedSpecialResult> stageSpecialLookup,  
             Dictionary<QuestionType, int> specialConfiguration)
         {
             var existingScores = await _context.DeelnemerStagePickSpecialScores

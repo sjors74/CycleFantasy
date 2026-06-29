@@ -4,6 +4,7 @@ using Domain.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DataAccessEF.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260629103828_renameScraperTable")]
+    partial class renameScraperTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -715,34 +718,6 @@ namespace DataAccessEF.Migrations
                     b.ToTable("Results");
                 });
 
-            modelBuilder.Entity("Domain.Models.SpecialResult", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("CompetitorInEventId")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("SpecialId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("StageId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CompetitorInEventId");
-
-                    b.HasIndex("SpecialId");
-
-                    b.HasIndex("StageId");
-
-                    b.ToTable("SpecialResults");
-                });
-
             modelBuilder.Entity("Domain.Models.Stage", b =>
                 {
                     b.Property<int>("Id")
@@ -1189,32 +1164,6 @@ namespace DataAccessEF.Migrations
                     b.Navigation("CompetitorInEvent");
 
                     b.Navigation("ConfigurationItem");
-
-                    b.Navigation("Stage");
-                });
-
-            modelBuilder.Entity("Domain.Models.SpecialResult", b =>
-                {
-                    b.HasOne("Domain.Models.CompetitorsInEvent", "CompetitorInEvent")
-                        .WithMany()
-                        .HasForeignKey("CompetitorInEventId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.HasOne("Domain.Models.ConfigurationItemSpecial", "Special")
-                        .WithMany()
-                        .HasForeignKey("SpecialId")
-                        .OnDelete(DeleteBehavior.NoAction);
-
-                    b.HasOne("Domain.Models.Stage", "Stage")
-                        .WithMany()
-                        .HasForeignKey("StageId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.Navigation("CompetitorInEvent");
-
-                    b.Navigation("Special");
 
                     b.Navigation("Stage");
                 });

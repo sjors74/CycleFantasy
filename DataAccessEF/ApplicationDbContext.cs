@@ -22,11 +22,12 @@ namespace Domain.Context
         public DbSet<ConfigurationItem> ConfigurationItems { get; set; }
         public DbSet<ConfigurationItemSpecial> ConfigurationItemSpecials { get; set; }
         public DbSet<Result> Results { get; set; }
+        public DbSet<SpecialResult> SpecialResults { get; set; }
         public DbSet<GameCompetitorEvent> GameCompetitorsEvent { get; set; }
         public DbSet<GameCompetitorEventPick> GameCompetitorEventPicks { get; set; }
         public DbSet<EventTeam> EventTeam { get; set; }
         public DbSet<ScrapedStageResult> ScrapedStageResults { get; set; }
-        public DbSet<StageSpecialResult> StageSpecialResults { get; set; }
+        public DbSet<ScrapedSpecialResult> ScrapedSpecialResults { get; set; }
         public DbSet<NewsItem> NewsItems { get; set; }
         public DbSet<DeelnemerScore> DeelnemerScores { get; set; }
         public DbSet<DeelnemerPickScore> DeelnemerPickScores { get; set; }
@@ -137,6 +138,23 @@ namespace Domain.Context
                 .WithMany(t => t.CompetitorInTeams)
                 .HasForeignKey(cit => cit.TeamId);
 
+            modelBuilder.Entity<SpecialResult>()
+                .HasOne(s => s.Stage)
+                .WithMany()
+                .HasForeignKey(s => s.StageId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<SpecialResult>()
+                .HasOne(s => s.CompetitorInEvent)
+                .WithMany()
+                .HasForeignKey(s => s.CompetitorInEventId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<SpecialResult>()
+                .HasOne(s => s.Special)
+                .WithMany()
+                .HasForeignKey(s => s.SpecialId)
+                .OnDelete(DeleteBehavior.NoAction);
 
             modelBuilder.Entity<IdentityUserToken<string>>(b =>
             {

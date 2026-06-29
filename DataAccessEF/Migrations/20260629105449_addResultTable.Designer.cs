@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DataAccessEF.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260527075859_removeSchedule")]
-    partial class removeSchedule
+    [Migration("20260629105449_addResultTable")]
+    partial class addResultTable
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -179,6 +179,34 @@ namespace DataAccessEF.Migrations
                     b.ToTable("ScrapedCompetitors");
                 });
 
+            modelBuilder.Entity("CycleManager.Domain.Models.ScrapedSpecialResult", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("BibNumber")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("CompetitorInEventId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("ImportedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("QuestionType")
+                        .HasColumnType("int");
+
+                    b.Property<int>("StageId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CompetitorInEventId");
+
+                    b.ToTable("ScrapedSpecialResults");
+                });
+
             modelBuilder.Entity("CycleManager.Domain.Models.ScrapedStageResult", b =>
                 {
                     b.Property<int>("Id")
@@ -301,6 +329,9 @@ namespace DataAccessEF.Migrations
                     b.Property<bool>("OutOfCompetition")
                         .HasColumnType("bit");
 
+                    b.Property<bool>("RemovedFromStartList")
+                        .HasColumnType("bit");
+
                     b.HasKey("Id");
 
                     b.HasIndex("CompetitorInTeamId");
@@ -349,6 +380,30 @@ namespace DataAccessEF.Migrations
                     b.HasIndex("ConfigurationId");
 
                     b.ToTable("ConfigurationItems");
+                });
+
+            modelBuilder.Entity("Domain.Models.ConfigurationItemSpecial", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ConfigurationId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Question")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Score")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ConfigurationId");
+
+                    b.ToTable("ConfigurationItemSpecials");
                 });
 
             modelBuilder.Entity("Domain.Models.Country", b =>
@@ -450,6 +505,34 @@ namespace DataAccessEF.Migrations
                         .IsUnique();
 
                     b.ToTable("DeelnemerStagePickScores");
+                });
+
+            modelBuilder.Entity("Domain.Models.DeelnemerStagePickSpecialScore", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("GameCompetitorEventPickId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("LastUpdated")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("QuestionType")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Score")
+                        .HasColumnType("int");
+
+                    b.Property<int>("StageId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GameCompetitorEventPickId");
+
+                    b.ToTable("DeelnemerStagePickSpecialScores");
                 });
 
             modelBuilder.Entity("Domain.Models.DeelnemerStageScore", b =>
@@ -633,6 +716,34 @@ namespace DataAccessEF.Migrations
                     b.HasIndex("StageId");
 
                     b.ToTable("Results");
+                });
+
+            modelBuilder.Entity("Domain.Models.SpecialResult", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CompetitorInEventId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("SpecialId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("StageId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CompetitorInEventId");
+
+                    b.HasIndex("SpecialId");
+
+                    b.HasIndex("StageId");
+
+                    b.ToTable("SpecialResults");
                 });
 
             modelBuilder.Entity("Domain.Models.Stage", b =>
@@ -892,6 +1003,15 @@ namespace DataAccessEF.Migrations
                     b.Navigation("Team");
                 });
 
+            modelBuilder.Entity("CycleManager.Domain.Models.ScrapedSpecialResult", b =>
+                {
+                    b.HasOne("Domain.Models.CompetitorsInEvent", "CompetitorInEvent")
+                        .WithMany()
+                        .HasForeignKey("CompetitorInEventId");
+
+                    b.Navigation("CompetitorInEvent");
+                });
+
             modelBuilder.Entity("CycleManager.Domain.Models.ScrapedStageResult", b =>
                 {
                     b.HasOne("Domain.Models.CompetitorsInEvent", "MatchedCompetitorInEvent")
@@ -953,6 +1073,17 @@ namespace DataAccessEF.Migrations
                     b.Navigation("Configuration");
                 });
 
+            modelBuilder.Entity("Domain.Models.ConfigurationItemSpecial", b =>
+                {
+                    b.HasOne("Domain.Models.Configuration", "Configuration")
+                        .WithMany("Specials")
+                        .HasForeignKey("ConfigurationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Configuration");
+                });
+
             modelBuilder.Entity("Domain.Models.DeelnemerPickScore", b =>
                 {
                     b.HasOne("Domain.Models.GameCompetitorEventPick", "Pick")
@@ -981,6 +1112,17 @@ namespace DataAccessEF.Migrations
                     b.Navigation("Pick");
 
                     b.Navigation("Stage");
+                });
+
+            modelBuilder.Entity("Domain.Models.DeelnemerStagePickSpecialScore", b =>
+                {
+                    b.HasOne("Domain.Models.GameCompetitorEventPick", "Pick")
+                        .WithMany()
+                        .HasForeignKey("GameCompetitorEventPickId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Pick");
                 });
 
             modelBuilder.Entity("Domain.Models.Event", b =>
@@ -1050,6 +1192,32 @@ namespace DataAccessEF.Migrations
                     b.Navigation("CompetitorInEvent");
 
                     b.Navigation("ConfigurationItem");
+
+                    b.Navigation("Stage");
+                });
+
+            modelBuilder.Entity("Domain.Models.SpecialResult", b =>
+                {
+                    b.HasOne("Domain.Models.CompetitorsInEvent", "CompetitorInEvent")
+                        .WithMany()
+                        .HasForeignKey("CompetitorInEventId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Models.ConfigurationItemSpecial", "Special")
+                        .WithMany()
+                        .HasForeignKey("SpecialId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("Domain.Models.Stage", "Stage")
+                        .WithMany()
+                        .HasForeignKey("StageId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("CompetitorInEvent");
+
+                    b.Navigation("Special");
 
                     b.Navigation("Stage");
                 });
@@ -1138,6 +1306,8 @@ namespace DataAccessEF.Migrations
             modelBuilder.Entity("Domain.Models.Configuration", b =>
                 {
                     b.Navigation("ConfigurationItems");
+
+                    b.Navigation("Specials");
                 });
 
             modelBuilder.Entity("Domain.Models.Event", b =>
