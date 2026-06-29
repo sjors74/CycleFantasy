@@ -2,12 +2,17 @@
 
 namespace CycleManager.Domain.Dto
 {
-    public class ResultDto
+    public class CompetitorRankingDto
     {
         public string StageNumber { get; set; } = string.Empty;
         public string CompetitorName { get; set; } = string.Empty;
         public string CompetitorTeam { get; set; } = string.Empty;
         public int Position { get; set; }
+        public int NormalPoints { get; set; }
+        public int SpecialPoints { get; set; } 
+        public int TotalPoints => NormalPoints + SpecialPoints;
+
+        [Obsolete("Use TotalPoints instead.")]
         public int Points { get; set; }
         public int LatestPoints { get; set; }
         public string PcsName { get; set; }
@@ -17,7 +22,7 @@ namespace CycleManager.Domain.Dto
         public int CompetitorInEventId { get; set; }
         public bool OutOfCompetition { get; set; }
         public string? CountryCode { get; set; }
-        public ResultDto()
+        public CompetitorRankingDto()
         {
 
         }

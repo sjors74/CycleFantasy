@@ -33,7 +33,7 @@ namespace CycleManager.Services.Interfaces
         /// </summary>
         /// <param name="eventId"></param>
         /// <returns></returns>
-        Task<IEnumerable<ResultDto>> GetResultsByEventId(int eventId, bool onlyTop15 = false);
+        Task<IEnumerable<CompetitorRankingDto>> GetResultsByEventId(int eventId, bool onlyTop15 = false);
 
         /// <summary>
         /// 
@@ -57,6 +57,7 @@ namespace CycleManager.Services.Interfaces
         //methodes for manager
         Task<Stage?> GetStageByIdAsync(int stageId);
         Task<List<Result>> GetResultsByStageAsync(int stageId);
+        Task<List<SpecialResult>> GetSpecialResultsByStageAsync(int stageId);
         Task<List<CompetitorsInEvent>> GetCompetitorsInEventAsync(int eventId);
         Task<List<ConfigurationItem>> GetConfigurationItemsByConfigAsync(int configId);
         Task AddResultsAsync(IEnumerable<Result> results);

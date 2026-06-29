@@ -18,6 +18,7 @@ namespace WebCycleManager.Models
             string noScoreDescription,
             int configurationItems, 
             List<ResultItemViewModel> results,
+            List<SpecialResultItemViewModel> specialResults,
             List<CompetitorsInEvent> competitorsInEvent
             )
         {
@@ -29,6 +30,7 @@ namespace WebCycleManager.Models
             NoScoreDescription = noScoreDescription;
             ConfigurationItems = configurationItems;
             Results = results;
+            SpecialResults = specialResults;
             Competitors = competitorsInEvent;
         }
 
@@ -44,5 +46,7 @@ namespace WebCycleManager.Models
         public int ConfigurationItems { get; set; }
 
         public List<ResultItemViewModel> Results { get; set; } = [];
+
+        public List<SpecialResultItemViewModel> SpecialResults { get; set; } = [];
     }
 }

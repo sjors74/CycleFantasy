@@ -69,13 +69,51 @@ else
             </tbody>
         </table>
 
+        <h3>Specials</h3>
+
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Special</th>
+                    <th>Deelnemer</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (var i = 0; i < Model.SpecialResults.Count; i++)
+                {
+                    <tr>
+                        <td>@Model.SpecialResults[i].SpecialName</td>
+                        <td>
+                            <input type="text"
+                                   id="competitor-autocomplete-@i"
+                                   name="SpecialResults[@i].CompetitorName"
+                                   value="@Model.SpecialResults[i].CompetitorName"
+                                   placeholder="Typ hier naam..."
+                                   autocomplete="on" />
+                            <input type="hidden" name="SpecialResults[@i].SelectedCompetitorId" id="selectedCompetitorId-@i" value="@Model.SpecialResults[i].SelectedCompetitorId" />
+                        </td>
+                        <td>
+                            @if (Model.SpecialResults[i].SpecialId > 0)
+                            {
+                                <a asp-action="Delete" asp-route-id="@Model.SpecialResults[i].SpecialId"
+                                   class="btn btn-sm btn-outline-danger"
+                                   title="Verwijderen">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
         <input type="hidden" id="configurationId" name="configurationId" value="@Model.ConfigurationId" />
         <input type="hidden" id="stageId" name="stageId" value="@Model.StageId" />
         <div class="mt-3 d-flex justify-content-between gap-2">
             <a asp-controller="Events" asp-action="Details" asp-route-id="@Model.EventId" class="btn btn-outline-secondary">Terug naar evenement</a>
             <button type="submit" class="btn btn-primary">Opslaan</button>
         </div>
-
     </form>
 }
 

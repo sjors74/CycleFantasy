@@ -78,9 +78,9 @@ namespace WebCycle.Controllers
         {
             var picks = await deelnemerService.GetAllPicks(id);
             if (picks == null)
-                return Ok(new List<ResultDto>());
+                return Ok(new List<CompetitorRankingDto>());
 
-            var competitorResponse = _mapper.Map<List<ResultDto>>(picks);
+            var competitorResponse = _mapper.Map<List<CompetitorRankingDto>>(picks);
 
             var pickDetails = await resultService.GetPickDetailsAsync(eventId, id);
 
@@ -117,7 +117,7 @@ namespace WebCycle.Controllers
             foreach (var deelnemer in currentEvent.GameCompetitorEvents)
             {
                 var picks = await deelnemerService.GetAllPicks(deelnemer.Id);
-                var picksDto = _mapper.Map<List<ResultDto>>(picks ?? new List<GameCompetitorEventPick>());
+                var picksDto = _mapper.Map<List<CompetitorRankingDto>>(picks ?? new List<GameCompetitorEventPick>());
 
                 foreach (var pick in picksDto)
                 {

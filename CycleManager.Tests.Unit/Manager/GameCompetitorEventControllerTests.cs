@@ -46,8 +46,8 @@ namespace CycleManager.Tests.Unit.Manager
             // Arrange
             int eventId = 1;
             _mockResultService.Setup(s => s.GetResultsByEventId(eventId, false))
-                .ReturnsAsync(new List<ResultDto> {
-                    new ResultDto { CompetitorInEventId = 10, Points = 5 }
+                .ReturnsAsync(new List<CompetitorScoreDto> {
+                    new CompetitorScoreDto { CompetitorInEventId = 10, Points = 5 }
                 });
 
             _mockGameCompetitorEventService.Setup(s => s.GetPicks(eventId))
@@ -79,7 +79,7 @@ namespace CycleManager.Tests.Unit.Manager
             // Arrange
             int eventId = 1;
             _mockResultService.Setup(s => s.GetResultsByEventId(eventId, false))
-                .ReturnsAsync(new List<ResultDto>());  // geen resultaten
+                .ReturnsAsync(new List<CompetitorScoreDto>());  // geen resultaten
             _mockGameCompetitorEventService.Setup(s => s.GetPicks(eventId))
                 .Returns(new List<GameCompetitorEventPick>().AsQueryable());
             _mockGameCompetitorEventService.Setup(s => s.GetAllCompetitorsInEvent(eventId))
@@ -115,7 +115,7 @@ namespace CycleManager.Tests.Unit.Manager
             int eventId = 2;
 
             _mockResultService.Setup(s => s.GetResultsByEventId(eventId, false))
-                .ReturnsAsync(new List<ResultDto>());
+                .ReturnsAsync(new List<CompetitorScoreDto>());
 
             _mockGameCompetitorEventService.Setup(s => s.GetPicks(eventId))
                 .Returns(new List<GameCompetitorEventPick>().AsQueryable());
@@ -147,7 +147,7 @@ namespace CycleManager.Tests.Unit.Manager
         {
             int eventId = 1, id = 2;
             _mockResultService.Setup(s => s.GetResultsByEventId(eventId, false))
-                .ReturnsAsync(new List<ResultDto>());
+                .ReturnsAsync(new List<CompetitorScoreDto>());
             _mockGameCompetitorEventService.Setup(s => s.GetPicks(eventId))
                 .Returns(new List<GameCompetitorEventPick>().AsQueryable());
             _mockCompetitorInEventService.Setup(s => s.GetCompetitors(eventId))

@@ -95,6 +95,7 @@ builder.Services.AddScoped<ITeamService, TeamService>();
 builder.Services.AddScoped<IGameCompetitorInEventService, GameCompetitorInEventService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IScoreRepository, ScoreRepository>();
+builder.Services.AddScoped<ISpecialResultsRepository, SpecialResultsRepository>();
 builder.Services.AddScoped<IScraperService, ScraperService>();
 builder.Services.AddScoped<IPcsScraper, PcsScraper>();
 builder.Services.AddScoped<IScoreService, ScoreService>();

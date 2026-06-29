@@ -30,6 +30,7 @@ namespace WebCycleManager.Controllers
             var config = currentEvent.Configuration;
 
             var results = await _resultService.GetResultsByStageAsync(stageId);
+            var specialResults = await _resultService.GetSpecialResultsByStageAsync(stageId);
             var competitorsInEvent = await _resultService.GetCompetitorsInEventAsync(currentEvent.EventId);
             var configItems = await _resultService.GetConfigurationItemsByConfigAsync(config.Id);
 
@@ -51,6 +52,16 @@ namespace WebCycleManager.Controllers
                     };
                 }).ToList();
 
+            var specialResultItems = specialResults
+    .Select(sr => new SpecialResultItemViewModel
+    {
+        SpecialId = sr.SpecialId ?? 0,
+        SpecialName = sr.Special?.Question.ToString() ?? string.Empty,
+        SelectedCompetitorId = sr.CompetitorInEventId,
+        CompetitorName = sr.CompetitorInEvent?.CompetitorInTeam?.Competitor?.CompetitorName ?? string.Empty,
+    })
+    .ToList();
+
             var rvm = new ResultViewModel(
                 stage.Id,
                 stage.EventId,
@@ -60,6 +71,7 @@ namespace WebCycleManager.Controllers
                 stage.NoScoreDescription,
                 configItems.Count,
                 resultItems,
+                specialResultItems,
                 competitorsInEvent
             );
 
