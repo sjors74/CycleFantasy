@@ -1,0 +1,41 @@
+trigger:
+- master
+
+pool:
+  vmImage: 'windows-latest'
+
+variables:
+  buildConfiguration: 'Release'
+
+steps:
+
+# 1. Checkout repo
+- checkout: self
+
+# 2. .NET SDK
+- task: UseDotNet@2
+  inputs:
+    packageType: 'sdk'
+    version: '8.x'
+
+# 3. Restore
+- script: dotnet restore repos/CycleFantasy/CycleFantasy.sln
+  displayName: 'Restore'
+
+# 4. Build solution
+- script: dotnet build repos/CycleFantasy/CycleFantasy.sln --configuration $(buildConfiguration) --no-restore
+  displayName: 'Build'
+
+# 5. Publish WebApp project
+- script: >
+    dotnet publish repos/CycleFantasy/WebApp/WebApp.csproj
+    -c $(buildConfiguration)
+    -o $(Build.ArtifactStagingDirectory)/web
+  displayName: 'Publish WebApp'
+
+# 6. Deploy to Azure App Service
+- task: AzureWebApp@1
+  inputs:
+    azureSubscription: 'azure-cyclefantasy-prod'
+    appName: 'WebApp20250508172648'
+    package: '$(Build.ArtifactStagingDirectory)/web'

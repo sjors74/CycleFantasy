@@ -106,14 +106,28 @@ namespace CycleManager.Services
             try
             {
                 // Forceer de 'name' tab door querystring (veilige manier)
+                _logger.LogInformation("Input url: {Url}", url);
+
                 var separator = url.Contains('?') ? "&" : "?";
                 var nameUrl = url + separator + "x=1&snav=name";
 
-                await page.GotoAsync(nameUrl, new PageGotoOptions
+                _logger.LogInformation("Name url: {Url}", nameUrl);
+
+                await page.GotoAsync(nameUrl, new()
                 {
-                    WaitUntil = WaitUntilState.DOMContentLoaded,
-                    Timeout = 30000
+                    WaitUntil = WaitUntilState.DOMContentLoaded
                 });
+
+                await page.WaitForTimeoutAsync(8000);
+
+                if ((await page.TitleAsync()).Contains("Just a moment"))
+                {
+                    _logger.LogWarning("Cloudflare challenge still active.");
+                }
+
+                var body = await page.Locator("body").InnerTextAsync();
+                _logger.LogInformation(body[..Math.Min(body.Length, 1000)]);
+                _logger.LogInformation("Current url: {Url}", page.Url);
 
                 // Prefereren: wacht tot er daadwerkelijk li-items zijn
                 var liSelector = "div.stab.name.riderlistcont ul.teamlist li";

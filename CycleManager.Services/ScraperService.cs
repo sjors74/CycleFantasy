@@ -341,7 +341,7 @@ namespace CycleManager.Services
 
             if (team == null) return;
 
-            string url = $"https://www.procyclingstats.com/team/{team.PcsName}-{year}/overview/start-v3";
+            string url = $"https://www.procyclingstats.com/team/{team.PcsName}-{year}/overview/start";
             _logger.LogInformation($"Start scraping competitors for team {team.CurrentTeamName}, year {year}");
 
             var competitors = await _pcsScraper.ScrapeCompetitorsAsync(url, teamId, year);

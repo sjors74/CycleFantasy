@@ -9,7 +9,6 @@ using Domain.Interfaces;
 using Domain.Mapping;
 using Hangfire;
 using Hangfire.Dashboard;
-using Humanizer.Localisation;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
