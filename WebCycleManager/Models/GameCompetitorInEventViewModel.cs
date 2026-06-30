@@ -12,7 +12,9 @@ namespace WebCycleManager.Models
         public int EventId { get; set; }
         public List<PickDetailViewModel> CompetitorsInEvent { get; set; } = new List<PickDetailViewModel>();
         public int GameCompetitorInEventId { get; set; }
-        public int Score { get; set; } = 0;
+        public int Score => NormalScore + SpecialScore;
+        public int NormalScore { get; set; } = 0;
+        public int SpecialScore { get; set; } = 0;  
         [NotMapped]
         public IEnumerable<SelectListItem> DropdownList { get; set; } = new List<SelectListItem>();
         public int NumberOfPicks { get; set; } = 0;

@@ -20,7 +20,13 @@
                 @Html.DisplayName("Deelnemernaam")
             </th>
             <th>
-                @Html.DisplayName("Score")
+                Normale score
+            </th>
+            <th>
+                Specials
+            </th>
+            <th>
+                Totaal
             </th>
             <th></th>
         </tr>
@@ -33,6 +39,12 @@
         </td>
         <td>
             @Html.DisplayFor(modelItem => item.GameCompetitorName)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.NormalScore)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.SpecialScore)
         </td>
         <td>
             @Html.DisplayFor(modelItem => item.Score)

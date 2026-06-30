@@ -32,44 +32,60 @@ namespace WebCycleManager.Controllers
         // GET: GameCompetitorEvents
         public async Task<IActionResult> Index(int eventId)
         {
-            // 1. Alle resultaten ophalen
-            var resultDtos = (await _resultService.GetResultsByEventId(eventId)).ToList();
-            var pointsByCompetitor = resultDtos
-                .ToDictionary(r => r.CompetitorInEventId, r => r.Points);
+            // 1. Ranking data (incl. normal + special + total)
+            var rankings = (await _resultService.GetResultsByEventId(eventId))
+                .ToList();
 
-            // 2. Alle picks ophalen
+            var rankingLookup = rankings
+                .ToDictionary(r => r.CompetitorInEventId);
+
+            // 2. Alle picks van teams in dit event
             var picks = _gameCompetitorEventService.GetPicks(eventId).ToList();
 
-            // 3. Alle GameCompetitorEvents ophalen
-            var allGameCompetitors = await _gameCompetitorEventService.GetAllCompetitorsInEvent(eventId);
+            // 3. Alle teams / game competitors
+            var allGameCompetitors =
+                await _gameCompetitorEventService.GetAllCompetitorsInEvent(eventId);
 
-            // 4. Model samenstellen
+            // 4. ViewModel opbouwen
             var model = allGameCompetitors
                 .Select(gameCompetitor =>
                 {
-                    // alle picks van dit team
-                    var teamPicks = picks
+                    var teamPickIds = picks
                         .Where(p => p.GameCompetitorEvent.Id == gameCompetitor.Id)
                         .Select(p => p.CompetitorsInEventId)
-                        .Distinct();
+                        .Distinct()
+                        .ToList();
 
-                    // sommeer scores van deze renners (0 als geen resultaat)
-                    var totalScore = teamPicks.Sum(cid => pointsByCompetitor.TryGetValue(cid, out var score) ? score : 0);
+                    var normalScore = 0;
+                    var specialScore = 0;
+
+                    foreach (var cid in teamPickIds)
+                    {
+                        if (rankingLookup.TryGetValue(cid, out var r))
+                        {
+                            normalScore += r.NormalPoints;
+                            specialScore += r.SpecialPoints;
+                        }
+                    }
 
                     return new GameCompetitorInEventViewModel
                     {
                         GameCompetitorInEventId = gameCompetitor.Id,
+                        Id = gameCompetitor.Id,
+                        EventId = gameCompetitor.EventId,
+
                         TeamName = gameCompetitor.TeamName,
                         GameCompetitorName = $"{gameCompetitor?.User?.FirstName} {gameCompetitor?.User?.LastName}",
-                        Score = totalScore,
-                        EventId = gameCompetitor.EventId,
-                        Id = gameCompetitor.Id
+
+                        NormalScore = normalScore,
+                        SpecialScore = specialScore
                     };
                 })
                 .OrderByDescending(m => m.Score)
                 .ToList();
 
             ViewData["EventId"] = eventId;
+
             return View(model);
         }
 
@@ -188,7 +204,7 @@ namespace WebCycleManager.Controllers
 
             model.CompetitorsInEvent = picks;
             model.NumberOfPicks = picks.Count(p => p.PickId > 0);
-            model.Score = picks.Sum(x => x.Score);
+            model.NormalScore = picks.Sum(x => x.Score);
 
             return View(model);
         }
