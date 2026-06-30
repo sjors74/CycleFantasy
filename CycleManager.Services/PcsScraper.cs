@@ -561,15 +561,29 @@ namespace CycleManager.Services
             int stageId,
             QuestionType questionType)
         {
+            ScrapedStageSpecialResult? result = null;
+
             var suffix = GetClassificationSuffix(questionType);
 
             // Eerst de stage-URL proberen
             var url = $"{baseUrl}-{suffix}";
 
-            var result = await ScrapeClassificationWinnerFromUrlAsync(
+
+            _logger.LogInformation("Trying stage url: {Url}", url);
+
+            try
+            {
+
+                result = await ScrapeClassificationWinnerFromUrlAsync(
                 url,
                 stageId,
                 questionType);
+            }
+            catch(PlaywrightException ex)
+            {
+                _logger.LogWarning(ex, "Stage URL failed, trying fallback."); 
+
+            }
 
             if (result != null)
                 return result;
