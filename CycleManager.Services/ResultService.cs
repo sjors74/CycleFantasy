@@ -51,18 +51,18 @@ namespace CycleManager.Services
                         SpecialPoints = specialPoints,
                     };
             })
-                .OrderByDescending(c => c.Points)
+                .OrderByDescending(c => c.TotalPoints)
                 .ThenBy(c => c.CompetitorName)
                 .ToList();
 
             if (onlyTop15 && groupedList.Any())
             {
                 var top15 = groupedList.Take(15).ToList();
-                int minScoreInTop15 = top15.LastOrDefault()?.Points ?? 0;
+                int minScoreInTop15 = top15.LastOrDefault()?.TotalPoints ?? 0;
 
                 var extendedTop15 = groupedList
                     .Skip(15)
-                    .TakeWhile(x => x.Points == minScoreInTop15)
+                    .TakeWhile(x => x.TotalPoints == minScoreInTop15)
                     .ToList();
 
                 groupedList = top15.Concat(extendedTop15).ToList();
@@ -74,13 +74,13 @@ namespace CycleManager.Services
 
             foreach(var item in groupedList)
             {
-                if(previousScore != item.Points)
+                if(previousScore != item.TotalPoints)
                 {
                     actualRank = rank;
                 }
 
                 item.Position = actualRank;
-                previousScore = item.Points;
+                previousScore = item.TotalPoints;
                 rank++;
             }
 
@@ -169,9 +169,19 @@ namespace CycleManager.Services
             return await _resultsRepository.GetConfigurationItemsByConfigAsync(configId);
         }
 
+        public async Task<List<ConfigurationItemSpecial>> GetConfigurationItemSpecialsAsync(int configId)
+        {
+            return await _specialResultsRepository.GetConfigurationItemsByConfigAsync(configId);
+        }
+
         public async Task AddResultsAsync(IEnumerable<Result> results)
         {
             await _resultsRepository.AddResultsAsync(results);
+        }
+
+        public async Task AddSpecialResultsAsync(IEnumerable<SpecialResult> specialResults)
+        {
+            await _specialResultsRepository.AddResultsAsync(specialResults);
         }
 
         public async Task<Result?> GetResultByIdAsync(int id)
@@ -218,6 +228,16 @@ namespace CycleManager.Services
         public Task<List<CompetitorScoreDto>> GetCompetitorResultsForEvent(int eventId)
         {
             return _resultsRepository.GetCompetitorResultsForEvent(eventId);
+        }
+
+        public Task<SpecialResult?> GetSpecialResultByIdAsync(int id)
+        {
+            return _specialResultsRepository.GetByIdAsync(id);
+        }
+
+        public Task DeleteSpecialResultAsync(int id)
+        {
+            return _specialResultsRepository.DeleteAsync(id);
         }
     }
 }

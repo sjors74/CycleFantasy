@@ -1,0 +1,29 @@
+﻿@model SpecialResultItemViewModel
+
+@{
+    ViewData["Title"] = "Delete";
+}
+
+<h3>Weet je zeker dat je de deelnemer uit het resultaat wilt verwijderen?</h3>
+<div>
+    <hr />
+    <dl class="row">
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.CompetitorName)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.CompetitorName)
+        </dd>
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.SpecialName)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.SpecialName)
+        </dd>
+    </dl>
+
+    <form asp-action="DeleteSpecial" asp-route-id="@Model.Id">
+        <input type="submit" value="Verwijder" class="btn btn-danger" /> |
+        <a asp-action="Index" asp-route-stageId="@Model.StageId">Terug naar de lijst</a>
+    </form>
+</div>

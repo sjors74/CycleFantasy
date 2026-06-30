@@ -1,58 +1,79 @@
-﻿const root = document.getElementById("autocomplete-root");
-if (root) {
-    const configurationItemCount = parseInt(root.dataset.count);
-    for (let i = 0; i < configurationItemCount; i++) {
-        setupAutocomplete(i);
+﻿document.addEventListener("DOMContentLoaded", function () {
+
+    document.querySelectorAll(".competitor-autocomplete")
+        .forEach(input => setupAutocomplete(input));
+
+});
+
+function setupAutocomplete(input) {
+    const row = input.closest("tr");
+    const hiddenId = row.querySelector(".competitor-id");
+
+    if (!hiddenId) {
+        return;
     }
-}
 
-function setupAutocomplete(index) {
-    const input = document.getElementById(`competitor-autocomplete-${index}`);
-    const hiddenId = document.getElementById(`selectedCompetitorId-${index}`);
+    if (!Array.isArray(window.competitors)) {
+        return;
+    }
 
-    if (!input || !hiddenId || !Array.isArray(competitors)) return;
+    if (!hiddenId || !window.competitors) return;
 
     function closeDropdown() {
         const items = document.querySelectorAll(`#${input.id}-autocomplete-list`);
-        items.forEach(el => el.parentNode.removeChild(el));
+        items.forEach(el => el.remove());
     }
 
-    input.addEventListener('input', function () {
-        const val = this.value.toLowerCase();
+    input.addEventListener("input", function () {
 
-        const filtered = competitors.filter(c =>
+        const val = this.value.toLowerCase().trim();
+
+        // altijd eerst oude dropdown weg
+        row.querySelectorAll(".autocomplete-items")
+            .forEach(el => el.remove());
+
+        if (!val) return;
+
+        const filtered = window.competitors.filter(c =>
             c.CompetitorName?.toLowerCase().includes(val)
         );
 
-        closeDropdown();
-        if (!val) return;
-
-        if (filtered.length === 1) {
+        if (
+            filtered.length === 1 &&
+            filtered[0].CompetitorName !== input.value
+        ) {
             input.value = filtered[0].CompetitorName;
             hiddenId.value = filtered[0].CompetitorId;
+            closeDropdown();
             return;
         }
 
-        const dropdown = document.createElement('div');
-        dropdown.setAttribute('id', this.id + '-autocomplete-list');
-        dropdown.setAttribute('class', 'autocomplete-items');
-        this.parentNode.appendChild(dropdown);
+        // ❗ belangrijk: als geen resultaten → niets tonen
+        if (filtered.length === 0) return;
 
-        filtered.forEach(c => {
-            const item = document.createElement('div');
-            item.classList.add('autocomplete-item'); // voeg een klasse toe voor styling
-            item.innerHTML = `<span>${c.CompetitorName}</span>`;
-            item.addEventListener('click', function () {
+        const dropdown = document.createElement("div");
+        dropdown.className = "autocomplete-items";
+        input.parentNode.appendChild(dropdown);
+
+        filtered.slice(0, 10).forEach(c => {   // optioneel limit voor UX
+            const item = document.createElement("div");
+            item.className = "autocomplete-item";
+
+            item.textContent = c.CompetitorName;
+
+            item.addEventListener("click", function () {
                 input.value = c.CompetitorName;
                 hiddenId.value = c.CompetitorId;
-                closeDropdown();
+
+                dropdown.remove(); // direct sluiten
             });
+
             dropdown.appendChild(item);
         });
     });
 
     document.addEventListener('click', function (e) {
-        if (e.target !== input) {
+        if (!input.contains(e.target)) {
             closeDropdown();
         }
     });

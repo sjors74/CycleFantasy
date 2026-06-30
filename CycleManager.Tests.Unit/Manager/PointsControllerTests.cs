@@ -1,4 +1,5 @@
 ﻿using CycleManager.Domain.Models;
+using CycleManager.Services.Interfaces;
 using DataAccessEF.Migrations;
 using Domain.Interfaces;
 using Domain.Models;
@@ -17,12 +18,14 @@ namespace CycleManager.Tests.Unit.Manager
     public class PointsControllerTests
     {
         private readonly Mock<IResultsRepository> _mockResultsRepo;
+        private readonly Mock<IResultService> _mockResultService;
         private readonly PointsController _controller;
 
         public PointsControllerTests()
         {
             _mockResultsRepo = new Mock<IResultsRepository>();
-            _controller = new PointsController(_mockResultsRepo.Object);
+            _mockResultService = new Mock<IResultService>();
+            _controller = new PointsController(_mockResultsRepo.Object, _mockResultService.Object);
         }
 
         [Fact]

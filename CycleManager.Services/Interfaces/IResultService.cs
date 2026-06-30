@@ -60,9 +60,14 @@ namespace CycleManager.Services.Interfaces
         Task<List<SpecialResult>> GetSpecialResultsByStageAsync(int stageId);
         Task<List<CompetitorsInEvent>> GetCompetitorsInEventAsync(int eventId);
         Task<List<ConfigurationItem>> GetConfigurationItemsByConfigAsync(int configId);
+        Task<List<ConfigurationItemSpecial>> GetConfigurationItemSpecialsAsync(int configId);
         Task AddResultsAsync(IEnumerable<Result> results);
+        Task AddSpecialResultsAsync(IEnumerable<SpecialResult> specialResults);
         Task<Result?> GetResultByIdAsync(int id);
+        Task<SpecialResult?> GetSpecialResultByIdAsync(int id);
         Task DeleteResultAsync(Result result);
+        Task DeleteSpecialResultAsync(int id);
+
         Task<bool> ResultExistsAsync(int id);
         string GetCompetitorFullName(int competitorId);
         Task RecalculateEventScoresAsync(int eventId);

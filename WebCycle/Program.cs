@@ -89,6 +89,7 @@ builder.Services.AddScoped<ICompetitorInTeamRepository, CompetitorInTeamReposito
 builder.Services.AddScoped<ICountryRepository, CountryRepository>();
 builder.Services.AddTransient<IEventRepository, EventRepository>();
 builder.Services.AddTransient<IResultsRepository, ResultsRepository>();
+builder.Services.AddTransient<ISpecialResultsRepository, SpecialResultsRepository>();
 builder.Services.AddTransient<IScoreRepository, ScoreRepository>();
 builder.Services.AddTransient<IStageRepository, StageRepository>();
 builder.Services.AddTransient<IGameCompetitorInEventRepository, GameCompetitorInEventRepository>();

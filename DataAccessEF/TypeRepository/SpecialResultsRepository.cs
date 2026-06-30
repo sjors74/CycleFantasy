@@ -14,6 +14,27 @@ namespace DataAccessEF.TypeRepository
 
         }
 
+        public async Task<SpecialResult?> GetByIdAsync(int id)
+        {
+            return await context.SpecialResults
+                .Include(s => s.Special)
+                .Include(s => s.CompetitorInEvent)
+                    .ThenInclude(c => c.CompetitorInTeam)
+                        .ThenInclude(ct => ct.Competitor)
+                .Include(s => s.Stage)
+                .FirstOrDefaultAsync(r => r.Id == id);
+        }
+
+        public async Task DeleteAsync(int id)
+        {
+            var entity = await context.SpecialResults.FindAsync(id);
+            if (entity == null)
+                return;
+
+            context.SpecialResults.Remove(entity);
+            await context.SaveChangesAsync();
+        }
+
         public async Task<IEnumerable<SpecialResult>> GetByEventId(int eventId)
         {
             var results = await context.SpecialResults
@@ -46,6 +67,21 @@ namespace DataAccessEF.TypeRepository
                 .OrderBy(r => r.Special != null ? r.Special.Question : default)
                 .ToListAsync();
             return results;
+        }
+
+        public async Task<List<ConfigurationItemSpecial>> GetConfigurationItemsByConfigAsync(int configId)
+        {
+            return await context.ConfigurationItemSpecials
+                .AsNoTracking()
+                .Where(ci => ci.ConfigurationId == configId)
+                .ToListAsync();
+        }
+
+        public async Task AddResultsAsync(IEnumerable<SpecialResult> specialResults)
+        {
+            context.SpecialResults.AddRange(specialResults);
+            await context.SaveChangesAsync();
+
         }
     }
 }
