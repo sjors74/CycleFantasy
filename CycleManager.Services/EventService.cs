@@ -5,6 +5,7 @@ using CycleManager.Services.Interfaces;
 using Domain.Dto;
 using Domain.Interfaces;
 using Domain.Models;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 
 namespace CycleManager.Services
@@ -224,14 +225,21 @@ namespace CycleManager.Services
         {
             var gameCompetitorEvent = new DeelnemerCreateDto
             {
-                TeamName = deelnemerDto.PoolNaam,
+                TeamName = deelnemerDto.PoolNaam.Trim(),
                 UserId = deelnemerDto.UserId,
                 EventId = deelnemerDto.EventId,
             };
 
-            var createdEvent = await _deelnemersRepository.CreateGameCompetitorEventAsync(gameCompetitorEvent);
-            deelnemerDto.Id = createdEvent.Id;
-            return deelnemerDto;
+            try
+            {
+                var createdEvent = await _deelnemersRepository.CreateGameCompetitorEventAsync(gameCompetitorEvent);
+                deelnemerDto.Id = createdEvent.Id;
+                return deelnemerDto;
+            }
+            catch(DbUpdateException ex) when (IsUniqueConstraintViolation(ex)) 
+            {
+                throw new InvalidOperationException("Je hebt al een pool met deze naam.");
+            }
         }
 
         public async Task DeletePoolAsync(int id)
@@ -323,6 +331,12 @@ namespace CycleManager.Services
             {
                 throw new UnauthorizedAccessException("Inschrijven is gesloten.");
             }
+        }
+
+        private static bool IsUniqueConstraintViolation(DbUpdateException ex)
+        {
+            return ex.InnerException is SqlException sqlEx &&
+                   (sqlEx.Number == 2601 || sqlEx.Number == 2627);
         }
     }
 }

@@ -1,9 +1,7 @@
 using CycleManager.Domain.Dto;
-using Domain.Dto;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using System.Net.Http;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
@@ -54,10 +52,10 @@ namespace WebApp.Pages.Account
                 return Page(); // Je kunt eventueel de pagina opnieuw renderen
             }
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var dto = new
+            var dto = new DeelnemerDto
             {
                 Id = DeelnemerId,
-                PoolNaam,
+                PoolNaam = PoolNaam,
                 UserId = userId,
                 EventId = CurrentEventId
             };
@@ -78,7 +76,8 @@ namespace WebApp.Pages.Account
             {
                 // Foutmelding bij falen
                 ModelState.AddModelError(string.Empty, "Er is iets misgegaan bij het aanmaken van de pool.");
-                return Page();
+                TempData["Error"] = "Er is iets misgegaan bij het aanmaken van de pool.";
+                return RedirectToPage(new { id = CurrentEventId });
             }
         }
 
