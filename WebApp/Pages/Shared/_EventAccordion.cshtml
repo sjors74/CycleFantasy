@@ -169,7 +169,8 @@
                          id="createPool-@Model.EventId">
 
                         <form method="post"
-                              asp-page-handler="CreatePool">
+                              asp-page-handler="CreatePool"
+                              onsubmit="this.querySelector('button[type=submit]').disabled = true;">
 
                             <input type="hidden"
                                    name="CurrentEventId"
@@ -181,7 +182,7 @@
                                    placeholder="Pool naam"
                                    required />
 
-                            <button class="btn btn-primary btn-sm">
+                            <button type="submit" class="btn btn-primary btn-sm">
                                 Toevoegen
                             </button>
 
