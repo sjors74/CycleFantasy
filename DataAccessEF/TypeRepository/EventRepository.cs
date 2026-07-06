@@ -64,6 +64,8 @@ namespace DataAccessEF.TypeRepository
                     .Include(e => e.EventTeams)
                         .ThenInclude(et => et.Team)
                     .Include(s => s.Stages)
+                    .Include(e => e.Configuration)
+                        .ThenInclude(c => c.ConfigurationItems)
                     .FirstOrDefaultAsync(e => e.EventId == id);
             return e;
         }

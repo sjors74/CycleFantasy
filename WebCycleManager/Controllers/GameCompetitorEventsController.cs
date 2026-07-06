@@ -144,9 +144,13 @@ namespace WebCycleManager.Controllers
                 EventId = eventId.Value
             };
 
+            // Event inclusief configuratie ophalen
+            var gameEvent = await _eventService.GetEventById(eventId.Value);
+            var numberOfPicks = gameEvent.Configuration.ConfigurationItems.Count();
+
             // Resultaten ophalen
             var resultDtos = (await _resultService.GetResultsByEventId(eventId.Value)).ToList();
-            var pointsByCompetitor = resultDtos.ToDictionary(r => r.CompetitorInEventId, r => r.Points);
+            var resultsByCompetitor = resultDtos.ToDictionary(r => r.CompetitorInEventId);
 
             // Team picks ophalen
             var teamPicks = _gameCompetitorEventService
@@ -161,20 +165,20 @@ namespace WebCycleManager.Controllers
                 .OrderBy(c => c.CompetitorInTeam.Competitor.LastName)
                 .Select(c => new SelectListItem
                 {
-                    Value = c.Id.ToString(), // dit is competitorInEvent.Id
+                    Value = c.Id.ToString(),
                     Text = $"{c.CompetitorInTeam.Competitor.FirstName} {c.CompetitorInTeam.Competitor.LastName}"
                 })
                 .ToList();
 
             model.DropdownList = dropdownList;
-            model.TeamName = teamPicks?.FirstOrDefault()?.GameCompetitorEvent?.TeamName ?? "onbekend";
+            model.TeamName = teamPicks.FirstOrDefault()?.GameCompetitorEvent?.TeamName ?? "onbekend";
 
             // Bestaande picks omzetten
             var picks = teamPicks
                 .Select(p =>
                 {
                     var competitorId = p.CompetitorsInEventId;
-                    var score = pointsByCompetitor.TryGetValue(competitorId, out var s) ? s : 0;
+                    resultsByCompetitor.TryGetValue(competitorId, out var result);
 
                     return new PickDetailViewModel
                     {
@@ -183,18 +187,25 @@ namespace WebCycleManager.Controllers
                         LastName = p.CompetitorsInEvent.CompetitorInTeam.Competitor.LastName ?? "onbekend",
                         CompetitorName = p.CompetitorsInEvent.CompetitorInTeam.Competitor.CompetitorName ?? "onbekend",
                         IsOutOfCompetition = p.CompetitorsInEvent.OutOfCompetition,
-                        Score = score,
+                        NormalScore = result?.NormalPoints ?? 0,
+                        SpecialQuestionScore = result?.SpecialPoints ?? 0,
+                        TotalScore = result?.TotalPoints ?? 0,
                         PickId = p.Id,
-                        SelectedCompetitorId = competitorId,   // dit zorgt dat de juiste waarde in de dropdown geselecteerd is
-                        Competitors = dropdownList             // dropdown altijd vullen
+                        SelectedCompetitorId = competitorId,
+                        Competitors = dropdownList
                     };
                 })
-                .OrderByDescending(m => m.Score)
+                .OrderByDescending(p => p.TotalScore)
                 .ToList();
 
-            // Als er nog lege plekken zijn → vullen met lege picks
-            var existingCount = picks.Count;
-            for (int i = existingCount; i < 15; i++)
+            // Nooit meer picks tonen dan volgens de configuratie zijn toegestaan
+            if (picks.Count > numberOfPicks)
+            {
+                picks = picks.Take(numberOfPicks).ToList();
+            }
+
+            // Aanvullen tot het aantal configuratie-items
+            while (picks.Count < numberOfPicks)
             {
                 picks.Add(new PickDetailViewModel
                 {
@@ -203,8 +214,8 @@ namespace WebCycleManager.Controllers
             }
 
             model.CompetitorsInEvent = picks;
-            model.NumberOfPicks = picks.Count(p => p.PickId > 0);
-            model.NormalScore = picks.Sum(x => x.Score);
+            model.NumberOfPicks = numberOfPicks;
+            model.NormalScore = picks.Sum(x => x.NormalScore);
 
             return View(model);
         }
