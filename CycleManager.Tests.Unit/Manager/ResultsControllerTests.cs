@@ -111,8 +111,8 @@ namespace CycleManager.Tests.Unit.Manager
             var viewResult = Assert.IsType<ViewResult>(result);
             var model = Assert.IsAssignableFrom<ResultViewModel>(viewResult.Model);
             Assert.Equal(stage.Id, model.StageId);
-            Assert.Equal(2, model.Results.Count);
-            Assert.Contains(model.Results, r => r.CompetitorName == "Remco Evenepoel");
+            Assert.Equal(2, model.Rows.Count);
+            Assert.Contains(model.Rows, r => r.CompetitorName == "Remco Evenepoel");
         }
 
         [Fact]
@@ -124,10 +124,10 @@ namespace CycleManager.Tests.Unit.Manager
                 EventId = 10,
                 StageId = 1,
                 ConfigurationId = 20,
-                Results = new List<ResultItemViewModel>
+                Rows = new List<StageResultRowViewModel>
                 {
-                    new ResultItemViewModel { Position = 1, SelectedCompetitorId = 5 },
-                    new ResultItemViewModel { Position = 2, SelectedCompetitorId = 0 }
+                    new StageResultRowViewModel { Position = 1, SelectedCompetitorId = 5 },
+                    new StageResultRowViewModel { Position = 2, SelectedCompetitorId = 0 }
                 }
             };
 

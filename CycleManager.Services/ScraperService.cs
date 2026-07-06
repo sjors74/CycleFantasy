@@ -124,11 +124,11 @@ namespace CycleManager.Services
                 await Task.Delay(TimeSpan.FromSeconds(20));
             }
 
-            var existingSpecials = await _db.StageSpecialResults
+            var existingSpecials = await _db.ScrapedSpecialResults
     .Where(x => x.StageId == stage.Id)
     .ToListAsync();
 
-            var mapped = specialResults.Select(x => new StageSpecialResult
+            var mapped = specialResults.Select(x => new Domain.Models.ScrapedSpecialResult
             {
                 StageId = stage.Id,
                 BibNumber = x.BibNumber,
@@ -136,8 +136,8 @@ namespace CycleManager.Services
                 QuestionType  = x.QuestionType
             }).ToList();
 
-            _db.StageSpecialResults.RemoveRange(existingSpecials);
-            _db.StageSpecialResults.AddRange(mapped);
+            _db.ScrapedSpecialResults.RemoveRange(existingSpecials);
+            _db.ScrapedSpecialResults.AddRange(mapped);
 
             await _db.SaveChangesAsync();
 
@@ -235,6 +235,64 @@ namespace CycleManager.Services
             }
 
             _db.ChangeTracker.AutoDetectChangesEnabled = true;
+
+            // =========================================
+            // 6b. Special results verwerken (geen DB calls)
+            // =========================================
+
+            var scrapedSpecialResults = await _db.ScrapedSpecialResults
+                .Where(x => x.StageId == stage.Id)
+                .ToListAsync();
+
+            var existingSpecialResults = await _db.SpecialResults
+                .Where(x => x.StageId == stage.Id)
+                .ToDictionaryAsync(
+                    x => (x.CompetitorInEventId, x.SpecialId));
+
+            var configurationByQuestionType = await _db.Events
+                .Where(e => e.EventId == eventId)
+                .SelectMany(e => e.Configuration.Specials)
+                .ToDictionaryAsync(x => x.Question);
+
+            foreach (var scrapedSpecial in scrapedSpecialResults)
+            {
+                if (scrapedSpecial.BibNumber <= 0 ||
+                    !competitorByBib.TryGetValue(scrapedSpecial.BibNumber, out var match))
+                {
+                    _logger.LogWarning(
+                        "No competitor found for special {QuestionType}, bib {Bib}",
+                        scrapedSpecial.QuestionType,
+                        scrapedSpecial.BibNumber);
+
+                    continue;
+                }
+
+                if (!configurationByQuestionType.TryGetValue(
+                        scrapedSpecial.QuestionType,
+                        out var configurationItem))
+                {
+                    _logger.LogWarning(
+                        "No configuration found for special {QuestionType}",
+                        scrapedSpecial.QuestionType);
+
+                    continue;
+                }
+
+                var key = (match.Id, configurationItem.Id);
+
+                if (!existingSpecialResults.ContainsKey(key))
+                {
+                    var newResult = new SpecialResult
+                    {
+                        StageId = stage.Id,
+                        CompetitorInEventId = match.Id,
+                        SpecialId = configurationItem.Id
+                    };
+
+                    _db.SpecialResults.Add(newResult);
+                    existingSpecialResults[key] = newResult;
+                }
+            }
 
             // =========================================
             // 7. Alles in 1 keer opslaan

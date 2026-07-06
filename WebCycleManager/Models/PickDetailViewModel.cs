@@ -9,7 +9,10 @@ namespace WebCycleManager.Models
         public string FirstName { get; set; } = string.Empty;
         public string LastName { get; set; } = string.Empty;
         public bool IsOutOfCompetition { get; set; }
-        public int Score { get; set; }
+        public int NormalScore { get; set; }
+
+        public int SpecialQuestionScore { get; set; }
+        public int TotalScore { get; set; }
         public int PickId { get; set; }
         public int? SelectedCompetitorId { get; set; }
         public IEnumerable<SelectListItem> Competitors { get; set; } = new List<SelectListItem>();
