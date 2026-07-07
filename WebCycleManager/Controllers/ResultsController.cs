@@ -33,7 +33,12 @@ namespace WebCycleManager.Controllers
             // Data
             var results = await _resultService.GetResultsByStageAsync(stageId);
             var specialResults = await _resultService.GetSpecialResultsByStageAsync(stageId);
-            var specials = await _resultService.GetSpecialResultsByStageAsync(stageId);
+            var specialLookup = specialResults
+                .GroupBy(sr => sr.SpecialId)
+                .ToDictionary(
+                        g => g.Key,
+                        g => g.First()
+                );
 
             var competitorsInEvent = await _resultService.GetCompetitorsInEventAsync(currentEvent.EventId);
             var configItems = await _resultService.GetConfigurationItemsByConfigAsync(config.Id);
@@ -64,7 +69,7 @@ namespace WebCycleManager.Controllers
             // Specials
             rows.AddRange(configurationSpecialItems.Select(s =>
             {
-                var result = specialResults.FirstOrDefault(sr => sr.SpecialId == s.Id);
+                specialLookup.TryGetValue(s.Id, out var result);
 
                 return new StageResultRowViewModel
                 {
@@ -111,45 +116,60 @@ namespace WebCycleManager.Controllers
 
             foreach (var row in model.Rows)
             {
-                if (row.SelectedCompetitorId == 0)
-                    continue;
+                Console.WriteLine($"ROW: IsSpecial={row.IsSpecial}, Position={row.Position}, Competitor={row.SelectedCompetitorId}");
 
-                var cie = cieList.FirstOrDefault(c => c.CompetitorInTeam.Competitor.CompetitorId == row.SelectedCompetitorId);
-                if (cie == null)
+                if (row.SelectedCompetitorId == 0)
+                {
+                    Console.WriteLine("  -> SKIP: geen competitor");
                     continue;
+                }
+
+                var cie = cieList.FirstOrDefault(c => c.Id == row.SelectedCompetitorId);
+
+                if (cie == null)
+                {
+                    Console.WriteLine($"  -> GEEN CIE gevonden voor {row.SelectedCompetitorId}");
+                    continue;
+                }
 
                 if (row.IsSpecial)
                 {
                     var specialItem = configurationSpecialItems.FirstOrDefault(s => s.Id == row.SpecialId);
-                    if(specialItem != null)
+
+                    if (specialItem == null)
                     {
-                        specialResultsToAdd.Add(new SpecialResult
-                        {
-                            CompetitorInEventId = cie.Id,
-                            StageId = model.StageId,
-                            SpecialId = specialItem.Id
-                        });
+                        Console.WriteLine($"  -> GEEN SPECIAL gevonden voor {row.SpecialId}");
+                        continue;
                     }
+
+                    specialResultsToAdd.Add(new SpecialResult
+                    {
+                        CompetitorInEventId = cie.Id,
+                        StageId = model.StageId,
+                        SpecialId = row.SpecialId
+                    });
                 }
                 else
                 {
                     var configurationItem = configItems.FirstOrDefault(c => c.Position == row.Position);
-                    if (configurationItem != null)
-                    {
-                        resultsToAdd.Add(new Result
-                        {
-                            CompetitorInEventId = cie.Id,
-                            StageId = model.StageId,
-                            ConfigurationItemId = configurationItem.Id
-                        });
 
+                    if (configurationItem == null)
+                    {
+                        Console.WriteLine($"  -> GEEN CONFIG gevonden voor positie {row.Position}");
+                        continue;
                     }
+
+                    resultsToAdd.Add(new Result
+                    {
+                        CompetitorInEventId = cie.Id,
+                        StageId = model.StageId,
+                        ConfigurationItemId = configurationItem.Id
+                    });
                 }
             }
 
-            await _resultService.AddResultsAsync(resultsToAdd);
-            await _resultService.AddSpecialResultsAsync(specialResultsToAdd);
-            await _scoreService.UpdateScoresForStageAsync(model.EventId, model.StageId);
+            await _resultService.SyncResultsAsync( model.StageId, resultsToAdd, specialResultsToAdd);
+            await _scoreService.UpdateScoresForStageAsync(model.EventId,model.StageId);
             await InvalidateCacheInApi(model.EventId);
 
             return RedirectToAction("Index", new { stageId = model.StageId});

@@ -47,7 +47,8 @@ else
                                        class="competitor-autocomplete"
                                        id="competitor-autocomplete-row-@i"
                                        data-id-input="SelectedCompetitorId"
-                                       name="Rows[@i].CompetitorName" />
+                                       name="Rows[@i].CompetitorName"
+                                           value="@Model.Rows[i].CompetitorName" />
 
                                 <input type="hidden"
                                        class="competitor-id"
@@ -104,10 +105,12 @@ else
     };
 
     var competitorsJson = JsonSerializer.Serialize(
-        Model.Competitors
-             .Select(c => c.CompetitorInTeam)
-             .Select(cit => cit.Competitor)
-             .ToList(),
+        Model.Competitors.Select(c => new
+        {
+            CompetitorInEventId = c.Id,
+            CompetitorId = c.CompetitorInTeam.Competitor.CompetitorId,
+            CompetitorName = c.CompetitorInTeam.Competitor.CompetitorName
+        }),
         options
     );
 }

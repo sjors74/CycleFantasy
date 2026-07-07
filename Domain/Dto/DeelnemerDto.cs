@@ -9,6 +9,8 @@ namespace CycleManager.Domain.Dto
         public string DeelnemerNaam { get; set; } = string.Empty;
         public string? UserId { get; set; }
         public List<CompetitorDto> Renners { get; set; } = [];
+        public int NormalePunten { get; set; }
+        public int SpecialePunten { get; set; }
         public int Punten { get; set;}
         public int LaatsteScore { get; set; }
         public int EventId { get; set; }

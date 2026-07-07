@@ -22,6 +22,7 @@ namespace CycleManager.Domain.Dto
         public int CompetitorInEventId { get; set; }
         public bool OutOfCompetition { get; set; }
         public string? CountryCode { get; set; }
+        public List<SpecialDetailDto> Specials { get; set; } = [];
         public CompetitorRankingDto()
         {
 

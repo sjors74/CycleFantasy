@@ -40,15 +40,13 @@ namespace WebCycle.Controllers
             {
                 if (cEvent.Deelnemers != null)
                 {
-                    var totalScores = await _resultService.GetTotalScoresByEventIdAsync(cEvent.EventId);
+                    var scoreBreakdown = await _resultService.GetScoreBreakdownByEventIdAsync(cEvent.EventId);
 
                     var stageScores = await _resultService.GetScoresByEventIdAsync(cEvent.EventId);
 
                     foreach (var deelnemer in cEvent.Deelnemers)
                     {
-
-
-                        var total = totalScores
+                        var score  = scoreBreakdown
                             .FirstOrDefault(s => s.GameCompetitorEventId == deelnemer.Id);
 
                         var lastStageScore = stageScores
@@ -56,7 +54,9 @@ namespace WebCycle.Controllers
                             .OrderByDescending(s => s.StageId)
                             .FirstOrDefault();
 
-                        deelnemer.Punten = total != null ? total.TotalScore : 0;
+                        deelnemer.NormalePunten = score?.NormalScore ?? 0;
+                        deelnemer.SpecialePunten = score?.SpecialScore?? 0;
+                        deelnemer.Punten = score?.TotalPoints ?? 0;
                         deelnemer.LaatsteScore = lastStageScore?.Score ?? 0;
                     }
                 }

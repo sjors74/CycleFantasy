@@ -75,5 +75,9 @@ namespace CycleManager.Services.Interfaces
         Task<List<PickDetailDto>> GetPickDetailsAsync(int eventId, int competitorInEventId);
 
         Task<List<CompetitorScoreDto>> GetCompetitorResultsForEvent(int eventId);
+
+        Task SyncResultsAsync(int stageId, IEnumerable<Result> results, IEnumerable<SpecialResult> specialResults);
+
+        Task<List<DeelnemerScoreDto>> GetScoreBreakdownByEventIdAsync(int eventId);
     }
 }

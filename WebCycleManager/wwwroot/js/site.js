@@ -43,7 +43,7 @@ function setupAutocomplete(input) {
             filtered[0].CompetitorName !== input.value
         ) {
             input.value = filtered[0].CompetitorName;
-            hiddenId.value = filtered[0].CompetitorId;
+            hiddenId.value = filtered[0].CompetitorInEventId;
             closeDropdown();
             return;
         }
@@ -63,7 +63,7 @@ function setupAutocomplete(input) {
 
             item.addEventListener("click", function () {
                 input.value = c.CompetitorName;
-                hiddenId.value = c.CompetitorId;
+                hiddenId.value = c.CompetitorInEventId;
 
                 dropdown.remove(); // direct sluiten
             });
