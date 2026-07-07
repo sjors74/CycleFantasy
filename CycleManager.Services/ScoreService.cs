@@ -18,99 +18,127 @@ namespace CycleManager.Services
 
         public async Task UpdateScoresForStageAsync(int eventId, int stageId)
         {
-
+            // --- 1. DEELNEMERS ---
             var deelnemers = await _context.GameCompetitorsEvent
                 .Include(d => d.Renners)
                 .Where(d => d.EventId == eventId)
                 .ToListAsync();
 
+            // --- 2. NORMAL RESULTS  ---
             var resultsLookup = await _context.Results
                 .Where(r => r.StageId == stageId)
                 .Include(r => r.ConfigurationItem)
+                .GroupBy(r => r.CompetitorInEventId)
                 .ToDictionaryAsync(
-                    r => r.CompetitorInEventId,
-                    r => r.ConfigurationItem.Score
+                    g => g.Key,
+                    g => g.First().ConfigurationItem.Score
                 );
 
-            // =========================================
-            // Configuratie van specials
-            // =========================================
-            var specialConfiguration = await _context.Events
-                .Where(e => e.EventId == eventId)
-                .SelectMany(e => e.Configuration.Specials)
-                .ToDictionaryAsync(
-                    s => s.Question,
-                    s => s.Score);
-
-            // =========================================
-            // Gescrapete speciale klassementen
-            // =========================================
-            var stageSpecialResults = await _context.ScrapedSpecialResults
-                .Where(x =>
-                    x.StageId == stageId &&
-                    x.CompetitorInEventId != null)
+            // --- 3. SPECIAL RESULTS ---
+            var specialResults = await _context.SpecialResults
+                .Where(r => r.StageId == stageId)
+                .Include(r => r.Special)
                 .ToListAsync();
 
-            var stageSpecialLookup = stageSpecialResults.ToLookup(
-                 x => x.CompetitorInEventId!.Value);
-
-            //TODO: check this, because I think this is not right. Over here you should check the specialResults-table, instead of the ScrapedSpecialResults-table.
-            //The ScrapedSpecialResults-table is only used for the scraping, and the specialResults-table is used for the actual scoring.
-            //So you should check the specialResults-table, and not the ScrapedSpecialResults-table.
-
-            var specialScorePerPick = await UpdateSpecialScoresAsync(stageId, deelnemers, stageSpecialLookup, specialConfiguration);
-
-            /// =========================================
-            /// Normale rsultaten
-            /// =========================================
-            /// 
+            // --- 4. EXISTING DATA ---
             var existingStagePickScores = await _context.DeelnemerStagePickScores
                 .Where(s => s.StageId == stageId)
                 .ToDictionaryAsync(s => s.GameCompetitorEventPickId);
 
+            var existingStagePickSpecialScores = await _context.DeelnemerStagePickSpecialScores
+                .Where(s => s.StageId == stageId)
+                .ToDictionaryAsync(x => new
+                {
+                    x.GameCompetitorEventPickId,
+                    x.QuestionType
+                });
+
             var existingPickTotals = await _context.DeelnemerPickScores
-                    .ToDictionaryAsync(p => p.GameCompetitorEventPickId);
+                .ToDictionaryAsync(p => p.GameCompetitorEventPickId);
 
             var existingStageScores = await _context.DeelnemerStageScores
                 .Where(s => s.StageId == stageId)
                 .ToDictionaryAsync(s => s.GameCompetitorEventId);
 
-            // pick most recent total record per participant as baseline if needed
             var existingTotals = await _context.DeelnemerScores
                 .GroupBy(s => s.GameCompetitorEventId)
-                .Select(g => g.OrderByDescending(s => s.LastUpdated).First())
+                .Select(g => g.OrderByDescending(x => x.LastUpdated).First())
                 .ToDictionaryAsync(s => s.GameCompetitorEventId);
 
+            // --- 5. NEW RECORDS ---
             var newStagePickScores = new List<DeelnemerStagePickScore>();
+            var newStagePickSpecialScores = new List<DeelnemerStagePickSpecialScore>();
             var newPickTotals = new List<DeelnemerPickScore>();
             var newStageScores = new List<DeelnemerStageScore>();
             var newTotals = new List<DeelnemerScore>();
 
-            // keep a map of stage snapshot totals per participant for LaatsteStageScore
             var stageSnapshotByParticipant = new Dictionary<int, int>();
 
+            // --- 6. MAIN LOOP ---
             foreach (var deelnemer in deelnemers)
             {
-                int newStageTotalForDeelnemer = 0;
+                int stageTotalForDeelnemer = 0;
 
                 foreach (var pick in deelnemer.Renners)
                 {
-                    int stageScore =  resultsLookup.TryGetValue(pick.CompetitorsInEventId, out var score) ? score : 0;
+                    int normalScore =
+                        resultsLookup.TryGetValue(pick.CompetitorsInEventId, out var n)
+                            ? n
+                            : 0;
 
-                    int specialScore = specialScorePerPick.TryGetValue(pick.Id, out var special) ? special : 0;
+                    int specialScore = 0;
 
-                    int newPickScore = stageScore + specialScore;  
-                    newStageTotalForDeelnemer += newPickScore;
+                    var specialsForPick = specialResults
+                        .Where(x => x.CompetitorInEventId == pick.CompetitorsInEventId)
+                        .ToList();
 
-                    existingStagePickScores.TryGetValue(pick.Id, out var prevStagePickEntry);
-                    int prevPickStageScore = prevStagePickEntry?.Score ?? 0;
-
-                    int pickDelta = newPickScore - prevPickStageScore;
-
-                    if (prevStagePickEntry != null)
+                    foreach(var special in specialsForPick)
                     {
-                        prevStagePickEntry.Score = newPickScore;
-                        prevStagePickEntry.LastUpdated = DateTime.UtcNow;
+                        var key = new
+                        {
+                            GameCompetitorEventPickId = pick.Id,
+                            QuestionType = special.Special!.Question
+                        };
+
+                        int score = special.Special.Score;
+
+                        specialScore += score;
+
+                        if (existingStagePickSpecialScores.TryGetValue(key, out var existing))
+                        {
+                            existing.Score = score;
+                            existing.LastUpdated = DateTime.UtcNow;
+                        }
+                        else
+                        {
+                            newStagePickSpecialScores.Add(new DeelnemerStagePickSpecialScore
+                            {
+                                Id = Guid.NewGuid(),
+                                GameCompetitorEventPickId = pick.Id,
+                                StageId = stageId,
+                                QuestionType = special.Special.Question,
+                                Score = score,
+                                LastUpdated = DateTime.UtcNow
+                            });
+                        }
+                    }
+
+                    int totalPickScore = normalScore + specialScore;
+
+                    stageTotalForDeelnemer += totalPickScore;
+
+                    // =============================
+                    // NORMAL STAGE SCORE
+                    // =============================
+
+                    int previousNormalScore = 0;
+
+                    if (existingStagePickScores.TryGetValue(pick.Id, out var existingNormal))
+                    {
+                        previousNormalScore = existingNormal.Score;
+
+                        existingNormal.Score = normalScore;
+                        existingNormal.LastUpdated = DateTime.UtcNow;
                     }
                     else
                     {
@@ -119,41 +147,41 @@ namespace CycleManager.Services
                             Id = Guid.NewGuid(),
                             GameCompetitorEventPickId = pick.Id,
                             StageId = stageId,
-                            Score = newPickScore,
+                            Score = normalScore,
                             LastUpdated = DateTime.UtcNow
                         });
                     }
 
-                    if (existingPickTotals.TryGetValue(pick.Id, out var pickTotalEntry))
+                    // =============================
+                    // UPDATE PICK TOTAL
+                    // =============================
+
+                    int newPickTotal = normalScore + specialScore;
+
+                    if (existingPickTotals.TryGetValue(pick.Id, out var pickTotal))
                     {
-                        if (pickDelta != 0)
-                        {
-                            pickTotalEntry.TotalScore += pickDelta;
-                            pickTotalEntry.LastUpdate = DateTime.UtcNow;
-                        }
+                        pickTotal.TotalScore = newPickTotal;
+                        pickTotal.LastUpdate = DateTime.UtcNow;
                     }
                     else
                     {
-                        // first time we see this pick -> insert total record
                         newPickTotals.Add(new DeelnemerPickScore
                         {
                             Id = Guid.NewGuid(),
                             GameCompetitorEventPickId = pick.Id,
-                            TotalScore = newPickScore,
+                            TotalScore = newPickTotal,
                             LastUpdate = DateTime.UtcNow
                         });
                     }
                 }
 
-                // snapshot participant stage score for later use
-                stageSnapshotByParticipant[deelnemer.Id] = newStageTotalForDeelnemer;
+                // --- STAGE SNAPSHOT ---
+                stageSnapshotByParticipant[deelnemer.Id] = stageTotalForDeelnemer;
 
-                // update or add stage snapshot record
-                existingStageScores.TryGetValue(deelnemer.Id, out var prevStageScoreEntry);
-                if (prevStageScoreEntry != null)
+                if (existingStageScores.TryGetValue(deelnemer.Id, out var stageScore))
                 {
-                    prevStageScoreEntry.Score = newStageTotalForDeelnemer;
-                    prevStageScoreEntry.LastUpdated = DateTime.UtcNow;
+                    stageScore.Score = stageTotalForDeelnemer;
+                    stageScore.LastUpdated = DateTime.UtcNow;
                 }
                 else
                 {
@@ -162,41 +190,54 @@ namespace CycleManager.Services
                         Id = Guid.NewGuid(),
                         GameCompetitorEventId = deelnemer.Id,
                         StageId = stageId,
-                        Score = newStageTotalForDeelnemer,
+                        Score = stageTotalForDeelnemer,
                         LastUpdated = DateTime.UtcNow
                     });
                 }
             }
 
-            if(newStagePickScores.Any()) _context.DeelnemerStagePickScores.AddRange(newStagePickScores);
-            if(newPickTotals.Any()) _context.DeelnemerPickScores.AddRange(newPickTotals);
-            if(newStageScores.Any()) _context.DeelnemerStageScores.AddRange(newStageScores);
+            // --- 7. SAVE STAGE DATA ---
+            if (newStagePickScores.Any())
+                _context.DeelnemerStagePickScores.AddRange(newStagePickScores);
 
-            // flush changes so DB reflects updated pick totals / snapshots
+            if (newStagePickSpecialScores.Any())
+                _context.DeelnemerStagePickSpecialScores.AddRange(newStagePickSpecialScores);
+
+            if (newPickTotals.Any())
+                _context.DeelnemerPickScores.AddRange(newPickTotals);
+
+            if (newStageScores.Any())
+                _context.DeelnemerStageScores.AddRange(newStageScores);
+
             await _context.SaveChangesAsync();
 
-            // rebuild a map of pickId -> totalScore using DB content (including newly inserted rows)
+            // --- 8. REBUILD TOTALS ---
             var allPickIds = deelnemers.SelectMany(d => d.Renners.Select(r => r.Id)).ToList();
+
             var pickTotalsFromDb = await _context.DeelnemerPickScores
-                .Where(dps => allPickIds.Contains(dps.GameCompetitorEventPickId))
+                .Where(p => allPickIds.Contains(p.GameCompetitorEventPickId))
                 .ToListAsync();
 
-            var pickTotalMap = pickTotalsFromDb.ToDictionary(dps => dps.GameCompetitorEventPickId, dps => dps.TotalScore);
+            var pickTotalMap = pickTotalsFromDb
+                .ToDictionary(x => x.GameCompetitorEventPickId, x => x.TotalScore);
 
-            // Now compute and persist participant totals based on the sum of their pick totals
             foreach (var deelnemer in deelnemers)
             {
-                var picks = deelnemer.Renners.Select(r => r.Id).ToList();
-                int computedTotal = picks.Sum(pid => pickTotalMap.TryGetValue(pid, out var val) ? val : 0);
-                int lastStageScore = stageSnapshotByParticipant.TryGetValue(deelnemer.Id, out var ss) ? ss : 0;
+                var pickIds = deelnemer.Renners.Select(r => r.Id);
 
-                if (existingTotals.TryGetValue(deelnemer.Id, out var totalEntry))
+                int computedTotal = pickIds.Sum(pid =>
+                    pickTotalMap.TryGetValue(pid, out var val) ? val : 0);
+
+                int lastStageScore = stageSnapshotByParticipant.TryGetValue(deelnemer.Id, out var ss)
+                    ? ss
+                    : 0;
+
+                if (existingTotals.TryGetValue(deelnemer.Id, out var total))
                 {
-                    // set authoritative total (recompute) rather than apply deltas
-                    totalEntry.TotalScore = computedTotal;
-                    totalEntry.LaatsteStageScore = lastStageScore;
-                    totalEntry.LaatsteStageId = stageId;
-                    totalEntry.LastUpdated = DateTime.UtcNow;
+                    total.TotalScore = computedTotal;
+                    total.LaatsteStageScore = lastStageScore;
+                    total.LaatsteStageId = stageId;
+                    total.LastUpdated = DateTime.UtcNow;
                 }
                 else
                 {
@@ -212,7 +253,8 @@ namespace CycleManager.Services
                 }
             }
 
-            if (newTotals.Any()) _context.DeelnemerScores.AddRange(newTotals);
+            if (newTotals.Any())
+                _context.DeelnemerScores.AddRange(newTotals);
 
             await _context.SaveChangesAsync();
         }

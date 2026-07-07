@@ -39,7 +39,9 @@ namespace WebCycle.Controllers
 
                 foreach (var deelnemer in deelnemerResponse)
                 {
-                    int score = 0;
+                    int normaal = 0;
+                    int specials = 0;
+
                     var picks = await deelnemerService.GetAllPicks(deelnemer.Id) ?? new List<GameCompetitorEventPick>();
 
                     foreach (var pick in picks)
@@ -47,11 +49,15 @@ namespace WebCycle.Controllers
                         var results = await resultService.GetCompetitorResultsByEventId(eventId, pick.CompetitorsInEvent.Id);
                         if (results != null)
                         {
-                          score += results.TotalScore;
+
+                            normaal += results.NormalScore;
+                            specials += results.SpecialScore;
                         }
                     }
 
-                    deelnemer.Punten = score;
+                    deelnemer.NormalePunten = normaal;
+                    deelnemer.SpecialePunten = specials;
+                    deelnemer.Punten = normaal + specials;
                 }
                 _cache.Set(cacheKey, deelnemerResponse, TimeSpan.FromHours(24));
             }
@@ -90,13 +96,19 @@ namespace WebCycle.Controllers
             {
                 if(scoreLookup.TryGetValue(pick.CompetitorInEventId, out var score))
                 {
+                    pick.NormalPoints = score.NormalScore;
+                    pick.SpecialPoints = score.SpecialScore;
                     pick.Points = score.TotalScore;
                     pick.LatestPoints = score.LastScore;
+                    pick.Specials = score.Specials;
                 }
                 else
                 {
+                    pick.NormalPoints = 0;
+                    pick.SpecialPoints = 0;
                     pick.Points = 0;
                     pick.LatestPoints = 0;
+                    pick.Specials = [];
                 }
             }
 
@@ -121,8 +133,24 @@ namespace WebCycle.Controllers
 
                 foreach (var pick in picksDto)
                 {
-                    var results = await resultService.GetCompetitorResultsByEventId(eventId, pick.CompetitorInEventId);
-                    pick.Points = results?.TotalScore ?? 0;
+                    var results = await resultService.GetCompetitorResultsByEventId(
+                        eventId,
+                        pick.CompetitorInEventId);
+
+                    if (results != null)
+                    {
+                        pick.NormalPoints = results.NormalScore;
+                        pick.SpecialPoints = results.SpecialScore;
+
+                        // oude property behouden indien ergens nog gebruikt
+                        pick.Points = results.TotalScore;
+                    }
+                    else
+                    {
+                        pick.NormalPoints = 0;
+                        pick.SpecialPoints = 0;
+                        pick.Points = 0;
+                    }
                 }
 
                 result.Add(new DeelnemerMetPicksDto
@@ -144,23 +172,35 @@ namespace WebCycle.Controllers
             var currentEvent = await _eventService.GetEventById(eventId);
             var result = new List<DeelnemerDto>();
 
-            if(currentEvent?.GameCompetitorEvents == null)
+            if (currentEvent?.GameCompetitorEvents == null)
                 return Ok(result);
 
             foreach (var deelnemer in currentEvent.GameCompetitorEvents)
             {
-                var picks = await deelnemerService.GetAllPicks(deelnemer.Id) ?? new List<GameCompetitorEventPick>();
-                int totaalPunten = 0;
+                var picks = await deelnemerService.GetAllPicks(deelnemer.Id)
+                    ?? new List<GameCompetitorEventPick>();
+
+                int normalPoints = 0;
+                int specialPoints = 0;
 
                 foreach (var pick in picks)
                 {
-                    var results = await resultService.GetCompetitorResultsByEventId(eventId, pick.CompetitorsInEventId);
-                    if (results != null)
-                        totaalPunten += results.TotalScore;
+                    var score = await resultService
+                        .GetCompetitorResultsByEventId(eventId, pick.CompetitorsInEventId);
+
+                    if (score != null)
+                    {
+                        normalPoints += score.NormalScore;
+                        specialPoints += score.SpecialScore;
+                    }
                 }
 
                 var dto = _mapper.Map<DeelnemerDto>(deelnemer);
-                dto.Punten = totaalPunten;
+
+                dto.NormalePunten= normalPoints;
+                dto.SpecialePunten = specialPoints;
+                dto.Punten = normalPoints + specialPoints;
+
                 result.Add(dto);
             }
 

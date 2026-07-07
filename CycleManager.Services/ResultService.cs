@@ -50,7 +50,7 @@ namespace CycleManager.Services
                         NormalPoints = normalPoints,
                         SpecialPoints = specialPoints,
                     };
-            })
+                })
                 .OrderByDescending(c => c.TotalPoints)
                 .ThenBy(c => c.CompetitorName)
                 .ToList();
@@ -72,9 +72,9 @@ namespace CycleManager.Services
             int actualRank = -1;
             int? previousScore = null;
 
-            foreach(var item in groupedList)
+            foreach (var item in groupedList)
             {
-                if(previousScore != item.TotalPoints)
+                if (previousScore != item.TotalPoints)
                 {
                     actualRank = rank;
                 }
@@ -238,6 +238,23 @@ namespace CycleManager.Services
         public Task DeleteSpecialResultAsync(int id)
         {
             return _specialResultsRepository.DeleteAsync(id);
+        }
+
+        public Task SyncResultsAsync(int stageId, IEnumerable<Result> results, IEnumerable<SpecialResult> specialResults)
+        {
+            return _resultsRepository.SyncResultsAsync(stageId, results, specialResults);
+        }
+
+        public async Task<List<DeelnemerScoreDto>> GetScoreBreakdownByEventIdAsync(int eventId)
+        {
+            var scores = await _resultsRepository.GetScoreBreakdownByEventIdAsync(eventId);
+
+            return scores.Select(x => new DeelnemerScoreDto
+            {
+                GameCompetitorEventId = x.GameCompetitorEventId,
+                NormalScore = x.NormalPoints,
+                SpecialScore = x.SpecialPoints,
+            }).ToList();
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using CycleManager.Domain.Dto;
+using CycleManager.Domain.Models;
 using Domain.Dto;
 using Domain.Models;
 
@@ -55,5 +56,9 @@ namespace Domain.Interfaces
         Task<List<PickDetailDto>> GetPickDetailsAsync(int eventId, int gameCompetitorEventId);
 
         Task<List<CompetitorScoreDto>> GetCompetitorResultsForEvent(int eventId);
+
+        Task SyncResultsAsync(int stageId, IEnumerable<Result> results, IEnumerable<SpecialResult> specialResults);
+
+        Task<List<DeelnemerScoreBreakdown>> GetScoreBreakdownByEventIdAsync(int eventId);
     }
 }
