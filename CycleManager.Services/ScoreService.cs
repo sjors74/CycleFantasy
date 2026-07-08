@@ -327,13 +327,29 @@ namespace CycleManager.Services
                     .Where(r => r.ConfigurationItem != null)
                     .ToDictionary(r => r.CompetitorInEventId, r => r.ConfigurationItem.Score);
 
+                var specialResults = await _context.SpecialResults
+                    .Where(r => r.StageId == stage.Id)
+                    .Include(r => r.Special)
+                    .ToListAsync();
+
+                var specialScoresByCompetitor = specialResults
+                    .GroupBy(sr => sr.CompetitorInEventId)
+                    .ToDictionary(
+                        g => g.Key,
+                        g => g.Sum(x => x.Special.Score)
+                    );
+
                 foreach (var gce in participants)
                 {
                     int stageTotalForGce = 0;
 
                     foreach (var pick in gce.Renners)
                     {
-                        int pickScore = resultByCompetitor.TryGetValue(pick.CompetitorsInEventId, out var sc) ? sc : 0;
+                        int normalScore = resultByCompetitor.TryGetValue(pick.CompetitorsInEventId,out var sc) ? sc : 0;
+
+                        int specialScore = specialScoresByCompetitor.TryGetValue(pick.CompetitorsInEventId, out var ss) ? ss : 0;
+
+                        int pickScore = normalScore + specialScore;
 
                         // stage snapshot for each pick
                         _context.DeelnemerStagePickScores.Add(new DeelnemerStagePickScore
