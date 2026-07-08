@@ -1,0 +1,116 @@
+﻿    .tabs {
+        margin-top: 1em;
+    }
+
+    .tab-header {
+        list-style: none;
+        padding: 0;
+        display: flex;
+        border-bottom: 1px solid #ccc;
+    }
+
+        .tab-header li {
+            padding: 0.5em 1.5em;
+            cursor: pointer;
+            border: 1px solid #ccc;
+            border-bottom: none;
+            background: #f9f9f9;
+            margin-right: 0.2em;
+        }
+
+            .tab-header li.active {
+                background: #fff;
+                font-weight: bold;
+                border-bottom: 1px solid #fff;
+            }
+
+    .tab-content {
+        display: none;
+        padding: 1em 0;
+    }
+
+        .tab-content.active {
+            display: block;
+        }
+
+    #geen-uitslag {
+        margin-top: 1rem;
+        padding: 1rem;
+        background: #f6f6f6;
+        border-radius: 6px;
+    }
+
+    #geen-uitslag-beschrijving {
+        margin-top: 0.5rem;
+        color: #555;
+        font-size: 0.95em;
+    }
+
+    .specials-grid {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        margin-top: 1rem;
+    }
+
+    .special-card {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 14px;
+        border: 1px solid #e7e7e7;
+        border-radius: 10px;
+        background: #fff;
+        min-width: 220px;
+    }
+
+    .special-jersey {
+        width: 44px;
+        height: 44px;
+        flex-shrink: 0;
+        /* standaardkleur */
+        --jersey-color: #999;
+    }
+
+        .special-jersey svg {
+            width: 100%;
+            height: 100%;
+        }
+
+    .jersey-body {
+        fill: var(--jersey-color);
+        stroke: #555;
+        stroke-width: 2;
+    }
+
+    .jersey-collar,
+    .jersey-zip {
+        fill: none;
+        stroke: #fff;
+        stroke-width: 2;
+        stroke-linecap: round;
+    }
+
+    .special-title {
+        font-size: .75rem;
+        color: #777;
+        text-transform: uppercase;
+        letter-spacing: .05em;
+    }
+
+    .special-name {
+        font-weight: 600;
+    }
+
+    .special-team {
+        font-size: .85rem;
+        color: #666;
+    }
+
+    .klassement-header {
+        margin-top: 2rem;
+    }
+
+        .klassement-header h2 {
+            margin-bottom: 0;
+        }

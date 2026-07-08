@@ -68,10 +68,10 @@ namespace CycleManager.Tests.Unit.Api
                                  });
 
             _mockResultService.Setup(s => s.GetCompetitorResultsByEventId(eventId, 1))
-            .ReturnsAsync(new CompetitorScoreDto { TotalScore = 10 });
+            .ReturnsAsync(new CompetitorScoreDto { NormalScore = 10 });
 
             _mockResultService.Setup(s => s.GetCompetitorResultsByEventId(eventId, 2))
-            .ReturnsAsync(new CompetitorScoreDto { TotalScore = 0 });
+            .ReturnsAsync(new CompetitorScoreDto { NormalScore = 0 });
 
             _mockMapper.Setup(m => m.Map<List<DeelnemerDto>>(It.IsAny<List<GameCompetitorEvent>>()))
             .Returns((List<GameCompetitorEvent> src) =>
@@ -227,10 +227,10 @@ namespace CycleManager.Tests.Unit.Api
 
             // Resultaten per pick
             _mockResultService.Setup(s => s.GetCompetitorResultsByEventId(eventId, 1))
-                .ReturnsAsync(new CompetitorScoreDto { TotalScore = 5 }); // elke pick voor deelnemer 1 = 5 punten
+                .ReturnsAsync(new CompetitorScoreDto { NormalScore = 5 }); // elke pick voor deelnemer 1 = 5 punten
 
             _mockResultService.Setup(s => s.GetCompetitorResultsByEventId(eventId, 2))
-                .ReturnsAsync(new CompetitorScoreDto { TotalScore = 10 }); // deelnemer 2 = 10 punten
+                .ReturnsAsync(new CompetitorScoreDto { NormalScore = 10 }); // deelnemer 2 = 10 punten
 
             // Mapper
             _mockMapper.Setup(m => m.Map<List<DeelnemerDto>>(It.IsAny<List<GameCompetitorEvent>>()))
@@ -330,7 +330,7 @@ namespace CycleManager.Tests.Unit.Api
 
             var expectedResult = new CompetitorScoreDto
             {
-                TotalScore = 50, 
+                NormalScore = 50, 
                 CompetitorInEventId = 1
             };
 
@@ -406,9 +406,9 @@ namespace CycleManager.Tests.Unit.Api
                            src.ConvertAll(p => new CompetitorRankingDto { CompetitorInEventId = p.CompetitorsInEvent.Id }));
 
             _mockResultService.Setup(s => s.GetCompetitorResultsByEventId(eventId, 1))
-                              .ReturnsAsync(new CompetitorScoreDto { TotalScore = 10, LaatsteScore = 5 });
+                              .ReturnsAsync(new CompetitorScoreDto { NormalScore = 10, LaatsteScore = 5 });
             _mockResultService.Setup(s => s.GetCompetitorResultsByEventId(eventId, 2))
-                              .ReturnsAsync(new CompetitorScoreDto { TotalScore = 20, LaatsteScore = 15 });
+                              .ReturnsAsync(new CompetitorScoreDto { NormalScore = 20, LaatsteScore = 15 });
 
             // Act
             var result = await _controller.GetListOfCompetitorsPicksForDeelnemer(id, eventId);
@@ -524,7 +524,7 @@ namespace CycleManager.Tests.Unit.Api
             _mockDeelnemerService.Setup(s => s.GetAllPicks(10)).ReturnsAsync(picks);
             _mockMapper.Setup(m => m.Map<List<CompetitorRankingDto>>(picks)).Returns(mappedPicks);
             _mockResultService.Setup(s => s.GetCompetitorResultsByEventId(eventId, 100))
-                              .ReturnsAsync(new CompetitorScoreDto { TotalScore = 25 });
+                              .ReturnsAsync(new CompetitorScoreDto { NormalScore = 25 });
 
             // Act
             var result = await _controller.GetDeelnemersMetPicks(eventId);
@@ -618,9 +618,9 @@ namespace CycleManager.Tests.Unit.Api
                 });
 
             _mockResultService.Setup(s => s.GetCompetitorResultsByEventId(eventId, 1))
-                .ReturnsAsync(new CompetitorScoreDto { TotalScore = 10 });
+                .ReturnsAsync(new CompetitorScoreDto { NormalScore = 10 });
             _mockResultService.Setup(s => s.GetCompetitorResultsByEventId(eventId, 2))
-                .ReturnsAsync(new CompetitorScoreDto { TotalScore = 20 });
+                .ReturnsAsync(new CompetitorScoreDto { NormalScore = 20 });
 
             _mockMapper.Setup(m => m.Map<DeelnemerDto>(It.IsAny<GameCompetitorEvent>()))
                 .Returns((GameCompetitorEvent e) => new DeelnemerDto { Id = e.Id, DeelnemerNaam = e.User.FirstName });

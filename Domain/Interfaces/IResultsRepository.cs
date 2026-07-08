@@ -37,7 +37,7 @@ namespace Domain.Interfaces
         /// <param name="stageId"></param>
         /// <returns></returns>
         Task<int> GetResultsByStageId(int stageId);
-        Task<List<EtappeUitslagDto>?> GetEtappeUitslag(int stageId);
+        Task<EtappeResultaatDto>? GetEtappeUitslag(int stageId);
 
         //methodes voor manager
         Task<Stage?> GetStageByIdAsync(int stageId);

@@ -145,15 +145,15 @@ namespace CycleManager.Tests.Unit.Api
 
             mockResultService
                 .Setup(s => s.GetCompetitorResultsByEventId(1, 100))
-                .ReturnsAsync(new CompetitorScoreDto { TotalScore = 5 });
+                .ReturnsAsync(new CompetitorScoreDto { NormalScore = 5 });
 
             mockResultService
             .Setup(s => s.GetCompetitorResultsByEventId(1, 200))
-            .ReturnsAsync(new CompetitorScoreDto { TotalScore = 10 });
+            .ReturnsAsync(new CompetitorScoreDto { NormalScore = 10 });
 
             mockResultService
             .Setup(s => s.GetCompetitorResultsByEventId(1, 300))
-            .ReturnsAsync(new CompetitorScoreDto { TotalScore = 20 });
+            .ReturnsAsync(new CompetitorScoreDto { NormalScore = 20 });
 
             var controller = new EventController(
                 mockEventService.Object,

@@ -125,7 +125,7 @@ namespace CycleManager.Services
         /// </summary>
         /// <param name="stageId"></param>
         /// <returns></returns>
-        public Task<List<EtappeUitslagDto>> GetEtappeUitslag(int stageId)
+        public Task<EtappeResultaatDto> GetEtappeUitslag(int stageId)
         {
             return _resultsRepository.GetEtappeUitslag(stageId);
         }

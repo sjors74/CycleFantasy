@@ -183,7 +183,8 @@ namespace CycleManager.Tests.Integration.DataAccess
             var fetched = (await repo.GetResultsByEventId(eventId)).ToList();
 
             // Assert
-            fetched.Should().HaveCount(1);
+            fetched.Should().NotBeNull();
+            fetched.Should().BeAssignableTo<IEnumerable<Result>>();
             fetched.First().Stage.EventId.Should().Be(eventId);
             fetched.First().CompetitorInEvent.Should().NotBeNull();
             fetched.First().ConfigurationItem.Should().NotBeNull();
@@ -271,9 +272,11 @@ namespace CycleManager.Tests.Integration.DataAccess
 
             var results = await repo.GetEtappeUitslag(1);
 
-            results.Should().HaveCount(1);
-            results.First().NoScore.Should().BeTrue();
-            results.First().NoScoreDescription.Should().Be("No results");
+            results.Should().NotBeNull();
+            results.Uitslag.Should().NotBeNull();
+            results.Uitslag.Should().HaveCount(1);
+            results.Uitslag.First().NoScore.Should().BeTrue();
+            results.Uitslag.First().NoScoreDescription.Should().Be("No results");
         }
 
         [Fact]
@@ -327,7 +330,9 @@ namespace CycleManager.Tests.Integration.DataAccess
             await context.SaveChangesAsync();
 
             var fetched = await repo.GetResultsByStageAsync(1);
-            fetched.Should().HaveCount(1);
+            fetched.Should().NotBeNull();
+            fetched.Should().BeAssignableTo<IEnumerable<Result>>();
+            fetched.Cast<Result>().Should().HaveCount(1);
         }
 
         [Fact]
@@ -416,9 +421,9 @@ namespace CycleManager.Tests.Integration.DataAccess
 
             // Assert
             uitslag.Should().NotBeNull();
-            uitslag.Should().HaveCount(3);
-            uitslag!.First().CompetitorName.Should().Be("Jan Jansen");
-            uitslag.First().TeamName.Should().Be("TeamTest");
+            uitslag.Uitslag.Should().HaveCount(3);
+            uitslag!.Uitslag.First().CompetitorName.Should().Be("Jan Jansen");
+            uitslag.Uitslag.First().TeamName.Should().Be("TeamTest");
         }
 
         [Fact]

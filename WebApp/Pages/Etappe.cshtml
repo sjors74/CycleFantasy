@@ -30,6 +30,15 @@
                 <!-- rijen worden via JS toegevoegd -->
             </tbody>
         </table>
+        <!-- Specials -->
+        <div id="specials-container" hidden>
+            <div class="event-header etappe-header klassement-header">
+                <h1>Klassementen</h1>
+            </div>
+
+            <div id="specials-lijst" class="specials-grid"></div>
+        </div>
+
         <div id="geen-uitslag" hidden>
             <strong id="geen-uitslag-titel">Er is geen uitslag</strong>
             <div id="geen-uitslag-beschrijving"></div>
@@ -75,53 +84,3 @@
     <script src="~/js/etappe.js" asp-append-version="true"></script>
  
 }
-<!-- TODO: style should be done in css files-->
-        <style>
-            .tabs {
-                margin-top: 1em;
-            }
-
-            .tab-header {
-                list-style: none;
-                padding: 0;
-                display: flex;
-                border-bottom: 1px solid #ccc;
-            }
-
-                .tab-header li {
-                    padding: 0.5em 1.5em;
-                    cursor: pointer;
-                    border: 1px solid #ccc;
-                    border-bottom: none;
-                    background: #f9f9f9;
-                    margin-right: 0.2em;
-                }
-
-                    .tab-header li.active {
-                        background: #fff;
-                        font-weight: bold;
-                        border-bottom: 1px solid #fff;
-                    }
-
-            .tab-content {
-                display: none;
-                padding: 1em 0;
-            }
-
-                .tab-content.active {
-                    display: block;
-                }
-
-    #geen-uitslag {
-        margin-top: 1rem;
-        padding: 1rem;
-        background: #f6f6f6;
-        border-radius: 6px;
-    }
-
-    #geen-uitslag-beschrijving {
-        margin-top: 0.5rem;
-        color: #555;
-        font-size: 0.95em;
-    }
-        </style>
