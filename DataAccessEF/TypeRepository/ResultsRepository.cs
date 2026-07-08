@@ -152,7 +152,7 @@ namespace DataAccessEF.TypeRepository
                 .CountAsync(r => r.StageId == stageId);
         }
 
-        public async Task<List<EtappeUitslagDto>?> GetEtappeUitslag(int stageId)
+        public async Task<EtappeResultaatDto>? GetEtappeUitslag(int stageId)
         {
             var stage = await context.Stages
                 .Include(s => s.Event)
@@ -169,10 +169,14 @@ namespace DataAccessEF.TypeRepository
             {
                 var emptyListOfResults = new List<EtappeUitslagDto>();
                 var noResultsItem = new EtappeUitslagDto();
-                noResultsItem.NoScoreDescription = stage.NoScoreDescription;
+                noResultsItem.NoScoreDescription = stage.NoScoreDescription ?? string.Empty;
                 noResultsItem.NoScore = true;
                 emptyListOfResults.Add(noResultsItem);
-                return emptyListOfResults;
+                return new EtappeResultaatDto
+                {
+                    Uitslag = emptyListOfResults,
+                    Specials = new List<EtappeSpecialDto>()
+                };
             }
 
             var configItems = await context.ConfigurationItems
@@ -188,30 +192,96 @@ namespace DataAccessEF.TypeRepository
                     .ThenInclude(cie => cie.CompetitorInTeam)
                         .ThenInclude(cit => cit.Team)
                 .Include(r => r.CompetitorInEvent)
-                    .ThenInclude(cie => cie.CompetitorInTeam.Competitor) // één pad
+                    .ThenInclude(cie => cie.CompetitorInTeam.Competitor)
                 .Include(r => r.ConfigurationItem)
                 .ToListAsync();
 
-            var top15 = configItems.Select(ci =>
+            var resultLookup = results
+                .Where(r => r.ConfigurationItemId.HasValue)
+                .ToDictionary(
+                    r => r.ConfigurationItemId!.Value,
+                    r => r
+                );
+
+            var configurationSpecialItems = await context.ConfigurationItemSpecials
+                .AsNoTracking()
+                .Where(c => c.ConfigurationId == stage.Event.ConfigurationId)
+                .OrderBy(c => c.Question)
+                .ToListAsync();
+
+            var specialResults = await context.SpecialResults
+                .AsNoTracking()
+                .Where(r => r.StageId == stageId)
+                .Include(r => r.CompetitorInEvent)
+                    .ThenInclude(cie => cie.CompetitorInTeam)
+                        .ThenInclude(cit => cit.Team)
+                .Include(r => r.CompetitorInEvent)
+                    .ThenInclude(cie => cie.CompetitorInTeam)
+                        .ThenInclude(cit => cit.Competitor)
+                .Include(r => r.Special)
+                .ToListAsync();
+
+            var specialLookup = specialResults
+                .Where(r => r.SpecialId.HasValue)
+                .ToDictionary(
+                    r => r.SpecialId!.Value,
+                    r => r
+                );
+            var uitslag = configItems.Select(ci =>
             {
-                var result = results.FirstOrDefault(r => r.ConfigurationItem.Position == ci.Position);
-                if (result == null || result.CompetitorInEvent?.CompetitorInTeam?.Competitor == null)
+                if (!resultLookup.TryGetValue(ci.Id, out var result))
+                    return null;    
+
+                var competitorInTeam = result.CompetitorInEvent?.CompetitorInTeam;
+                var competitor = competitorInTeam?.Competitor;
+                var team = competitor?.CompetitorInTeams?.FirstOrDefault()?.Team;
+
+                if (competitor == null)
                     return null;
 
-                var competitor = result.CompetitorInEvent.CompetitorInTeam.Competitor;
-                var team = competitor.CompetitorInTeams.FirstOrDefault()?.Team;
                 return new EtappeUitslagDto
                 {
                     Positie = ci.Position,
                     CompetitorName = $"{competitor.FirstName} {competitor.LastName}",
-                    TeamName = team?.CurrentTeamName,
+                    TeamName = team?.CurrentTeamName ?? string.Empty,
                     Score = ci.Score
                 };
             })
             .Where(r => r != null)
+            .Cast<EtappeUitslagDto>()
             .ToList();
 
-            return top15;
+            var specials = configurationSpecialItems.Select(item =>
+            {
+                if (!specialLookup.TryGetValue(item.Id, out var result))
+                    return null;
+
+                var competitorInTeam = result.CompetitorInEvent?.CompetitorInTeam;
+                var competitor = competitorInTeam?.Competitor;
+                var team = competitor?.CompetitorInTeams?.FirstOrDefault()?.Team;
+
+                if (competitor == null)
+                    return null;
+
+                return new EtappeSpecialDto
+                {
+                    Name = item.Question.ToString(),
+                    Color = item.Color,
+                    CompetitorName = $"{competitor.FirstName} {competitor.LastName}",
+                    TeamName = team?.CurrentTeamName ?? string.Empty,
+                    Score = item.Score
+
+                };
+            })
+            .Where(x => x != null)
+            .Cast<EtappeSpecialDto>()
+            .ToList();
+
+            return new EtappeResultaatDto
+            {
+                Uitslag = uitslag,
+                Specials = specials
+            };
         }
 
         public async Task<List<PickDetailDto>> GetPickDetailsAsync(int eventId, int gameCompetitorEventId)

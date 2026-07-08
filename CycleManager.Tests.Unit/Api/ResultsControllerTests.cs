@@ -46,7 +46,10 @@ namespace CycleManager.Tests.Unit.Api
                 new EtappeUitslagDto { Positie = 2, CompetitorName = "Mathieu", Score = 30 }
             };
 
-            _mockResultService.Setup(s => s.GetEtappeUitslag(stageId)).ReturnsAsync(uitslag);
+            // Fix: Setup the mock to return a Task.FromResult(uitslag) for the correct return type
+            _mockResultService.Setup(s => s.GetEtappeUitslag(stageId)).ReturnsAsync(
+                new EtappeResultaatDto { Uitslag = uitslag }
+            );
 
             // Act
             var result = await _controller.GetEtappeUitslag(stageId);
