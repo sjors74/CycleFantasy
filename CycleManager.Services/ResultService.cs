@@ -45,7 +45,6 @@ namespace CycleManager.Services
                         CompetitorName = competitor?.CompetitorName ?? "onbekend",
                         EventId = first?.Stage?.EventId ?? 0,
                         CompetitorInEventId = first?.CompetitorInEventId ?? 0,
-                        Points = c.Sum(a => a.ConfigurationItem?.Score ?? 0),
                         CompetitorTeam = team?.CurrentTeamName ?? "onbekend",
                         NormalPoints = normalPoints,
                         SpecialPoints = specialPoints,
