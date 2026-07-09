@@ -47,6 +47,7 @@ steps:
 
 # 6. Deploy to Azure App Service
 - task: AzureWebApp@1
+  condition: eq(variables['Build.SourceBranch'], 'refs/heads/master')
   inputs:
     azureSubscription: 'azure-cyclefantasy-prod'
     appName: 'WebApp20250508172648'
