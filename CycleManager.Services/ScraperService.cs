@@ -508,10 +508,23 @@ namespace CycleManager.Services
 
             var eventYear = eventEntity.EventYear;
 
+            var eventTeamIds = await _db.EventTeam
+                .Where(et => et.EventId == eventId)
+                .Select(et => et.TeamId)
+                .ToListAsync();
+
+            if (!eventTeamIds.Any())
+            {
+                throw new InvalidOperationException(
+                    "Geen teams geselecteerd voor dit evenement.");
+            }
+
             var competitorInTeams = await _db.CompetitorInTeams
                 .Include(cit => cit.Competitor)
                 .Include(cit => cit.Team)
-                .Where(cit => cit.Year == eventYear)
+                .Where(cit => 
+                    cit.Year == eventYear &&
+                    eventTeamIds.Contains(cit.TeamId))
                 .ToListAsync();
 
             var existingEntries = await _db.CompetitorsInEvent
