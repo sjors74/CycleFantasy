@@ -753,7 +753,6 @@ namespace DataAccessEF.TypeRepository
                 })
                 .ToListAsync();
 
-
             var pickLookup = picks.ToDictionary(
                 x => x.PickId,
                 x => x.DeelnemerId);
@@ -767,7 +766,6 @@ namespace DataAccessEF.TypeRepository
             var normalScores = await context.DeelnemerStagePickScores
                 .Where(x => pickIds.Contains(x.GameCompetitorEventPickId))
                 .ToListAsync();
-
 
             var specialScores = await context.DeelnemerStagePickSpecialScores
                 .Where(x => pickIds.Contains(x.GameCompetitorEventPickId))
