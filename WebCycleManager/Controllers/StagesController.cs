@@ -4,6 +4,7 @@ using CycleManager.Services.Interfaces;
 using Domain.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using WebCycleManager.Helpers;
 using WebCycleManager.Models;
 
 namespace WebCycleManager.Controllers
@@ -152,11 +153,12 @@ namespace WebCycleManager.Controllers
                     ? DateOnly.FromDateTime(stage.Event.EndDate.Value)
                     : DateOnly.MaxValue,
                 ScrapeStatus = stage.ScrapeStatus,
-                AvailableStatuses = Enum.GetValues<ScrapeStatus>()
+                AvailableStatuses = Enum
+                .GetValues<ScrapeStatus>()
                 .Select(x => new SelectListItem
                 {
-                    Value = x.ToString(),
-                    Text = x.ToString()
+                    Value = ((int)x).ToString(),
+                    Text = x.GetDisplayName()
                 })
             };
             return PartialView("_EditStagePartial", vm);
@@ -241,15 +243,17 @@ namespace WebCycleManager.Controllers
                 NoScore = stage.NoScore,
                 NoScoreDescription = stage.NoScoreDescription,
                 EventId = stage.EventId,
-                EventName = stage.Event == null ? string.Empty : stage.Event.EventName,                
+                EventName = stage.Event == null ? string.Empty : stage.Event.EventName,
                 EventYear = stage.Event == null ? int.MinValue : stage.Event.EventYear,
                 ScrapeStatus = stage.ScrapeStatus,
-                AvailableStatuses = Enum.GetValues<ScrapeStatus>()
+                AvailableStatuses = Enum
+                    .GetValues<ScrapeStatus>()
                     .Select(x => new SelectListItem
                     {
-                        Value = x.ToString(),
-                        Text = x.ToString()
+                        Value = ((int)x).ToString(),
+                        Text = x.GetDisplayName()
                     })
+                    .ToList()
             };
             return vm;
         }
