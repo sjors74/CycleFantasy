@@ -26,5 +26,6 @@ namespace Domain.Models
         public DateTime? LastSuccessfulScrape { get; set; }
         public virtual Event Event{ get; set; } 
         public virtual ICollection<Result> Results { get; set; } = [];
+        public virtual ICollection<SpecialResult> SpecialResults { get; set; } = [];
     }
 }

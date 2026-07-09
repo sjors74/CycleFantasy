@@ -33,7 +33,7 @@
                 <th>Van</th>
                 <th>Naar</th>
                 <th>Acties</th>
-                <th>Uitslag / Posities</th>
+                <th>Uitslag / Klassementen</th>
                 <th>Scrape</th>
             </tr>
         </thead>
@@ -62,7 +62,8 @@
                         <a asp-controller="Results" asp-action="Index" asp-route-stageId="@item.StageId" title="Uitslag" class="text-decoration-none">
                             <i class="bi bi-card-list"></i>
                         </a>
-                        <span title="Aantal posities">@item.AantalPosities</span>
+                        <span title="Aantal posities">@item.AantalPosities</span> / 
+                        <span title="Aantal klassementen">@item.AantalSpecials</span>
                     </td>
                     <td>
                         @if (!string.IsNullOrWhiteSpace(Model.EventCode))

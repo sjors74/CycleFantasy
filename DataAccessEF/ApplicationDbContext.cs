@@ -52,10 +52,17 @@ namespace Domain.Context
                 .HasOne(e => e.Event)
                 .WithMany(s => s.Stages)
                 .HasForeignKey(e => e.EventId);
+
             modelBuilder.Entity<Stage>()
                 .HasMany(s => s.Results)
                 .WithOne(s => s.Stage)
                 .HasForeignKey(r => r.StageId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Stage>()
+                .HasMany(s => s.SpecialResults)
+                .WithOne(sr => sr.Stage)
+                .HasForeignKey(sr => sr.StageId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<Event>()
@@ -137,12 +144,6 @@ namespace Domain.Context
                 .HasOne(cit => cit.Team)
                 .WithMany(t => t.CompetitorInTeams)
                 .HasForeignKey(cit => cit.TeamId);
-
-            modelBuilder.Entity<SpecialResult>()
-                .HasOne(s => s.Stage)
-                .WithMany()
-                .HasForeignKey(s => s.StageId)
-                .OnDelete(DeleteBehavior.NoAction);
 
             modelBuilder.Entity<SpecialResult>()
                 .HasOne(s => s.CompetitorInEvent)

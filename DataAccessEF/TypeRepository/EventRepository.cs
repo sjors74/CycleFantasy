@@ -92,6 +92,7 @@ namespace DataAccessEF.TypeRepository
                             StartLocation = s.StartLocation,
                             FinishLocation = s.FinishLocation,
                             AantalPosities = s.Results.Count,
+                            AantalSpecials = s.SpecialResults.Count,
                             NoScore = s.NoScore
                         }).ToList()
                 })
