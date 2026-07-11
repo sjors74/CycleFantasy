@@ -46,3 +46,78 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
+function editPoolName(id) {
+
+    document.getElementById(`editPool-${id}`).classList.remove("d-none");
+
+    const input = document.getElementById(`poolInput-${id}`);
+    const error = document.getElementById(`poolError-${id}`);
+
+    error.classList.add("d-none");
+
+    input.focus();
+
+    input.oninput = function () {
+        error.classList.add("d-none");
+    };
+}
+
+function cancelPoolName(id) {
+
+    document
+        .getElementById(`editPool-${id}`)
+        .classList.add("d-none");
+}
+
+async function savePoolName(id) {
+
+    const naam =
+        document
+            .getElementById(`poolInput-${id}`)
+            .value
+            .trim();
+
+    if (naam === "")
+        return;
+
+    const token = document.querySelector(
+                   'input[name="__RequestVerificationToken"]'
+                  ).value;
+
+    const response = await fetch
+        ("?handler=RenamePool",
+            {
+                method: "POST",
+
+                headers: {
+                    "Content-Type": "application/json",
+                    "RequestVerificationToken": token
+                },
+
+                body: JSON.stringify({
+                    deelnemerId: id,
+                    nieuweNaam: naam
+                })
+            });
+
+    const result = await response.json();
+
+    const error = document.getElementById(`poolError-${id}`);
+
+    if (!result.success) {
+
+        error.textContent = result.message;
+        error.classList.remove("d-none");
+
+        return;
+    }
+
+    error.classList.add("d-none");
+      
+    document
+        .getElementById(`poolName-${id}`)
+        .textContent = result.poolNaam;
+
+    cancelPoolName(id);
+}

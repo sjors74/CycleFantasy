@@ -180,5 +180,13 @@ namespace CycleManager.Services
             }
             return competitors;
         }
+
+        public async Task<bool> RenamePoolAsync(RenamePoolDto dto)
+        {
+            if (string.IsNullOrWhiteSpace(dto.NieuweNaam))
+                return false;
+
+            return await _repo.RenamePoolAsync(dto.DeelnemerId, dto.UserId, dto.NieuweNaam);
+        }
     }
 }
