@@ -214,5 +214,14 @@ namespace WebCycle.Controllers
             var picksDto = _mapper.Map<List<int>>(picks) ?? new List<int>();
             return Ok(picksDto);
         }
+
+        [HttpPut("renamepool")]
+        public async Task<IActionResult> RenamePool([FromBody] RenamePoolDto dto)
+        {
+            var success = await deelnemerService.RenamePoolAsync(dto);
+            if (!success)
+                BadRequest();
+
+            return Ok();        }
     }
 }

@@ -68,11 +68,27 @@ namespace DataAccessEF.TypeRepository
             return events;
         }
 
-        public async Task<GameCompetitorEvent> GetyCompetitorWithPicksById(int id)
+        public async Task<GameCompetitorEvent> GetCompetitorWithPicksById(int id)
         {
             return await context.GameCompetitorsEvent
                 .Include(p => p.Renners) // of Picks
                 .FirstOrDefaultAsync(p => p.Id == id);
+        }
+
+        public async Task<bool> RenamePoolAsync(int deelnemerId, string userId, string nieuweNaam)
+        {
+            var deelnemer = await context.GameCompetitorsEvent
+                 .FirstOrDefaultAsync(x =>
+                    x.Id == deelnemerId &&
+                    x.UserId == userId);
+            if (deelnemer == null)
+                return false;
+
+            deelnemer.TeamName = nieuweNaam.Trim();
+
+            await context.SaveChangesAsync();
+            
+            return true;
         }
     }
 }

@@ -1,15 +1,15 @@
-﻿    .tabs {
+﻿    .etappe-tabs {
         margin-top: 1em;
     }
 
-    .tab-header {
+    .etappe-tab-header {
         list-style: none;
         padding: 0;
         display: flex;
         border-bottom: 1px solid #ccc;
     }
 
-        .tab-header li {
+        .etappe-tab-header li {
             padding: 0.5em 1.5em;
             cursor: pointer;
             border: 1px solid #ccc;
@@ -18,18 +18,18 @@
             margin-right: 0.2em;
         }
 
-            .tab-header li.active {
+        .etappe-tab-header li.active {
                 background: #fff;
                 font-weight: bold;
                 border-bottom: 1px solid #fff;
             }
 
-    .tab-content {
+    .etappe-tab-content {
         display: none;
         padding: 1em 0;
     }
 
-        .tab-content.active {
+        .etappe-tab-content.active {
             display: block;
         }
 

@@ -244,7 +244,7 @@ namespace CycleManager.Services
 
         public async Task DeletePoolAsync(int id)
         {
-            var deelnemer = await _deelnemersRepository.GetyCompetitorWithPicksById(id);
+            var deelnemer = await _deelnemersRepository.GetCompetitorWithPicksById(id);
 
             if(deelnemer != null)
             {
@@ -301,22 +301,6 @@ namespace CycleManager.Services
         public async Task AddTeamToEvent(int eventId, int teamId)
         {
             await _eventRepository.AddTeamToEvent(eventId, teamId);
-        }
-
-        public async Task<RenamePoolDto> RenamePoolAsync(RenamePoolDto renamePoolDto)
-        {
-            var pool = await _deelnemersRepository.GetById(renamePoolDto.PoolId);
-            if (pool == null)
-                throw new InvalidOperationException("Pool niet gevonden.");
-
-            var evenement = await _eventRepository.GetEventById(pool.EventId);
-            if (!evenement.CanSubscribe)
-                throw new InvalidOperationException("Inschrijving voor dit evenement is gesloten.");
-
-            pool.TeamName = renamePoolDto.NieuweNaam;
-            await _deelnemersRepository.SaveChangesAsync();
-
-            return renamePoolDto;
         }
 
         public async Task EnsureCanSubscribeAsync(int eventId)

@@ -2,7 +2,8 @@
 {
     public class RenamePoolDto
     {
-        public int PoolId { get; set; }
+        public int DeelnemerId { get; set; }
         public string NieuweNaam { get; set; } = string.Empty;
+        public string UserId { get; set; } = string.Empty;  
     }
 }

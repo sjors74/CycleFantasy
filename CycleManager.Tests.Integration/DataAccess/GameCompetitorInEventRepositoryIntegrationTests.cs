@@ -142,7 +142,7 @@ namespace CycleManager.Tests.Integration.DataAccess
             var repo = new GameCompetitorInEventRepository(context, _mapper);
 
             // Act
-            var result = await repo.GetyCompetitorWithPicksById(1);
+            var result = await repo.GetCompetitorWithPicksById(1);
 
             // Assert
             Assert.NotNull(result);
@@ -157,7 +157,7 @@ namespace CycleManager.Tests.Integration.DataAccess
             var repo = new GameCompetitorInEventRepository(context, _mapper);
 
             // Act
-            var result = await repo.GetyCompetitorWithPicksById(999);
+            var result = await repo.GetCompetitorWithPicksById(999);
 
             // Assert
             Assert.Null(result);
