@@ -19,7 +19,7 @@ steps:
     version: '8.x'
 
 # 3. Restore
-- script: dotnet CycleFantasy.sln
+- script: dotnet restore CycleFantasy.sln
   displayName: 'Restore'
 
 # 4. Build solution
