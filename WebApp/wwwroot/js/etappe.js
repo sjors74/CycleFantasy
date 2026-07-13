@@ -158,6 +158,8 @@ async function laadEtappeData(stageId) {
     const geenUitslag = document.getElementById("geen-uitslag");
     const geenUitslagTitel = document.getElementById("geen-uitslag-titel");
     const geenUitslagBeschrijving = document.getElementById("geen-uitslag-beschrijving");
+    const specialsContainer = document.getElementById("specials-container");
+    const specialsLijst = document.getElementById("specials-lijst");
 
     try {
         const stage = stages.find(s => s.stageId === stageId);
@@ -171,6 +173,8 @@ async function laadEtappeData(stageId) {
         tabel.hidden = true;
         geenUitslag.hidden = true;
         lijst.innerHTML = "";
+        specialsContainer.hidden = true;
+        specialsLijst.innerHTML = "";
 
         const response = await fetch(`${API_BASE_URL}/api/Results/${stage.stageId}/uitslag`);
 
