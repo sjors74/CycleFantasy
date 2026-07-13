@@ -52,9 +52,19 @@
                 <!-- ACTUEEL -->
                 <div class="tab-pane fade show active" id="actueel">
 
-                    @foreach (var evt in Model.Actueel)
+                    @if(Model.Actueel?.Any() == true)
                     {
-                        @await Html.PartialAsync("_EventAccordion", evt)
+                        foreach (var evt in Model.Actueel)
+                        {
+                            @await Html.PartialAsync("_EventAccordion", evt)
+                        }
+                    }
+                    else
+                    {
+                        <div class="text-center text-muted py-4">
+                            <i class="bi bi-calendar-x fs-2 d-block mb-2"></i>
+                            Er zijn momenteel geen actuele evenementen.
+                        </div>
                     }
 
                 </div>
@@ -62,19 +72,37 @@
                 <!-- TOEKOMST -->
                 <div class="tab-pane fade" id="toekomst">
 
-                    @foreach (var evt in Model.Toekomst)
+                    @if(Model.Toekomst?.Any() == true)
                     {
-                        @await Html.PartialAsync("_EventAccordion", evt)
+                        foreach (var evt in Model.Toekomst)
+                        {
+                            @await Html.PartialAsync("_EventAccordion", evt)
+                        }
                     }
-
+                    else
+                    {
+                        <div class="text-center text-muted py-4">
+                            <i class="bi bi-calendar-x fs-2 d-block mb-2"></i>
+                            Er zijn momenteel geen toekomstige evenementen.
+                        </div>
+                    }
                 </div>
 
                 <!-- HISTORISCH -->
                 <div class="tab-pane fade" id="historisch">
-
-                    @foreach (var evt in Model.Historisch)
+                    @if(Model.Historisch?.Any() == true)
                     {
-                        @await Html.PartialAsync("_EventAccordion", evt)
+                        foreach (var evt in Model.Historisch)
+                        {
+                            @await Html.PartialAsync("_EventAccordion", evt)
+                        }
+                    }
+                    else
+                    {
+                        <div class="text-center text-muted py-4">
+                            <i class="bi bi-calendar-x fs-2 d-block mb-2"></i>
+                            Er zijn momenteel geen historische evenementen.
+                        </div>
                     }
 
                 </div>
