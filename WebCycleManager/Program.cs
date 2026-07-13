@@ -82,6 +82,7 @@ builder.Services.AddScoped<IGameCompetitorEventPickRepository, GameCompetitorEve
 builder.Services.AddScoped<IGameCompetitorInEventRepository, GameCompetitorInEventRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<INewsItemRepository, NewsItemRepository>();
+builder.Services.AddScoped<ISeasonYearRepository, SeasonYearRepository>();
 //Service
 builder.Services.AddScoped<IEventService, EventService>();
 builder.Services.AddScoped<IStageService, StageService>();
@@ -104,6 +105,7 @@ builder.Services.AddScoped<IScrapeScheduleService, EventScrapeJobRegistrationSer
 builder.Services.AddScoped<IEventScrapeSchedulerService, EventScrapeSchedulerService>();
 builder.Services.AddScoped<IScrapeOrchestratorService, ScrapeOrchestratorService>();
 builder.Services.AddScoped<IDropoutOrchestratorService, DropoutOrchestratorService>();
+builder.Services.AddScoped<ISeasonYearService, SeasonYearService>();
 
 builder.Services.AddControllersWithViews()
     .AddDataAnnotationsLocalization(options =>
