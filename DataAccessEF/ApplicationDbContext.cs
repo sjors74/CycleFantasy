@@ -37,6 +37,7 @@ namespace Domain.Context
         public DbSet<ScrapedCompetitor> ScrapedCompetitors { get; set; }
         public DbSet<CompetitorInTeam> CompetitorInTeams { get; set; }
         public DbSet<TeamYear> TeamYear { get; set; }
+        public DbSet<SeasonYear> SeasonYears { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
