@@ -16,9 +16,11 @@ namespace CycleManager.Services
         public async Task CreateAsync(SeasonYear year)
         {
             if(await _repository.ExistsAsync(year.Year))
-                throw new InvalidOperationException($"Season year {year.Year} already exists.");
+                throw new InvalidOperationException($"Jaar {year.Year} bestaat al.");
 
             await _repository.AddAsync(year);   
+
+            await _repository.SaveChangesAsync();
         }
 
         public async Task DeleteAsync(int id)
@@ -27,7 +29,10 @@ namespace CycleManager.Services
             if (year == null)
                 return;
 
-            _repository.Delete(year);
+            //don't delete, just set to inactive
+            year.Active = false;
+            _repository.Update(year);
+            await _repository.SaveChangesAsync();
         }
 
         public Task<List<SeasonYear>> GetAllAsync()
@@ -43,6 +48,7 @@ namespace CycleManager.Services
         public async Task UpdateAsync(SeasonYear year)
         {
             _repository.Update(year);
+            await _repository.SaveChangesAsync();
         }
     }
 }

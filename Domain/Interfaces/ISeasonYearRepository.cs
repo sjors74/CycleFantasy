@@ -10,5 +10,6 @@ namespace CycleManager.Domain.Interfaces
         void Update(SeasonYear year);
         void Delete(SeasonYear year);
         Task<bool> ExistsAsync(int year);
+        Task SaveChangesAsync();
     }
 }

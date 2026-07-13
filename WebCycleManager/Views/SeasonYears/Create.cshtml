@@ -1,0 +1,26 @@
+﻿@model SeasonYearViewModel
+
+@{
+    ViewData["Title"] = "Nieuw jaar";
+}
+
+<h3>Nieuw jaar</h3>
+
+<hr />
+
+<div class="row">
+    <div class="col-md-4">
+
+        <form asp-action="Create">
+            <partial name="_SeasonYearForm" model="Model" />
+        </form>
+
+    </div>
+</div>
+
+@section Scripts
+{
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}
