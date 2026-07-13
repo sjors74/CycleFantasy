@@ -16,7 +16,7 @@ document.addEventListener("DOMContentLoaded", () => {
     navigateToEtappe(etappeId, { replaceHistory: true });
 });
 function initTabSwitching() {
-    const tabHeaders = document.querySelectorAll(".tab-header li");
+    const tabHeaders = document.querySelectorAll(".etappe-tab-header li");
     tabHeaders.forEach(header => {
         header.addEventListener("click", () => {
             console.log("tab klik:", header.dataset.tab);

@@ -71,10 +71,10 @@
 @section Scripts {
     <script>
         // Tab switching logic
-        document.querySelectorAll('.tab-header li').forEach(tab => {
+        document.querySelectorAll('.etappe-tab-header li').forEach(tab => {
             tab.addEventListener('click', function () {
-                document.querySelectorAll('.tab-header li').forEach(t => t.classList.remove('active'));
-                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                document.querySelectorAll('.etappe-tab-header li').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.etappe-tab-content').forEach(c => c.classList.remove('active'));
                 this.classList.add('active');
                 document.getElementById(this.getAttribute('data-tab')).classList.add('active');
             });
