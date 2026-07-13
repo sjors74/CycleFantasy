@@ -1,11 +1,7 @@
 ﻿using CycleManager.Services.Interfaces;
-using Domain.Interfaces;
 using Domain.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.CodeAnalysis.Elfie.Diagnostics;
-using Microsoft.EntityFrameworkCore;
-using System.Reflection;
 using WebCycleManager.Models;
 
 namespace WebCycleManager.Controllers
@@ -61,7 +57,8 @@ namespace WebCycleManager.Controllers
                 {
                     ConfigurationId = vm.ConfigurationId, 
                     Question = vm.Question, 
-                    Score = vm.Score 
+                    Score = vm.Score,
+                    Color = vm.ColorName
                 };
 
                 var success = await _configurationService.CreateItemSpecial(configurationItem);
@@ -92,7 +89,14 @@ namespace WebCycleManager.Controllers
             {
                 return NotFound();
             }
-            var vm = new ConfigurationItemsSpecialViewModel { Id = configurationItem.Id, Score = configurationItem.Score, Question = configurationItem.Question, ConfigurationId = configurationItem.ConfigurationId };
+            var vm = new ConfigurationItemsSpecialViewModel 
+            { 
+                Id = configurationItem.Id, 
+                Score = configurationItem.Score, 
+                Question = configurationItem.Question, 
+                ColorName = configurationItem.Color,
+                ConfigurationId = configurationItem.ConfigurationId 
+            };
             ViewData["ConfigurationId"] = new SelectList(await GetConfigurationList(), "Id", "ConfigurationType", vm.ConfigurationId);
             return View(vm);
         }
@@ -117,6 +121,7 @@ namespace WebCycleManager.Controllers
                     configurationItem.Question = vm.Question;
                     configurationItem.Score = vm.Score;
                     configurationItem.ConfigurationId = vm.ConfigurationId;
+                    configurationItem.Color = vm.ColorName;
 
                     var success = await _configurationService.UpdateItemSpecial(configurationItem);
                     if (!success)
@@ -147,7 +152,14 @@ namespace WebCycleManager.Controllers
             {
                 return NotFound();
             }
-            var vm = new ConfigurationItemsSpecialViewModel {  ConfigurationId= configurationItem.ConfigurationId, Score = configurationItem.Score, Question = configurationItem.Question, Id = configurationItem.Id };
+            var vm = new ConfigurationItemsSpecialViewModel 
+            { 
+                ConfigurationId = configurationItem.ConfigurationId, 
+                Score = configurationItem.Score, 
+                Question = configurationItem.Question, 
+                Id = configurationItem.Id,
+                ColorName = configurationItem.Color
+            };
             return View(vm);
         }
 
@@ -164,12 +176,6 @@ namespace WebCycleManager.Controllers
             var configurationId = configurationItem.ConfigurationId;
             await _configurationService.DeleteItemSpecial(configurationItem);
             return RedirectToAction("Details", "Configurations", new { id = configurationId });
-        }
-
-        private async Task<bool> ConfigurationItemSpecialExists(int id)
-        {
-            var item = await _configurationService.GetConfigurationItemSpecialById(id);
-            return  item != null;
         }
 
         private async Task<IEnumerable<Configuration>> GetConfigurationList()
