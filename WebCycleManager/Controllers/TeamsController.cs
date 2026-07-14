@@ -11,10 +11,12 @@ namespace WebCycleManager.Controllers
     {
         private readonly ITeamService _teamService;
         private readonly ICountryService _countryService;
-        public TeamsController(ITeamService teamService, ICountryService countryService)
+        private readonly ISeasonYearService _seasonYearService;
+        public TeamsController(ITeamService teamService, ICountryService countryService, ISeasonYearService seasonYearService)
         {
             _teamService = teamService;
             _countryService = countryService;
+            _seasonYearService = seasonYearService;
         }
 
         // GET: Teams
@@ -73,7 +75,7 @@ namespace WebCycleManager.Controllers
                 Country = team.Country?.CountryNameShort ?? "onbekend",
                 SelectedYear = selectedYear,
                 AvailableYears = team.TeamYears
-                                    .Select(ty => ty.Year)
+                                    .Select(ty => ty.SeasonYear.Year)
                                     .Distinct()
                                     .OrderByDescending(y => y)
                                     .ToList(),
@@ -128,17 +130,18 @@ namespace WebCycleManager.Controllers
         public async Task<IActionResult> Edit(int id)
         {
             var team = await _teamService.GetTeamById(id);
-            if (team == null)  return NotFound();
+            if (team == null)  
+                return NotFound();
 
-            var availableYears = Enumerable.Range(2025, 4).ToList();
-            
-            var countries = _countryService.GetAll().Result
+            var availableYears = await _seasonYearService.GetAllAsync();
+
+            var countries = (await _countryService.GetAll())
                 .OrderBy(c => c.CountryNameLong)
                 .Select(c => new SelectListItem
                 {
                     Value = c.CountryId.ToString(),
                     Text = c.CountryNameLong,
-                    Selected = c.CountryId == team.CountryId // hier de geselecteerde waarde instellen
+                    Selected = c.CountryId == team.CountryId
                 })
                 .ToList();
             
@@ -149,13 +152,23 @@ namespace WebCycleManager.Controllers
                 CountryId = team.CountryId,
                 PcsName = team.PcsName,
                 Countries = countries,
-                AvailableYears = availableYears,
+                AvailableYears = availableYears
+                .OrderByDescending(y => y.Year)
+                .Select(y => new SeasonYearViewModel
+                {
+                    SeasonYearId = y.SeasonYearId,
+                    Year = y.Year,
+                    Active = y.Active
+                })
+                .ToList(),
+
                 TeamYears = team.TeamYears
-                            .OrderBy(ty => ty.Year)
+                            .OrderBy(ty => ty.SeasonYear.Year)
                             .Select(ty => new TeamYearViewModel
                             {
                                 TeamYearId = ty.TeamYearId,
-                                Year = ty.Year,
+                                SeasonYearId = ty.SeasonYearId,
+                                Year = ty.SeasonYear.Year,
                                 Name = ty.Name
                             }).ToList()
             };
@@ -168,8 +181,9 @@ namespace WebCycleManager.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(TeamEditViewModel model)
         {
-            model.AvailableYears = Enumerable.Range(2025, 4).ToList();
-            model.Countries = _countryService.GetAll().Result
+            if (!ModelState.IsValid)
+            { 
+               model.Countries = (await _countryService.GetAll())
                 .OrderBy(c => c.CountryNameLong)
                 .Select(c => new SelectListItem
                 {
@@ -178,22 +192,22 @@ namespace WebCycleManager.Controllers
                 })
                 .ToList();
 
-            if (!ModelState.IsValid)
-            {
                 return View(model);
             }
 
             var team = await _teamService.GetTeamById(model.TeamId);
-            if (team == null) return NotFound();
+            if (team == null) 
+                return NotFound();
 
             team.CurrentTeamName = model.CurrentTeamName;
             team.PcsName = model.PcsName;
             team.CountryId = model.CountryId;
 
-            foreach (var year in model.AvailableYears)
+            foreach (var seasonYear in model.AvailableYears)
             {
-                var posted = model.TeamYears.FirstOrDefault(x => x.Year == year);
-                var existing = team.TeamYears.FirstOrDefault(x => x.Year == year);
+                var posted = model.TeamYears.FirstOrDefault(x => x.SeasonYearId == seasonYear.SeasonYearId);
+
+                var existing = team.TeamYears.FirstOrDefault(x => x.SeasonYearId == seasonYear.SeasonYearId);
 
                 if (posted == null || string.IsNullOrWhiteSpace(posted.Name))
                 {
@@ -212,7 +226,8 @@ namespace WebCycleManager.Controllers
                     {
                         team.TeamYears.Add(new TeamYear
                         {
-                            Year = posted.Year,
+                            TeamId = team.TeamId,
+                            SeasonYearId  = seasonYear.SeasonYearId,
                             Name = posted.Name
                         });
                     }
@@ -220,6 +235,7 @@ namespace WebCycleManager.Controllers
             }
 
             await _teamService.Update(team);
+
             return RedirectToAction(nameof(Index));
         }
 

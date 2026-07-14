@@ -18,7 +18,7 @@ namespace WebCycleManager.Models
         [Display(Name = "PCS naam")]
         public string? PcsName { get; set; }
 
-        public List<int> AvailableYears { get; set; } = [];
+        public List<SeasonYearViewModel> AvailableYears { get; set; } = [];
 
         public List<TeamYearViewModel> TeamYears { get; set; } = [];
     }
@@ -26,6 +26,7 @@ namespace WebCycleManager.Models
     public class TeamYearViewModel
     {
         public int TeamYearId { get; set; }
+        public int SeasonYearId { get; set; }
         public int Year { get; set; }
         [Display(Name = "Teamnaam")]
         public string Name { get; set; } = string.Empty;

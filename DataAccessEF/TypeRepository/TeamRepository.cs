@@ -35,6 +35,7 @@ namespace DataAccessEF.TypeRepository
                     .ThenInclude(cit => cit.Competitor)
                         .ThenInclude(c => c.Country)
                 .Include(t => t.TeamYears)
+                    .ThenInclude(ty => ty.SeasonYear)
                 .FirstOrDefaultAsync(t => t.TeamId == id);
 
             return team;
@@ -48,9 +49,11 @@ namespace DataAccessEF.TypeRepository
                     .ThenInclude(cit => cit.Competitor)
                         .ThenInclude(c => c.Country)
                 .Include(t => t.TeamYears)
+                    .ThenInclude(ty => ty.SeasonYear)
                 .FirstOrDefaultAsync(t => 
                     t.TeamId == id &&
-                    t.TeamYears.Any(ty => ty.Year == year));
+                    t.TeamYears.Any(ty => ty.SeasonYear.Year == year));
+
             return team;
             
         }

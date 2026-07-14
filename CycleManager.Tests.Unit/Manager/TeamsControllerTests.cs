@@ -11,13 +11,15 @@ namespace CycleManager.Tests.Unit.Manager
     {
         private readonly Mock<ITeamService> _mockTeamService;
         private readonly Mock<ICountryService> _mockCountryService;
+        private readonly Mock<ISeasonYearService> _mockSeasonYearService;
         private readonly TeamsController _controller;
 
         public TeamsControllerTests()
         {
             _mockTeamService = new Mock<ITeamService>();
             _mockCountryService = new Mock<ICountryService>();
-            _controller = new TeamsController(_mockTeamService.Object, _mockCountryService.Object);
+            _mockSeasonYearService = new Mock<ISeasonYearService>();
+            _controller = new TeamsController(_mockTeamService.Object, _mockCountryService.Object, _mockSeasonYearService.Object);
         }
 
         // -------------------------------------------
@@ -157,7 +159,7 @@ namespace CycleManager.Tests.Unit.Manager
                 PcsName = "NewPCS",
                 CountryId = 2,
                 TeamYears = new List<TeamYearViewModel>(),
-                AvailableYears = new List<int> { 2025 }
+                AvailableYears = new List<SeasonYearViewModel> { new SeasonYearViewModel { Year = 2025 } }
             };
 
             _mockTeamService.Setup(s => s.GetTeamById(1)).ReturnsAsync(team);

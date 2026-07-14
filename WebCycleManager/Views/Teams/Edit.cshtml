@@ -28,15 +28,15 @@
             <ul class="nav nav-tabs" id="yearTabs" role="tablist">
                 @for (int i = 0; i < Model.AvailableYears.Count; i++)
                 {
-                    var year = Model.AvailableYears[i];
+                    var seasonYear = Model.AvailableYears[i];
                     <li class="nav-item" role="presentation">
                         <button class="nav-link @(i == 0 ? "active" : "")"
-                                id="tab-@year"
+                                id="tab-@seasonYear.SeasonYearId"
                                 data-bs-toggle="tab"
-                                data-bs-target="#year-@year"
+                                data-bs-target="#year-@seasonYear.SeasonYearId"
                                 type="button"
                                 role="tab">
-                            @year
+                            @seasonYear.Year
                         </button>
                     </li>
                 }
@@ -45,14 +45,19 @@
             <div class="tab-content mt-3">
                 @for (int i = 0; i < Model.AvailableYears.Count; i++)
                 {
-                    var year = Model.AvailableYears[i];
-                    var teamYear = Model.TeamYears.FirstOrDefault(ty => ty.Year == year);
-                    <div class="tab-pane fade @(i == 0 ? "show active" : "")" id="year-@year" role="tabpanel">
-                        <div id="teamyear-container-@year">
+                    var seasonYear = Model.AvailableYears[i];
+                    var teamYear = Model.TeamYears.FirstOrDefault(ty => ty.SeasonYearId == seasonYear.SeasonYearId);
+                    <input type="hidden" name="AvailableYears.Index" value="@i" />
+                    <input type="hidden" name="AvailableYears[@i].SeasonYearId" value="@seasonYear.SeasonYearId" />
+                    <input type="hidden" name="AvailableYears[@i].Year" value="@seasonYear.Year" />
+                    <div class="tab-pane fade @(i == 0 ? "show active" : "")" id="year-@seasonYear.SeasonYearId" role="tabpanel">
+                        <div id="teamyear-container-@seasonYear.SeasonYearId">
                             @if (teamYear != null)
                             {
+                                <input type="hidden" name="TeamYears.Index" value="@i" />
                                 <input type="hidden" name="TeamYears[@i].TeamYearId" value="@teamYear.TeamYearId" />
-                                <input type="hidden" name="TeamYears[@i].Year" value="@teamYear.Year" />
+                                <input type="hidden" name="TeamYears[@i].SeasonYearId" value="@teamYear.SeasonYearId" />
+
 
                                 <div class="form-group mt-2">
                                     <label>Teamnaam</label>
@@ -60,7 +65,7 @@
                                         <input type="text" class="form-control" style="max-width: 300px;" name="TeamYears[@i].Name" value="@teamYear.Name" />
                                         <button type="button"
                                                 class="btn btn-outline-danger"
-                                                onclick="removeTeamYear(@year, @i)">
+                                                onclick="removeTeamYear(@seasonYear.SeasonYearId, @seasonYear.Year, @i)">
                                             <i class="bi bi-trash"></i>
                                         </button>
                                     </div>
@@ -71,9 +76,9 @@
                                 <div class="form-group mt-2">
                                     <label>Teamnaam</label>
                                     <div class="input-group" style="max-width: 300px;">
-                                        <input type="text" class="form-control" value="Geen team aanwezig voor @year" readonly />
+                                        <input type="text" class="form-control" value="Geen team aanwezig voor @seasonYear.Year" readonly />
                                         <button type="button" class="btn btn-outline-primary"
-                                                onclick="createTeamYear(@year, @i)">
+                                                onclick="createTeamYear(@seasonYear.SeasonYearId, @i)">
                                             <i class="bi bi-plus"></i>
                                         </button>
                                     </div>                     
@@ -95,10 +100,11 @@
     @{ await Html.RenderPartialAsync("_ValidationScriptsPartial");}
 
     <script>
-        function createTeamYear(year, index) {
-            var container = document.getElementById('teamyear-container-' + year);
+        function createTeamYear(seasonYearId, index) {
+            var container = document.getElementById('teamyear-container-' + seasonYearId);
             container.innerHTML = `
-                <input type="hidden" name="TeamYears[${index}].Year" value="${year}" />
+                <input type="hidden" name="TeamYears.Index" value="${index}" />
+                <input type="hidden" name="TeamYears[${index}].SeasonYearId" value="${seasonYearId}" />
                 <div class="form-group">
                     <label>Teamnaam</label>
                     <input type="text" class="form-control" name="TeamYears[${index}].Name" value="" />
@@ -107,15 +113,15 @@
         }
     </script>
     <script>
-        function removeTeamYear(year, index) {
-            var container = document.getElementById('teamyear-container-' + year);
+        function removeTeamYear(seasonYearId, year, index) {
+            var container = document.getElementById('teamyear-container-' + seasonYearId);
             container.innerHTML = `
                 <div class="form-group mt-2">
                     <label>Teamnaam</label>
                     <div class="input-group" style="max-width: 300px;">
                         <input type="text" class="form-control" value="Geen team aanwezig voor ${year}" readonly />
                         <button type="button" class="btn btn-outline-primary"
-                            onclick="createTeamYear(${year}, ${index})">
+                            onclick="createTeamYear(${seasonYearId}, ${year}, ${index})">
                             <i class="bi bi-plus"></i>
                         </button>
                     </div>
