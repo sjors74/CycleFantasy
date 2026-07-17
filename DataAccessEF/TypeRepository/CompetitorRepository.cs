@@ -14,10 +14,10 @@ namespace DataAccessEF.TypeRepository
         { 
         }
 
-        public async Task<List<CompetitorDto>> GetAllCompetitors(int year)
+        public async Task<List<CompetitorDto>> GetAllCompetitors(int seasonYearId)
         {
             var competitors = await context.Competitors
-                .Where(c => c.CompetitorInTeams.Any(cit => cit.Year == year))
+                .Where(c => c.CompetitorInTeams.Any(cit => cit.TeamYear.SeasonYearId == seasonYearId))
                 .Select(c => new CompetitorDto
                 {
                     CompetitorId = c.CompetitorId,
@@ -26,17 +26,18 @@ namespace DataAccessEF.TypeRepository
                     PcsName = c.PcsName,
                     ScraperName = c.ScraperName,
                     CountryShort = c.Country.CountryNameShort,
+
                     Teams = c.CompetitorInTeams
-                        .Where(cit => cit.Year == year)
+                        .Where(cit => cit.TeamYear.SeasonYearId == seasonYearId)
                         .Select(cit => new CompetitorInTeamDto
                         {
                             CompetitorInTeamId = cit.Id,
-                            TeamId = cit.TeamId,
-                            TeamName = cit.Team.CurrentTeamName,
-                            Year = cit.Year,
+                            TeamId = cit.TeamYear.TeamId,
+                            TeamName = cit.TeamYear.Name,
+                            Year = cit.TeamYear.SeasonYear.Year,
                             IsNationalChampion = cit.IsNationalChampion
                         })
-                        .ToList() // mag blijven voor materialisatie
+                        .ToList()
                 })
                 .AsNoTracking()
                 .ToListAsync();
@@ -49,10 +50,11 @@ namespace DataAccessEF.TypeRepository
             var competitor = await context.Competitors
                 .Include(c => c.Country)
                 .Include(c => c.CompetitorInTeams)
-                    .ThenInclude(cit => cit.Team)
-                        .ThenInclude(t => t.TeamYears)
+                        .ThenInclude(t => t.TeamYear)
+                            .ThenInclude(ty => ty.Team)
                 .Include(c => c.CompetitorInTeams)
                     .ThenInclude(cit => cit.TeamYear)
+                        .ThenInclude(ty => ty.SeasonYear)
                 .FirstOrDefaultAsync(c => c.CompetitorId == competitorId);
 
             return competitor;
@@ -89,12 +91,16 @@ namespace DataAccessEF.TypeRepository
             return numberOfCompetitors;
         }
 
-        public async Task<List<int>> GetAvailableYears()
+        public async Task<List<SeasonYearDto>> GetAvailableSeasonYears()
         {
-            return await context.CompetitorInTeams
-                .Select(cit => cit.Year)
-                .Distinct()
-                .OrderByDescending(y => y)
+            return await context.SeasonYears
+                .OrderByDescending(sy => sy.Year)
+                .Select(sy => new SeasonYearDto
+                {
+                    SeasonYearId = sy.SeasonYearId,
+                    Year = sy.Year,
+                    Active = sy.Active
+                })
                 .ToListAsync();
         }
 

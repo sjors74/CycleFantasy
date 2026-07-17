@@ -17,11 +17,13 @@ namespace DataAccessEF.TypeRepository
         public async Task<IEnumerable<Team>> GetAllTeams()
         {
             var teams = await context.Teams
-                .Include(ct => ct.Country)
-                .Include(t => t.CompetitorInTeams)
-                    .ThenInclude(cit => cit.Competitor)
-                        .ThenInclude(c => c.Country)
+                .Include(t => t.Country)
                 .Include(t => t.TeamYears)
+                    .ThenInclude(ty => ty.SeasonYear)
+                .Include(t => t.TeamYears)
+                    .ThenInclude(ty => ty.CompetitorInTeams)
+                        .ThenInclude(cit => cit.Competitor)
+                            .ThenInclude(c => c.Country)
                 .ToListAsync();
 
             return teams;
@@ -45,11 +47,12 @@ namespace DataAccessEF.TypeRepository
         {
             var team = await context.Teams
                 .Include(t => t.Country)
-                .Include(t => t.CompetitorInTeams)
-                    .ThenInclude(cit => cit.Competitor)
-                        .ThenInclude(c => c.Country)
                 .Include(t => t.TeamYears)
                     .ThenInclude(ty => ty.SeasonYear)
+                .Include(t => t.TeamYears)
+                    .ThenInclude(ty => ty.CompetitorInTeams)
+                        .ThenInclude(cit => cit.Competitor)
+                            .ThenInclude(c => c.Country)
                 .FirstOrDefaultAsync(t => 
                     t.TeamId == id &&
                     t.TeamYears.Any(ty => ty.SeasonYear.Year == year));

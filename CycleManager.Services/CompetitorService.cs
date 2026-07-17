@@ -55,14 +55,14 @@ namespace CycleManager.Services
         /// Get all competitors
         /// </summary>
         /// <returns></returns>
-        public async Task<List<CompetitorDto>> GetAllCompetitors(int year)
+        public async Task<List<CompetitorDto>> GetAllCompetitors(int seasonYearId)
         {
-            return await _competitorRepository.GetAllCompetitors(year);
+            return await _competitorRepository.GetAllCompetitors(seasonYearId);
         }
 
-        public Task<List<int>> GetAvailableYears()
+        public Task<List<SeasonYearDto>> GetAvailableYears()
         {
-            return _competitorRepository.GetAvailableYears();
+            return _competitorRepository.GetAvailableSeasonYears();
         }
 
         /// <summary>

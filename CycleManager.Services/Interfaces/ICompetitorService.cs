@@ -25,7 +25,7 @@ namespace CycleManager.Services.Interfaces
         /// Get all competitors
         /// </summary>
         /// <returns></returns>
-        Task<List<CompetitorDto>> GetAllCompetitors(int year);
+        Task<List<CompetitorDto>> GetAllCompetitors(int seasonYearId);
 
         /// <summary>
         /// Create a new competitor and save it
@@ -60,8 +60,7 @@ namespace CycleManager.Services.Interfaces
         /// <param name="teamId"></param>
         /// <returns></returns>
         Task<IEnumerable<CompetitorInTeamDto>> GetByTeamId(int teamId, int year);
-        Task<List<int>> GetAvailableYears();
-
+        Task<List<SeasonYearDto>> GetAvailableYears();
         Task<Competitor?> GetCompetitorByName(string firstName, string lastName, int countryId);
         Task<bool> CheckCompetitorInTeam(int competitorId, int teamId, int year);
         IQueryable<Competitor> GetCompetitorsByTerm(string term);

@@ -11,8 +11,7 @@ namespace Domain.Interfaces
         Task<Competitor> GetById(int competitorId);
         Task<IEnumerable<CompetitorInTeamDto>> GetByTeamId(int teamId, int year);
         Task<int> GetCompetitorsByCountry(int countryId);
-        Task<List<int>> GetAvailableYears();
-
+        Task<List<SeasonYearDto>> GetAvailableSeasonYears();
         Task<Competitor?> GetCompetitorByName(string firstName, string lastName, int countryId);
         IQueryable<Competitor> GetCompetitorsByTerm(string term);
         Task UpdateCompetitorWithTeam(CompetitorEditDto dto);
