@@ -12,12 +12,11 @@ namespace DataAccessEF.TypeRepository
 
         }
 
-        public async Task<bool> CheckCompetitorInTeam(int competitorId, int teamId, int year)
+        public async Task<bool> CheckCompetitorInTeam(int competitorId, int teamYearId)
         {
             return await context.CompetitorInTeams
                 .AnyAsync(cit => cit.CompetitorId == competitorId
-                && cit.TeamId == teamId
-                && cit.Year == year);
+                && cit.TeamYearId == teamYearId);
         }
     }
 }

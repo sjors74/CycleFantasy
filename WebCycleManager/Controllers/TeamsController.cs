@@ -36,7 +36,7 @@ namespace WebCycleManager.Controllers
                     TeamName = team.CurrentTeamName,
                     PcsName = team.PcsName,
                     CountryNameShort = team.Country?.CountryNameShort ?? string.Empty,
-                    CompetitorsInTeam = team.CompetitorInTeams?.Count ?? 0, // telt via CompetitorInTeams
+                    CompetitorsInTeam = team.TeamYears.FirstOrDefault(ty => ty.SeasonYear.Active)?.CompetitorInTeams.Count ?? 0
                 });
             }
 
@@ -55,8 +55,9 @@ namespace WebCycleManager.Controllers
             if (team == null)
                 return NotFound();
 
-            var competitors = team.CompetitorInTeams
-                .Where(cit => cit.Year == selectedYear)
+            var competitors = team.TeamYears
+                .Where(ty => ty.SeasonYear.Year == selectedYear)
+                .SelectMany(ty => ty.CompetitorInTeams)
                 .Select(cit => new CompetitorViewModel
                 {
                     CompetitorId = cit.CompetitorId,
@@ -152,16 +153,6 @@ namespace WebCycleManager.Controllers
                 CountryId = team.CountryId,
                 PcsName = team.PcsName,
                 Countries = countries,
-                AvailableYears = availableYears
-                .OrderByDescending(y => y.Year)
-                .Select(y => new SeasonYearViewModel
-                {
-                    SeasonYearId = y.SeasonYearId,
-                    Year = y.Year,
-                    Active = y.Active
-                })
-                .ToList(),
-
                 TeamYears = team.TeamYears
                             .OrderBy(ty => ty.SeasonYear.Year)
                             .Select(ty => new TeamYearViewModel
@@ -203,35 +194,19 @@ namespace WebCycleManager.Controllers
             team.PcsName = model.PcsName;
             team.CountryId = model.CountryId;
 
-            foreach (var seasonYear in model.AvailableYears)
+            foreach (var posted in model.TeamYears)
             {
-                var posted = model.TeamYears.FirstOrDefault(x => x.SeasonYearId == seasonYear.SeasonYearId);
+                var existing = team.TeamYears
+                    .FirstOrDefault(ty => ty.SeasonYearId == posted.SeasonYearId);
 
-                var existing = team.TeamYears.FirstOrDefault(x => x.SeasonYearId == seasonYear.SeasonYearId);
+                if (existing == null)
+                {
+                    // Dit zou eigenlijk nooit meer mogen gebeuren.
+                    throw new InvalidOperationException(
+                        $"Geen TeamYear gevonden voor seizoen {posted.SeasonYearId}.");
+                }
 
-                if (posted == null || string.IsNullOrWhiteSpace(posted.Name))
-                {
-                    if (existing != null)
-                    {
-                        team.TeamYears.Remove(existing);
-                    }
-                }
-                else
-                {
-                    if (existing != null)
-                    {
-                        existing.Name = posted.Name;
-                    }
-                    else
-                    {
-                        team.TeamYears.Add(new TeamYear
-                        {
-                            TeamId = team.TeamId,
-                            SeasonYearId  = seasonYear.SeasonYearId,
-                            Name = posted.Name
-                        });
-                    }
-                }
+                existing.Name = posted.Name;
             }
 
             await _teamService.Update(team);

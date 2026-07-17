@@ -159,7 +159,6 @@ namespace CycleManager.Tests.Unit.Manager
                 PcsName = "NewPCS",
                 CountryId = 2,
                 TeamYears = new List<TeamYearViewModel>(),
-                AvailableYears = new List<SeasonYearViewModel> { new SeasonYearViewModel { Year = 2025 } }
             };
 
             _mockTeamService.Setup(s => s.GetTeamById(1)).ReturnsAsync(team);

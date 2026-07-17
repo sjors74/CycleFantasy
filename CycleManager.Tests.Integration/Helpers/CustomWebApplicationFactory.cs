@@ -88,8 +88,8 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
 
         // 4) CompetitorInTeam: koppel correct aan team en competitor
         // - let op: stel zowel FK-velden als navigations in (voor zekerheid)
-        var cit1 = new CompetitorInTeam {  CompetitorId = competitor1.CompetitorId, TeamId = team.TeamId, Year = 2025, IsNationalChampion = false };
-        var cit2 = new CompetitorInTeam {  CompetitorId = competitor2.CompetitorId, TeamId = team.TeamId, Year = 2025, IsNationalChampion = false
+        var cit1 = new CompetitorInTeam {  CompetitorId = competitor1.CompetitorId, IsNationalChampion = false };
+        var cit2 = new CompetitorInTeam {  CompetitorId = competitor2.CompetitorId, IsNationalChampion = false
         };
 
         // Voeg toe aan DbSet én ook aan navigatiecollecties zodat in-memory virtueel geladen wordt

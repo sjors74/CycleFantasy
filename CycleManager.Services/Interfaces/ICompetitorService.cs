@@ -59,10 +59,10 @@ namespace CycleManager.Services.Interfaces
         /// </summary>
         /// <param name="teamId"></param>
         /// <returns></returns>
-        Task<IEnumerable<CompetitorInTeamDto>> GetByTeamId(int teamId, int year);
+        Task<IEnumerable<CompetitorInTeamDto>> GetByTeamId(int teamYearId);
         Task<List<SeasonYearDto>> GetAvailableYears();
         Task<Competitor?> GetCompetitorByName(string firstName, string lastName, int countryId);
-        Task<bool> CheckCompetitorInTeam(int competitorId, int teamId, int year);
+        Task<bool> CheckCompetitorInTeam(int competitorId, int teamYearId);
         IQueryable<Competitor> GetCompetitorsByTerm(string term);
         Task UpdateCompetitorWithTeam(CompetitorEditDto dto);
         Task<CompetitorEditDto> GetCompetitorForEdit(int competitorId);

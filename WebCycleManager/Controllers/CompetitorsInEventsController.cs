@@ -32,7 +32,7 @@ namespace WebCycleManager.Controllers
             if (FilterTeam > 0)
             {
                 deelnemers = deelnemers
-                    .Where(t => t.CompetitorInTeam.Team.TeamId == FilterTeam)
+                    .Where(t => t.CompetitorInTeam.TeamYear.TeamId == FilterTeam)
                     .ToList();
             }
 
@@ -49,7 +49,7 @@ namespace WebCycleManager.Controllers
             var deelnemersViewModel = deelnemers.Select(d =>
             {
                 var competitor = d.CompetitorInTeam.Competitor;
-                var team = d.CompetitorInTeam.Team;
+                var team = d.CompetitorInTeam.TeamYear.Team;
 
                 return new CompetitorInEventViewModel
                 {
@@ -212,7 +212,7 @@ namespace WebCycleManager.Controllers
             }
             var competitor = await  _competitorService.GetCompetitorById(competitorsInEvent.CompetitorInTeamId);
             var vm = GetViewModel(competitorsInEvent);
-            var team = competitor?.CompetitorInTeams.FirstOrDefault()?.Team;
+            var team = competitor?.CompetitorInTeams.FirstOrDefault()?.TeamYear?.Team;
             vm.TeamId = team?.TeamId ?? 0;
             ViewData["EventId"] = new SelectList(await _eventService.GetAllEvents(), "EventId", "EventName", competitorsInEvent.EventId);
             return View(vm);
@@ -311,17 +311,19 @@ namespace WebCycleManager.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetCompetitorForEvent(int teamId, int year)
+        public async Task<IActionResult> GetCompetitorForEvent(int teamYearId)
         {
-            var competitors = await _competitorService.GetByTeamId(teamId, year);
+            var competitors = await _competitorService.GetByTeamId(teamYearId);
+
             var result = competitors
                 .OrderBy(c => c.LastName)
                 .ThenBy(c => c.FirstName)
                 .Select(c => new
-            {
-                value = c.CompetitorInTeamId,
-                text = $"{c.LastName}, {c.FirstName}"
-            });
+                {
+                    value = c.CompetitorInTeamId,
+                    text = $"{c.LastName}, {c.FirstName}"
+                });
+
             return Json(result);
         }
 
@@ -330,7 +332,7 @@ namespace WebCycleManager.Controllers
             var competitor = competitorsInEvent.CompetitorInTeam.Competitor;
 
             // Kies het eerste team (of filter op een specifiek jaar)
-            var team = competitor?.CompetitorInTeams.FirstOrDefault()?.Team;
+            var team = competitor?.CompetitorInTeams.FirstOrDefault()?.TeamYear?.Team;
 
             var vm = new CompetitorInEventViewModel
             {

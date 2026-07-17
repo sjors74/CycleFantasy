@@ -8,11 +8,11 @@
         public string? PcsName { get; set; }
         public string? ScraperName { get; set; }
         public int CountryId { get; set; }
-        public int SelectedTeamId { get; set; }
-        public int SelectedYear { get; set; }
+        public int? SelectedTeamYearId { get; set; }
+        public int SelectedSeasonYearId { get; set; }
 
-        public IEnumerable<int> AvailableYears { get; set; } = new List<int>();
-        public IEnumerable<TeamDto> Teams { get; set; } = new List<TeamDto>();
+        public IEnumerable<SeasonYearDto> AvailableYears { get; set; } = new List<SeasonYearDto>();
+        public IEnumerable<TeamYearDto> Teams { get; set; } = new List<TeamYearDto>();
         public IEnumerable<CountryDto> Countries { get; set; } = new List<CountryDto>();
 
         public List<CompetitorInTeamDto> CompetitorInTeams { get; set; } = new();

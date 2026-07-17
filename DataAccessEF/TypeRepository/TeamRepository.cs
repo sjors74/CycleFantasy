@@ -1,4 +1,5 @@
-﻿using Domain.Context;
+﻿using CycleManager.Domain.Dto;
+using Domain.Context;
 using Domain.Interfaces;
 using Domain.Models;
 using Microsoft.EntityFrameworkCore;
@@ -27,6 +28,19 @@ namespace DataAccessEF.TypeRepository
                 .ToListAsync();
 
             return teams;
+        }
+
+        public async Task<List<TeamYearDto>> GetTeamYears(int seasonYearId)
+        {
+            return await context.TeamYear
+                .Where(ty => ty.SeasonYearId == seasonYearId)
+                .OrderBy(ty => ty.Name)
+                 .Select(ty => new TeamYearDto
+                 {
+                     TeamYearId = ty.TeamYearId,
+                        Name = ty.Name
+                 })
+                .ToListAsync();
         }
 
         public async Task<Team> GetTeamById(int id)

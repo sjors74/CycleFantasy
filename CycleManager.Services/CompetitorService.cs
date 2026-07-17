@@ -70,9 +70,9 @@ namespace CycleManager.Services
         /// </summary>
         /// <param name="teamId"></param>
         /// <returns></returns>
-        public async Task<IEnumerable<CompetitorInTeamDto>> GetByTeamId(int teamId, int year)
+        public async Task<IEnumerable<CompetitorInTeamDto>> GetByTeamId(int teamYearId)
         {
-            return await _competitorRepository.GetByTeamId(teamId, year);
+            return await _competitorRepository.GetByTeamId(teamYearId);
         }
 
         /// <summary>
@@ -112,9 +112,9 @@ namespace CycleManager.Services
             return await _competitorRepository.GetCompetitorByName(firstName, lastName, countryId);
         }
 
-        public async Task<bool> CheckCompetitorInTeam(int competitorId, int teamId, int year)
+        public async Task<bool> CheckCompetitorInTeam(int competitorId, int teamYearId)
         {
-            return await _competitorInTeamRepository.CheckCompetitorInTeam(competitorId, teamId, year);
+            return await _competitorInTeamRepository.CheckCompetitorInTeam(competitorId, teamYearId);
         }
 
         public IQueryable<Competitor> GetCompetitorsByTerm(string term)
@@ -133,41 +133,17 @@ namespace CycleManager.Services
             competitor.ScraperName = dto.ScraperName ?? string.Empty;
             competitor.CountryId = dto.CountryId;
 
-            foreach (var dtoCit in dto.CompetitorInTeams)
-            {
-                var existingCit = competitor.CompetitorInTeams
-                .FirstOrDefault(cit => cit.Id == dtoCit.CompetitorInTeamId);
-
-                if (existingCit != null)
-                {
-                    existingCit.IsNationalChampion = dtoCit.IsNationalChampion;
-                    existingCit.TeamId = dtoCit.TeamId;
-                    existingCit.Year = dtoCit.Year;
-                }
-                else
-                {
-                    competitor.CompetitorInTeams.Add(new CompetitorInTeam
-                    {
-                        TeamId = dtoCit.TeamId,
-                        Year = dtoCit.Year,
-                        IsNationalChampion = dtoCit.IsNationalChampion
-                    });
-                }
-            }
-
             await _competitorRepository.UpdateCompetitorAsync(competitor);
 
         }
-
         public async Task<CompetitorEditDto> GetCompetitorForEdit(int competitorId)
         {
             var competitor = await _competitorRepository.GetById(competitorId);
-            if (competitor == null) return null;
 
-            var teams = await _teamRepository.GetAll();
-            var countries =  await _countryRepository.GetAll();
+            if (competitor == null)
+                return null;
 
-            var years = Enumerable.Range(DateTime.Now.Year - 3, 7);
+            var countries = await _countryRepository.GetAll();
 
             return new CompetitorEditDto
             {
@@ -177,23 +153,15 @@ namespace CycleManager.Services
                 PcsName = competitor.PcsName,
                 ScraperName = competitor.ScraperName,
                 CountryId = competitor.CountryId,
-                SelectedTeamId = competitor.CompetitorInTeams.FirstOrDefault()?.TeamId ?? 0,
-                SelectedYear = competitor.CompetitorInTeams?.FirstOrDefault()?.Year ?? DateTime.Now.Year,
-                
-                AvailableYears = years,
-                Teams = teams.Select(t => new TeamDto { Id = t.TeamId, Naam = t.CurrentTeamName, Renners = new List<CompetitorDto>() }),
-                Countries = countries.Select(c => new CountryDto { Id = c.CountryId, CountryNameLong = c.CountryNameLong, CountryNameShort = c.CountryNameShort }),
-                CompetitorInTeams = competitor.CompetitorInTeams
-                .Select(cit => new CompetitorInTeamDto
-                {
-                    CompetitorInTeamId = cit.Id,
-                    TeamId = cit.TeamId,
-                    TeamName = cit.Team.CurrentTeamName,
-                    TeamNameForYear = cit.Team.TeamYears.Where(ty => ty.Year == cit.Year).Select(ty => ty.Name).FirstOrDefault(),
-                    Year = cit.Year,
-                    IsNationalChampion = cit.IsNationalChampion
-                })
-                .ToList()
+
+                Countries = countries
+                    .Select(c => new CountryDto
+                    {
+                        Id = c.CountryId,
+                        CountryNameLong = c.CountryNameLong,
+                        CountryNameShort = c.CountryNameShort
+                    })
+                    .ToList()
             };
         }
 

@@ -1,11 +1,9 @@
 ﻿using AutoMapper;
-using AutoMapper.Internal;
 using CycleManager.Domain.Dto;
 using CycleManager.Services;
 using CycleManager.Services.Interfaces;
 using Domain.Dto;
 using Microsoft.AspNetCore.Mvc;
-using System.Linq;
 
 namespace WebCycle.Controllers
 {
@@ -18,14 +16,16 @@ namespace WebCycle.Controllers
         private readonly IGameCompetitorInEventService _deelnemerService;
         private readonly IEventDashboardService _eventDashboardService;
         private readonly ITeamService _teamService;
+        private readonly ISeasonYearService _seasonYearService;
         private readonly IMapper _mapper;
 
-        public EventController(IEventService eventService, IGameCompetitorInEventService deelnemerService, IEventDashboardService eventDashboardService, ITeamService teamService, IResultService resultService, IMapper mapper)
+        public EventController(IEventService eventService, IGameCompetitorInEventService deelnemerService, IEventDashboardService eventDashboardService, ITeamService teamService, IResultService resultService, ISeasonYearService seasonYearService, IMapper mapper)
         {
             _eventService = eventService;
             _deelnemerService = deelnemerService;
             _eventDashboardService = eventDashboardService;
             _resultService = resultService;
+            _seasonYearService = seasonYearService;
             _teamService = teamService;
             this._mapper = mapper;
         }
@@ -148,26 +148,27 @@ namespace WebCycle.Controllers
 
 
         [HttpGet("team/{teamId}/teams-with-more-renners")]
-        public async Task<ActionResult<IEnumerable<CompetitorDto>>> GetTeamsWithRennersFromTeam(int teamId)
+        public async Task<ActionResult<IEnumerable<CompetitorInSelectieDto>>> GetTeamsWithRennersFromTeam(int teamId)
         {
-            var year = DateTime.Now.Year;
-            var team = await _teamService.GetTeamForCurrentYear(teamId, year);
+            var activeSeasonYear = (await _seasonYearService.GetAllAsync())
+                .Single(s => s.Active);
+
+            var team = await _teamService.GetTeamById(activeSeasonYear.SeasonYearId);
 
             if (team == null)
             {
                 return NotFound();
             }
 
-            // Haal competitors via CompetitorInTeams
             var competitors = team.CompetitorInTeams
-                .Where(cit => cit.Year == year)
                 .Select(cit => new CompetitorInSelectieDto
                 {
                     CompetitorInTeamId = cit.Id,
                     FirstName = cit.Competitor.FirstName,
                     LastName = cit.Competitor.LastName,
                     PcsName = cit.Competitor.PcsName
-                }).ToList();
+                })
+                .ToList();
 
             return Ok(competitors);
         }

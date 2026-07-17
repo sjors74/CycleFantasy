@@ -83,8 +83,8 @@ namespace CycleManager.Tests.Integration.Manager
                 db.Competitors.AddRange(comp1, comp2);
 
                 // CompetitorInTeam
-                var cit1 = new CompetitorInTeam { CompetitorId = comp1.CompetitorId, TeamId = team1.TeamId, IsNationalChampion = false };
-                var cit2 = new CompetitorInTeam { CompetitorId = comp2.CompetitorId, TeamId = team2.TeamId, IsNationalChampion = false };
+                var cit1 = new CompetitorInTeam { CompetitorId = comp1.CompetitorId, IsNationalChampion = false };
+                var cit2 = new CompetitorInTeam { CompetitorId = comp2.CompetitorId, IsNationalChampion = false };
                 db.CompetitorInTeams.AddRange(cit1, cit2);
 
                 // CompetitorInEvent
@@ -238,9 +238,7 @@ namespace CycleManager.Tests.Integration.Manager
 
             var competitorInTeam = new CompetitorInTeam
             {
-                CompetitorId = competitor.CompetitorId,
-                TeamId = team.TeamId,
-                Year = 2025
+                CompetitorId = competitor.CompetitorId                    
             };
             db.CompetitorInTeams.Add(competitorInTeam);
             await db.SaveChangesAsync();
@@ -359,8 +357,8 @@ namespace CycleManager.Tests.Integration.Manager
             db.Competitors.AddRange(comp1, comp2);
             await db.SaveChangesAsync();
 
-            var cit1 = new CompetitorInTeam { CompetitorId = comp1.CompetitorId, TeamId = team1.TeamId, Year = 2025 };
-            var cit2 = new CompetitorInTeam { CompetitorId = comp2.CompetitorId, TeamId = team1.TeamId, Year = 2025 };
+            var cit1 = new CompetitorInTeam { CompetitorId = comp1.CompetitorId };
+            var cit2 = new CompetitorInTeam { CompetitorId = comp2.CompetitorId };
             db.CompetitorInTeams.AddRange(cit1, cit2);
             await db.SaveChangesAsync();
 
@@ -441,8 +439,8 @@ namespace CycleManager.Tests.Integration.Manager
                 db.Competitors.AddRange(competitor1, competitor2);
                 await db.SaveChangesAsync();
 
-                var cit1 = new CompetitorInTeam { CompetitorId = competitor1.CompetitorId, TeamId = team.TeamId, Year = 2025 };
-                var cit2 = new CompetitorInTeam { CompetitorId = competitor2.CompetitorId, TeamId = team.TeamId, Year = 2025 };
+                var cit1 = new CompetitorInTeam { CompetitorId = competitor1.CompetitorId };
+                var cit2 = new CompetitorInTeam { CompetitorId = competitor2.CompetitorId };
                 db.CompetitorInTeams.AddRange(cit1, cit2);
                 await db.SaveChangesAsync();
 

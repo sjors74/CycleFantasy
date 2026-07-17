@@ -151,7 +151,7 @@ namespace CycleManager.Services
                             EventNumber = renner.CompetitorsInEvent.EventNumber.ToString(),
                             PcsName = renner.CompetitorsInEvent.CompetitorInTeam.Competitor.PcsName,
                             Punten = punten,
-                            CurrentTeamName = renner.CompetitorsInEvent.CompetitorInTeam.Team.CurrentTeamName,
+                            CurrentTeamName = renner.CompetitorsInEvent.CompetitorInTeam.TeamYear.Name,
                             IsNationalChampion = renner.CompetitorsInEvent.CompetitorInTeam.IsNationalChampion,
                             CompetitorInTeamId = renner.CompetitorsInEvent.CompetitorInTeam.Id
                         });

@@ -37,8 +37,6 @@ namespace CycleManager.Tests.Integration.Helpers
                 _db.CompetitorInTeams.Add(new CompetitorInTeam
                 {
                     Competitor = competitor,
-                    TeamId = sc.TeamId,
-                    Year = sc.Year
                 });
 
                 sc.ProcessedAt = DateTime.UtcNow;

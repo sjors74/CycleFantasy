@@ -57,7 +57,7 @@ namespace CycleManager.Tests.Unit.Manager
                     CompetitorInTeam = new CompetitorInTeam
                     {
                         Competitor = new Competitor { FirstName = "Jan", LastName = "Jansen" },
-                        Team = new Team { TeamId = 5, CurrentTeamName = "Team Jumbo" }
+                        TeamYear = new TeamYear { TeamId = 5, Name = "Team Jumbo" }
                     }
                 }
             };
@@ -107,7 +107,7 @@ namespace CycleManager.Tests.Unit.Manager
                 {
                     CompetitorInTeam = new CompetitorInTeam
                     {
-                        Team = new Team { TeamId = 5 },
+                        TeamYear = new TeamYear { TeamId = 5, Name = "Team Jumbo" },
                         Competitor = new Competitor()
                     }
                 },
@@ -115,7 +115,7 @@ namespace CycleManager.Tests.Unit.Manager
                 {
                     CompetitorInTeam = new CompetitorInTeam
                     {
-                        Team = new Team { TeamId = 9 },
+                        TeamYear = new TeamYear { TeamId = 9, Name = "Team B" },
                         Competitor = new Competitor()
                     }
                 }
@@ -207,8 +207,8 @@ namespace CycleManager.Tests.Unit.Manager
                 .Setup(s => s.GetCompetitorInTeamsByIdsAsync(It.IsAny<List<int>>()))
                 .ReturnsAsync(new List<CompetitorInTeam>
                 {
-                    new CompetitorInTeam { Id = 5, TeamId = 1 },
-                    new CompetitorInTeam { Id = 7, TeamId = 1 }
+                    new CompetitorInTeam { Id = 5, TeamYear = new TeamYear { TeamId = 1 } },
+                    new CompetitorInTeam { Id = 7, TeamYear = new TeamYear { TeamId = 1 } }
                 });
 
             // Mock de service call die de CompetitorsInEvent opslaat
@@ -266,7 +266,7 @@ namespace CycleManager.Tests.Unit.Manager
                         LastName = "Jansen",
                         CompetitorInTeams = new List<CompetitorInTeam>
                 {
-                    new CompetitorInTeam { Team = new Team { TeamId = 3, CurrentTeamName = "Jumbo" } }
+                    new CompetitorInTeam { TeamYear = new TeamYear { TeamId = 3, Name = "Jumbo" } }
                 }
                     }
                 }
@@ -425,8 +425,8 @@ namespace CycleManager.Tests.Unit.Manager
         public async Task GetCompetitorForEvent_ReturnsJson_WithExpectedValues()
         {
             // Arrange
-            int teamId = 1, year = 2025;
-            _competitorServiceMock.Setup(s => s.GetByTeamId(teamId, year))
+            int teamYearId = 1;
+            _competitorServiceMock.Setup(s => s.GetByTeamId(teamYearId))
                 .ReturnsAsync(new List<CompetitorInTeamDto>
             {
                 new CompetitorInTeamDto
@@ -450,7 +450,7 @@ namespace CycleManager.Tests.Unit.Manager
             });
 
             // Act
-            var result = await _controller.GetCompetitorForEvent(teamId, year);
+            var result = await _controller.GetCompetitorForEvent(teamYearId);
 
             // Assert
             var json = Assert.IsType<JsonResult>(result);
@@ -468,7 +468,7 @@ namespace CycleManager.Tests.Unit.Manager
                 CompetitorInTeam = new CompetitorInTeam
                 {
                     Competitor = new Competitor { FirstName = "Jan", LastName = "Jansen" },
-                    Team = new Team { CurrentTeamName = "Team A" }
+                    TeamYear = new TeamYear { TeamId =10, Name  = "Team A" }
                 }
             };
 

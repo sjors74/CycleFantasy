@@ -49,11 +49,11 @@ namespace WebCycle.Controllers
         }
 
         [HttpGet("{id}/team", Name = "GetCompetitorsByTeamId")]
-        public async Task<IActionResult> GetByTeamId(int id, int year)
+        public async Task<IActionResult> GetByTeamId(int id)
         {
             try
             {
-                var competitors = await _competitorService.GetByTeamId(id, year) ?? new List<CompetitorInTeamDto>();
+                var competitors = await _competitorService.GetByTeamId(id) ?? new List<CompetitorInTeamDto>();
                 return Ok(competitors);
             }
             catch (Exception)

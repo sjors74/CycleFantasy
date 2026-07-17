@@ -34,8 +34,9 @@ namespace CycleManager.Services
                 .Select(c =>
                 {
                     var first = c.First();
-                    var competitor = first?.CompetitorInEvent?.CompetitorInTeam.Competitor;
-                    var team = competitor?.CompetitorInTeams.FirstOrDefault()?.Team;
+
+                    var competitorInTeam = first?.CompetitorInEvent?.CompetitorInTeam;
+                    var competitor = competitorInTeam?.Competitor;
 
                     var normalPoints = c.Sum(a => a.ConfigurationItem?.Score ?? 0);
                     var specialPoints = specialLookup.GetValueOrDefault(first?.CompetitorInEventId ?? 0, 0);
@@ -45,7 +46,7 @@ namespace CycleManager.Services
                         CompetitorName = competitor?.CompetitorName ?? "onbekend",
                         EventId = first?.Stage?.EventId ?? 0,
                         CompetitorInEventId = first?.CompetitorInEventId ?? 0,
-                        CompetitorTeam = team?.CurrentTeamName ?? "onbekend",
+                        CompetitorTeam = competitorInTeam?.TeamYear?.Name ?? "onbekend",
                         NormalPoints = normalPoints,
                         SpecialPoints = specialPoints,
                     };

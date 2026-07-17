@@ -33,8 +33,9 @@ namespace WebCycleManager.Models.ViewModel
         public string? ScraperName { get; set; }
         [DisplayName("Land")]
         public int CountryId { get; set; }
-        public int SelectedTeamId { get; set; }
-        public int SelectedYear { get; set; }
+        public int SelectedSeasonYearId { get; set; }
+        public int? SelectedTeamYearId { get; set; }
+
         public string? ReturnUrl { get; set; }
 
         public IEnumerable<SelectListItem> Countries { get; set; }
@@ -47,10 +48,15 @@ namespace WebCycleManager.Models.ViewModel
     public class CompetitorInTeamEditModel
     {
         public int CompetitorInTeamId { get; set; }
+
+        public int TeamYearId { get; set; }
+
         public string TeamName { get; set; } = string.Empty;
+
+        public int SeasonYearId { get; set; }
+
         public int Year { get; set; }
+
         public bool IsNationalChampion { get; set; }
-        public string? TeamNameForYear { get; set; }
-        public int TeamId { get; set; }
     }
 }

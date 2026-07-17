@@ -1,4 +1,5 @@
-﻿using Domain.Models;
+﻿using CycleManager.Domain.Dto;
+using Domain.Models;
 
 namespace Domain.Interfaces
 {
@@ -15,5 +16,7 @@ namespace Domain.Interfaces
         Task<bool> HasUnprocessedScrapedCompetitors();
 
         Task<int> CountUnprocessedScrapedCompetitors();
+
+        Task<List<TeamYearDto>> GetTeamYears(int seasonYearId);
     }
 }

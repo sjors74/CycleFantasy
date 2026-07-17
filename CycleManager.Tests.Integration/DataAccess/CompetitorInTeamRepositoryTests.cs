@@ -25,11 +25,18 @@ namespace CycleManager.Tests.Integration.DataAccess
             var competitor = new Competitor { CompetitorId = 1, FirstName = "Remco", LastName = "Evenepoel" };
             var team = new Team { TeamId = 1, CurrentTeamName = "Soudal Quick-Step" };
 
+            var teamYear = new TeamYear
+            {
+                TeamId = team.TeamId,
+                Team = team,
+                Year = 2024
+            };
+
             var cit = new CompetitorInTeam
             {
                 CompetitorId = competitor.CompetitorId,
-                TeamId = team.TeamId,
-                Year = 2024
+                Competitor = competitor,
+                TeamYear = teamYear
             };
 
             context.Competitors.Add(competitor);
@@ -40,7 +47,7 @@ namespace CycleManager.Tests.Integration.DataAccess
             var repo = new CompetitorInTeamRepository(context);
 
             // Act
-            var result = await repo.CheckCompetitorInTeam(1, 1, 2024);
+            var result = await repo.CheckCompetitorInTeam(1, 1);
 
             // Assert
             Assert.True(result);
@@ -61,15 +68,20 @@ namespace CycleManager.Tests.Integration.DataAccess
             context.CompetitorInTeams.Add(new CompetitorInTeam
             {
                 CompetitorId = 1,
-                TeamId = 1,
-                Year = 2023 // niet 2024
+                Competitor = competitor,
+                TeamYear = new TeamYear
+                {
+                    TeamId = 1,
+                    Team = team,
+                    Year = 2023 // niet 2024
+                }
             });
             await context.SaveChangesAsync();
 
             var repo = new CompetitorInTeamRepository(context);
 
             // Act
-            var result = await repo.CheckCompetitorInTeam(1, 1, 2024);
+            var result = await repo.CheckCompetitorInTeam(1, 1);
 
             // Assert
             Assert.False(result);
@@ -83,7 +95,7 @@ namespace CycleManager.Tests.Integration.DataAccess
             var repo = new CompetitorInTeamRepository(context);
 
             // Act
-            var result = await repo.CheckCompetitorInTeam(99, 99, 2025);
+            var result = await repo.CheckCompetitorInTeam(99, 99);
 
             // Assert
             Assert.False(result);

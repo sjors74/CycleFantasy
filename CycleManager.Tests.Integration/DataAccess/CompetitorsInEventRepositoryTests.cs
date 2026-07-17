@@ -36,12 +36,19 @@ namespace CycleManager.Tests.Integration.DataAccess
             var team = new Team { TeamId = 1, CurrentTeamName = "TeamA" };
             context.Teams.Add(team);
 
+            var teamYear = new TeamYear
+            {
+                TeamYearId = 1,
+                TeamId = 1,
+                Year = 2025
+            };
+
             var competitorInTeam = new CompetitorInTeam
             {
                 Id = 1,
                 CompetitorId = 1,
-                TeamId = 1,
-                Year = 2025
+                TeamYearId = teamYear.TeamYearId,
+                TeamYear = teamYear
             };
             context.CompetitorInTeams.Add(competitorInTeam);
 
@@ -84,8 +91,34 @@ namespace CycleManager.Tests.Integration.DataAccess
             var team = new Team { TeamId = 1, CurrentTeamName = "TeamA" };
             context.Teams.Add(team);
 
-            var cit1 = new CompetitorInTeam { Id = 1, CompetitorId = 1, TeamId = 1, Competitor = competitor1, Team = team, Year = 2025 };
-            var cit2 = new CompetitorInTeam { Id = 2, CompetitorId = 2, TeamId = 1, Competitor = competitor2, Team = team, Year = 2025 };
+            var teamYear = new TeamYear
+            {
+                TeamYearId = 1,
+                TeamId = 1,
+                Year = 2025
+            };
+
+            var cit1 = new CompetitorInTeam
+            {
+                Id = 1,
+                CompetitorId = 1,
+                TeamYearId = teamYear.TeamYearId,
+                TeamYear = teamYear
+            };
+            var teamYear2 = new TeamYear
+            {
+                TeamYearId = 1,
+                TeamId = 1,
+                Year = 2025
+            };
+
+            var cit2 = new CompetitorInTeam
+            {
+                Id = 2,
+                CompetitorId = 2,
+                TeamYearId = teamYear2.TeamYearId,
+                TeamYear = teamYear2    
+            };
             context.CompetitorInTeams.AddRange(cit1, cit2);
 
             var cie1 = new CompetitorsInEvent { Id = 1, EventId = 100, CompetitorInTeamId = 1, CompetitorInTeam = cit1 };
@@ -132,14 +165,20 @@ namespace CycleManager.Tests.Integration.DataAccess
             var team = new Team { TeamId = 1, CurrentTeamName = "TeamA" };
             context.Teams.Add(team);
 
+            var teamYear = new TeamYear
+            {
+                TeamYearId = 1,
+                TeamId = 1,
+                Year = 2025
+            };
+
             var competitorInTeam = new CompetitorInTeam
             {
                 Id = 1,
                 CompetitorId = 1,
-                TeamId = 1,
                 Competitor = competitor,
-                Team = team,
-                Year = 2025
+                TeamYearId = teamYear.TeamYearId,
+                TeamYear = teamYear
             };
             context.CompetitorInTeams.Add(competitorInTeam);
 
@@ -187,7 +226,7 @@ namespace CycleManager.Tests.Integration.DataAccess
             foreach (var c in competitors)
             {
                 context.Competitors.Add(c);
-                var cit = new CompetitorInTeam { Id = c.CompetitorId, CompetitorId = c.CompetitorId, TeamId = 1, Team = team, Competitor = c, Year = 2025 };
+                var cit = new CompetitorInTeam { Id = c.CompetitorId, CompetitorId = c.CompetitorId, Competitor = c};
                 context.CompetitorInTeams.Add(cit);
                 context.CompetitorsInEvent.Add(new CompetitorsInEvent { Id = c.CompetitorId, EventId = eventId, CompetitorInTeamId = cit.Id, CompetitorInTeam = cit });
             }

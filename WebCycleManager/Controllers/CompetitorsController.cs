@@ -18,16 +18,18 @@ namespace WebCycleManager.Controllers
         private readonly ICompetitorService _competitorService;
         private readonly ITeamService _teamService;
         private readonly ICountryService _countryService;
+        private readonly ISeasonYearService _seasonYearService;
 
-        public CompetitorsController(ICompetitorService competitorService, ITeamService teamService, ICountryService countryService)
+        public CompetitorsController(ICompetitorService competitorService, ITeamService teamService, ICountryService countryService, ISeasonYearService seasonYearService)
         {
             _competitorService = competitorService;
             _teamService = teamService;
             _countryService = countryService;
+            _seasonYearService = seasonYearService;
         }
 
         // GET: Competitors
-        public async Task<IActionResult> Index(string currentFilter, string? searchString, int? pageNumber, int? year)
+        public async Task<IActionResult> Index(string currentFilter, string? searchString, int? pageNumber, int? seasonYearId)
         {
             if (searchString != null)
             {
@@ -41,13 +43,16 @@ namespace WebCycleManager.Controllers
             ViewData["CurrentFilter"] = searchString;
             var availableYears = await _competitorService.GetAvailableYears();
             ViewData["AvailableYears"] = availableYears;
-            
-            var selectedYear = year ?? DateTime.Now.Year;
-            ViewData["SelectedYear"] = selectedYear;
+
+            var activeSeason = availableYears.Single(a => a.Active);
+
+            var selectedSeasonYearId = seasonYearId ?? activeSeason.SeasonYearId;
+
+            ViewData["SelectedSeasonYearId"] = selectedSeasonYearId;
 
             var pageSize = ConfigurationConstants.PageSize;
 
-            var competitors = await _competitorService.GetAllCompetitors(selectedYear);
+            var competitors = await _competitorService.GetAllCompetitors(selectedSeasonYearId);
 
             if (!string.IsNullOrEmpty(searchString))
             {
@@ -61,8 +66,26 @@ namespace WebCycleManager.Controllers
                 .OrderBy(c => c.LastName)
                 .ThenBy(c => c.FirstName);
 
-            return View(PaginatedList<CompetitorDto>.Create(
-                orderedList, pageNumber ?? 1, pageSize));
+            var vm = new CompetitorIndexViewModel
+            {
+                Competitors = PaginatedList<CompetitorDto>.Create(
+                    orderedList,
+                    pageNumber ?? 1,
+                    pageSize),
+                AvailableYears = availableYears
+                    .OrderByDescending(y => y.Year)
+                    .Select(y => new SeasonYearViewModel
+                    {
+                        SeasonYearId = y.SeasonYearId,
+                        Year = y.Year,
+                        Active = y.Active
+                    })
+                    .ToList(),
+                SelectedSeasonYearId = selectedSeasonYearId,
+                CurrentFilter = searchString
+            };
+
+            return View(vm);
         }
 
         // GET: Competitors/Details/5
@@ -83,28 +106,33 @@ namespace WebCycleManager.Controllers
         }
 
         // GET: Competitors/Create
-        public async Task<IActionResult> Create(int year)
+        public async Task<IActionResult> Create(int? seasonYearId)
         {
-            var selectedYear = year == 0 ? DateTime.Now.Year : year;
-            ViewData["SelectedYear"] = selectedYear;
+            var seasonYears = await _seasonYearService.GetAllAsync();
 
-            var teams = (await _teamService.GetAllTeams())
-                .OrderBy(t => t.CurrentTeamName)
-                .Select(t => new SelectListItem {  Value = t.TeamId.ToString(), Text = t.CurrentTeamName })
+            var activeSeason = seasonYears.Single(s => s.Active);
+            var selectedSeasonYearId = seasonYearId ?? activeSeason.SeasonYearId;
+            var selectedSeason = seasonYears.Single(s => s.SeasonYearId == selectedSeasonYearId);
+
+            var teams = (await _teamService.GetTeamYears(selectedSeasonYearId))
+                .OrderBy(t => t.Name)
+                .Select(ty => new SelectListItem {  Value = ty.TeamYearId.ToString(), Text = ty.Name })
                 .ToList();
-            teams.Insert(0, new SelectListItem { Value = "", Text = "-- Kies een team --" });
-            ViewData["TeamId"] =teams ?? Enumerable.Empty<SelectListItem>();
 
+            teams.Insert(0, new SelectListItem { Value = "", Text = "-- Kies een team --" });
+            
             var countries = (await CountrySelectListHelper.GetOrderedCountries(_countryService))
                 .Select(c => new SelectListItem { Value = c.CountryId.ToString(), Text = c.CountryNameLong })
                 .ToList();
             countries.Insert(0, new SelectListItem { Value = "", Text = "-- Kies een land --" });
-            ViewData["CountryId"] = countries ?? Enumerable.Empty<SelectListItem>();
-
+            
             var vm = new CreateCompetitorViewModel
             {
-                Year = selectedYear,
-                CompetitorId = 0
+                CompetitorId = 0,
+                SeasonYearId = selectedSeasonYearId,
+                SeasonYear = selectedSeason.Year,
+                Teams = teams,
+                Countries = countries
             };
 
             return View(vm);
@@ -118,15 +146,52 @@ namespace WebCycleManager.Controllers
 
             async Task PopulateDropdownsAsync()
             {
-                ViewData["TeamId"] = new SelectList((await _teamService.GetAllTeams()).OrderBy(t => t.CurrentTeamName), "TeamId", "TeamName", model.TeamId);
-                ViewData["CountryId"] = new SelectList(await CountrySelectListHelper.GetOrderedCountries(_countryService), "CountryId", "CountryNameLong", model.CountryId);
+                var season = await _seasonYearService.GetByIdAsync(model.SeasonYearId);
+                if (season != null)
+                {
+                    model.SeasonYear = season.Year;
+                }
+
+                model.Teams = (await _teamService.GetTeamYears(model.SeasonYearId))
+                    .OrderBy(t => t.Name)
+                    .Select(t => new SelectListItem
+                    {
+                        Value = t.TeamYearId.ToString(),
+                        Text = t.Name
+                    })
+                    .ToList();
+
+                model.Teams.Insert(0, new SelectListItem
+                {
+                    Value = "",
+                    Text = "-- Kies een team --"
+                });
+
+                model.Countries = (await CountrySelectListHelper.GetOrderedCountries(_countryService))
+                    .Select(c => new SelectListItem
+                    {
+                        Value = c.CountryId.ToString(),
+                        Text = c.CountryNameLong
+                    })
+                    .ToList();
+
+                model.Countries.Insert(0, new SelectListItem
+                {
+                    Value = "",
+                    Text = "-- Kies een land --"
+                });
+            }
+
+            async Task<IActionResult> ReturnViewAsync()
+            {
+                await PopulateDropdownsAsync();
+                return View(model);
             }
 
             if (!ModelState.IsValid)
             {
-                ViewBag.Competitors = await GetCompetitorSelectListAsync();
-                await PopulateDropdownsAsync();
-                return View(model);
+                ViewBag.Competitors = await GetCompetitorSelectListAsync(model.SeasonYearId);
+                return await ReturnViewAsync();
             }
 
             Competitor competitor;
@@ -136,8 +201,7 @@ namespace WebCycleManager.Controllers
                 if (competitor == null)
                 {
                     ModelState.AddModelError("", "Geselecteerde renner bestaat niet.");
-                    await PopulateDropdownsAsync();
-                    return View(model);
+                    return await ReturnViewAsync();
                 }
             }
             else
@@ -145,8 +209,7 @@ namespace WebCycleManager.Controllers
                 if (string.IsNullOrEmpty(model.FirstName) || string.IsNullOrEmpty(model.LastName))
                 {
                     ModelState.AddModelError("", "Vul naam in voor nieuwe renner.");
-                    await PopulateDropdownsAsync();
-                    return View(model);
+                    return await ReturnViewAsync();
                 }
 
                 // If PCS name is missing, default it (prevents NULL DB insert)
@@ -168,14 +231,13 @@ namespace WebCycleManager.Controllers
                     await _competitorService.Create(competitor);
                 }
             }
-            bool alreadyExists = await _competitorService.CheckCompetitorInTeam(model.CompetitorId, model.TeamId, model.Year);
+            bool alreadyExists = await _competitorService.CheckCompetitorInTeam(competitor.CompetitorId, model.TeamYearId!.Value);
             if (!alreadyExists)
             {
                 var competitorInTeam = new CompetitorInTeam
                 {
                     CompetitorId = competitor.CompetitorId,
-                    TeamId = model.TeamId,
-                    Year = model.Year,
+                    TeamYearId = model.TeamYearId!.Value,
                     IsNationalChampion = model.IsNationalChampion
                 };
 
@@ -183,12 +245,11 @@ namespace WebCycleManager.Controllers
             }
             else
             {
-                ModelState.AddModelError("", "Deze renner zit al in dit team voor dit jaar.");
-                await PopulateDropdownsAsync();
-                return View(model);
+                ModelState.AddModelError("", "Deze renner zit al in dit team voor dit seizoen.");
+                return await ReturnViewAsync();
             }
 
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction(nameof(Index), new { seasonYearId = model.SeasonYearId});
         }
 
         // GET: Competitors/Edit/5
@@ -205,8 +266,8 @@ namespace WebCycleManager.Controllers
                 PcsName = dto.PcsName,
                 ScraperName = dto.ScraperName,
                 CountryId = dto.CountryId,
-                SelectedTeamId = dto.SelectedTeamId,
-                SelectedYear = dto.SelectedYear,
+                SelectedTeamYearId = dto.SelectedTeamYearId,
+                SelectedSeasonYearId = dto.SelectedSeasonYearId,
                 ReturnUrl = returnUrl,
                 
                 Countries = dto.Countries.Select(c => new SelectListItem
@@ -218,27 +279,28 @@ namespace WebCycleManager.Controllers
 
                 Teams = dto.Teams.Select(t => new SelectListItem
                 {
-                    Value = t.Id.ToString(),
-                    Text = t.Naam,
-                    Selected = (t.Id == dto.SelectedTeamId)
+                    Value = t.TeamYearId.ToString(),
+                    Text = t.Name,
+                    Selected = (t.TeamYearId == dto.SelectedTeamYearId)
                 }),
 
                 AvailableYears = dto.AvailableYears.Select(y => new SelectListItem
                 {
-                    Value = y.ToString(),
-                    Text = y.ToString(),
-                    Selected = (y == dto.SelectedYear)
+                    Value = y.SeasonYearId.ToString(),
+                    Text = y.Year.ToString(),
+                    Selected = (y.SeasonYearId == dto.SelectedSeasonYearId)
                 }),
 
-                CompetitorInTeams = dto.CompetitorInTeams.Select(cit => new CompetitorInTeamEditModel
-                {
-                    CompetitorInTeamId = cit.CompetitorInTeamId,
-                    TeamName = cit.TeamName,
-                    TeamNameForYear  = cit.TeamNameForYear,
-                    Year = cit.Year,
-                    IsNationalChampion = cit.IsNationalChampion,
-                    TeamId = cit.TeamId
-                }).ToList()
+                CompetitorInTeams = dto.CompetitorInTeams
+                    .Select(cit => new CompetitorInTeamEditModel
+                    {
+                        CompetitorInTeamId = cit.CompetitorInTeamId,
+                        TeamYearId = cit.TeamYearId,
+                        TeamName = cit.TeamName,
+                        Year = cit.Year,
+                        IsNationalChampion = cit.IsNationalChampion
+                    })
+                    .ToList()
             };
 
             return View(vm);
@@ -253,14 +315,14 @@ namespace WebCycleManager.Controllers
             {
                 var dto = await _competitorService.GetCompetitorForEdit(input.CompetitorId);
                 var vm = MapDtoToViewModel(dto);
-                foreach (var cit in vm.CompetitorInTeams)
-                {
-                    var matchingInput = input.CompetitorInTeams.FirstOrDefault(c => c.CompetitorInTeamId == cit.CompetitorInTeamId);
-                    if (matchingInput != null)
-                    {
-                        cit.IsNationalChampion = matchingInput.IsNationalChampion;
-                    }
-                }
+                //foreach (var cit in vm.CompetitorInTeams)
+                //{
+                //    var matchingInput = input.CompetitorInTeams.FirstOrDefault(c => c.CompetitorInTeamId == cit.CompetitorInTeamId);
+                //    if (matchingInput != null)
+                //    {
+                //        cit.IsNationalChampion = matchingInput.IsNationalChampion;
+                //    }
+                //}
 
                 return View(vm);
             }
@@ -272,13 +334,18 @@ namespace WebCycleManager.Controllers
                 PcsName = input.PcsName,
                 ScraperName = input.ScraperName,
                 CountryId = input.CountryId,
-                CompetitorInTeams = input.CompetitorInTeams.Select(c => new CompetitorInTeamDto
-                {
-                    CompetitorInTeamId = c.CompetitorInTeamId,
-                    Year = c.Year,
-                    IsNationalChampion = c.IsNationalChampion,
-                    TeamId = c.TeamId
-                }).ToList()
+
+
+                //CompetitorInTeams = input.CompetitorInTeams
+                //    .Select(c => new CompetitorInTeamDto
+                //    {
+                //        CompetitorInTeamId = c.CompetitorInTeamId,
+                //        TeamYearId = c.T,
+                //        SeasonYearId = c.SeasonYearId,
+                //        Year = c.Year,
+                //        IsNationalChampion = c.IsNationalChampion
+                //    })
+                //    .ToList()
             };
 
             await _competitorService.UpdateCompetitorWithTeam(dtoUpdate);
@@ -331,17 +398,17 @@ namespace WebCycleManager.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetCompetitorInfo(int id, int year)
+        public async Task<IActionResult> GetCompetitorInfo(int id, int seasonYearId)
         {
             var competitor = await _competitorService.GetCompetitorById(id);
             if (competitor == null) return NotFound();
 
-            var team = competitor.CompetitorInTeams
-                .FirstOrDefault(cit => cit.Year == year)?.Team;
+            var competitorInTeam = competitor.CompetitorInTeams
+                .FirstOrDefault(cit => cit.TeamYear.SeasonYearId == seasonYearId);
 
             return Json(new
             {
-                TeamName = team?.CompetitorInTeams.FirstOrDefault()?.Team.CurrentTeamName ?? "Onbekend",
+                TeamName = competitorInTeam?.TeamYear.Name ?? "Onbekend",
                 Country = competitor.Country?.CountryNameLong ?? "Onbekend",
                 PcsName = competitor.PcsName ?? ""
             });
@@ -352,29 +419,28 @@ namespace WebCycleManager.Controllers
           return _competitorService.GetCompetitorById(id) != null;
         }
 
-        private async Task<List<SelectListItem>> GetCompetitorSelectListAsync()
+        private async Task<List<SelectListItem>> GetCompetitorSelectListAsync(int seasonYearId)
         {
-            var competitors = await _competitorService.GetAllCompetitors(DateTime.Now.Year);
-            var selectList = competitors.Select(c => new SelectListItem
-            {
-                Value = c.CompetitorId.ToString(),
-                Text = $"{c.FirstName} {c.LastName}"
-            }).ToList();
+            var competitors = await _competitorService.GetAllCompetitors(seasonYearId);
+            var selectList = competitors
+                .OrderBy(c => c.LastName)
+                .ThenBy(c => c.FirstName)
+                .Select(c => new SelectListItem
+                {
+                    Value = c.CompetitorId.ToString(),
+                    Text = $"{c.FirstName} {c.LastName}"
+                })
+                .ToList();
 
-            selectList.Insert(0, new SelectListItem { Value = "0", Text = "-- Nieuwe renner --" });
+            selectList.Insert(0, new SelectListItem
+            { 
+                Value = "0", 
+                Text = "-- Nieuwe renner --" 
+            });
+
             return selectList;
         }
-        private Task<IEnumerable<SelectListItem>> GetAvailableYears(int selectedYear)
-        {
-            var currentYear = DateTime.Now.Year;
-            var years = Enumerable.Range(currentYear - 3, 7); // range -3 tot +3
-            return Task.FromResult(years.Select(y => new SelectListItem
-            {
-                Value = y.ToString(),
-                Text = y.ToString(),
-                Selected = (y == selectedYear)
-            }));
-        }
+
         private CompetitorEditViewModel MapDtoToViewModel(CompetitorEditDto dto)
         {
             return new CompetitorEditViewModel
@@ -385,34 +451,12 @@ namespace WebCycleManager.Controllers
                 PcsName = dto.PcsName,
                 ScraperName = dto.ScraperName,
                 CountryId = dto.CountryId,
-                SelectedTeamId = dto.SelectedTeamId,
-                SelectedYear = dto.SelectedYear,
 
                 Countries = dto.Countries.Select(c => new SelectListItem
                 {
                     Value = c.Id.ToString(),
-                    Text = c.CountryNameLong
-                }),
-
-                Teams = dto.Teams.Select(t => new SelectListItem
-                {
-                    Value = t.Id.ToString(),
-                    Text = t.Naam
-                }),
-
-                AvailableYears = dto.AvailableYears.Select(y => new SelectListItem
-                {
-                    Value = y.ToString(),
-                    Text = y.ToString()
-                }),
-
-                CompetitorInTeams = dto.CompetitorInTeams.Select(cit => new CompetitorInTeamEditModel
-                {
-                    CompetitorInTeamId = cit.CompetitorInTeamId,
-                    TeamName = cit.TeamName,
-                    Year = cit.Year,
-                    IsNationalChampion = cit.IsNationalChampion,
-                    TeamId = cit.TeamId
+                    Text = c.CountryNameLong,
+                    Selected = c.Id == dto.CountryId
                 }).ToList()
             };
         }
@@ -426,14 +470,7 @@ namespace WebCycleManager.Controllers
                 LastName = vm.LastName,
                 PcsName = vm.PcsName,
                 ScraperName = vm.ScraperName,
-                CountryId = vm.CountryId,
-                CompetitorInTeams = vm.CompetitorInTeams.Select(cit => new CompetitorInTeamInputModel
-                {
-                    CompetitorInTeamId = cit.CompetitorInTeamId,
-                    Year = cit.Year,
-                    IsNationalChampion = cit.IsNationalChampion,
-                    TeamId = cit.TeamId
-                }).ToList()
+                CountryId = vm.CountryId
             };
         }
 

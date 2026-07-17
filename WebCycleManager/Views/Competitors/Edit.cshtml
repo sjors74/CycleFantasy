@@ -48,7 +48,7 @@
         <div class="col-md-6">
             <h4 class="mb-3">Per jaar</h4>
 
-            @{
+            @* @{
                 var currentYear = DateTime.Now.Year;
                 var years = Model.AvailableYears
                 .Select(y => int.Parse(y.Value))
@@ -120,7 +120,7 @@
                         </div>
                     }
                 }
-            </div>
+            </div> *@
         </div>
     </div>
 

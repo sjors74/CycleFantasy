@@ -186,7 +186,7 @@ namespace CycleManager.Tests.Integration.Manager
             html.Should().Contain(team.CurrentTeamName);
 
             var competitorsForYear = team.CompetitorInTeams
-                .Where(cit => cit.Year == year)
+                .Where(cit => cit.TeamYear.Year == year)
                 .Select(cit => cit.Competitor.CompetitorName);
 
             foreach (var riderName in competitorsForYear)
@@ -214,7 +214,7 @@ namespace CycleManager.Tests.Integration.Manager
             var competitor = db.Competitors.FirstOrDefault(c => c.ScraperName.Contains("_2025"));
             competitor.Should().NotBeNull();
 
-            var cit = db.CompetitorInTeams.FirstOrDefault(c => c.TeamId == 1 && c.CompetitorId == competitor.CompetitorId && c.Year == 2025);
+            var cit = db.CompetitorInTeams.FirstOrDefault(c => c.TeamYear.TeamId == 1 && c.CompetitorId == competitor.CompetitorId && c.TeamYear.Year == 2025);
             cit.Should().NotBeNull();
 
             var htmlResponse = await client.GetAsync($"/Teams/Details/1?year=2025");

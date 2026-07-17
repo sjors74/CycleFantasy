@@ -15,5 +15,8 @@ namespace CycleManager.Domain.Models
         public SeasonYear SeasonYear { get; set; } = null!;
 
         public string Name { get; set; } = string.Empty;
+
+        public ICollection<CompetitorInTeam> CompetitorInTeams { get; set; }
+        = new List<CompetitorInTeam>();
     }
 }

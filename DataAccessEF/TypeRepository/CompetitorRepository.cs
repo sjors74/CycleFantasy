@@ -32,7 +32,7 @@ namespace DataAccessEF.TypeRepository
                         .Select(cit => new CompetitorInTeamDto
                         {
                             CompetitorInTeamId = cit.Id,
-                            TeamId = cit.TeamYear.TeamId,
+                            TeamYearId = cit.TeamYearId,
                             TeamName = cit.TeamYear.Name,
                             Year = cit.TeamYear.SeasonYear.Year,
                             IsNationalChampion = cit.IsNationalChampion
@@ -60,13 +60,14 @@ namespace DataAccessEF.TypeRepository
             return competitor;
         }
 
-        public async Task<IEnumerable<CompetitorInTeamDto>> GetByTeamId(int teamId, int year)
+        public async Task<IEnumerable<CompetitorInTeamDto>> GetByTeamId(int teamYearId)
         {
             var competitors = await context.CompetitorInTeams
                 .Include(cit => cit.Competitor)
                     .ThenInclude(c => c.Country)
-                .Include(cit => cit.Team)
-                .Where(cit => cit.TeamId == teamId && cit.Year == year)
+                .Include(cit => cit.TeamYear)
+                    .ThenInclude(ty => ty.SeasonYear)
+                .Where(cit => cit.TeamYearId == teamYearId)
                 .Select(cit => new CompetitorInTeamDto
                 {
 
@@ -74,9 +75,11 @@ namespace DataAccessEF.TypeRepository
                     FirstName = cit.Competitor.FirstName,
                     LastName = cit.Competitor.LastName,
                     CompetitorName = cit.Competitor.CompetitorName,
-                    TeamName = cit.Team.CurrentTeamName,
-                    TeamId = cit.TeamId,
-                    Year = cit.Year
+                    TeamId = cit.TeamYear.TeamId,
+                    TeamYearId = cit.TeamYearId,
+                    TeamName = cit.TeamYear.Name,
+                    SeasonYearId = cit.TeamYear.SeasonYearId,
+                    Year = cit.TeamYear.SeasonYear.Year
                 })
                 .ToListAsync();
 
@@ -128,41 +131,49 @@ namespace DataAccessEF.TypeRepository
         {
             try
             {
+                if (!dto.SelectedTeamYearId.HasValue)
+                    throw new InvalidOperationException("Er is geen team geselecteerd.");
+
                 var competitor = await context.Competitors
                     .Include(c => c.CompetitorInTeams)
+                        .ThenInclude(cit => cit.TeamYear)
                     .FirstOrDefaultAsync(c => c.CompetitorId == dto.CompetitorId);
 
                 if (competitor == null)
                     throw new KeyNotFoundException($"Competitor met ID {dto.CompetitorId} niet gevonden.");
 
+                // Algemene gegevens bijwerken
                 competitor.FirstName = dto.FirstName;
                 competitor.LastName = dto.LastName;
                 competitor.PcsName = dto.PcsName;
                 competitor.ScraperName = dto.ScraperName;
                 competitor.CountryId = dto.CountryId;
 
+                // Zoek de ploegkoppeling voor het geselecteerde seizoen
                 var existingCit = competitor.CompetitorInTeams
-                    .FirstOrDefault(cit => cit.Year == dto.SelectedYear);
+                    .FirstOrDefault(cit =>
+                        cit.TeamYear.SeasonYearId == dto.SelectedSeasonYearId);
 
                 if (existingCit == null)
                 {
+                    // Nog geen ploeg in dit seizoen
                     context.CompetitorInTeams.Add(new CompetitorInTeam
                     {
                         CompetitorId = competitor.CompetitorId,
-                        TeamId = dto.SelectedTeamId,
-                        Year = dto.SelectedYear
+                        TeamYearId = dto.SelectedTeamYearId.Value
                     });
                 }
                 else
                 {
-                    existingCit.TeamId = dto.SelectedTeamId;
+                    // Ploeg wijzigen
+                    existingCit.TeamYearId = dto.SelectedTeamYearId.Value;
                 }
 
                 await context.SaveChangesAsync();
             }
             catch (KeyNotFoundException)
             {
-                throw; // laat de KeyNotFoundException door
+                throw;
             }
             catch (Exception ex)
             {

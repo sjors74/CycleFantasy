@@ -163,7 +163,7 @@ namespace CycleManager.Services
             var competitors = new List<SelectListItem>();
             var competitorsDb = await _competitorRepo.GetCompetitorsInEventList(eventId);
             var groupedCompetitors = competitorsDb
-                .GroupBy(x => x.CompetitorInTeam?.Team?.CurrentTeamName ?? "onbekend");
+            .GroupBy(x => x.CompetitorInTeam?.TeamYear?.Name ?? "onbekend");
 
             foreach (var group in groupedCompetitors)
             {

@@ -1,4 +1,5 @@
-﻿using CycleManager.Services.Interfaces;
+﻿using CycleManager.Domain.Dto;
+using CycleManager.Services.Interfaces;
 using Domain.Interfaces;
 using Domain.Models;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -70,6 +71,11 @@ namespace CycleManager.Services
         public async Task<IEnumerable<Team>> GetTeamsForEvent(int eventId)
         {
             return await _teamRepository.GetTeamsForEvent(eventId);
+        }
+
+        public async Task<List<TeamYearDto>> GetTeamYears(int seasonYearId)
+        {
+            return await _teamRepository.GetTeamYears(seasonYearId);
         }
 
         public async Task<bool> HasUnprocessedScrapedTeams()

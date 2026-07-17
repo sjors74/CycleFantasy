@@ -84,7 +84,7 @@ namespace CycleManager.Tests.Integration.DataAccess
             var country = new Country { CountryId = 1, CountryNameShort = "BEL" };
             var competitor = new Competitor { CompetitorId = 1, FirstName = "Remco", LastName = "Evenepoel", Country = country };
             var team = new Team { TeamId = 1, CurrentTeamName = "Soudal Quick-Step" };
-            var competitorInTeam = new CompetitorInTeam { Id = 1, Team = team, Competitor = competitor };
+            var competitorInTeam = new CompetitorInTeam { Id = 1, Competitor = competitor };
             var eventEntity = new Event { EventId = 1, EventName = "Tour de France" };
             var eventTeam = new EventTeam { TeamId = 1, Event = eventEntity, EventId = 1, Team = team };
 

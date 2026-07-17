@@ -18,17 +18,22 @@ namespace DataAccessEF.TypeRepository
         public async Task<IEnumerable<Result>> GetResultsByEventId(int eventId)
         {
             var results = await context.Results
-                .Include(c => c.CompetitorInEvent)
-                    .ThenInclude(c => c.CompetitorInTeam)
-                        .ThenInclude(cit => cit.Team)
-                 .Include(c => c.CompetitorInEvent)
-                    .ThenInclude(c => c.CompetitorInTeam)
-                        .ThenInclude(c => c.Competitor)
-                .Include(s => s.Stage)
+                .Include(r => r.CompetitorInEvent)
+                    .ThenInclude(cie => cie.CompetitorInTeam)
+                        .ThenInclude(cit => cit.TeamYear)
+                            .ThenInclude(ty => ty.Team)
+
+                .Include(r => r.CompetitorInEvent)
+                    .ThenInclude(cie => cie.CompetitorInTeam)
+                        .ThenInclude(cit => cit.Competitor)
+
+                .Include(r => r.Stage)
                 .Include(r => r.ConfigurationItem)
+
                 .Where(r => r.Stage.EventId == eventId)
                 .OrderBy(r => r.ConfigurationItem.Position)
                 .ToListAsync();
+
             return results;
         }
 
@@ -188,12 +193,18 @@ namespace DataAccessEF.TypeRepository
             var results = await context.Results
                 .AsNoTracking()
                 .Where(r => r.StageId == stageId)
+
                 .Include(r => r.CompetitorInEvent)
                     .ThenInclude(cie => cie.CompetitorInTeam)
-                        .ThenInclude(cit => cit.Team)
+                        .ThenInclude(cit => cit.TeamYear)
+                            .ThenInclude(ty => ty.Team)
+
                 .Include(r => r.CompetitorInEvent)
-                    .ThenInclude(cie => cie.CompetitorInTeam.Competitor)
+                    .ThenInclude(cie => cie.CompetitorInTeam)
+                        .ThenInclude(cit => cit.Competitor)
+
                 .Include(r => r.ConfigurationItem)
+
                 .ToListAsync();
 
             var resultLookup = results
@@ -212,13 +223,18 @@ namespace DataAccessEF.TypeRepository
             var specialResults = await context.SpecialResults
                 .AsNoTracking()
                 .Where(r => r.StageId == stageId)
+
                 .Include(r => r.CompetitorInEvent)
                     .ThenInclude(cie => cie.CompetitorInTeam)
-                        .ThenInclude(cit => cit.Team)
+                        .ThenInclude(cit => cit.TeamYear)
+                            .ThenInclude(ty => ty.Team)
+
                 .Include(r => r.CompetitorInEvent)
                     .ThenInclude(cie => cie.CompetitorInTeam)
                         .ThenInclude(cit => cit.Competitor)
+
                 .Include(r => r.Special)
+
                 .ToListAsync();
 
             var specialLookup = specialResults
@@ -230,11 +246,11 @@ namespace DataAccessEF.TypeRepository
             var uitslag = configItems.Select(ci =>
             {
                 if (!resultLookup.TryGetValue(ci.Id, out var result))
-                    return null;    
+                    return null;
 
                 var competitorInTeam = result.CompetitorInEvent?.CompetitorInTeam;
                 var competitor = competitorInTeam?.Competitor;
-                var team = competitor?.CompetitorInTeams?.FirstOrDefault()?.Team;
+                var teamYear = competitorInTeam?.TeamYear;
 
                 if (competitor == null)
                     return null;
@@ -243,7 +259,7 @@ namespace DataAccessEF.TypeRepository
                 {
                     Positie = ci.Position,
                     CompetitorName = $"{competitor.FirstName} {competitor.LastName}",
-                    TeamName = team?.CurrentTeamName ?? string.Empty,
+                    TeamName = teamYear?.Name ?? string.Empty,
                     Score = ci.Score
                 };
             })
@@ -258,7 +274,6 @@ namespace DataAccessEF.TypeRepository
 
                 var competitorInTeam = result.CompetitorInEvent?.CompetitorInTeam;
                 var competitor = competitorInTeam?.Competitor;
-                var team = competitor?.CompetitorInTeams?.FirstOrDefault()?.Team;
 
                 if (competitor == null)
                     return null;
@@ -267,10 +282,9 @@ namespace DataAccessEF.TypeRepository
                 {
                     Name = item.Question.ToString(),
                     Color = item.Color,
-                    CompetitorName = $"{competitor.FirstName} {competitor.LastName}",
-                    TeamName = team?.CurrentTeamName ?? string.Empty,
+                    CompetitorName = competitor.CompetitorName,
+                    TeamName = competitorInTeam?.TeamYear?.Name ?? string.Empty,
                     Score = item.Score
-
                 };
             })
             .Where(x => x != null)
