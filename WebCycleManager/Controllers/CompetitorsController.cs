@@ -44,8 +44,12 @@ namespace WebCycleManager.Controllers
             var availableYears = await _competitorService.GetAvailableYears();
             ViewData["AvailableYears"] = availableYears;
 
-            var activeSeason = availableYears.Single(a => a.Active);
+            var activeSeason = availableYears.SingleOrDefault(a => a.Active);
 
+            if (activeSeason == null)
+            {
+                return View("ConfigurationError");
+            }
             var selectedSeasonYearId = seasonYearId ?? activeSeason.SeasonYearId;
 
             ViewData["SelectedSeasonYearId"] = selectedSeasonYearId;
