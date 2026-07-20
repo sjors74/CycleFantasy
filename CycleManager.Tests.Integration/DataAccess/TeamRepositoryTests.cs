@@ -35,7 +35,6 @@ namespace CycleManager.Tests.Integration.DataAccess
                 CurrentTeamName = "TeamA",
                 Country = country,
                 CountryId = 1,
-                CompetitorInTeams = new List<CompetitorInTeam> { competitorInTeam },
                 TeamYears = new List<TeamYear> { teamYear }
             };
             return team;
@@ -56,10 +55,7 @@ namespace CycleManager.Tests.Integration.DataAccess
             result.Should().NotBeEmpty();
             var fetched = result.First();
             fetched.Country.Should().NotBeNull();
-            fetched.CompetitorInTeams.Should().HaveCount(1);
             fetched.TeamYears.Should().HaveCount(1);
-            fetched.CompetitorInTeams.First().Competitor.Should().NotBeNull();
-            fetched.CompetitorInTeams.First().Competitor.Country.Should().NotBeNull();
         }
 
         [Fact]
@@ -87,7 +83,6 @@ namespace CycleManager.Tests.Integration.DataAccess
 
             fetched.Should().NotBeNull();
             fetched.Country.Should().NotBeNull();
-            fetched.CompetitorInTeams.Should().NotBeEmpty();
             fetched.TeamYears.Should().NotBeEmpty();
         }
 

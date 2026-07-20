@@ -12,8 +12,8 @@ namespace CycleManager.Tests.Unit.Manager
     {
         public static List<Team> FakeTeams() => new()
         {
-            new Team { TeamId = 1, CurrentTeamName = "Team A", Country = new Country { CountryNameShort = "NL" }, CompetitorInTeams = new List<CompetitorInTeam>() },
-            new Team { TeamId = 2, CurrentTeamName = "Team B", Country = new Country { CountryNameShort = "BE" }, CompetitorInTeams = new List<CompetitorInTeam>() }
+            new Team { TeamId = 1, CurrentTeamName = "Team A", Country = new Country { CountryNameShort = "NL" } },
+            new Team { TeamId = 2, CurrentTeamName = "Team B", Country = new Country { CountryNameShort = "BE" } }
         };
 
         public static Team FakeTeamWithCompetitors(int year) => new()
@@ -21,19 +21,19 @@ namespace CycleManager.Tests.Unit.Manager
             TeamId = 1,
             CurrentTeamName = "TestTeam",
             Country = new Country { CountryNameShort = "NL" },
-            CompetitorInTeams = new List<CompetitorInTeam>
-            {
-                new CompetitorInTeam
-                {
-                    TeamYearId = 1,
-                    Competitor = new Competitor
-                    {
-                        FirstName = "Jan",
-                        LastName = "Jansen",
-                        Country = new Country { CountryNameShort = "NL" }
-                    }
-                }
-            }
+            //CompetitorInTeams = new List<CompetitorInTeam>
+            //{
+            //    new CompetitorInTeam
+            //    {
+            //        TeamYearId = 1,
+            //        Competitor = new Competitor
+            //        {
+            //            FirstName = "Jan",
+            //            LastName = "Jansen",
+            //            Country = new Country { CountryNameShort = "NL" }
+            //        }
+            //    }
+            //}
         };
 
         public static Team FakeTeamWithYears() => new()
@@ -203,7 +203,7 @@ namespace CycleManager.Tests.Unit.Manager
                 }
             };
 
-            team.CompetitorInTeams = new List<CompetitorInTeam> { competitor.CompetitorInTeams.First() };
+            //team.CompetitorInTeams = new List<CompetitorInTeam> { competitor.CompetitorInTeams.First() };
 
             return competitor;
         }

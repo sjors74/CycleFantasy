@@ -333,18 +333,19 @@ namespace CycleManager.Services
             }
         }
 
-        public async Task RunCompetitorsAsync(int teamId, int year)
+        public async Task RunCompetitorsAsync(int teamYearId)
         {
-            var team = await _db.Teams
-                .Where(t => t.TeamId == teamId)
-                .FirstOrDefaultAsync();
+            var teamYear = await _db.TeamYear
+                .Include(ty => ty.Team)
+                .Include(ty => ty.SeasonYear)
+                .FirstOrDefaultAsync(ty => ty.TeamYearId == teamYearId);
 
-            if (team == null) return;
+            if (teamYear == null) return;
 
-            string url = $"https://www.procyclingstats.com/team/{team.PcsName}-{year}/overview/start";
-            _logger.LogInformation($"Start scraping competitors for team {team.CurrentTeamName}, year {year}");
+            string url = $"https://www.procyclingstats.com/team/{teamYear.Team.PcsName}-{teamYear.SeasonYear.Year}/overview/start";
+            _logger.LogInformation($"Start scraping competitors for team {teamYear.Team.CurrentTeamName}, year {teamYear.SeasonYear.Year}");
 
-            var competitors = await _pcsScraper.ScrapeCompetitorsAsync(url, teamId, year);
+            var competitors = await _pcsScraper.ScrapeCompetitorsAsync(url, teamYear.TeamId, teamYear.SeasonYear.Year);
 
             _db.ScrapedCompetitors.AddRange(competitors);
             await _db.SaveChangesAsync();            
@@ -476,6 +477,8 @@ namespace CycleManager.Services
                 }
 
                 var citKey = (competitorKey, teamYearId);
+
+                var teamYear = await _db.TeamYear.FirstAsync(ty => ty.TeamYearId == teamYearId);
 
                 if (!competitorInTeamSet.Contains(citKey))
                 {

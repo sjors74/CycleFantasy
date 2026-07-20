@@ -55,6 +55,7 @@ namespace CycleManager.Tests.Integration.Helpers
             throw new NotImplementedException();
         }
 
+
         public Task RunCompetitorsAsync(int teamId, int year)
         {
             if (year <= DateTime.Now.Year + 3)
@@ -85,6 +86,11 @@ namespace CycleManager.Tests.Integration.Helpers
                 _db.SaveChanges();
             }
             return Task.CompletedTask;
+        }
+
+        public Task RunCompetitorsAsync(int teamYearId)
+        {
+            throw new NotImplementedException();
         }
 
         public Task RunDropoutsAsync(int eventId, string eventName, int year)

@@ -96,9 +96,9 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
         db.CompetitorInTeams.AddRange(cit1, cit2);
 
         // Zorg dat team navigation reflecteert dat er items zijn
-        team.CompetitorInTeams = team.CompetitorInTeams ?? new List<CompetitorInTeam>();
-        team.CompetitorInTeams.Add(cit1);
-        team.CompetitorInTeams.Add(cit2);
+        //team.CompetitorInTeams = team.CompetitorInTeams ?? new List<CompetitorInTeam>();
+        //team.CompetitorInTeams.Add(cit1);
+        //team.CompetitorInTeams.Add(cit2);
 
         // En koppel competitors -> competitorInTeams navigations (handig voor tests)
         competitor1.CompetitorInTeams = competitor1.CompetitorInTeams ?? new List<CompetitorInTeam>();

@@ -1,4 +1,5 @@
 ﻿using CycleManager.Domain.Models;
+using CycleManager.Services;
 using CycleManager.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using WebCycleManager.Models;
@@ -124,6 +125,14 @@ namespace WebCycleManager.Controllers
         {
             await _service.DeleteAsync(id);
             return RedirectToAction(nameof(Index));
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetSeasonYears()
+        {
+            var years = await _service.GetAllAsync();
+
+            return Ok(years);
         }
     }
 }

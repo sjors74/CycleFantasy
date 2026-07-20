@@ -36,5 +36,7 @@ namespace CycleManager.Services.Interfaces
         Task<int> CountUnprocessedScrapedCompetitors();
 
         Task<List<TeamYearDto>> GetTeamYears(int seasonYearId);
+
+        Task<TeamYearDto?> GetByTeamAndSeasonAsync(int teamId, int seasonYearId);
     }
 }

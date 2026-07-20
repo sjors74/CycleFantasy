@@ -159,18 +159,18 @@ namespace WebCycle.Controllers
             {
                 return NotFound();
             }
+            //TODO HERSTEL!!!
+            //var competitors = team.CompetitorInTeams
+            //    .Select(cit => new CompetitorInSelectieDto
+            //    {
+            //        CompetitorInTeamId = cit.Id,
+            //        FirstName = cit.Competitor.FirstName,
+            //        LastName = cit.Competitor.LastName,
+            //        PcsName = cit.Competitor.PcsName
+            //    })
+            //    .ToList();
 
-            var competitors = team.CompetitorInTeams
-                .Select(cit => new CompetitorInSelectieDto
-                {
-                    CompetitorInTeamId = cit.Id,
-                    FirstName = cit.Competitor.FirstName,
-                    LastName = cit.Competitor.LastName,
-                    PcsName = cit.Competitor.PcsName
-                })
-                .ToList();
-
-            return Ok(competitors);
+            return Ok();
         }
 
         [HttpPost("selectie")]

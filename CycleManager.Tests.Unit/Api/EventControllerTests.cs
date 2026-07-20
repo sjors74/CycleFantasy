@@ -545,31 +545,31 @@ namespace CycleManager.Tests.Unit.Api
             {
                 TeamId = teamId,
                 CurrentTeamName = "Team A",
-                CompetitorInTeams = new List<CompetitorInTeam>
-                {
-                    new CompetitorInTeam
-                    {
-                        Id = 10,
-                        Competitor = new Competitor
-                        {
-                            CompetitorId = 101,
-                            FirstName = "John",
-                            LastName = "Doe",
-                            PcsName = "JD123"
-                        }
-                    },
-                    new CompetitorInTeam
-                    {
-                        Id = 11,
-                        Competitor = new Competitor
-                        {
-                            CompetitorId = 102,
-                            FirstName = "Jane",
-                            LastName = "Smith",
-                            PcsName = "JS456"
-                        }
-                    }
-                }
+                //CompetitorInTeams = new List<CompetitorInTeam>
+                //{
+                //    new CompetitorInTeam
+                //    {
+                //        Id = 10,
+                //        Competitor = new Competitor
+                //        {
+                //            CompetitorId = 101,
+                //            FirstName = "John",
+                //            LastName = "Doe",
+                //            PcsName = "JD123"
+                //        }
+                //    },
+                //    new CompetitorInTeam
+                //    {
+                //        Id = 11,
+                //        Competitor = new Competitor
+                //        {
+                //            CompetitorId = 102,
+                //            FirstName = "Jane",
+                //            LastName = "Smith",
+                //            PcsName = "JS456"
+                //        }
+                //    }
+                //}
             };
 
             var mockTeamService = new Mock<ITeamService>();

@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using CycleManager.Domain.Interfaces;
+using CycleManager.Services.Interfaces;
+using Microsoft.AspNetCore.Mvc;
 
 namespace WebCycle.Controllers
 {
@@ -7,10 +9,12 @@ namespace WebCycle.Controllers
     public class ConfigController : ControllerBase
     {
         private readonly IConfiguration _configuration;
+        private readonly ISeasonYearService _seasonYearService;
 
-        public ConfigController(IConfiguration configuration)
+        public ConfigController(IConfiguration configuration, ISeasonYearService seasonYearService)
         {
             _configuration = configuration;
+            _seasonYearService = seasonYearService;
         }
 
         [HttpGet]
