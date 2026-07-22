@@ -288,19 +288,20 @@ namespace WebCycleManager.Controllers
                     Selected = (t.TeamYearId == dto.SelectedTeamYearId)
                 }),
 
-                AvailableYears = dto.AvailableYears.Select(y => new SelectListItem
+                AvailableYears = dto.AvailableYears.Select(y => new SeasonYearViewModel
                 {
-                    Value = y.SeasonYearId.ToString(),
-                    Text = y.Year.ToString(),
-                    Selected = (y.SeasonYearId == dto.SelectedSeasonYearId)
-                }),
-
+                    SeasonYearId = y.SeasonYearId,
+                    Year = y.Year
+                })
+                .OrderByDescending(y => y.Year)
+                .ToList(),
                 CompetitorInTeams = dto.CompetitorInTeams
                     .Select(cit => new CompetitorInTeamEditModel
                     {
                         CompetitorInTeamId = cit.CompetitorInTeamId,
                         TeamYearId = cit.TeamYearId,
                         TeamName = cit.TeamName,
+                        SeasonYearId = cit.SeasonYearId,
                         Year = cit.Year,
                         IsNationalChampion = cit.IsNationalChampion
                     })
@@ -319,15 +320,6 @@ namespace WebCycleManager.Controllers
             {
                 var dto = await _competitorService.GetCompetitorForEdit(input.CompetitorId);
                 var vm = MapDtoToViewModel(dto);
-                //foreach (var cit in vm.CompetitorInTeams)
-                //{
-                //    var matchingInput = input.CompetitorInTeams.FirstOrDefault(c => c.CompetitorInTeamId == cit.CompetitorInTeamId);
-                //    if (matchingInput != null)
-                //    {
-                //        cit.IsNationalChampion = matchingInput.IsNationalChampion;
-                //    }
-                //}
-
                 return View(vm);
             }
             var dtoUpdate = new CompetitorEditDto
@@ -339,17 +331,16 @@ namespace WebCycleManager.Controllers
                 ScraperName = input.ScraperName,
                 CountryId = input.CountryId,
 
-
-                //CompetitorInTeams = input.CompetitorInTeams
-                //    .Select(c => new CompetitorInTeamDto
-                //    {
-                //        CompetitorInTeamId = c.CompetitorInTeamId,
-                //        TeamYearId = c.T,
-                //        SeasonYearId = c.SeasonYearId,
-                //        Year = c.Year,
-                //        IsNationalChampion = c.IsNationalChampion
-                //    })
-                //    .ToList()
+                CompetitorInTeams = input.CompetitorInTeams
+                    .Select(c => new CompetitorInTeamDto
+                    {
+                        CompetitorInTeamId = c.CompetitorInTeamId,
+                        TeamYearId = c.TeamYearId,
+                        SeasonYearId = c.SeasonYearId,
+                        Year = c.Year,
+                        IsNationalChampion = c.IsNationalChampion
+                    })
+                    .ToList()
             };
 
             await _competitorService.UpdateCompetitorWithTeam(dtoUpdate);

@@ -17,9 +17,12 @@ namespace WebCycleManager.Models.ViewModel
     public class CompetitorInTeamInputModel
     {
         public int CompetitorInTeamId { get; set; }
+        public int TeamYearId { get; set; }
+        public int SeasonYearId { get; set; }
         public int Year { get; set; }
         public bool IsNationalChampion { get; set; }
         public int TeamId { get; set; }
+        public string TeamName { get; set; } = string.Empty;
     }
 
     public class CompetitorEditViewModel
@@ -40,8 +43,7 @@ namespace WebCycleManager.Models.ViewModel
 
         public IEnumerable<SelectListItem> Countries { get; set; }
         public IEnumerable<SelectListItem> Teams { get; set; }
-        public IEnumerable<SelectListItem> AvailableYears { get; set; }
-
+        public List<SeasonYearViewModel> AvailableYears { get; set; } = [];
         public List<CompetitorInTeamEditModel> CompetitorInTeams { get; set; } = new();
     }
 

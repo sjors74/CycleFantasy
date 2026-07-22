@@ -190,27 +190,6 @@ namespace DataAccessEF.TypeRepository
 
         public async Task UpdateCompetitorAsync(Competitor competitor)
         {
-            var existingCompetitor = await context.Competitors
-                .Include(c => c.CompetitorInTeams)
-                .FirstOrDefaultAsync(c => c.CompetitorId == competitor.CompetitorId);
-
-            if (existingCompetitor != null)
-            {
-                foreach (var updatedCit in competitor.CompetitorInTeams)
-                {
-                    var existingCit = existingCompetitor.CompetitorInTeams
-                        .FirstOrDefault(c => c.Id == updatedCit.Id);
-
-                    if (existingCit == null)
-                    {
-                        existingCompetitor.CompetitorInTeams.Add(updatedCit);
-                    }
-                    else
-                    {
-                        context.Entry(existingCit).CurrentValues.SetValues(updatedCit);
-                    }
-                }
-            }
             await context.SaveChangesAsync();
         }
 

@@ -1,4 +1,5 @@
 ﻿using CycleManager.Domain.Dto;
+using CycleManager.Domain.Interfaces;
 using CycleManager.Domain.Models;
 using CycleManager.Services.Interfaces;
 using Domain.Dto;
@@ -13,14 +14,20 @@ namespace CycleManager.Services
         private readonly ICompetitorInTeamRepository _competitorInTeamRepository;
         private readonly ITeamRepository _teamRepository;
         private readonly ICountryRepository _countryRepository;
-        public CompetitorService(ICompetitorRepository competitorRepository, 
+        private readonly ISeasonYearRepository _seasonYearRepository;
+
+        public CompetitorService(
+                ICompetitorRepository competitorRepository, 
                 ICompetitorInTeamRepository competitorInTeamRepository, 
-                ITeamRepository teamRepository, ICountryRepository countryRepository)
+                ITeamRepository teamRepository, 
+                ICountryRepository countryRepository,
+                ISeasonYearRepository seasonYearRepository)
         {
             _competitorRepository = competitorRepository;
             _competitorInTeamRepository = competitorInTeamRepository;
             _teamRepository = teamRepository;
             _countryRepository = countryRepository;
+            _seasonYearRepository = seasonYearRepository;
         }
 
         /// <summary>
@@ -133,6 +140,17 @@ namespace CycleManager.Services
             competitor.ScraperName = dto.ScraperName ?? string.Empty;
             competitor.CountryId = dto.CountryId;
 
+            foreach (var teamDto in dto.CompetitorInTeams)
+            {
+                var team = competitor.CompetitorInTeams
+                    .FirstOrDefault(t => t.Id == teamDto.CompetitorInTeamId);
+
+                if (team != null)
+                {
+                    team.IsNationalChampion = teamDto.IsNationalChampion;
+                }
+            }
+
             await _competitorRepository.UpdateCompetitorAsync(competitor);
 
         }
@@ -143,6 +161,7 @@ namespace CycleManager.Services
             if (competitor == null)
                 return null;
 
+            var availableYears = await _seasonYearRepository.GetAllAsync();
             var countries = await _countryRepository.GetAll();
 
             return new CompetitorEditDto
@@ -161,7 +180,28 @@ namespace CycleManager.Services
                         CountryNameLong = c.CountryNameLong,
                         CountryNameShort = c.CountryNameShort
                     })
-                    .ToList()
+                    .ToList(),
+                AvailableYears = availableYears
+                    .Select(y => new SeasonYearDto
+                    {
+                        SeasonYearId = y.SeasonYearId,
+                        Year = y.Year,
+                        Active = y.Active
+                    })
+                    .OrderByDescending(y => y.Year)
+                    .ToList(),
+
+                CompetitorInTeams = competitor.CompetitorInTeams
+                .Select(cit => new CompetitorInTeamDto
+                {
+                    CompetitorInTeamId = cit.Id,
+                    TeamYearId = cit.TeamYearId,
+                    SeasonYearId = cit.TeamYear.SeasonYearId,
+                    Year = cit.TeamYear.Year,
+                    TeamName = cit.TeamYear.Team.CurrentTeamName,
+                   IsNationalChampion = cit.IsNationalChampion
+                })
+                .ToList()
             };
         }
 

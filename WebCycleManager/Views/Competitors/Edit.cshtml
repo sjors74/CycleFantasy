@@ -47,80 +47,115 @@
         <!-- Rechter kolom: Tabs per jaar -->
         <div class="col-md-6">
             <h4 class="mb-3">Per jaar</h4>
-
-            @* @{
-                var currentYear = DateTime.Now.Year;
+            @{
                 var years = Model.AvailableYears
-                .Select(y => int.Parse(y.Value))
-                .Where(y => y >= 2025)
-                .OrderBy(y => y)
-                .Take(4)
+                .OrderByDescending(y => y.Year)
                 .ToList();
+            
+                var firstTab = true;
+                var firstPane = true;
+                var globalIndex = 0;
             }
 
             <ul class="nav nav-tabs" id="yearTabs" role="tablist">
-                @for (int i = 0; i < years.Count; i++)
+                @foreach (var year in years)
                 {
-                    var year = years[i];
-                    var competitors = Model.CompetitorInTeams.Where(c => c.Year == year).ToList();
-                    var hasData = competitors.Any();
+                    var hasData = Model.CompetitorInTeams
+                    .Any(c => c.SeasonYearId == year.SeasonYearId);
 
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link @(year == currentYear && hasData ? "active" : "") @(hasData ? "" : "disabled")"
-                                id="tab-@year"
+                        <button class="nav-link @(hasData && firstTab ? "active" : "") @(hasData ? "" : "disabled")"
+                                id="tab-@year.SeasonYearId"
                                 data-bs-toggle="tab"
-                                data-bs-target="#year-@year"
+                                data-bs-target="#year-@year.SeasonYearId"
                                 type="button"
                                 role="tab"
-                                @(hasData ? "" : "tabindex='-1' aria-disabled='true'")>
-                            @year
+                                @(hasData ? "" : "tabindex=-1 aria-disabled=true")>
+
+                            @year.Year
                         </button>
                     </li>
+
+                    if (hasData)
+                    {
+                        firstTab = false;
+                    }
                 }
             </ul>
 
             <div class="tab-content mt-3">
-                @{
-                    var globalIndex = 0;
-                }
 
-                @for (int i = 0; i < years.Count; i++)
+                @foreach (var year in Model.AvailableYears)
                 {
-                    var year = years[i];
-                    var competitors = Model.CompetitorInTeams.Where(c => c.Year == year).ToList();
+                    var competitors = Model.CompetitorInTeams
+                    .Where(c => c.SeasonYearId == year.SeasonYearId)
+                    .ToList();
 
-                    if (competitors.Any())
+                    if (!competitors.Any())
                     {
-                        <div class="tab-pane fade @(year == currentYear ? "show active" : "")" id="year-@year" role="tabpanel">
-                            @foreach (var cit in competitors)
-                            {
-                                <div class="card mb-3 shadow-sm">
-                                    <div class="card-body">
-                                        <input type="hidden" name="CompetitorInTeams[@globalIndex].CompetitorInTeamId" value="@cit.CompetitorInTeamId" />
-                                        <input type="hidden" name="CompetitorInTeams[@globalIndex].Year" value="@cit.Year" />
-                                        <input type="hidden" name="CompetitorInTeams[@globalIndex].TeamId" value="@cit.TeamId" />
-
-                                        <div class="form-check mb-2">
-                                            <input type="checkbox" class="form-check-input"
-                                                   name="CompetitorInTeams[@globalIndex].IsNationalChampion"
-                                                   value="true" @(cit.IsNationalChampion ? "checked" : "") />
-                                            <input type="hidden" name="CompetitorInTeams[@globalIndex].IsNationalChampion" value="false" />
-                                            <label class="form-check-label">
-                                                <i class="bi bi-trophy-fill text-warning"></i> Nationaal kampioen
-                                            </label>
-                                        </div>
-                                        <div>
-                                            <i class="bi bi-people-fill text-primary"></i>
-                                            <strong>@cit.TeamNameForYear</strong>
-                                        </div>
-                                    </div>
-                                </div>
-                                globalIndex++;
-                            }
-                        </div>
+                        continue;
                     }
+
+                    <div class="tab-pane fade @(firstPane ? "show active" : "")"
+                         id="year-@year.SeasonYearId"
+                         role="tabpanel">
+
+                        @foreach (var cit in competitors)
+                        {
+                            <div class="card mb-3 shadow-sm">
+                                <div class="card-body">
+
+                                    <input type="hidden"
+                                           name="CompetitorInTeams[@globalIndex].CompetitorInTeamId"
+                                           value="@cit.CompetitorInTeamId" />
+
+                                    <input type="hidden"
+                                           name="CompetitorInTeams[@globalIndex].TeamYearId"
+                                           value="@cit.TeamYearId" />
+
+                                    <input type="hidden"
+                                           name="CompetitorInTeams[@globalIndex].SeasonYearId"
+                                           value="@cit.SeasonYearId" />
+
+                                    <input type="hidden"
+                                           name="CompetitorInTeams[@globalIndex].Year"
+                                           value="@cit.Year" />
+
+                                    <input type="hidden"
+                                           name="CompetitorInTeams[@globalIndex].TeamName"
+                                           value="@cit.TeamName" />
+
+                                    <div class="form-check mb-2">
+                                        <input asp-for="CompetitorInTeams[@globalIndex].IsNationalChampion"
+                                               class="form-check-input" />
+
+                                        <label class="form-check-label"
+                                               asp-for="CompetitorInTeams[@globalIndex].IsNationalChampion">
+                                            <i class="bi bi-trophy-fill text-warning"></i>
+                                            Nationaal kampioen
+                                        </label>
+                                    </div>
+
+                                    <div>
+                                        <i class="bi bi-people-fill text-primary"></i>
+                                        <strong>
+                                            @cit.TeamName
+                                        </strong>
+                                    </div>
+
+                                </div>
+                            </div>
+
+                            globalIndex++;
+                        }
+
+                    </div>
+
+                    firstPane = false;
                 }
-            </div> *@
+
+            </div>
+
         </div>
     </div>
 
