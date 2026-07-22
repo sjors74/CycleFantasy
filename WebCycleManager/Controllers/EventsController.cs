@@ -17,11 +17,12 @@ namespace WebCycleManager.Controllers
         private IResultService _resultService;
         private IConfigurationService _configurationService;
         private readonly IScoreService _scoreService;
+        private readonly ISeasonYearService _seasonYearService;
 
         public EventsController(IEventService eventService, ITeamService teamService,
             IStageService stageService, IResultService resultService, 
             IConfigurationService configurationService,
-            IScoreService scoreService)
+            IScoreService scoreService, ISeasonYearService seasonYearService)
         {
             _eventService = eventService;
             _teamService = teamService;
@@ -29,68 +30,53 @@ namespace WebCycleManager.Controllers
             _resultService = resultService;
             _configurationService = configurationService;
             _scoreService = scoreService;
+            _seasonYearService = seasonYearService;
         }
 
         // GET: Events
         public async Task<IActionResult> Index(int? year, bool? isActiveFilter)
         {
-            var vm = new EventViewModel();
             year ??= DateTime.Now.Year;
 
-            var allEventsList = (await _eventService.GetAllEvents()).ToList();
-            var allYears = allEventsList
+            var allEvents = (await _eventService.GetAllEvents()).ToList();
+
+            var vm = new EventViewModel
+            {
+                SelectedYear = year.Value,
+                IsActiveFilter = isActiveFilter
+            };
+
+            vm.Years = allEvents
                 .Select(e => e.EventYear)
                 .Distinct()
                 .OrderByDescending(y => y)
+                .Select(y => new SelectListItem
+                {
+                    Value = y.ToString(),
+                    Text = y.ToString()
+                })
                 .ToList();
 
-            vm.Years = allYears.Select(y => new SelectListItem
-            {
-                Value = y.ToString(),
-                Text = y.ToString()
-            })
-            .ToList();
+            vm.ActiveFilters = new List<SelectListItem>
+    {
+        new() { Value = "", Text = "Alle evenementen" },
+        new() { Value = "true", Text = "Actief" },
+        new() { Value = "false", Text = "Inactief" }
+    };
 
-            vm.SelectedYear = year.Value;
-            vm.IsActiveFilter = isActiveFilter;
+            var query = allEvents.Where(e => e.EventYear == year.Value);
 
-            vm.ActiveFilters =
-                [
-                new SelectListItem
-                {
-                    Value = "",
-                    Text = "Alle evenementen"
-                },
-                new SelectListItem
-                {
-                    Value = "true",
-                    Text = "Actief"
-                },
-                new SelectListItem
-                {
-                    Value = "false",
-                    Text = "Inactief"
-                }
-                ];
-
-            var allEvents = await _eventService.GetAllEvents();
-            var query = allEvents.Where(e => e.EventYear == year);
-
-            if(isActiveFilter.HasValue)
+            if (isActiveFilter.HasValue)
             {
                 query = query.Where(e => e.IsActive == isActiveFilter.Value);
             }
 
-            var events = query.ToList();
-
-            foreach (var e in events)
-            {
-                vm.Events.Add(CreateViewModel(e));
-            }
+            vm.Events = query
+                .Select(CreateViewModel)
+                .ToList();
 
             return View(vm);
         }
-
         // GET: Events/Details/5
         public async Task<IActionResult> Details(int? id)
         {
@@ -108,23 +94,27 @@ namespace WebCycleManager.Controllers
         // GET: Events/Create
         public async Task<ActionResult> Create()
         {
-            var configurations = await _configurationService.GetAllConfigurations();
-            ViewData["ConfigurationId"] = new SelectList(configurations, "Id", "ConfigurationType");
-            return View();
+            var model = new EventItemViewModel();
+
+            await PopulateViewModelAsync(model);
+
+            return View(model);
         }
 
         // POST: Events/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(EventItemViewModel @event)
+        public async Task<IActionResult> Create(EventItemViewModel model)
         {
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
-                var e = await CreateFromViewModel(@event);
-                await  _eventService.Create(e);
-                return RedirectToAction(nameof(Index));
+                await PopulateViewModelAsync(model);
+                return View(model);
             }
-            return View(@event);
+
+            var e = await CreateFromViewModel(model);
+            await  _eventService.Create(e);
+            return RedirectToAction(nameof(Index));
         }
 
         // GET: Events/Edit/5
@@ -141,40 +131,32 @@ namespace WebCycleManager.Controllers
                 return NotFound();
             }
             var vm = CreateViewModel(@event);
-            var configurations = await _configurationService.GetAllConfigurations();
-            ViewData["ConfigurationId"] = new SelectList(configurations, "Id", "ConfigurationType");
+            await PopulateViewModelAsync(vm);
+
             return View(vm);
         }
 
         // POST: Events/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int? id, EventItemViewModel @event)
+        public async Task<IActionResult> Edit(int? id, EventItemViewModel model)
         {
-            if (id == null || id <= 0)
-            {
-                ModelState.AddModelError("Id", "Ongeldig of ontbrekend ID.");
-                return View(@event ?? new EventItemViewModel());
-            }
-
-            if (@event == null || id != @event.Id)
-            {
-                ModelState.AddModelError("Id", "Het opgegeven ID komt niet overeen met het model.");
-                return View(@event ?? new EventItemViewModel());
-            }
-
             if (!ModelState.IsValid)
-                return View(@event);
+            {
+                await PopulateViewModelAsync(model);
+                return View(model);
+            }
+
 
             try
             {
-                var e = await CreateFromViewModel(@event);
+                var e = await CreateFromViewModel(model);
                 await _eventService.Update(e);
                 return RedirectToAction(nameof(Index));
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (await _eventService.GetEventById(@event.Id) == null)
+                if (await _eventService.GetEventById(model.Id) == null)
                     return NotFound();
                 throw;
             }
@@ -386,6 +368,28 @@ namespace WebCycleManager.Controllers
             {
                 throw;
             }
+        }
+
+        private async Task PopulateViewModelAsync(EventItemViewModel model)
+        {
+            var configurations = await _configurationService.GetAllConfigurations();
+            var years = await _seasonYearService.GetAllAsync();
+
+            model.AvailableYears = years
+                .OrderByDescending(y => y.Year)
+                .Select(y => new SelectListItem
+                {
+                    Value = y.Year.ToString(),
+                    Text = y.Year.ToString(),
+                    Selected = y.Year == model.Year
+                })
+                .ToList();
+
+            ViewData["ConfigurationId"] = new SelectList(
+                configurations,
+                "Id",
+                "ConfigurationType",
+                model.ConfigurationId);
         }
     }
 }
