@@ -21,6 +21,7 @@ namespace Domain.Models
         [DisplayName("Land")]
         public Country? Country { get; set; }
         public virtual ICollection<CompetitorInTeam> CompetitorInTeams { get; set; } = [];
+        public virtual ICollection<CompetitorRating> Ratings { get; set; } = [];
 
         [NotMapped]
         [DisplayName("Naam")]
