@@ -429,6 +429,7 @@ namespace CycleManager.Tests.Unit.Manager
         {
             // Arrange
             int teamYearId = 1;
+            int seasonYearId = 1;
             _competitorServiceMock.Setup(s => s.GetByTeamId(teamYearId))
                 .ReturnsAsync(new List<CompetitorInTeamDto>
             {
@@ -453,7 +454,7 @@ namespace CycleManager.Tests.Unit.Manager
             });
 
             // Act
-            var result = await _controller.GetCompetitorForEvent(teamYearId);
+            var result = await _controller.GetCompetitorForEvent(teamYearId, seasonYearId);
 
             // Assert
             var json = Assert.IsType<JsonResult>(result);
