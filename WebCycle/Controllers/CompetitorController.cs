@@ -48,7 +48,7 @@ namespace WebCycle.Controllers
             
         }
 
-        [HttpGet("{id}/team", Name = "GetCompetitorsByTeamId")]
+        [HttpGet("{id}/team", Name = "GetCompetitorsByTeamYearId")]
         public async Task<IActionResult> GetByTeamId(int id)
         {
             try
@@ -61,6 +61,5 @@ namespace WebCycle.Controllers
                 return StatusCode(500, "Fout bij ophalen van renners/team.");
             }
         }
-
     }
 }

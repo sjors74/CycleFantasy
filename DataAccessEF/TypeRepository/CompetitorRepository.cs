@@ -32,8 +32,10 @@ namespace DataAccessEF.TypeRepository
                         .Select(cit => new CompetitorInTeamDto
                         {
                             CompetitorInTeamId = cit.Id,
+                            TeamId = cit.TeamYear.TeamId,
                             TeamYearId = cit.TeamYearId,
                             TeamName = cit.TeamYear.Name,
+                            SeasonYearId = cit.TeamYear.SeasonYearId,
                             Year = cit.TeamYear.SeasonYear.Year,
                             IsNationalChampion = cit.IsNationalChampion
                         })
@@ -60,14 +62,14 @@ namespace DataAccessEF.TypeRepository
             return competitor;
         }
 
-        public async Task<IEnumerable<CompetitorInTeamDto>> GetByTeamId(int teamYearId)
+        public async Task<IEnumerable<CompetitorInTeamDto>> GetByTeamId(int teamId)
         {
             var competitors = await context.CompetitorInTeams
                 .Include(cit => cit.Competitor)
                     .ThenInclude(c => c.Country)
                 .Include(cit => cit.TeamYear)
                     .ThenInclude(ty => ty.SeasonYear)
-                .Where(cit => cit.TeamYearId == teamYearId)
+                .Where(cit => cit.TeamYear.TeamId == teamId)
                 .Select(cit => new CompetitorInTeamDto
                 {
 
@@ -197,6 +199,33 @@ namespace DataAccessEF.TypeRepository
         {
             return await context.CompetitorInTeams
                 .Where(cit => ids.Contains(cit.Id))
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<CompetitorInTeamDto>> GetByTeamAndSeason(int teamId, int seasonYearId)
+        {
+            return await context.CompetitorInTeams
+                .Include(cit => cit.Competitor)
+                    .ThenInclude(c => c.Country)
+                .Include(cit => cit.TeamYear)
+                    .ThenInclude(ty => ty.SeasonYear)
+                .Where(cit =>
+                    cit.TeamYear.TeamId == teamId &&
+                    cit.TeamYear.SeasonYearId == seasonYearId)
+                .Select(cit => new CompetitorInTeamDto
+                {
+                    CompetitorInTeamId = cit.Id,
+                    FirstName = cit.Competitor.FirstName,
+                    LastName = cit.Competitor.LastName,
+                    CompetitorName = cit.Competitor.CompetitorName,
+                    TeamId = cit.TeamYear.TeamId,
+                    TeamYearId = cit.TeamYearId,
+                    TeamName = cit.TeamYear.Name,
+                    SeasonYearId = cit.TeamYear.SeasonYearId,
+                    Year = cit.TeamYear.SeasonYear.Year,
+                    IsNationalChampion = cit.IsNationalChampion
+                })
+                .AsNoTracking()
                 .ToListAsync();
         }
     }

@@ -77,9 +77,9 @@ namespace CycleManager.Services
         /// </summary>
         /// <param name="teamId"></param>
         /// <returns></returns>
-        public async Task<IEnumerable<CompetitorInTeamDto>> GetByTeamId(int teamYearId)
+        public async Task<IEnumerable<CompetitorInTeamDto>> GetByTeamId(int teamId)
         {
-            return await _competitorRepository.GetByTeamId(teamYearId);
+            return await _competitorRepository.GetByTeamId(teamId);
         }
 
         /// <summary>
@@ -209,5 +209,10 @@ namespace CycleManager.Services
         {
             return await _competitorRepository.GetCompetitorInTeamsByIdsAsync(ids);
         }
+        public async Task<IEnumerable<CompetitorInTeamDto>> GetByTeamAndSeason(int teamId, int seasonYearId)
+        {
+            return await _competitorRepository.GetByTeamAndSeason(teamId, seasonYearId);
+        }
+
     }
 }

@@ -9,7 +9,7 @@ namespace Domain.Interfaces
     {
         Task<List<CompetitorDto>> GetAllCompetitors(int year);
         Task<Competitor> GetById(int competitorId);
-        Task<IEnumerable<CompetitorInTeamDto>> GetByTeamId(int teamYearId);
+        Task<IEnumerable<CompetitorInTeamDto>> GetByTeamId(int teamId);
         Task<int> GetCompetitorsByCountry(int countryId);
         Task<List<SeasonYearDto>> GetAvailableSeasonYears();
         Task<Competitor?> GetCompetitorByName(string firstName, string lastName, int countryId);
@@ -18,5 +18,6 @@ namespace Domain.Interfaces
         Task<Competitor?> GetByIdWithTeamsAsync(int id);
         Task UpdateCompetitorAsync(Competitor competitor);
         Task<List<CompetitorInTeam>> GetCompetitorInTeamsByIdsAsync(List<int> ids);
+        Task<IEnumerable<CompetitorInTeamDto>> GetByTeamAndSeason(int teamId, int seasonYearId);
     }
 }
