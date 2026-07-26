@@ -1,4 +1,7 @@
-﻿using CycleManager.Services.Interfaces;
+﻿using CycleManager.Domain.Dto;
+using CycleManager.Domain.Interfaces;
+using CycleManager.Domain.Models;
+using CycleManager.Services.Interfaces;
 using Domain.Interfaces;
 using Domain.Models;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -8,14 +11,29 @@ namespace CycleManager.Services
     public class TeamService : ITeamService
     {
         private readonly ITeamRepository _teamRepository;
-        public TeamService(ITeamRepository teamRepository) 
+        private readonly ISeasonYearRepository _seasonYearRepository;
+
+        public TeamService(ITeamRepository teamRepository, ISeasonYearRepository seasonYearRepository)
         {
             _teamRepository = teamRepository;
+            _seasonYearRepository = seasonYearRepository;
         }
 
-        public async Task Add(Team entity)
+        public async Task Add(Team team)
         {
-            _teamRepository.Add(entity);
+            var seasonYears = await _seasonYearRepository.GetAllAsync();
+
+            foreach (var seasonYear in seasonYears)
+            {
+                team.TeamYears.Add(new TeamYear
+                {
+                    SeasonYearId = seasonYear.SeasonYearId,
+                    Year = seasonYear.Year,
+                    Name = team.CurrentTeamName
+                });
+            }
+
+            _teamRepository.Add(team);
             await _teamRepository.SaveChangesAsync();
         }
 
@@ -72,6 +90,11 @@ namespace CycleManager.Services
             return await _teamRepository.GetTeamsForEvent(eventId);
         }
 
+        public async Task<List<TeamYearDto>> GetTeamYears(int seasonYearId)
+        {
+            return await _teamRepository.GetTeamYears(seasonYearId);
+        }
+
         public async Task<bool> HasUnprocessedScrapedTeams()
         {
             return await _teamRepository.HasUnprocessedScrapedCompetitors();
@@ -81,6 +104,11 @@ namespace CycleManager.Services
         {
             _teamRepository.Update(entity);
             await _teamRepository.SaveChangesAsync();
+        }
+
+        public async Task<TeamYearDto?> GetByTeamAndSeasonAsync(int teamId, int seasonYearId)
+        {
+            return await _teamRepository.GetByTeamAndSeasonAsync(teamId, seasonYearId);
         }
     }
 }

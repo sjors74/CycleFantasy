@@ -50,6 +50,7 @@ namespace WebCycleManager.Models
         public int? ConfigurationId { get; set; }
         public int AantalPosities { get; set; }
         public int SelectedTeamsCount { get; set; }
+        public IEnumerable<SelectListItem> AvailableYears { get; set; } = [];
 
         public string EventNameDescription
         {

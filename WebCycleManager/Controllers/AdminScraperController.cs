@@ -1,5 +1,4 @@
 ﻿using CycleManager.Domain.Dto;
-using CycleManager.Services;
 using CycleManager.Services.Interfaces;
 using Hangfire;
 using Microsoft.AspNetCore.Mvc;
@@ -11,15 +10,18 @@ namespace WebCycleManager.Controllers
         private readonly IScraperService _scraperService;
         private readonly IScoreService _scoreService;
         private readonly IAdminScraperService _adminScraperService;
+        private readonly ITeamService _teamService;
 
         public AdminScraperController(
             IScraperService scraperService, 
             IScoreService scoreService, 
-            IAdminScraperService adminScraperService)
+            IAdminScraperService adminScraperService,
+            ITeamService teamService)
         {
             _scraperService = scraperService;
             _scoreService = scoreService;
             _adminScraperService = adminScraperService;
+            _teamService = teamService;
         }
         
         [HttpGet]
@@ -56,11 +58,12 @@ namespace WebCycleManager.Controllers
         [HttpPost]
         public async Task<IActionResult> ScrapeCompetitors([FromBody] ScrapeRequestDto dto)
         {
-            var team = await _adminScraperService.GetTeamByIdAsync(dto.TeamId);
-            if (team == null)
+            var teamYear = await _teamService.GetByTeamAndSeasonAsync(dto.TeamId, dto.SeasonYearId);
+            if (teamYear == null)
                 throw new Exception("Team not found while trying to scrape competitors.");
 
-            await _scraperService.RunCompetitorsAsync(dto.TeamId, dto.Year);
+
+            await _scraperService.RunCompetitorsAsync(teamYear.TeamYearId);
 
             return Ok();
         }

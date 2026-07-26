@@ -7,6 +7,7 @@
             <form asp-action="Create" method="post">
                 @Html.AntiForgeryToken()
                 <input type="hidden" asp-for="CompetitorId" />
+                <input type="hidden" asp-for="SeasonYearId" />
                 <h4>Nieuwe renner gegevens</h4>
                 <div class="form-group mb-2">
                     <label asp-for="FirstName" class="control-label"></label>
@@ -22,18 +23,18 @@
                 </div>
                 <div class="form-group mb-2">
                     <label asp-for="CountryId" class="control-label"></label>
-                    <select asp-for="CountryId" class="form-control" asp-items="ViewBag.CountryId"></select>
+                    <select asp-for="CountryId" class="form-control" asp-items="Model.Countries"></select>
                 </div>
-
                 <h4>Team en jaar</h4>
                 <div class="form-group mb-2">
-                    <label asp-for="TeamId" class="control-label"></label>
-                    <select asp-for="TeamId" class="form-control" asp-items="ViewBag.TeamId"></select>
+                    <label asp-for="TeamYearId" class="control-label"></label>
+                    <select asp-for="TeamYearId" class="form-control" asp-items="Model.Teams"></select>
                 </div>
-                <div class="form-group mb-2">
-                    <label asp-for="Year"></label>
-                    <input asp-for="Year" class="form-control" />
+                <div>
+                    <label>Seizoen</label>
+                    <p class="form-control-plaintext">@Model.SeasonYear</p>
                 </div>
+
                  <div class="form-group mb-3">
                     <input asp-for="IsNationalChampion" class="form-check-input" />
                     <label asp-for="IsNationalChampion" class="form-check-label"></label>
@@ -52,39 +53,5 @@
 
     @section Scripts {
         @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
-@* 
-    <script>
-        $(function () {
-            $("#competitorSearch").autocomplete({
-                source: '/Competitors/SearchCompetitors',
-                minLength: 2,
-                select: function (event, ui) {
-                    $("#CompetitorId").val(ui.item.id);
-
-                    const selectYear = $("#Year").val();
-
-                    // AJAX call voor extra info
-                    $.ajax({
-                        url: '/Competitors/GetCompetitorInfo',
-                        data: { id: ui.item.id, year: selectYear },
-                        success: function (data) {
-                            $("#teamName").text(data.teamName);
-                            $("#countryName").text(data.country);
-                            $("#pcsName").text(data.pcsName);
-                            $("#competitorInfo").show();
-                        }
-                    });
-                }
-            });
-
-            // voorkom form submit bij Enter in het zoekveld
-            $("#competitorSearch").on("keydown", function (e) {
-                if (e.key === "Enter") {
-                    e.preventDefault();
-                }
-            });
-        });
-
-    </script> *@
 
     }

@@ -333,18 +333,19 @@ namespace CycleManager.Services
             }
         }
 
-        public async Task RunCompetitorsAsync(int teamId, int year)
+        public async Task RunCompetitorsAsync(int teamYearId)
         {
-            var team = await _db.Teams
-                .Where(t => t.TeamId == teamId)
-                .FirstOrDefaultAsync();
+            var teamYear = await _db.TeamYear
+                .Include(ty => ty.Team)
+                .Include(ty => ty.SeasonYear)
+                .FirstOrDefaultAsync(ty => ty.TeamYearId == teamYearId);
 
-            if (team == null) return;
+            if (teamYear == null) return;
 
-            string url = $"https://www.procyclingstats.com/team/{team.PcsName}-{year}/overview/start";
-            _logger.LogInformation($"Start scraping competitors for team {team.CurrentTeamName}, year {year}");
+            string url = $"https://www.procyclingstats.com/team/{teamYear.Team.PcsName}-{teamYear.SeasonYear.Year}/overview/start";
+            _logger.LogInformation($"Start scraping competitors for team {teamYear.Team.CurrentTeamName}, year {teamYear.SeasonYear.Year}");
 
-            var competitors = await _pcsScraper.ScrapeCompetitorsAsync(url, teamId, year);
+            var competitors = await _pcsScraper.ScrapeCompetitorsAsync(url, teamYear.TeamId, teamYear.SeasonYear.Year);
 
             _db.ScrapedCompetitors.AddRange(competitors);
             await _db.SaveChangesAsync();            
@@ -387,13 +388,19 @@ namespace CycleManager.Services
             var countries = await _db.Countries.ToListAsync();
             var countryLookup = countries.ToDictionary(c => c.CountryNameShort, StringComparer.OrdinalIgnoreCase);
 
+            var teamYearLookup = await _db.TeamYear
+                .Include(ty => ty.SeasonYear)
+                .ToDictionaryAsync(
+                    ty => (ty.TeamId, ty.SeasonYear.Year),
+                    ty => ty.TeamYearId);
+
             // Cache bestaande CompetitorInTeams (hashset)
             var existingCompetitorInTeams = await _db.CompetitorInTeams
-                .Select(c => new { c.CompetitorId, c.TeamId, c.Year })
+                .Select(c => new { c.CompetitorId, c.TeamYearId })
                 .ToListAsync();
 
             var competitorInTeamSet = existingCompetitorInTeams
-                .Select(x => ((object)x.CompetitorId, x.TeamId, x.Year))
+                .Select(x => ((object)x.CompetitorId, x.TeamYearId))
                 .ToHashSet();
 
             var newCompetitors = new List<Competitor>();
@@ -463,15 +470,22 @@ namespace CycleManager.Services
 
                 object competitorKey = competitor.CompetitorId == 0 ? competitor : competitor.CompetitorId;
 
-                var citKey = (competitorKey, sc.TeamId, sc.Year);
+                if (!teamYearLookup.TryGetValue((sc.TeamId, sc.Year), out var teamYearId))
+                {
+                    throw new InvalidOperationException(
+                        $"Geen TeamYear gevonden voor TeamId={sc.TeamId}, Year={sc.Year}.");
+                }
+
+                var citKey = (competitorKey, teamYearId);
+
+                var teamYear = await _db.TeamYear.FirstAsync(ty => ty.TeamYearId == teamYearId);
 
                 if (!competitorInTeamSet.Contains(citKey))
                 {
                     newCompetitorInTeams.Add(new CompetitorInTeam
                     {
                         Competitor = competitor,
-                        TeamId = sc.TeamId,
-                        Year = sc.Year
+                        TeamYearId = teamYearId
                     });
 
                     competitorInTeamSet.Add(citKey);
@@ -521,10 +535,11 @@ namespace CycleManager.Services
 
             var competitorInTeams = await _db.CompetitorInTeams
                 .Include(cit => cit.Competitor)
-                .Include(cit => cit.Team)
+                .Include(cit => cit.TeamYear)
+                    .ThenInclude(ty => ty.SeasonYear)
                 .Where(cit => 
-                    cit.Year == eventYear &&
-                    eventTeamIds.Contains(cit.TeamId))
+                    cit.TeamYear.SeasonYear.Year == eventYear &&
+                    eventTeamIds.Contains(cit.TeamYear.TeamId))
                 .ToListAsync();
 
             var existingEntries = await _db.CompetitorsInEvent
@@ -539,9 +554,9 @@ namespace CycleManager.Services
                 competitorInTeams
                 .Where(x =>
                     !string.IsNullOrWhiteSpace(x.Competitor.PcsName) && 
-                    !string.IsNullOrWhiteSpace(x.Team.PcsName))
+                    !string.IsNullOrWhiteSpace(x.TeamYear.Team.PcsName))
                 .GroupBy(x =>
-                    $"{x.Competitor.PcsName.ToLower()}|{x.Team.PcsName.ToLower()}")
+                    $"{x.Competitor.PcsName.ToLower()}|{x.TeamYear.Team.PcsName.ToLower()}")
                 .ToDictionary(g => g.Key, g => g.First());
 
             var byPcs = 
@@ -555,7 +570,7 @@ namespace CycleManager.Services
             var byNameAndTeam = 
                 competitorInTeams
                 .GroupBy(x =>
-                    $"{NormalizeName($"{x.Competitor.LastName} {x.Competitor.FirstName}")}|{NormalizeName(x.Team.CurrentTeamName)}")
+                    $"{NormalizeName($"{x.Competitor.LastName} {x.Competitor.FirstName}")}|{NormalizeName(x.TeamYear.Name)}")
                 .ToDictionary(g => g.Key, g => g.First());
 
             var byName = 

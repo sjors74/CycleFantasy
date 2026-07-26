@@ -1,11 +1,9 @@
-﻿@model PaginatedList<Domain.Dto.CompetitorDto>
+﻿@model CompetitorIndexViewModel
 
 @{
-    var availableYears = (List<int>)ViewData["AvailableYears"];
-    var selectedYear = (int)ViewData["SelectedYear"];
-    var half = (int)Math.Ceiling(Model.Count / 2.0);
-    var leftItems = Model.Take(half).ToList();
-    var rightItems = Model.Skip(half).ToList();
+    var half = (int)Math.Ceiling(Model.Competitors.Count / 2.0);
+    var leftItems = Model.Competitors.Take(half).ToList();
+    var rightItems = Model.Competitors.Skip(half).ToList();
 }
 
 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -14,20 +12,20 @@
     <div class="d-flex align-items-center">
         <!-- Jaar Tabs -->
         <ul class="nav nav-tabs mb-0">
-            @foreach (var year in availableYears)
+            @foreach (var seasonYear in Model.AvailableYears)
             {
                 <li class="nav-item">
-                    <a class="nav-link @(year == selectedYear ? "active" : "")"
+                    <a class="nav-link @(seasonYear.SeasonYearId == Model.SelectedSeasonYearId ? "active" : "")"
                        asp-action="Index"
-                       asp-route-year="@year"
-                       asp-route-SearchString="@ViewData["CurrentFilter"]">
-                        @year
+                       asp-route-seasonYearId="@seasonYear.SeasonYearId"
+                       asp-route-searchString="@Model.CurrentFilter">
+                        @seasonYear.Year
                     </a>
                 </li>
             }
         </ul>
 
-        <a asp-action="Create" asp-route-year="@selectedYear" class="btn btn-success btn-sm ms-3">
+        <a asp-action="Create" asp-route-seasonYearId="@Model.SelectedSeasonYearId" class="btn btn-success btn-sm ms-3">
             <i class="bi bi-plus-lg"></i> Nieuwe renner
         </a>
     </div>
@@ -36,10 +34,11 @@
 <!-- Compact zoekformulier -->
 <form asp-action="Index" method="get" class="d-flex align-items-center mb-3">
     <label class="me-2 mb-0">Zoek op naam:</label>
-    <input type="hidden" name="year" value="@(selectedYear)" />
-    <input type="text" name="SearchString" value="@ViewData["CurrentFilter"]"
+    <input type="hidden" name="seasonYearId" value="@Model.SelectedSeasonYearId" />
+    <input type="text" name="searchString" value="@Model.CurrentFilter"
            class="form-control form-control-sm me-2" style="width:150px;" />
     <input type="submit" value="Zoek" class="btn btn-secondary btn-sm me-2" />
+
     <a asp-action="Index" class="btn btn-link btn-sm mb-0">Terug naar volledige lijst</a>
 </form>
 
@@ -69,10 +68,6 @@
                                        class="btn btn-sm btn-outline-primary" title="Bewerken">
                                            <i class="bi bi-pencil-square"></i>
                                     </a>
-                                    <a asp-action="Details" asp-route-id="@item.CompetitorId"
-                                        class="btn btn-sm btn-outline-secondary" title="Details">
-                                            <i class="bi bi-eye"></i>
-                                    </a>
                                     <a asp-action="Delete" asp-route-id="@item.CompetitorId"
                                         class="btn btn-sm btn-outline-danger" title="Verwijderen">
                                             <i class="bi bi-trash"></i>
@@ -90,12 +85,12 @@
 <!-- Paginate -->
 
 <div class="d-flex justify-content-between mt-3">
-    @if (Model.HasPreviousPage)
+    @if (Model.Competitors.HasPreviousPage)
     {
         <a asp-action="Index"
-        asp-route-pageNumber="@(Model.PageIndex - 1)"
-        asp-route-year="@(selectedYear)"
-        asp-route-currentFilter="@ViewData["CurrentFilter"]"
+        asp-route-pageNumber="@(Model.Competitors.PageIndex - 1)"
+        asp-route-seasonYearId="@(Model.SelectedSeasonYearId)"
+        asp-route-currentFilter="@Model.CurrentFilter"
         class="btn btn-outline-secondary btn-sm">
             Vorige
         </a>
@@ -105,12 +100,12 @@
         <button class="btn btn-outline-secondary btn-sm" disabled>Vorige</button>
     }
 
-    @if (Model.HasNextPage)
+    @if (Model.Competitors.HasNextPage)
     {
         <a asp-action="Index"
-        asp-route-pageNumber="@(Model.PageIndex + 1)"
-        asp-route-year="@(selectedYear)"
-        asp-route-currentFilter="@ViewData["CurrentFilter"]"
+        asp-route-pageNumber="@(Model.Competitors.PageIndex + 1)"
+        asp-route-seasonYearId="@(Model.SelectedSeasonYearId)"
+        asp-route-currentFilter="@Model.CurrentFilter"
         class="btn btn-outline-secondary btn-sm">
             Volgende
         </a>

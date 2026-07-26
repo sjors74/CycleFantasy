@@ -124,19 +124,19 @@ namespace DataAccessEF.TypeRepository
                    Id = et.Team.TeamId,
                    Naam = et.Team.CurrentTeamName,
                    Renners = competitorsInEvent
-                    .Where(cie => cie.CompetitorInTeam.TeamId == et.Team.TeamId)
+                    .Where(cie => cie.CompetitorInTeam.TeamYear.TeamId == et.Team.TeamId)
                     .OrderByDescending(cie => cie.InSelectie)
                     .ThenBy(cie => cie.EventNumber)
                     .ThenBy(cie => cie.CompetitorInTeam.Competitor.LastName)
                     .Select(cie =>
                     {
                         var competitor = cie.CompetitorInTeam.Competitor;
-                        var team = cie.CompetitorInTeam.Team;
+                        
                         return new CompetitorDto
                         {
                             CompetitorInTeamId = cie.CompetitorInTeamId,
-                            FirstName = cie.CompetitorInTeam.Competitor.FirstName,
-                            LastName = cie.CompetitorInTeam.Competitor.LastName,
+                            FirstName = competitor.FirstName,
+                            LastName = competitor.LastName,
                             PcsName = competitor.PcsName,
                             CountryShort = competitor.Country.CountryNameShort,
                             InSelectie = cie.InSelectie,

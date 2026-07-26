@@ -1,4 +1,5 @@
-﻿using CycleManager.Domain.Interfaces;
+﻿using CycleManager.Domain.Dto;
+using CycleManager.Domain.Interfaces;
 using CycleManager.Domain.Models;
 using CycleManager.Services.Interfaces;
 
@@ -35,9 +36,15 @@ namespace CycleManager.Services
             await _repository.SaveChangesAsync();
         }
 
-        public Task<List<SeasonYear>> GetAllAsync()
+        public async Task<List<SeasonYearDto>> GetAllAsync()
         {
-            return _repository.GetAllAsync();
+            var years = await _repository.GetAllAsync();
+            return years.Select(y => new SeasonYearDto
+            {
+                SeasonYearId = y.SeasonYearId,
+                Year = y.Year,
+                Active = y.Active
+            }).ToList();
         }
 
         public Task<SeasonYear?> GetByIdAsync(int id)

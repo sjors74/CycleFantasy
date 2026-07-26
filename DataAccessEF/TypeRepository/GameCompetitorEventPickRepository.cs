@@ -38,18 +38,23 @@ namespace DataAccessEF.TypeRepository
         {
             var picks = await context.GameCompetitorEventPicks
                 .Include(g => g.GameCompetitorEvent)
-                    .ThenInclude(b => b.User)
-                .Include(c => c.CompetitorsInEvent)
-                    .ThenInclude(c => c.CompetitorInTeam)
-                        .ThenInclude(cie => cie.Competitor)
+                    .ThenInclude(gce => gce.User)
+
+                .Include(g => g.CompetitorsInEvent)
+                    .ThenInclude(cie => cie.CompetitorInTeam)
+                        .ThenInclude(cit => cit.Competitor)
                             .ThenInclude(c => c.Country)
-                .Include(c => c.CompetitorsInEvent)
-                        .ThenInclude(c => c.CompetitorInTeam)
-                            .ThenInclude(cit => cit.Team)
-                .Include(c => c.CompetitorsInEvent)
+
+                .Include(g => g.CompetitorsInEvent)
+                    .ThenInclude(cie => cie.CompetitorInTeam)
+                        .ThenInclude(cit => cit.TeamYear)
+                            .ThenInclude(ty => ty.Team)
+
+                .Include(g => g.CompetitorsInEvent)
                     .ThenInclude(cie => cie.Event)
-                .Where(c => c.GameCompetitorEvent.Id == id)
-                .OrderBy(c => c.CompetitorsInEvent.EventNumber)
+
+                .Where(g => g.GameCompetitorEvent.Id == id)
+                .OrderBy(g => g.CompetitorsInEvent.EventNumber)
                 .ToListAsync();
 
             return picks;

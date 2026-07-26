@@ -1,4 +1,6 @@
-﻿using System.ComponentModel;
+﻿using Microsoft.AspNetCore.Mvc.Rendering;
+using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 
 namespace WebCycleManager.Models
 {
@@ -14,10 +16,15 @@ namespace WebCycleManager.Models
         [DisplayName("Land")]
         public int CountryId { get; set; }
         [DisplayName("Team")]
-        public int TeamId { get; set; }
+        [Required(ErrorMessage = "Kies een team.")]
+        public int? TeamYearId { get; set; }
         [DisplayName("Kampioen")]
         public bool IsNationalChampion { get; set; }
-        [DisplayName("Jaar")]
-        public int Year { get; set; } = DateTime.Now.Year; // standaard huidig jaar
+        public int SeasonYearId { get; set; }
+        public int SeasonYear { get; set; } 
+
+        public List<SelectListItem> Teams { get; set; } = [];
+
+        public List<SelectListItem> Countries { get; set; } = [];
     }
 }

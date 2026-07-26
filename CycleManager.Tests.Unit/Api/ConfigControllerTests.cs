@@ -1,5 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using CycleManager.Services.Interfaces;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
+using Moq;
 using WebCycle.Controllers;
 
 namespace CycleManager.Tests.Unit.Api
@@ -19,7 +21,8 @@ namespace CycleManager.Tests.Unit.Api
                 .AddInMemoryCollection(inMemorySettings!)
                 .Build();
 
-            var controller = new ConfigController(configuration);
+            var seasonYearServiceMock = new Mock<ISeasonYearService>();
+            var controller = new ConfigController(configuration, seasonYearServiceMock.Object);
 
             // Act
             var result = controller.GetClientSettings();
@@ -41,7 +44,8 @@ namespace CycleManager.Tests.Unit.Api
         {
             // Arrange
             var configuration = new ConfigurationBuilder().Build(); // lege config
-            var controller = new ConfigController(configuration);
+            var seasonYearServiceMock = new Mock<ISeasonYearService>();
+            var controller = new ConfigController(configuration, seasonYearServiceMock.Object);
 
             // Act
             var result = controller.Ping();
@@ -51,5 +55,4 @@ namespace CycleManager.Tests.Unit.Api
             Assert.Equal("pong", okResult.Value);
         }
     }
-
 }

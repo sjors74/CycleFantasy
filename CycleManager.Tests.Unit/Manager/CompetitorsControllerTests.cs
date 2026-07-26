@@ -19,18 +19,21 @@ namespace CycleManager.Tests.Unit.Manager
         private readonly Mock<ICompetitorService> _competitorServiceMock;
         private readonly Mock<ITeamService> _teamServiceMock;
         private readonly Mock<ICountryService> _countryServiceMock;
+        private readonly Mock<ISeasonYearService> _seasonYearServiceMock;
         private readonly CompetitorsController _controller;
 
         public CompetitorsControllerTests()
         {
             _competitorServiceMock = new Mock<ICompetitorService>();
             _teamServiceMock = new Mock<ITeamService>();
+            _seasonYearServiceMock = new Mock<ISeasonYearService>();
             _countryServiceMock = new Mock<ICountryService>();
 
             _controller = new CompetitorsController(
                 _competitorServiceMock.Object,
                 _teamServiceMock.Object,
-                _countryServiceMock.Object
+                _countryServiceMock.Object,
+                _seasonYearServiceMock.Object
             );
         }
 
@@ -39,7 +42,7 @@ namespace CycleManager.Tests.Unit.Manager
         {
             // Arrange
             var competitors = TestDataFactory.CreateCompetitorDtos(3);
-            _competitorServiceMock.Setup(s => s.GetAvailableYears()).ReturnsAsync(new List<int> { 2023, 2024 });
+            _competitorServiceMock.Setup(s => s.GetAvailableYears()).ReturnsAsync(new List<SeasonYearDto> { new SeasonYearDto { Year = 2023 }, new SeasonYearDto { Year = 2024 } });
             _competitorServiceMock.Setup(s => s.GetAllCompetitors(It.IsAny<int>()))
                                   .ReturnsAsync(competitors);
 
@@ -99,7 +102,7 @@ namespace CycleManager.Tests.Unit.Manager
             _competitorServiceMock.Setup(s => s.GetCompetitorByName(vm.FirstName, vm.LastName, vm.CountryId))
                                   .ReturnsAsync((Competitor)null);
             _competitorServiceMock.Setup(s => s.Create(It.IsAny<Competitor>())).Returns(Task.CompletedTask);
-            _competitorServiceMock.Setup(s => s.CheckCompetitorInTeam(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>()))
+            _competitorServiceMock.Setup(s => s.CheckCompetitorInTeam(It.IsAny<int>(), It.IsAny<int>()))
                                   .ReturnsAsync(false);
             _competitorServiceMock.Setup(s => s.CreateCompetitorInTeam(It.IsAny<CompetitorInTeam>()))
                                   .Returns(Task.CompletedTask);
@@ -146,9 +149,8 @@ namespace CycleManager.Tests.Unit.Manager
                 CompetitorId = 0,
                 FirstName = "", // invalid
                 LastName = "",  // invalid
-                TeamId = 1,
+                TeamYearId = 1,
                 CountryId = 1,
-                Year = 2025
             };
 
             // Act
@@ -242,7 +244,7 @@ namespace CycleManager.Tests.Unit.Manager
             _competitorServiceMock.Setup(s => s.GetCompetitorById(1))
                                   .ReturnsAsync(competitor);
 
-            var result = await _controller.GetCompetitorInfo(1, competitor.CompetitorInTeams.First().Year);
+            var result = await _controller.GetCompetitorInfo(1, competitor.CompetitorInTeams.First().TeamYearId);
 
             var json = Assert.IsType<JsonResult>(result);
             json.Value.Should().NotBeNull();

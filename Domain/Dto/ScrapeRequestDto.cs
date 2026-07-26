@@ -3,6 +3,7 @@
     public class ScrapeRequestDto
     {
         public int TeamId { get; set; }
-        public int Year { get; set; }
+
+        public int SeasonYearId { get; set; }
     }
 }

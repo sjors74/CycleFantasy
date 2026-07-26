@@ -41,8 +41,10 @@ namespace CycleManager.Tests.Integration.Manager
 
             var competitorsForYear = db.Competitors
                 .Include(c => c.CompetitorInTeams)
+                    .ThenInclude(cit => cit.TeamYear)
                 .Include(c => c.Country)
-                .Where(c => c.CompetitorInTeams.Any(cit => cit.Year == year))
+                .Where(c => c.CompetitorInTeams
+                    .Any(cit => cit.TeamYear.Year == year))
                 .ToList();
 
             foreach (var c in competitorsForYear)
@@ -50,8 +52,13 @@ namespace CycleManager.Tests.Integration.Manager
                 html.Should().Contain(c.FirstName);
                 html.Should().Contain(c.LastName);
                 html.Should().Contain(c.Country.CountryNameShort);
-                if (c.CompetitorInTeams.Any(cit => cit.Year == year && cit.IsNationalChampion))
+
+                if (c.CompetitorInTeams.Any(cit =>
+                    cit.TeamYear.Year == year &&
+                    cit.IsNationalChampion))
+                {
                     html.Should().Contain("🏆");
+                }
             }
         }
 
@@ -103,7 +110,7 @@ namespace CycleManager.Tests.Integration.Manager
                 ["ScraperName"] = competitor.ScraperName + "_Edited",
                 // markeer eerste jaar als nationaal kampioen
                 ["CompetitorInTeams[0].CompetitorInTeamId"] = competitor.CompetitorInTeams.ElementAt(0).Id.ToString(),
-                ["CompetitorInTeams[0].Year"] = competitor.CompetitorInTeams.ElementAt(0).Year.ToString(),
+                ["CompetitorInTeams[0].TeamYearId"] = competitor.CompetitorInTeams.ElementAt(0).TeamYearId.ToString(),
                 ["CompetitorInTeams[0].IsNationalChampion"] = "true"
             };
 
@@ -244,12 +251,16 @@ namespace CycleManager.Tests.Integration.Manager
             using var scope = _factory.Services.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
             var competitor = db.Competitors
-                               .Include(c => c.Country)
-                               .Include(c => c.CompetitorInTeams)
-                                   .ThenInclude(cit => cit.Team)
-                               .First();
+                .Include(c => c.Country)
+                .Include(c => c.CompetitorInTeams)
+                    .ThenInclude(cit => cit.TeamYear)
+                        .ThenInclude(ty => ty.Team)
+                .First();
 
-            var year = competitor.CompetitorInTeams.First().Year;
+            var year = competitor.CompetitorInTeams
+                .First()
+                .TeamYear
+                .Year;
 
             // Act
             var response = await _client.GetAsync($"/Competitors/GetCompetitorInfo?id={competitor.CompetitorId}&year={year}");
@@ -260,7 +271,7 @@ namespace CycleManager.Tests.Integration.Manager
             var data = JsonSerializer.Deserialize<JsonElement>(json);
 
             data.GetProperty("country").GetString().Should().Be(competitor.Country.CountryNameLong);
-            data.GetProperty("teamName").GetString().Should().Be(competitor.CompetitorInTeams.First().Team.CurrentTeamName);
+            data.GetProperty("teamName").GetString().Should().Be(competitor.CompetitorInTeams.First().TeamYear.Team.CurrentTeamName);
         }
 
     }

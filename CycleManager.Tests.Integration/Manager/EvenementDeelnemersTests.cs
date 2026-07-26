@@ -70,8 +70,8 @@ namespace CycleManager.Tests.Integration.Manager
             db.Competitors.AddRange(c1, c2);
             await db.SaveChangesAsync();
 
-            var cit1 = new CompetitorInTeam { CompetitorId = c1.CompetitorId, TeamId = team.TeamId, Year = 2025 };
-            var cit2 = new CompetitorInTeam { CompetitorId = c2.CompetitorId, TeamId = team.TeamId, Year = 2025 };
+            var cit1 = new CompetitorInTeam { CompetitorId = c1.CompetitorId };
+            var cit2 = new CompetitorInTeam { CompetitorId = c2.CompetitorId };
             db.CompetitorInTeams.AddRange(cit1, cit2);
             await db.SaveChangesAsync();
 
@@ -261,7 +261,7 @@ namespace CycleManager.Tests.Integration.Manager
             db.Competitors.Add(comp);
             await db.SaveChangesAsync();
 
-            var cit = new CompetitorInTeam { CompetitorId = comp.CompetitorId, TeamId = team.TeamId, Year = 2025 };
+            var cit = new CompetitorInTeam { CompetitorId = comp.CompetitorId };
             db.CompetitorInTeams.Add(cit);
             await db.SaveChangesAsync();
 
@@ -318,7 +318,7 @@ namespace CycleManager.Tests.Integration.Manager
             db.Competitors.Add(comp);
             await db.SaveChangesAsync();
 
-            var cit = new CompetitorInTeam { CompetitorId = comp.CompetitorId, TeamId = team.TeamId, Year = 2025 };
+            var cit = new CompetitorInTeam { CompetitorId = comp.CompetitorId };
             db.CompetitorInTeams.Add(cit);
             await db.SaveChangesAsync();
 
@@ -390,7 +390,7 @@ namespace CycleManager.Tests.Integration.Manager
             var competitor = new Competitor { FirstName = "Bob", LastName = "Builder", Country = country };
             db.Competitors.Add(competitor);
 
-            var cit = new CompetitorInTeam { Competitor = competitor, Team = team, Year = 2025 };
+            var cit = new CompetitorInTeam {Competitor = competitor };
             db.CompetitorInTeams.Add(cit);
 
             var cie = new CompetitorsInEvent { EventId = ev.EventId, CompetitorInTeam = cit };
@@ -445,7 +445,7 @@ namespace CycleManager.Tests.Integration.Manager
             var competitor = new Competitor { FirstName = "Max", LastName = "Add", Country = country };
             db.Competitors.Add(competitor);
 
-            var cit = new CompetitorInTeam { Competitor = competitor, Team = team, Year = 2025 };
+            var cit = new CompetitorInTeam {Competitor = competitor };
             db.CompetitorInTeams.Add(cit);
 
             var cie = new CompetitorsInEvent { EventId = ev.EventId, CompetitorInTeam = cit };
@@ -513,7 +513,7 @@ namespace CycleManager.Tests.Integration.Manager
             var citList = new List<CompetitorInTeam>();
             foreach (var comp in competitors)
             {
-                var cit = new CompetitorInTeam { Competitor = comp, Team = team, Year = 2025 };
+                var cit = new CompetitorInTeam { Competitor = comp };
                 db.CompetitorInTeams.Add(cit);
                 citList.Add(cit);
             }

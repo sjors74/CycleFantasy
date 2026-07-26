@@ -109,20 +109,12 @@ namespace DataAccessEF.Migrations
                     b.Property<bool>("IsNationalChampion")
                         .HasColumnType("bit");
 
-                    b.Property<int>("TeamId")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("TeamYearId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Year")
+                    b.Property<int>("TeamYearId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
 
                     b.HasIndex("CompetitorId");
-
-                    b.HasIndex("TeamId");
 
                     b.HasIndex("TeamYearId");
 
@@ -276,6 +268,9 @@ namespace DataAccessEF.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int>("SeasonYearId")
+                        .HasColumnType("int");
+
                     b.Property<int>("TeamId")
                         .HasColumnType("int");
 
@@ -283,6 +278,8 @@ namespace DataAccessEF.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("TeamYearId");
+
+                    b.HasIndex("SeasonYearId");
 
                     b.HasIndex("TeamId");
 
@@ -989,19 +986,13 @@ namespace DataAccessEF.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Domain.Models.Team", "Team")
+                    b.HasOne("CycleManager.Domain.Models.TeamYear", "TeamYear")
                         .WithMany("CompetitorInTeams")
-                        .HasForeignKey("TeamId")
+                        .HasForeignKey("TeamYearId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("CycleManager.Domain.Models.TeamYear", "TeamYear")
-                        .WithMany()
-                        .HasForeignKey("TeamYearId");
-
                     b.Navigation("Competitor");
-
-                    b.Navigation("Team");
 
                     b.Navigation("TeamYear");
                 });
@@ -1045,11 +1036,19 @@ namespace DataAccessEF.Migrations
 
             modelBuilder.Entity("CycleManager.Domain.Models.TeamYear", b =>
                 {
+                    b.HasOne("CycleManager.Domain.Models.SeasonYear", "SeasonYear")
+                        .WithMany()
+                        .HasForeignKey("SeasonYearId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("Domain.Models.Team", "Team")
                         .WithMany("TeamYears")
                         .HasForeignKey("TeamId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("SeasonYear");
 
                     b.Navigation("Team");
                 });
@@ -1315,6 +1314,11 @@ namespace DataAccessEF.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("CycleManager.Domain.Models.TeamYear", b =>
+                {
+                    b.Navigation("CompetitorInTeams");
+                });
+
             modelBuilder.Entity("Domain.Models.Competitor", b =>
                 {
                     b.Navigation("CompetitorInTeams");
@@ -1357,8 +1361,6 @@ namespace DataAccessEF.Migrations
 
             modelBuilder.Entity("Domain.Models.Team", b =>
                 {
-                    b.Navigation("CompetitorInTeams");
-
                     b.Navigation("EventTeams");
 
                     b.Navigation("TeamYears");

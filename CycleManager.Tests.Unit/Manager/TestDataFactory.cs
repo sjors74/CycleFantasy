@@ -12,8 +12,8 @@ namespace CycleManager.Tests.Unit.Manager
     {
         public static List<Team> FakeTeams() => new()
         {
-            new Team { TeamId = 1, CurrentTeamName = "Team A", Country = new Country { CountryNameShort = "NL" }, CompetitorInTeams = new List<CompetitorInTeam>() },
-            new Team { TeamId = 2, CurrentTeamName = "Team B", Country = new Country { CountryNameShort = "BE" }, CompetitorInTeams = new List<CompetitorInTeam>() }
+            new Team { TeamId = 1, CurrentTeamName = "Team A", Country = new Country { CountryNameShort = "NL" } },
+            new Team { TeamId = 2, CurrentTeamName = "Team B", Country = new Country { CountryNameShort = "BE" } }
         };
 
         public static Team FakeTeamWithCompetitors(int year) => new()
@@ -21,19 +21,19 @@ namespace CycleManager.Tests.Unit.Manager
             TeamId = 1,
             CurrentTeamName = "TestTeam",
             Country = new Country { CountryNameShort = "NL" },
-            CompetitorInTeams = new List<CompetitorInTeam>
-            {
-                new CompetitorInTeam
-                {
-                    Year = year,
-                    Competitor = new Competitor
-                    {
-                        FirstName = "Jan",
-                        LastName = "Jansen",
-                        Country = new Country { CountryNameShort = "NL" }
-                    }
-                }
-            }
+            //CompetitorInTeams = new List<CompetitorInTeam>
+            //{
+            //    new CompetitorInTeam
+            //    {
+            //        TeamYearId = 1,
+            //        Competitor = new Competitor
+            //        {
+            //            FirstName = "Jan",
+            //            LastName = "Jansen",
+            //            Country = new Country { CountryNameShort = "NL" }
+            //        }
+            //    }
+            //}
         };
 
         public static Team FakeTeamWithYears() => new()
@@ -197,15 +197,13 @@ namespace CycleManager.Tests.Unit.Manager
                     {
                         Id = 1,
                         CompetitorId = 1,
-                        TeamId = 1,
-                        Year = DateTime.Now.Year,
-                        Team = team,
+                        TeamYearId = 1,
                         IsNationalChampion = true
                     }
                 }
             };
 
-            team.CompetitorInTeams = new List<CompetitorInTeam> { competitor.CompetitorInTeams.First() };
+            //team.CompetitorInTeams = new List<CompetitorInTeam> { competitor.CompetitorInTeams.First() };
 
             return competitor;
         }
@@ -219,8 +217,7 @@ namespace CycleManager.Tests.Unit.Manager
                 LastName = "Van Aert",
                 PcsName = "VanAertW",
                 CountryId = 1,
-                TeamId = 1,
-                Year = DateTime.Now.Year,
+                TeamYearId = 1,
                 IsNationalChampion = false
             };
         }
@@ -235,30 +232,69 @@ namespace CycleManager.Tests.Unit.Manager
                 PcsName = "PogacarT",
                 ScraperName = "TadejP",
                 CountryId = 1,
-                SelectedTeamId = 1,
-                SelectedYear = DateTime.Now.Year,
+
+                SelectedSeasonYearId = 2024,
+                SelectedTeamYearId = 1,
+
                 Countries = new List<CountryDto>
-                {
-                    new CountryDto { Id = 1, CountryNameLong = "Slovenia" },
-                    new CountryDto { Id = 2, CountryNameLong = "Belgium" }
-                },
-                Teams = new List<TeamDto>
-                {
-                    new TeamDto { Id = 1, Naam = "UAE Team Emirates", Renners = new List<CompetitorDto>() },
-                    new TeamDto { Id = 2, Naam = "Jumbo-Visma", Renners = new List<CompetitorDto>() }
-                },
-                AvailableYears = new List<int> { 2023, 2024, 2025 },
+        {
+            new CountryDto
+            {
+                Id = 1,
+                CountryNameLong = "Slovenia"
+            },
+            new CountryDto
+            {
+                Id = 2,
+                CountryNameLong = "Belgium"
+            }
+        },
+
+                Teams = new List<TeamYearDto>
+        {
+            new TeamYearDto
+            {
+                TeamYearId = 1,
+                Name = "UAE Team Emirates"
+            },
+            new TeamYearDto
+            {
+                TeamYearId = 2,
+                Name = "Jumbo-Visma",
+            }
+        },
+
+                AvailableYears = new List<SeasonYearDto>
+        {
+            new SeasonYearDto
+            {
+                SeasonYearId = 2023,
+                Year = 2023
+            },
+            new SeasonYearDto
+            {
+                SeasonYearId = 2024,
+                Year = 2024
+            },
+            new SeasonYearDto
+            {
+                SeasonYearId = 2025,
+                Year = 2025
+            }
+        },
+
                 CompetitorInTeams = new List<CompetitorInTeamDto>
-                {
-                    new CompetitorInTeamDto
-                    {
-                        CompetitorInTeamId = 1,
-                        TeamId = 1,
-                        Year = 2024,
-                        IsNationalChampion = false,
-                        TeamName = "UAE Team Emirates"
-                    }
-                }
+        {
+            new CompetitorInTeamDto
+            {
+                CompetitorInTeamId = 1,
+                TeamYearId = 1,
+                SeasonYearId = 2024,
+                Year = 2024,
+                TeamName = "UAE Team Emirates",
+                IsNationalChampion = false
+            }
+        }
             };
         }
 

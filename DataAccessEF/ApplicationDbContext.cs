@@ -142,9 +142,10 @@ namespace Domain.Context
                 .HasForeignKey(cit => cit.CompetitorId);
 
             modelBuilder.Entity<CompetitorInTeam>()
-                .HasOne(cit => cit.Team)
+                .HasOne(cit => cit.TeamYear)
                 .WithMany(t => t.CompetitorInTeams)
-                .HasForeignKey(cit => cit.TeamId);
+                .HasForeignKey(cit => cit.TeamYearId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<SpecialResult>()
                 .HasOne(s => s.CompetitorInEvent)

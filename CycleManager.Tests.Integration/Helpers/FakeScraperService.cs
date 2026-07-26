@@ -37,8 +37,6 @@ namespace CycleManager.Tests.Integration.Helpers
                 _db.CompetitorInTeams.Add(new CompetitorInTeam
                 {
                     Competitor = competitor,
-                    TeamId = sc.TeamId,
-                    Year = sc.Year
                 });
 
                 sc.ProcessedAt = DateTime.UtcNow;
@@ -56,6 +54,7 @@ namespace CycleManager.Tests.Integration.Helpers
         {
             throw new NotImplementedException();
         }
+
 
         public Task RunCompetitorsAsync(int teamId, int year)
         {
@@ -87,6 +86,11 @@ namespace CycleManager.Tests.Integration.Helpers
                 _db.SaveChanges();
             }
             return Task.CompletedTask;
+        }
+
+        public Task RunCompetitorsAsync(int teamYearId)
+        {
+            throw new NotImplementedException();
         }
 
         public Task RunDropoutsAsync(int eventId, string eventName, int year)

@@ -27,7 +27,7 @@ namespace CycleManager.Tests.Integration.DataAccess
         {
             var country = new Country { CountryId = 1, CountryNameLong = "Nederland" };
             var competitor = new Competitor { CompetitorId = 1, FirstName = "John", LastName = "Doe", Country = country };
-            var competitorInTeam = new CompetitorInTeam { Id = 1, Competitor = competitor, CompetitorId = 1, TeamId = 1 };
+            var competitorInTeam = new CompetitorInTeam {Id = 1 };
             var teamYear = new TeamYear { TeamYearId = 1, Year = 2025, TeamId = 1 };
             var team = new Team
             {
@@ -35,7 +35,6 @@ namespace CycleManager.Tests.Integration.DataAccess
                 CurrentTeamName = "TeamA",
                 Country = country,
                 CountryId = 1,
-                CompetitorInTeams = new List<CompetitorInTeam> { competitorInTeam },
                 TeamYears = new List<TeamYear> { teamYear }
             };
             return team;
@@ -56,10 +55,7 @@ namespace CycleManager.Tests.Integration.DataAccess
             result.Should().NotBeEmpty();
             var fetched = result.First();
             fetched.Country.Should().NotBeNull();
-            fetched.CompetitorInTeams.Should().HaveCount(1);
             fetched.TeamYears.Should().HaveCount(1);
-            fetched.CompetitorInTeams.First().Competitor.Should().NotBeNull();
-            fetched.CompetitorInTeams.First().Competitor.Country.Should().NotBeNull();
         }
 
         [Fact]
@@ -87,7 +83,6 @@ namespace CycleManager.Tests.Integration.DataAccess
 
             fetched.Should().NotBeNull();
             fetched.Country.Should().NotBeNull();
-            fetched.CompetitorInTeams.Should().NotBeEmpty();
             fetched.TeamYears.Should().NotBeEmpty();
         }
 

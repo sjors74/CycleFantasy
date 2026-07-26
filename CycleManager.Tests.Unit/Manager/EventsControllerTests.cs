@@ -22,6 +22,7 @@ namespace CycleManager.Tests.Unit.Manager
         private readonly Mock<IResultService> _resultServiceMock;
         private readonly Mock<IScoreService> _scoreServiceMock;
         private readonly Mock<IConfigurationService> _configurationServiceMock;
+        private readonly Mock<ISeasonYearService> _seasonYearServiceMock;
         private readonly EventsController _controller;
 
         public EventsControllerTests()
@@ -32,6 +33,7 @@ namespace CycleManager.Tests.Unit.Manager
             _resultServiceMock = new Mock<IResultService>();
             _configurationServiceMock = new Mock<IConfigurationService>();
             _scoreServiceMock = new Mock<IScoreService>();
+            _seasonYearServiceMock = new Mock<ISeasonYearService>();
 
 
             _controller = new EventsController(
@@ -40,7 +42,8 @@ namespace CycleManager.Tests.Unit.Manager
                 _stageServiceMock.Object,
                 _resultServiceMock.Object,
                 _configurationServiceMock.Object,
-                _scoreServiceMock.Object
+                _scoreServiceMock.Object,
+                _seasonYearServiceMock.Object
             );
         }
 
