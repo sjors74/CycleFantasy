@@ -38,6 +38,8 @@ namespace Domain.Context
         public DbSet<CompetitorInTeam> CompetitorInTeams { get; set; }
         public DbSet<TeamYear> TeamYear { get; set; }
         public DbSet<SeasonYear> SeasonYears { get; set; }
+        public DbSet<RatingCategory> RatingCategories { get; set; }
+        public DbSet<CompetitorRating> CompetitorRatings { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -170,6 +172,15 @@ namespace Domain.Context
                 b.Property(t => t.LoginProvider).HasMaxLength(450);
                 b.Property(t => t.ProviderKey).HasMaxLength(450);
             });
+
+            modelBuilder.Entity<CompetitorRating>()
+                .HasIndex(x => new
+                {
+                    x.CompetitorId,
+                    x.RatingCategoryId,
+                    x.RatingDate
+                })
+                .IsUnique();
         }
     }
 }
