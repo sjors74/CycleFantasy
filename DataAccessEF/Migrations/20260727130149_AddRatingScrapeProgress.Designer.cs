@@ -4,6 +4,7 @@ using Domain.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DataAccessEF.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260727130149_AddRatingScrapeProgress")]
+    partial class AddRatingScrapeProgress
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -264,10 +267,6 @@ namespace DataAccessEF.Migrations
                     b.Property<decimal>("Rating")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<string>("RatingCategoryCode")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<int>("RatingCategoryId")
                         .HasColumnType("int");
 
@@ -279,6 +278,8 @@ namespace DataAccessEF.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("RatingCategoryId");
 
                     b.ToTable("ScrapeCompetitorRatings");
                 });
@@ -1185,8 +1186,19 @@ namespace DataAccessEF.Migrations
             modelBuilder.Entity("CycleManager.Domain.Models.RatingScrapeProgress", b =>
                 {
                     b.HasOne("CycleManager.Domain.Models.RatingCategory", "RatingCategory")
-                        .WithOne("ScrapeProgress")
-                        .HasForeignKey("CycleManager.Domain.Models.RatingScrapeProgress", "RatingCategoryId")
+                        .WithMany()
+                        .HasForeignKey("RatingCategoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("RatingCategory");
+                });
+
+            modelBuilder.Entity("CycleManager.Domain.Models.ScrapeCompetitorRating", b =>
+                {
+                    b.HasOne("CycleManager.Domain.Models.RatingCategory", "RatingCategory")
+                        .WithMany()
+                        .HasForeignKey("RatingCategoryId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -1489,11 +1501,6 @@ namespace DataAccessEF.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-                });
-
-            modelBuilder.Entity("CycleManager.Domain.Models.RatingCategory", b =>
-                {
-                    b.Navigation("ScrapeProgress");
                 });
 
             modelBuilder.Entity("CycleManager.Domain.Models.TeamYear", b =>

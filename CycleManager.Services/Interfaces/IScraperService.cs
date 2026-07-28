@@ -9,7 +9,7 @@ namespace CycleManager.Services.Interfaces
         Task RunCompetitorsAsync(int teamYearId);
         Task ImportScrapedCompetitorsAsync();
         Task SyncStartlistAsync(int eventId, List<ScrapedStartlistEntry> scrapedEntries);
-
         Task RefreshStartlistAsync(int eventId);
+        Task RunRatingsScrapeAsync();
     }
 }

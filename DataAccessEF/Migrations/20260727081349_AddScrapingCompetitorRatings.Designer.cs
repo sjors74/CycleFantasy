@@ -4,6 +4,7 @@ using Domain.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DataAccessEF.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260727081349_AddScrapingCompetitorRatings")]
+    partial class AddScrapingCompetitorRatings
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -181,51 +184,13 @@ namespace DataAccessEF.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
-                    b.Property<int>("MaxPages")
-                        .HasColumnType("int");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("RefreshOrder")
-                        .HasColumnType("int");
-
                     b.HasKey("RatingCategoryId");
 
                     b.ToTable("RatingCategories");
-                });
-
-            modelBuilder.Entity("CycleManager.Domain.Models.RatingScrapeProgress", b =>
-                {
-                    b.Property<int>("RatingScrapeProgressId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("RatingScrapeProgressId"));
-
-                    b.Property<int>("ErrorCount")
-                        .HasColumnType("int");
-
-                    b.Property<string>("LastError")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<int>("LastPage")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime?>("LastScrapeDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("RatingCategoryId")
-                        .HasColumnType("int");
-
-                    b.HasKey("RatingScrapeProgressId");
-
-                    b.HasIndex("RatingCategoryId")
-                        .IsUnique();
-
-                    b.ToTable("RatingScrapeProgress");
                 });
 
             modelBuilder.Entity("CycleManager.Domain.Models.ScrapeCompetitorRating", b =>
@@ -258,15 +223,8 @@ namespace DataAccessEF.Migrations
                     b.Property<DateTime?>("ProcessedDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("ProfileUrl")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<decimal>("Rating")
                         .HasColumnType("decimal(18,2)");
-
-                    b.Property<string>("RatingCategoryCode")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("RatingCategoryId")
                         .HasColumnType("int");
@@ -279,6 +237,8 @@ namespace DataAccessEF.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("RatingCategoryId");
 
                     b.ToTable("ScrapeCompetitorRatings");
                 });
@@ -1182,11 +1142,11 @@ namespace DataAccessEF.Migrations
                     b.Navigation("Team");
                 });
 
-            modelBuilder.Entity("CycleManager.Domain.Models.RatingScrapeProgress", b =>
+            modelBuilder.Entity("CycleManager.Domain.Models.ScrapeCompetitorRating", b =>
                 {
                     b.HasOne("CycleManager.Domain.Models.RatingCategory", "RatingCategory")
-                        .WithOne("ScrapeProgress")
-                        .HasForeignKey("CycleManager.Domain.Models.RatingScrapeProgress", "RatingCategoryId")
+                        .WithMany()
+                        .HasForeignKey("RatingCategoryId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -1489,11 +1449,6 @@ namespace DataAccessEF.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-                });
-
-            modelBuilder.Entity("CycleManager.Domain.Models.RatingCategory", b =>
-                {
-                    b.Navigation("ScrapeProgress");
                 });
 
             modelBuilder.Entity("CycleManager.Domain.Models.TeamYear", b =>

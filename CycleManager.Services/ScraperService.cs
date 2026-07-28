@@ -8,21 +8,25 @@ using Domain.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System.Globalization;
+using System.Text;
 
 namespace CycleManager.Services
 {
     public class ScraperService : IScraperService
     {
         private readonly IPcsScraper _pcsScraper;
+        private readonly ICyclingFlashScraper _cyclingFlashScraper;
         private readonly ScraperSettings _settings;
         private readonly ApplicationDbContext _db;
         private readonly ILogger<ScraperService> _logger;
 
-        public ScraperService(ApplicationDbContext db, IOptions<ScraperSettings> options, IPcsScraper pcsScraper, ILogger<ScraperService> logger)
+        public ScraperService(ApplicationDbContext db, IOptions<ScraperSettings> options, IPcsScraper pcsScraper, ICyclingFlashScraper cyclingFlashScraper, ILogger<ScraperService> logger)
         {
             _db = db;
             _logger = logger;
             _pcsScraper = pcsScraper;
+            _cyclingFlashScraper = cyclingFlashScraper;
             _settings = options.Value;
         }
 
@@ -65,7 +69,7 @@ namespace CycleManager.Services
             var nieuweScrape = await ScrapeStageResultsAsync(url, topLimit, eventId);
 
             _logger.LogInformation(
-                 "Scraper returned {Count} results",    
+                 "Scraper returned {Count} results",
                 nieuweScrape.Count);
 
             foreach (var scraped in nieuweScrape)
@@ -133,7 +137,7 @@ namespace CycleManager.Services
                 StageId = stage.Id,
                 BibNumber = x.BibNumber,
                 ImportedAt = DateTime.Now,
-                QuestionType  = x.QuestionType
+                QuestionType = x.QuestionType
             }).ToList();
 
             _db.ScrapedSpecialResults.RemoveRange(existingSpecials);
@@ -222,9 +226,9 @@ namespace CycleManager.Services
                 }
             }
 
-            foreach(var special in mapped)
+            foreach (var special in mapped)
             {
-                if(competitorByBib.TryGetValue(special.BibNumber, out var competitor))
+                if (competitorByBib.TryGetValue(special.BibNumber, out var competitor))
                 {
                     special.CompetitorInEventId = competitor.Id;
                 }
@@ -318,7 +322,7 @@ namespace CycleManager.Services
             {
                 if (dropoutBibs.Contains(competitor.EventNumber))
                 {
-                    if(!competitor.OutOfCompetition)
+                    if (!competitor.OutOfCompetition)
                     {
                         competitor.OutOfCompetition = true;
                         updateCount++;
@@ -348,7 +352,7 @@ namespace CycleManager.Services
             var competitors = await _pcsScraper.ScrapeCompetitorsAsync(url, teamYear.TeamId, teamYear.SeasonYear.Year);
 
             _db.ScrapedCompetitors.AddRange(competitors);
-            await _db.SaveChangesAsync();            
+            await _db.SaveChangesAsync();
         }
 
         public async Task ImportScrapedCompetitorsAsync()
@@ -506,6 +510,50 @@ namespace CycleManager.Services
             await _db.SaveChangesAsync();
         }
 
+        public async Task RunRatingsScrapeAsync()
+        {
+            var batchId = Guid.NewGuid();
+
+            var category = await _db.RatingCategories
+                .Where(x => x.IsActive)
+                .OrderBy(x =>
+                    x.ScrapeProgress == null
+                        ? DateTime.MinValue
+                        : x.ScrapeProgress.LastScrapeDate)
+                .FirstOrDefaultAsync();
+
+            var progress = await _db.RatingScrapeProgress
+                .FirstOrDefaultAsync(x => x.RatingCategoryId == category.RatingCategoryId);
+
+            var nextPage = progress == null ? 1 : progress.LastPage + 1;
+
+            if (nextPage > category.MaxPages)
+            {
+                nextPage = 1;
+            }
+
+            var ratings = await _cyclingFlashScraper.ScrapePageResultAsync(category.Code, nextPage, DateTime.UtcNow);
+
+            await SaveScrapeRatingsAsync(ratings, batchId);
+
+            await ProcessRatingsAsync(batchId);
+
+            if (progress == null)
+            {
+                progress = new RatingScrapeProgress
+                {
+                    RatingCategoryId = category.RatingCategoryId
+                };
+
+                _db.RatingScrapeProgress.Add(progress);
+            }
+
+            progress.LastPage = nextPage;
+            progress.LastScrapeDate = DateTime.UtcNow;
+
+            await _db.SaveChangesAsync();
+        }
+
 
         /// <summary>
         /// </summary>
@@ -515,9 +563,9 @@ namespace CycleManager.Services
         public async Task SyncStartlistAsync(int eventId, List<ScrapedStartlistEntry> scrapedEntries)
         {
             var eventEntity = await _db.Events
-                .FirstOrDefaultAsync(e => e.EventId == eventId);  
+                .FirstOrDefaultAsync(e => e.EventId == eventId);
 
-            if (eventEntity == null) 
+            if (eventEntity == null)
                 throw new Exception($"Event {eventId} niet gevonden");
 
             var eventYear = eventEntity.EventYear;
@@ -537,7 +585,7 @@ namespace CycleManager.Services
                 .Include(cit => cit.Competitor)
                 .Include(cit => cit.TeamYear)
                     .ThenInclude(ty => ty.SeasonYear)
-                .Where(cit => 
+                .Where(cit =>
                     cit.TeamYear.SeasonYear.Year == eventYear &&
                     eventTeamIds.Contains(cit.TeamYear.TeamId))
                 .ToListAsync();
@@ -550,16 +598,16 @@ namespace CycleManager.Services
                 .ToDictionary(e => e.CompetitorInTeamId);
 
 
-            var byPcsAndTeam = 
+            var byPcsAndTeam =
                 competitorInTeams
                 .Where(x =>
-                    !string.IsNullOrWhiteSpace(x.Competitor.PcsName) && 
+                    !string.IsNullOrWhiteSpace(x.Competitor.PcsName) &&
                     !string.IsNullOrWhiteSpace(x.TeamYear.Team.PcsName))
                 .GroupBy(x =>
                     $"{x.Competitor.PcsName.ToLower()}|{x.TeamYear.Team.PcsName.ToLower()}")
                 .ToDictionary(g => g.Key, g => g.First());
 
-            var byPcs = 
+            var byPcs =
                 competitorInTeams
                 .Where(x =>
                 !string.IsNullOrWhiteSpace(x.Competitor.PcsName))
@@ -567,13 +615,13 @@ namespace CycleManager.Services
                     x.Competitor.PcsName.ToLower())
                 .ToDictionary(g => g.Key, g => g.First());
 
-            var byNameAndTeam = 
+            var byNameAndTeam =
                 competitorInTeams
                 .GroupBy(x =>
                     $"{NormalizeName($"{x.Competitor.LastName} {x.Competitor.FirstName}")}|{NormalizeName(x.TeamYear.Name)}")
                 .ToDictionary(g => g.Key, g => g.First());
 
-            var byName = 
+            var byName =
                 competitorInTeams
                 .GroupBy(x =>
                     NormalizeName($"{x.Competitor.LastName} {x.Competitor.FirstName}"))
@@ -588,7 +636,7 @@ namespace CycleManager.Services
 
             foreach (var scraped in scrapedEntries)
             {
-                if(string.IsNullOrWhiteSpace(scraped.TeamPcsName))
+                if (string.IsNullOrWhiteSpace(scraped.TeamPcsName))
                 {
                     _logger.LogWarning(
                         "Missing TeamPcsName for rider: {Rider} ({Pcs})",
@@ -777,6 +825,129 @@ namespace CycleManager.Services
                 return nameMatch;
 
             return null;
+        }
+
+        private async Task SaveScrapeRatingsAsync(List<ScrapeCompetitorRating> ratings, Guid batchId)
+        {
+            foreach (var rating in ratings)
+            {
+                rating.ImportedAt = DateTime.UtcNow;
+                rating.Processed = false;
+                rating.BatchId = batchId;
+
+                _db.ScrapeCompetitorRatings.Add(rating);
+            }
+
+            await _db.SaveChangesAsync();
+        }
+
+        public async Task ProcessRatingsAsync(Guid batchId)
+        {
+            var ratings = await _db.ScrapeCompetitorRatings
+                .Where(x => x.BatchId == batchId && !x.Processed)
+                .ToListAsync(); 
+            
+            // Eén keer alle competitors laden
+            var lookup = await _db.Competitors 
+                .ToDictionaryAsync( 
+                    x => Normalize($"{x.FirstName} {x.LastName}"),
+                    x => x); 
+
+            foreach (var rating in ratings) 
+            { 
+                try 
+                { 
+                    var competitor = FindCompetitor(rating, lookup); 
+                    if (competitor == null) 
+                    { 
+                        continue; 
+                    } 
+                    var categoryId = await _db.RatingCategories 
+                        .Where(x => x.Code == rating.RatingCategoryCode) 
+                        .Select(x => x.RatingCategoryId) 
+                        .FirstAsync(); 
+                    
+                    await UpdateCompetitorRatingAsync( competitor, rating, categoryId); 
+                    
+                    rating.Processed = true; 
+                } 
+                catch (Exception ex) 
+                { 
+                    _logger.LogError( ex, "Fout bij verwerken van rating voor {Name}", rating.CompetitorName); 
+                } 
+            } 
+            await _db.SaveChangesAsync(); 
+        } 
+        
+        private Competitor? FindCompetitor( ScrapeCompetitorRating rating, Dictionary<string, Competitor> lookup) 
+        { 
+            // 1. Exacte volledige naam
+            var fullKey = Normalize(rating.CompetitorName); 
+            
+            if (lookup.TryGetValue(fullKey, out var competitor)) 
+            { 
+                return competitor; 
+            } 
+            
+            // 2. Spaanse dubbele achternaam: 
+            // "Einer Rubio Reyes" -> "Einer Rubio"
+            var parts = rating.CompetitorName 
+                .Split(' ', StringSplitOptions.RemoveEmptyEntries); 
+            
+            if (parts.Length >= 3) 
+            { 
+                var shortKey = Normalize($"{parts[0]} {parts[1]}"); 
+                if (lookup.TryGetValue(shortKey, out competitor)) 
+                { 
+                    return competitor; 
+                } 
+            } 
+            _logger.LogWarning( "Geen competitor match voor '{Name}'", rating.CompetitorName); 
+            return null; 
+        } 
+        
+        private static string Normalize(string value) 
+        { 
+            if (string.IsNullOrWhiteSpace(value)) 
+                return string.Empty; 
+            var normalized = value 
+                .Trim() 
+                .ToLowerInvariant() 
+                .Normalize(NormalizationForm.FormD); 
+            var sb = new StringBuilder(); 
+            foreach (var c in normalized) 
+            { 
+                if (CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark) 
+                { 
+                    sb.Append(c); 
+                } 
+            } 
+            return sb.ToString() 
+                .Normalize(NormalizationForm.FormC); 
+        } 
+        
+        private async Task UpdateCompetitorRatingAsync( 
+            Competitor competitor, 
+            ScrapeCompetitorRating scrapeRating, 
+            int ratingCategoryId) 
+        { 
+            var competitorRating = await _db.CompetitorRatings 
+                .FirstOrDefaultAsync(x => x.CompetitorId == competitor.CompetitorId && x.RatingCategoryId == ratingCategoryId); 
+            
+            if (competitorRating == null) 
+            { 
+                competitorRating = new CompetitorRating 
+                { 
+                    CompetitorId = competitor.CompetitorId, 
+                    Competitor = competitor,
+                    RatingCategoryId = ratingCategoryId,
+                    RatingCategory =  await _db.RatingCategories.FirstAsync(x => x.RatingCategoryId == ratingCategoryId)
+                }; 
+                
+                _db.CompetitorRatings.Add(competitorRating); 
+            } 
+            competitorRating.Rating = scrapeRating.Rating; 
+            competitorRating.RatingDate = scrapeRating.RatingDate; 
         }
     }
 }

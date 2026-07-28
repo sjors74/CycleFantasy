@@ -12,5 +12,11 @@ namespace CycleManager.Domain.Models
         public string Code { get; set; } = string.Empty;
 
         public bool IsActive { get; set; } = true;
+
+        public int MaxPages { get; set; } = 10;
+
+        public int RefreshOrder { get; set; }
+
+        public RatingScrapeProgress? ScrapeProgress { get; set; }
     }
 }

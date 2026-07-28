@@ -98,6 +98,11 @@ namespace CycleManager.Tests.Integration.Helpers
             throw new NotImplementedException();
         }
 
+        public Task RunRatingsScrapeAsync()
+        {
+            throw new NotImplementedException();
+        }
+
         public Task SyncStartlistAsync(int eventId, List<ScrapedStartlistEntry> scrapedEntries)
         {
             throw new NotImplementedException();

@@ -4,6 +4,7 @@ using Domain.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DataAccessEF.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260727142519_AddUpdateScrapeCompetitorRating")]
+    partial class AddUpdateScrapeCompetitorRating
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1185,8 +1188,8 @@ namespace DataAccessEF.Migrations
             modelBuilder.Entity("CycleManager.Domain.Models.RatingScrapeProgress", b =>
                 {
                     b.HasOne("CycleManager.Domain.Models.RatingCategory", "RatingCategory")
-                        .WithOne("ScrapeProgress")
-                        .HasForeignKey("CycleManager.Domain.Models.RatingScrapeProgress", "RatingCategoryId")
+                        .WithMany()
+                        .HasForeignKey("RatingCategoryId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -1489,11 +1492,6 @@ namespace DataAccessEF.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-                });
-
-            modelBuilder.Entity("CycleManager.Domain.Models.RatingCategory", b =>
-                {
-                    b.Navigation("ScrapeProgress");
                 });
 
             modelBuilder.Entity("CycleManager.Domain.Models.TeamYear", b =>
