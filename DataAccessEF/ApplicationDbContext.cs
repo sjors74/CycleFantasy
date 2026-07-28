@@ -40,6 +40,8 @@ namespace Domain.Context
         public DbSet<SeasonYear> SeasonYears { get; set; }
         public DbSet<RatingCategory> RatingCategories { get; set; }
         public DbSet<CompetitorRating> CompetitorRatings { get; set; }
+        public DbSet<ScrapeCompetitorRating> ScrapeCompetitorRatings { get; set; }
+        public DbSet<RatingScrapeProgress> RatingScrapeProgress { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -180,6 +182,10 @@ namespace Domain.Context
                     x.RatingCategoryId,
                     x.RatingDate
                 })
+                .IsUnique();
+
+            modelBuilder.Entity<RatingScrapeProgress>()
+                .HasIndex(x => x.RatingCategoryId)
                 .IsUnique();
         }
     }

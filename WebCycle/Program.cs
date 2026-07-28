@@ -108,6 +108,7 @@ builder.Services.AddScoped<IEventDashboardService, EventDashboardService>();
 builder.Services.AddScoped<IScrapeScheduleService, EventScrapeJobRegistrationService>();
 builder.Services.AddScoped<IPcsScraper, PcsScraper>();
 builder.Services.AddScoped<IScraperService, ScraperService>();
+builder.Services.AddScoped<ICyclingFlashScraper, CyclingFlashScraper>();
 
 builder.Services.AddControllers();
 builder.Services.AddHttpClient();

@@ -1,0 +1,94 @@
+﻿@model RatingsIndexViewModel
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Ratings</h2>
+
+<form asp-action="RunRatingScrape" method="post">
+    <button type="submit" class="btn btn-primary">
+        Start scrape
+    </button>
+</form>
+
+</div>
+
+<form method="get" class="row g-2 mb-3"> 
+    <div class="col-md-4"> 
+        <input asp-for="Search" 
+            class="form-control" 
+            placeholder="Zoek op naam" /> 
+    </div> 
+    <div class="col-md-3"> 
+        <select asp-for="RatingCategoryId" 
+              asp-items="Model.Categories" 
+                class="form-select"> 
+            <option value="">Alle categorieën</option> 
+        </select> 
+    </div> 
+    <div class="col-md-2"> 
+        <button type="submit" class="btn btn-secondary w-100"> 
+            Filter 
+        </button> 
+    </div> 
+</form>
+
+<table class="table table-striped table-hover"> 
+    <thead> 
+        <tr> 
+            <th>Renner</th> 
+            <th>Categorie</th> 
+            <th class="text-end">Rating</th> 
+            <th>Datum</th> 
+       </tr>
+    </thead> 
+    <tbody> 
+        @foreach (var r in Model.Ratings) 
+        {
+            <tr> 
+                <td>@r.FirstName @r.LastName</td> 
+                <td>@r.Category</td> 
+                <td class="text-end fw-bold">@r.Rating</td> 
+                <td>@r.RatingDate.ToString("dd-MM-yyyy")</td> 
+            </tr>
+        }
+    </tbody> 
+</table>
+
+<nav> 
+    <ul class="pagination"> 
+
+        @if (Model.Page > 1)
+        {
+            <li class="page-item"> 
+                <a class="page-link" 
+                    asp-route-page="@(Model.Page - 1)" 
+                    asp-route-search="@Model.Search" 
+                    asp-route-ratingCategoryId="@Model.RatingCategoryId"> 
+                     Vorige 
+                </a> 
+            </li>
+        }
+
+        @for (int p = 1; p <= Model.TotalPages; p++)
+        {
+            <li class="page-item @(p == Model.Page ? "active" : "")"> 
+                <a class="page-link" 
+                    asp-route-page="@p" 
+                    asp-route-search="@Model.Search" 
+                    asp-route-ratingCategoryId="@Model.RatingCategoryId"> 
+                     @p 
+                </a> 
+            </li>
+        }
+ 
+        @if (Model.Page < Model.TotalPages)
+        {
+            <li class="page-item"> 
+                <a class="page-link" 
+                    asp-route-page="@(Model.Page + 1)" 
+                    asp-route-search="@Model.Search" 
+                    asp-route-ratingCategoryId="@Model.RatingCategoryId"> 
+                      Volgende 
+                </a> 
+            </li>
+        }
+    </ul>   
+</nav>
