@@ -17,6 +17,10 @@ namespace CycleManager.Domain.Models
 
         public int RefreshOrder { get; set; }
 
+        public string Color { get; set; } = "secondary";
+
+        public int DisplayOrder { get; set; }
+
         public RatingScrapeProgress? ScrapeProgress { get; set; }
     }
 }
