@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc.Rendering;
+﻿using CycleManager.Domain.Dto;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using System.ComponentModel;
 
 namespace WebCycleManager.Models.ViewModel
@@ -41,10 +42,13 @@ namespace WebCycleManager.Models.ViewModel
 
         public string? ReturnUrl { get; set; }
 
-        public IEnumerable<SelectListItem> Countries { get; set; }
-        public IEnumerable<SelectListItem> Teams { get; set; }
+        public IEnumerable<SelectListItem> Countries { get; set; } = new List<SelectListItem>();
+        public IEnumerable<SelectListItem> Teams { get; set; } = new List<SelectListItem>();
         public List<SeasonYearViewModel> AvailableYears { get; set; } = [];
         public List<CompetitorInTeamEditModel> CompetitorInTeams { get; set; } = new();
+
+        public IEnumerable<RatingCategoryDto> RatingCategories { get; set; } = new List<RatingCategoryDto>(); 
+        public IEnumerable<CompetitorRatingDto> Ratings { get; set; } = new List<CompetitorRatingDto>();
     }
 
     public class CompetitorInTeamEditModel

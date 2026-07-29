@@ -15,18 +15,21 @@ namespace CycleManager.Services
         private readonly ITeamRepository _teamRepository;
         private readonly ICountryRepository _countryRepository;
         private readonly ISeasonYearRepository _seasonYearRepository;
+        private readonly IRatingRepository _ratingRepository;
 
         public CompetitorService(
                 ICompetitorRepository competitorRepository, 
                 ICompetitorInTeamRepository competitorInTeamRepository, 
                 ITeamRepository teamRepository, 
                 ICountryRepository countryRepository,
-                ISeasonYearRepository seasonYearRepository)
+                ISeasonYearRepository seasonYearRepository,
+                IRatingRepository ratingRepository)
         {
             _competitorRepository = competitorRepository;
             _competitorInTeamRepository = competitorInTeamRepository;
             _teamRepository = teamRepository;
             _countryRepository = countryRepository;
+            _ratingRepository = ratingRepository;
             _seasonYearRepository = seasonYearRepository;
         }
 
@@ -163,6 +166,8 @@ namespace CycleManager.Services
 
             var availableYears = await _seasonYearRepository.GetAllAsync();
             var countries = await _countryRepository.GetAll();
+            var categories = await _ratingRepository.GetRatingCategories();
+            var ratings = await _ratingRepository.GetRatingsByCompetitorId(competitorId);
 
             return new CompetitorEditDto
             {
@@ -190,7 +195,25 @@ namespace CycleManager.Services
                     })
                     .OrderByDescending(y => y.Year)
                     .ToList(),
+                
+                RatingCategories = categories
+                    .Select(r => new RatingCategoryDto
+                    {
+                        RatingCategoryId = r.RatingCategoryId,
+                        Name = r.Name,
+                        IsActive = r.IsActive,
+                        Color = r.Color,
+                        DisplayOrder = r.DisplayOrder
+                    })
+                    .OrderBy(r => r.Name),
 
+                Ratings = ratings
+                    .Select(r => new CompetitorRatingDto
+                    {
+                        RatingCategoryId = r.RatingCategoryId,
+                        Rating = r.Rating
+                    })
+                    .ToList(),
                 CompetitorInTeams = competitor.CompetitorInTeams
                 .Select(cit => new CompetitorInTeamDto
                 {

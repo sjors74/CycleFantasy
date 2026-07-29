@@ -16,5 +16,8 @@
         public IEnumerable<CountryDto> Countries { get; set; } = new List<CountryDto>();
 
         public List<CompetitorInTeamDto> CompetitorInTeams { get; set; } = new();
+
+        public IEnumerable<RatingCategoryDto> RatingCategories { get; set; } = new List<RatingCategoryDto>();
+        public IEnumerable<CompetitorRatingDto> Ratings { get; set; } = new List<CompetitorRatingDto>();
     }
 }

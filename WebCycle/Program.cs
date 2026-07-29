@@ -96,6 +96,7 @@ builder.Services.AddTransient<IGameCompetitorInEventRepository, GameCompetitorIn
 builder.Services.AddScoped<IGameCompetitorInEventService, GameCompetitorInEventService>();
 builder.Services.AddTransient<IGameCompetitorEventPickRepository, GameCompetitorEventPickRepository>();
 builder.Services.AddScoped<ISeasonYearRepository, SeasonYearRepository>();
+builder.Services.AddScoped<IRatingRepository, RatingRepository>();
 builder.Services.AddTransient<IResultService, ResultService>();
 builder.Services.AddTransient<IEventService, EventService>();
 builder.Services.AddScoped<ICompetitorService, CompetitorService>();

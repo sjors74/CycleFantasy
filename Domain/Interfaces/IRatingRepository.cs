@@ -7,5 +7,7 @@ namespace CycleManager.Domain.Interfaces
         Task<IEnumerable<CompetitorRating>> GetRatings();
 
         Task<IEnumerable<RatingCategory>> GetRatingCategories();
+
+        Task<IEnumerable<CompetitorRating>> GetRatingsByCompetitorId(int competitorId);
     }
 }

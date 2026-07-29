@@ -287,7 +287,8 @@ namespace WebCycleManager.Controllers
                     Text = t.Name,
                     Selected = (t.TeamYearId == dto.SelectedTeamYearId)
                 }),
-
+                RatingCategories = dto.RatingCategories,
+                Ratings = dto.Ratings,
                 AvailableYears = dto.AvailableYears.Select(y => new SeasonYearViewModel
                 {
                     SeasonYearId = y.SeasonYearId,

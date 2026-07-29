@@ -11,6 +11,18 @@ namespace DataAccessEF.TypeRepository
         {
         }
 
+        public async Task<IEnumerable<CompetitorRating>> GetRatingsByCompetitorId(int competitorId)
+        {
+            var ratings = await context.CompetitorRatings
+                .Include(x => x.Competitor)
+                .Include(x => x.RatingCategory)
+                .Where(x => x.CompetitorId == competitorId)
+                .AsQueryable()
+                .ToListAsync();
+
+            return ratings;
+        }
+
         public async Task<IEnumerable<RatingCategory>> GetRatingCategories()
         {
             var ratingCategories = await context.RatingCategories

@@ -1,6 +1,21 @@
 ﻿@using WebCycleManager.Models.ViewModel
 @model CompetitorEditViewModel
-
+@{
+    var ratingsLookup = Model.Ratings.ToDictionary(r => r.RatingCategoryId, r => r);
+    var allCategories = Model.RatingCategories
+        .Where(c => c.IsActive)
+        .OrderBy(c => c.DisplayOrder)
+        .Select(c => new 
+            { 
+                Category = c, 
+                Rating = ratingsLookup.TryGetValue(c.RatingCategoryId, out var r) 
+                ? r.Rating 
+                : (decimal?)null 
+            })
+            .ToList(); 
+    var hasAnyRating = allCategories.Any(x => x.Rating.HasValue);
+    const decimal maxRating = 2500m;
+}
 <form asp-action="Edit">
     <input type="hidden" asp-for="CompetitorId" />
 
@@ -44,7 +59,7 @@
             </div>
         </div>
 
-        <!-- Rechter kolom: Tabs per jaar -->
+        <!-- Rechter kolom: Tabs per jaar / Ratings -->
         <div class="col-md-6">
             <h4 class="mb-3">Per jaar</h4>
             @{
@@ -156,8 +171,49 @@
 
             </div>
 
+            <!-- Ratings -->
+            @if (hasAnyRating) {
+                <div class="mt-4"> 
+                    <h4 class="mb-3">Ratings</h4> 
+                    
+                    <div class="row g-3">
+                        
+                        @foreach (var item in allCategories)
+                        {
+                           var color = item.Category.Color ?? "secondary";
+
+                           var percentage = item.Rating.HasValue  
+                            ? Math.Min(100, Math.Max(4, (int)Math.Round((item.Rating.Value / maxRating) * 100))) 
+                            : 0;
+                            <div class="col-md-4 col-6">
+                                <div class="border rounded p-2 h-100">
+
+                               <div class="d-flex justify-content-between align-items-center mb-1"> 
+                                   <span class="fw-semibold">@item.Category.Name</span> 
+                                   
+                                   @if (item.Rating.HasValue) 
+                                   {
+                                       <span class="badge bg-@color">@item.Rating.Value.ToString("0")</span>
+                                   } 
+                                   else
+                                   {
+                                       <span class="text-muted fst-italic small">nnb</span>
+                                   }
+                               </div>
+
+                                    <div class="progress" style="height:5px;"> 
+                                        <div class="progress-bar bg-@color" 
+                                            style="width:@percentage%;">
+                                        </div> 
+                                    </div>
+                                </div>
+                        </div>
+                        } 
+                     </div> 
+                </div> 
+            }
         </div>
-    </div>
+     </div>
 
     <!-- Onderste regel: Terug + Opslaan -->
     <div class="d-flex justify-content-between align-items-center mt-3">
