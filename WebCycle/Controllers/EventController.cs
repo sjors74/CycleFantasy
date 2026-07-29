@@ -147,30 +147,28 @@ namespace WebCycle.Controllers
         }
 
 
-        [HttpGet("team/{teamId}/teams-with-more-renners")]
-        public async Task<ActionResult<IEnumerable<CompetitorInSelectieDto>>> GetTeamsWithRennersFromTeam(int teamId)
+        [HttpGet("teamyear/{teamYearId}/teams-with-more-renners")]
+        public async Task<ActionResult<IEnumerable<CompetitorInSelectieDto>>> GetTeamsWithRennersFromTeam(int teamYearId)
         {
-            var activeSeasonYear = (await _seasonYearService.GetAllAsync())
-                .Single(s => s.Active);
+            var teamYear = await _teamService.GetTeamYearById(teamYearId);
 
-            var team = await _teamService.GetTeamById(activeSeasonYear.SeasonYearId);
-
-            if (team == null)
+            if (teamYear == null)
             {
                 return NotFound();
             }
-            //TODO HERSTEL!!!
-            //var competitors = team.CompetitorInTeams
-            //    .Select(cit => new CompetitorInSelectieDto
-            //    {
-            //        CompetitorInTeamId = cit.Id,
-            //        FirstName = cit.Competitor.FirstName,
-            //        LastName = cit.Competitor.LastName,
-            //        PcsName = cit.Competitor.PcsName
-            //    })
-            //    .ToList();
 
-            return Ok();
+            var competitors = teamYear.CompetitorInTeams
+                .Select(cit => new CompetitorInSelectieDto
+                {
+                    CompetitorInTeamId = cit.Id,
+                    FirstName = cit.Competitor.FirstName,
+                    LastName = cit.Competitor.LastName,
+                    PcsName = cit.Competitor.PcsName
+                })
+                .OrderBy(c => c.LastName)
+                .ThenBy(c => c.FirstName)
+                .ToList();
+            return Ok(competitors);
         }
 
         [HttpPost("selectie")]

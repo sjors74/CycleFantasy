@@ -49,7 +49,7 @@
                 .ToList();
             <div class="col-md-4 d-flex">
                 <div class="card w-100 d-flex flex-column p-3 h-100 shadow-sm"
-                     data-team-id="@team.Id">
+                     data-teamyear-id="@team.Id">
 
                     <h5 class="card-title">@team.Naam</h5>
 
@@ -115,7 +115,7 @@
                     <div class="mt-auto">
                         <button type="button"
                                 class="btn btn-outline-primary w-100 show-more-btn"
-                                data-team-id="@team.Id"
+                                data-teamyear-id="@team.TeamYearId"
                                 data-loaded-ids="@string.Join(",", initialIds)"
                                 data-expanded="false">
                             Meer...
@@ -143,7 +143,7 @@
             const container = card.querySelector(".team-extra");
 
             const isExpanded = btn.dataset.expanded === "true";
-            const teamId = btn.dataset.teamId;
+            const teamyearId = btn.dataset.teamyearId;
 
             const selectedIds = Array.from(
                 document.querySelectorAll(".renner-checkbox:checked")
@@ -162,7 +162,7 @@
             btn.dataset.expanded = "true";
 
             const response = await fetch(
-                `${API_BASE_URL}/api/event/team/${teamId}/teams-with-more-renners`
+                `${API_BASE_URL}/api/event/teamyear/${teamyearId}/teams-with-more-renners`
             );
 
             const riders = await response.json();

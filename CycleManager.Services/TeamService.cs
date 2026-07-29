@@ -110,5 +110,16 @@ namespace CycleManager.Services
         {
             return await _teamRepository.GetByTeamAndSeasonAsync(teamId, seasonYearId);
         }
+
+        public async Task<TeamYear?> GetTeamYearById(int teamYearId)
+        {
+            var teamYear = await _teamRepository.GetTeamYearByIdAsync(teamYearId);
+            if (teamYear == null)
+            {
+                return null;
+            }
+
+            return teamYear;
+        }
     }
 }

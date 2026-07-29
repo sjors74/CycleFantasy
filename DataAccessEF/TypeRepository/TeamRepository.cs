@@ -86,6 +86,8 @@ namespace DataAccessEF.TypeRepository
         public async Task<TeamYear?> GetTeamYearByIdAsync(int teamYearId)
         {
             return await context.TeamYear
+                .Include(ty => ty.CompetitorInTeams)
+                    .ThenInclude(cit => cit.Competitor)
                 .Include(ty => ty.Team)
                 .Include(ty => ty.SeasonYear)
                 .FirstOrDefaultAsync(ty => ty.TeamYearId == teamYearId);
