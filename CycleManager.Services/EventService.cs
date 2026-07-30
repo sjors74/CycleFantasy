@@ -153,7 +153,15 @@ namespace CycleManager.Services
                             Punten = punten,
                             CurrentTeamName = renner.CompetitorsInEvent.CompetitorInTeam.TeamYear.Name,
                             IsNationalChampion = renner.CompetitorsInEvent.CompetitorInTeam.IsNationalChampion,
-                            CompetitorInTeamId = renner.CompetitorsInEvent.CompetitorInTeam.Id
+                            CompetitorInTeamId = renner.CompetitorsInEvent.CompetitorInTeam.Id,
+                            Ratings = renner.CompetitorsInEvent.CompetitorInTeam.Competitor.Ratings.Select(r => new CompetitorRatingDto
+                            {
+                                RatingCategoryId = r.RatingCategoryId,
+                                Code = r.RatingCategory.Code,
+                                CategoryName = r.RatingCategory.Name,
+                                Color = r.RatingCategory.Color,
+                                Rating = (int)r.Rating
+                            }).ToList()
                         });
                     }
 

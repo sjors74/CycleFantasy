@@ -1,0 +1,27 @@
+﻿@using WebApp.ViewModels
+@model CompetitorRatingsViewModel
+
+@if (Model.Ratings.Any())
+{
+    var topRating = Model.Ratings
+        .OrderByDescending(r => r.Rating)
+        .First();
+
+    <span class="rating-trigger ms-2">
+        <span class="rating-dot bg-@topRating.Color"></span>
+        <span class="rating-tooltip">
+            @foreach (var rating in Model.Ratings)
+            {
+                var percentage = ((double)rating.Rating / Model.MaxRating) * 100;
+
+                <div class="rating-row">
+                    <span class="rating-name">@rating.Code</span>
+                    <div class="rating-progress">
+                        <div class="rating-progress-bar bg-@rating.Color" style="width:@percentage.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture)%"></div>
+                    </div>
+                    <span class="rating-value">@rating.Rating</span>
+                </div>
+            }
+        </span>
+    </span>
+}

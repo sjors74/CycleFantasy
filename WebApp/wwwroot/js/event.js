@@ -279,6 +279,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const isOut = pick.outOfCompetition === true;
         const rowStyle = isOut ? 'background-color: #eee; text-decoration: line-through;' : '';
         const flagUrl = `${FLAGS_BASE_URL}/24x18/${pick.countryCode.toLowerCase()}.png`;
+        const maxRating = window.appSettings?.maxRating ?? 2500;
         const specialBadges = (pick.specials || [])
             .map(s => {
                 const name = s.name.toLowerCase();
@@ -305,7 +306,9 @@ document.addEventListener('DOMContentLoaded', function () {
                          style="display: grid; grid-template-columns: 1fr 250px; gap: 0.5rem;">
                         <div class="fw-bold">${pick.pcsName
                             ? `<a href="https://procyclingstats.com/rider/${pick.pcsName}" target="_blank" class="text-dark text-decoration-none">${pick.competitorName}</a>`
-                : pick.competitorName} ${pick.isNationalChampion ? `<span class="nc-badge">NC</span>` : ''}
+            : pick.competitorName} 
+                ${window.renderRatings(pick.ratings, maxRating)}
+                ${pick.isNationalChampion ? `<span class="nc-badge">NC</span>` : ''}
                 ${specialBadges}            
                 </div>
                         <div class="text-muted small">${pick.competitorTeam}</div>

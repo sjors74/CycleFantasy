@@ -49,7 +49,7 @@
                 .ToList();
             <div class="col-md-4 d-flex">
                 <div class="card w-100 d-flex flex-column p-3 h-100 shadow-sm"
-                     data-team-id="@team.Id">
+                     data-teamyear-id="@team.Id">
 
                     <h5 class="card-title">@team.Naam</h5>
 
@@ -78,6 +78,10 @@
 
                             @foreach (var renner in team.Renners)
                             {
+                                var topRating = renner.Ratings
+                                .OrderByDescending(r => r.Rating)
+                                .FirstOrDefault();
+
                                 var isMax = Model.SelectedRiders.Count >= 15;
                                 var isChecked = Model.SelectedRiders.Contains(renner.CompetitorInTeamId);
 
@@ -93,6 +97,11 @@
                                     <label class="form-check-label">
 
                                         @renner.FirstName @renner.LastName
+
+                                        @if (topRating != null)
+                                        {
+                                            @await Component.InvokeAsync("CompetitorRatings", new { ratings = renner.Ratings })
+                                        }
 
                                         @if (renner.RemovedFromStartlist)
                                         {
@@ -115,7 +124,7 @@
                     <div class="mt-auto">
                         <button type="button"
                                 class="btn btn-outline-primary w-100 show-more-btn"
-                                data-team-id="@team.Id"
+                                data-teamyear-id="@team.TeamYearId"
                                 data-loaded-ids="@string.Join(",", initialIds)"
                                 data-expanded="false">
                             Meer...
@@ -143,7 +152,7 @@
             const container = card.querySelector(".team-extra");
 
             const isExpanded = btn.dataset.expanded === "true";
-            const teamId = btn.dataset.teamId;
+            const teamyearId = btn.dataset.teamyearId;
 
             const selectedIds = Array.from(
                 document.querySelectorAll(".renner-checkbox:checked")
@@ -162,11 +171,10 @@
             btn.dataset.expanded = "true";
 
             const response = await fetch(
-                `${API_BASE_URL}/api/event/team/${teamId}/teams-with-more-renners`
+                `${API_BASE_URL}/api/event/teamyear/${teamyearId}/teams-with-more-renners`
             );
 
             const riders = await response.json();
-
             const zichtbaarIds = new Set(
                 Array.from(
                     card.querySelectorAll(".renner-checkbox")
@@ -176,13 +184,13 @@
         const notSelected = riders
             .filter(r => !zichtbaarIds.has(r.competitorInTeamId))
             .sort((a, b) => a.lastName.localeCompare(b.lastName));
-
         container.innerHTML = `
             <strong class="d-block mb-2 not-selected-header">
                 Niet geselecteerd
             </strong>
 
-            ${notSelected.map(r => `
+            ${notSelected.map(r =>
+                `
                 <div class="form-check mb-1">
 
                     <input type="checkbox"
@@ -192,7 +200,8 @@
                     <span class="rider-name">
                         ${r.firstName} ${r.lastName}
                     </span>
-
+                    
+                    ${window.renderRatings(r.ratings, @Model.MaxRating)}
                 </div>
             `).join("")}
         `;

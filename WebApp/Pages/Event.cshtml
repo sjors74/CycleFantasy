@@ -29,6 +29,7 @@
 @section Scripts {
     <script>
         window._suppressAutoLoaderToggle = true;
+        window.appSettings = { maxRating: @Model.MaxRating };
     </script>
     <script type="module" src="~/js/event.js" asp-append-version="true"></script>
 }

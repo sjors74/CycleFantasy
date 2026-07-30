@@ -11,6 +11,7 @@ namespace CycleManager.Domain.Dto
         public int NormalPoints { get; set; }
         public int SpecialPoints { get; set; } 
         public int TotalPoints => NormalPoints + SpecialPoints;
+        public List<CompetitorRatingDto> Ratings { get; set; } = new();
 
         [Obsolete("Use TotalPoints instead.")]
         public int Points { get; set; }

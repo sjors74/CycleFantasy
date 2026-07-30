@@ -68,6 +68,14 @@ namespace DataAccessEF.TypeRepository
                         .ThenInclude(p => p.CompetitorsInEvent)
                             .ThenInclude(cie => cie.Event)
 
+                .Include(e => e.GameCompetitorEvents.Where(gce => gce.UserId == userId))
+                    .ThenInclude(gce => gce.Renners)
+                        .ThenInclude(p => p.CompetitorsInEvent)
+                            .ThenInclude(cie => cie.CompetitorInTeam)
+                                .ThenInclude(cit => cit.Competitor)
+                                    .ThenInclude(c => c.Ratings)
+                                        .ThenInclude(r => r.RatingCategory)
+
                 .ToListAsync();
 
             return events;

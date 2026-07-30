@@ -110,6 +110,7 @@ builder.Services.AddScoped<IScrapeScheduleService, EventScrapeJobRegistrationSer
 builder.Services.AddScoped<IPcsScraper, PcsScraper>();
 builder.Services.AddScoped<IScraperService, ScraperService>();
 builder.Services.AddScoped<ICyclingFlashScraper, CyclingFlashScraper>();
+builder.Services.AddScoped<ISeasonYearService, SeasonYearService>();
 
 builder.Services.AddControllers();
 builder.Services.AddHttpClient();

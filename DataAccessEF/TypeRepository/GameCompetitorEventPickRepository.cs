@@ -47,6 +47,12 @@ namespace DataAccessEF.TypeRepository
 
                 .Include(g => g.CompetitorsInEvent)
                     .ThenInclude(cie => cie.CompetitorInTeam)
+                        .ThenInclude(cit => cit.Competitor)
+                            .ThenInclude(c => c.Ratings)
+                                .ThenInclude(r => r.RatingCategory)
+
+                .Include(g => g.CompetitorsInEvent)
+                    .ThenInclude(cie => cie.CompetitorInTeam)
                         .ThenInclude(cit => cit.TeamYear)
                             .ThenInclude(ty => ty.Team)
 
