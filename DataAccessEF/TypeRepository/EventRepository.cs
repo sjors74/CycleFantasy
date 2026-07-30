@@ -116,6 +116,10 @@ namespace DataAccessEF.TypeRepository
                 .Where(cie => cie.EventId == id)
                 .Include(cie => cie.CompetitorInTeam)
                     .ThenInclude(cie => cie.Competitor)
+                        .ThenInclude(c => c.Ratings)
+                            .ThenInclude(r => r.RatingCategory)
+                .Include(cie => cie.CompetitorInTeam)
+                    .ThenInclude(cie => cie.Competitor)
                         .ThenInclude(c => c.Country)
                 .ToListAsync();
 
@@ -151,7 +155,19 @@ namespace DataAccessEF.TypeRepository
                                 PcsName = competitor.PcsName,
                                 CountryShort = competitor.Country.CountryNameShort,
                                 InSelectie = cie.InSelectie,
-                                RemovedFromStartlist = cie.RemovedFromStartList
+                                RemovedFromStartlist = cie.RemovedFromStartList,
+                                Ratings = competitor.Ratings
+                                            .Where(r => r.RatingCategory.IsActive)
+                                            .OrderBy(r => r.RatingCategory.DisplayOrder)
+                                            .Select(r => new CompetitorRatingDto
+                                            {
+                                                Rating = (int)r.Rating,
+                                                RatingCategoryId = r.RatingCategoryId,
+                                                Code = r.RatingCategory.Code,
+                                                CategoryName = r.RatingCategory.Name,
+                                                Color = r.RatingCategory.Color
+                                            })
+                                            .ToList()
                             };
                         }).ToList()
                 };

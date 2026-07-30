@@ -211,7 +211,9 @@ namespace CycleManager.Services
                     .Select(r => new CompetitorRatingDto
                     {
                         RatingCategoryId = r.RatingCategoryId,
-                        Rating = r.Rating
+                        Rating = (int)r.Rating,
+                        CategoryName = r.RatingCategory.Name,
+                        Code = r.RatingCategory.Code
                     })
                     .ToList(),
                 CompetitorInTeams = competitor.CompetitorInTeams

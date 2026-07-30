@@ -163,7 +163,15 @@ namespace WebCycle.Controllers
                     CompetitorInTeamId = cit.Id,
                     FirstName = cit.Competitor.FirstName,
                     LastName = cit.Competitor.LastName,
-                    PcsName = cit.Competitor.PcsName
+                    PcsName = cit.Competitor.PcsName,
+                    Ratings = cit.Competitor.Ratings
+                        .Select(r => new CompetitorRatingDto
+                        {
+                            Code = r.RatingCategory.Code,
+                            Rating = (int)r.Rating,
+                            Color = r.RatingCategory.Color
+                        })
+                        .ToList()
                 })
                 .OrderBy(c => c.LastName)
                 .ThenBy(c => c.FirstName)

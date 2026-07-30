@@ -152,6 +152,8 @@
 
                                                         <td class="fw-semibold small">
                                                             @($"{renner.FirstName} {renner.LastName}")
+
+                                                            @await Component.InvokeAsync("CompetitorRatings", new { ratings = renner.Ratings })
                                                         </td>
 
                                                         <td class="text-muted small">
