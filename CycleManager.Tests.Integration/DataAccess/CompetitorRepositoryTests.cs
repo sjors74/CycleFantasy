@@ -608,7 +608,7 @@ namespace CycleManager.Tests.Integration.DataAccess
                 LastName = "Evenepoel",
                 CountryId = 1,
                 PcsName = "REvenepoel",
-                ScraperName = "evenepoel",
+                PcsScraperName = "evenepoel",
 
                 SelectedSeasonYearId = 2024,
                 SelectedTeamYearId = 2

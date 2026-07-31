@@ -6,7 +6,9 @@
         public string FirstName { get; set; } = string.Empty;
         public string LastName { get; set; }= string.Empty;
         public string? PcsName { get; set; }
-        public string? ScraperName { get; set; }
+        public string? PcsScraperName { get; set; }
+        public string? CyclingFlashScraperName { get; set; }
+        public DateTime? CyclingFlahsLastScraped { get; set; }
         public int CountryId { get; set; }
         public int? SelectedTeamYearId { get; set; }
         public int SelectedSeasonYearId { get; set; }

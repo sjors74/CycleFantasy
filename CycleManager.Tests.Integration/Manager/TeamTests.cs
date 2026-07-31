@@ -209,7 +209,7 @@ namespace CycleManager.Tests.Integration.Manager
             await scraperService.RunCompetitorsAsync(dto.TeamId);
             await scraperService.ImportScrapedCompetitorsAsync();
 
-            var competitor = db.Competitors.FirstOrDefault(c => c.ScraperName.Contains("_2025"));
+            var competitor = db.Competitors.FirstOrDefault(c => c.PcsScraperName.Contains("_2025"));
             competitor.Should().NotBeNull();
 
             var cit = db.CompetitorInTeams.FirstOrDefault(c => c.TeamYear.TeamId == 1 && c.CompetitorId == competitor.CompetitorId && c.TeamYear.Year == 2025);
@@ -218,7 +218,7 @@ namespace CycleManager.Tests.Integration.Manager
             var htmlResponse = await client.GetAsync($"/Teams/Details/1?year=2025");
             htmlResponse.EnsureSuccessStatusCode();
             var html = await htmlResponse.Content.ReadAsStringAsync();
-            html.Should().Contain(competitor.ScraperName);
+            html.Should().Contain(competitor.PcsScraperName);
         }
 
         [Fact]

@@ -10,7 +10,9 @@ namespace WebCycleManager.Models.ViewModel
         public string FirstName { get; set; } = string.Empty;
         public string LastName { get; set; } = string.Empty;
         public string? PcsName { get; set; }
-        public string? ScraperName { get; set; }
+        public string? PcsScraperName { get; set; }
+        public string? CyclingFlashScraperName { get; set; }
+        public DateTime? CyclingFlahsLastScraped { get; set; }
         public int CountryId { get; set; }
 
         public List<CompetitorInTeamInputModel> CompetitorInTeams { get; set; } = new();
@@ -34,7 +36,9 @@ namespace WebCycleManager.Models.ViewModel
         [DisplayName("Achternaam")]
         public string LastName { get; set; } = string.Empty;
         public string? PcsName { get; set; }
-        public string? ScraperName { get; set; }
+        public string? PcsScraperName { get; set; }
+        public string? CyclingFlashScraperName { get; set; }
+        public DateTime? CyclingFlashLastScraped { get; set; }
         [DisplayName("Land")]
         public int CountryId { get; set; }
         public int SelectedSeasonYearId { get; set; }

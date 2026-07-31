@@ -19,13 +19,15 @@ namespace WebCycleManager.Controllers
         private readonly ITeamService _teamService;
         private readonly ICountryService _countryService;
         private readonly ISeasonYearService _seasonYearService;
+        private readonly IScraperService _scraperService;
 
-        public CompetitorsController(ICompetitorService competitorService, ITeamService teamService, ICountryService countryService, ISeasonYearService seasonYearService)
+        public CompetitorsController(ICompetitorService competitorService, ITeamService teamService, ICountryService countryService, ISeasonYearService seasonYearService, IScraperService scraperService)
         {
             _competitorService = competitorService;
             _teamService = teamService;
             _countryService = countryService;
             _seasonYearService = seasonYearService;
+            _scraperService = scraperService;
         }
 
         // GET: Competitors
@@ -268,7 +270,9 @@ namespace WebCycleManager.Controllers
                 FirstName = dto.FirstName,
                 LastName = dto.LastName,
                 PcsName = dto.PcsName,
-                ScraperName = dto.ScraperName,
+                PcsScraperName = dto.PcsScraperName,
+                CyclingFlashScraperName = dto.CyclingFlashScraperName,
+                CyclingFlashLastScraped = dto.CyclingFlahsLastScraped,
                 CountryId = dto.CountryId,
                 SelectedTeamYearId = dto.SelectedTeamYearId,
                 SelectedSeasonYearId = dto.SelectedSeasonYearId,
@@ -329,7 +333,9 @@ namespace WebCycleManager.Controllers
                 FirstName = input.FirstName,
                 LastName = input.LastName,
                 PcsName = input.PcsName,
-                ScraperName = input.ScraperName,
+                PcsScraperName = input.PcsScraperName,
+                CyclingFlashScraperName = input.CyclingFlashScraperName,
+                CyclingFlahsLastScraped = input.CyclingFlahsLastScraped,
                 CountryId = input.CountryId,
 
                 CompetitorInTeams = input.CompetitorInTeams
@@ -410,6 +416,15 @@ namespace WebCycleManager.Controllers
             });
         }
 
+        [HttpPost]
+        public async Task<IActionResult> RunRatingCompetitorScrape(int competitorId)
+        {
+            await _scraperService.RunRatingCompetitorScrapeAsync(competitorId);
+
+            TempData["Success"] = "Rating scrape uitgevoerd.";
+
+            return RedirectToAction(nameof(Index));
+        }
         private bool CompetitorExists(int id)
         {
           return _competitorService.GetCompetitorById(id) != null;
@@ -445,7 +460,9 @@ namespace WebCycleManager.Controllers
                 FirstName = dto.FirstName,
                 LastName = dto.LastName,
                 PcsName = dto.PcsName,
-                ScraperName = dto.ScraperName,
+                PcsScraperName = dto.PcsScraperName,
+                CyclingFlashScraperName = dto.CyclingFlashScraperName,
+                CyclingFlashLastScraped = dto.CyclingFlahsLastScraped,
                 CountryId = dto.CountryId,
 
                 Countries = dto.Countries.Select(c => new SelectListItem
@@ -465,7 +482,7 @@ namespace WebCycleManager.Controllers
                 FirstName = vm.FirstName,
                 LastName = vm.LastName,
                 PcsName = vm.PcsName,
-                ScraperName = vm.ScraperName,
+                PcsScraperName = vm.PcsScraperName,
                 CountryId = vm.CountryId
             };
         }

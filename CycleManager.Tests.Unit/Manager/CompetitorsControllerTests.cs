@@ -20,6 +20,7 @@ namespace CycleManager.Tests.Unit.Manager
         private readonly Mock<ITeamService> _teamServiceMock;
         private readonly Mock<ICountryService> _countryServiceMock;
         private readonly Mock<ISeasonYearService> _seasonYearServiceMock;
+        private readonly Mock<IScraperService> _scraperServiceMock;
         private readonly CompetitorsController _controller;
 
         public CompetitorsControllerTests()
@@ -28,12 +29,14 @@ namespace CycleManager.Tests.Unit.Manager
             _teamServiceMock = new Mock<ITeamService>();
             _seasonYearServiceMock = new Mock<ISeasonYearService>();
             _countryServiceMock = new Mock<ICountryService>();
+            _scraperServiceMock = new Mock<IScraperService>();
 
             _controller = new CompetitorsController(
                 _competitorServiceMock.Object,
                 _teamServiceMock.Object,
                 _countryServiceMock.Object,
-                _seasonYearServiceMock.Object
+                _seasonYearServiceMock.Object,
+                _scraperServiceMock.Object
             );
         }
 
