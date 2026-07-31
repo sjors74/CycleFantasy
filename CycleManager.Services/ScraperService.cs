@@ -373,16 +373,16 @@ namespace CycleManager.Services
                 .ToDictionary(g => g.Key, g => g.First());
 
             var competitorByScraperName = competitors
-                .Where(c => !string.IsNullOrEmpty(c.ScraperName))
-                .GroupBy(c => c.ScraperName.ToLowerInvariant())
+                .Where(c => !string.IsNullOrEmpty(c.PcsScraperName))
+                .GroupBy(c => c.PcsScraperName.ToLowerInvariant())
                 .ToDictionary(g => g.Key, g => g.First());
 
             foreach (var c in competitors)
             {
-                if (string.IsNullOrWhiteSpace(c.ScraperName))
+                if (string.IsNullOrWhiteSpace(c.PcsScraperName))
                     continue;
 
-                var key = c.ScraperName.Trim().ToLower();
+                var key = c.PcsScraperName.Trim().ToLower();
 
                 // Als hij al bestaat -> negeren of loggen
                 if (!competitorByScraperName.ContainsKey(key))
@@ -454,7 +454,7 @@ namespace CycleManager.Services
                             FirstName = firstName,
                             LastName = lastName,
                             Country = country,
-                            ScraperName = sc.RiderName
+                            PcsScraperName = sc.RiderName
                         };
 
                         newCompetitors.Add(competitor);
@@ -464,7 +464,7 @@ namespace CycleManager.Services
                     }
                     else
                     {
-                        competitor.ScraperName = sc.RiderName;
+                        competitor.PcsScraperName = sc.RiderName;
                         if (country != null)
                             competitor.Country = country;
 

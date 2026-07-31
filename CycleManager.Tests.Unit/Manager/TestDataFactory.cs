@@ -230,7 +230,7 @@ namespace CycleManager.Tests.Unit.Manager
                 FirstName = "Tadej",
                 LastName = "Pogacar",
                 PcsName = "PogacarT",
-                ScraperName = "TadejP",
+                PcsScraperName = "TadejP",
                 CountryId = 1,
 
                 SelectedSeasonYearId = 2024,

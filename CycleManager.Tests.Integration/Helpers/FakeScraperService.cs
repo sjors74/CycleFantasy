@@ -28,7 +28,7 @@ namespace CycleManager.Tests.Integration.Helpers
                 {
                     FirstName = sc.RiderName.Split(' ')[0],
                     LastName = sc.RiderName.Split(' ')[1],
-                    ScraperName = sc.RiderName,
+                    PcsScraperName = sc.RiderName,
                     Country = await _db.Countries.FirstOrDefaultAsync(c => c.CountryNameShort == sc.CountryShortName)
                 };
 

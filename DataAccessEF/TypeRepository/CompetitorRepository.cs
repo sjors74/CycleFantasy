@@ -24,7 +24,7 @@ namespace DataAccessEF.TypeRepository
                     FirstName = c.FirstName,
                     LastName = c.LastName,
                     PcsName = c.PcsName,
-                    ScraperName = c.ScraperName,
+                    ScraperName = c.PcsScraperName,
                     CountryShort = c.Country.CountryNameShort,
 
                     Teams = c.CompetitorInTeams
@@ -148,7 +148,9 @@ namespace DataAccessEF.TypeRepository
                 competitor.FirstName = dto.FirstName;
                 competitor.LastName = dto.LastName;
                 competitor.PcsName = dto.PcsName;
-                competitor.ScraperName = dto.ScraperName;
+                competitor.PcsScraperName = dto.PcsScraperName;
+                competitor.CyclingFlashScraperName = dto.CyclingFlashScraperName;
+                competitor.CyclingFlashLastScraped = dto.CyclingFlahsLastScraped;
                 competitor.CountryId = dto.CountryId;
 
                 // Zoek de ploegkoppeling voor het geselecteerde seizoen

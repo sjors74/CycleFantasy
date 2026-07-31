@@ -268,7 +268,9 @@ namespace WebCycleManager.Controllers
                 FirstName = dto.FirstName,
                 LastName = dto.LastName,
                 PcsName = dto.PcsName,
-                ScraperName = dto.ScraperName,
+                PcsScraperName = dto.PcsScraperName,
+                CyclingFlashScraperName = dto.CyclingFlashScraperName,
+                CyclingFlashLastScraped = dto.CyclingFlahsLastScraped,
                 CountryId = dto.CountryId,
                 SelectedTeamYearId = dto.SelectedTeamYearId,
                 SelectedSeasonYearId = dto.SelectedSeasonYearId,
@@ -329,7 +331,9 @@ namespace WebCycleManager.Controllers
                 FirstName = input.FirstName,
                 LastName = input.LastName,
                 PcsName = input.PcsName,
-                ScraperName = input.ScraperName,
+                PcsScraperName = input.PcsScraperName,
+                CyclingFlashScraperName = input.CyclingFlashScraperName,
+                CyclingFlahsLastScraped = input.CyclingFlahsLastScraped,
                 CountryId = input.CountryId,
 
                 CompetitorInTeams = input.CompetitorInTeams
@@ -445,7 +449,9 @@ namespace WebCycleManager.Controllers
                 FirstName = dto.FirstName,
                 LastName = dto.LastName,
                 PcsName = dto.PcsName,
-                ScraperName = dto.ScraperName,
+                PcsScraperName = dto.PcsScraperName,
+                CyclingFlashScraperName = dto.CyclingFlashScraperName,
+                CyclingFlashLastScraped = dto.CyclingFlahsLastScraped,
                 CountryId = dto.CountryId,
 
                 Countries = dto.Countries.Select(c => new SelectListItem
@@ -465,7 +471,7 @@ namespace WebCycleManager.Controllers
                 FirstName = vm.FirstName,
                 LastName = vm.LastName,
                 PcsName = vm.PcsName,
-                ScraperName = vm.ScraperName,
+                PcsScraperName = vm.PcsScraperName,
                 CountryId = vm.CountryId
             };
         }

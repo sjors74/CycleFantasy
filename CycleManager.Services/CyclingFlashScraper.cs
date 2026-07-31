@@ -102,6 +102,11 @@ namespace CycleManager.Services
             return result;
         }
 
+        public Task<List<ScrapeCompetitorRating>> ScrapeCompetitorRatingsAsync(string profileUrl, DateTime ratingDate)
+        {
+            throw new NotImplementedException();
+        }
+
         private async Task<IReadOnlyList<ILocator>> GetRowsAsync(IPage page)
         {
             return await page

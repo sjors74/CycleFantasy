@@ -44,9 +44,21 @@
                         </div>
                     </div>
                     <div class="row mb-3 align-items-center">
-                        <label asp-for="ScraperName" class="col-sm-4 col-form-label">Scraper naam</label>
+                        <label asp-for="PcsScraperName" class="col-sm-4 col-form-label">PCS Scraper naam</label>
                         <div class="col-sm-8">
-                            <input asp-for="ScraperName" class="form-control" />
+                            <input asp-for="PcsScraperName" class="form-control" />
+                        </div>
+                    </div>
+                    <div class="row mb-3 align-items-center">
+                        <label asp-for="CyclingFlashScraperName" class="col-sm-4 col-form-label">Cyclingflash naam</label>
+                        <div class="col-sm-8">
+                            <input asp-for="CyclingFlashScraperName" class="form-control" />
+                        </div>
+                    </div>
+                    <div class="row mb-3 align-items-center">
+                        <label asp-for="CyclingFlashLastScraped" class="col-sm-4 col-form-label">Laatste update</label>
+                        <div class="col-sm-8">
+                            <input readonly asp-for="CyclingFlashLastScraped" class="form-control" />
                         </div>
                     </div>
                     <div class="row mb-3 align-items-center">

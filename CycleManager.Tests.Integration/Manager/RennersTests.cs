@@ -107,7 +107,7 @@ namespace CycleManager.Tests.Integration.Manager
                 ["LastName"] = competitor.LastName + "_Edited",
                 ["CountryId"] = competitor.CountryId.ToString(),
                 ["PcsName"] = competitor.PcsName + "_Edited",
-                ["ScraperName"] = competitor.ScraperName + "_Edited",
+                ["ScraperName"] = competitor.PcsScraperName + "_Edited",
                 // markeer eerste jaar als nationaal kampioen
                 ["CompetitorInTeams[0].CompetitorInTeamId"] = competitor.CompetitorInTeams.ElementAt(0).Id.ToString(),
                 ["CompetitorInTeams[0].TeamYearId"] = competitor.CompetitorInTeams.ElementAt(0).TeamYearId.ToString(),
@@ -125,7 +125,7 @@ namespace CycleManager.Tests.Integration.Manager
             updated.FirstName.Should().EndWith("_Edited");
             updated.LastName.Should().EndWith("_Edited");
             updated.PcsName.Should().EndWith("_Edited");
-            updated.ScraperName.Should().EndWith("_Edited");
+            updated.PcsScraperName.Should().EndWith("_Edited");
             updated.CompetitorInTeams.ElementAt(0).IsNationalChampion.Should().BeTrue();
         }
 

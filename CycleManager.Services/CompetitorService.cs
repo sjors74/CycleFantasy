@@ -140,7 +140,9 @@ namespace CycleManager.Services
             competitor.FirstName = dto.FirstName;
             competitor.LastName = dto.LastName;
             competitor.PcsName = dto.PcsName ?? string.Empty;
-            competitor.ScraperName = dto.ScraperName ?? string.Empty;
+            competitor.PcsScraperName = dto.PcsScraperName ?? string.Empty;
+            competitor.CyclingFlashScraperName = dto.CyclingFlashScraperName ?? string.Empty;
+            competitor.CyclingFlashLastScraped = dto.CyclingFlahsLastScraped ?? null;
             competitor.CountryId = dto.CountryId;
 
             foreach (var teamDto in dto.CompetitorInTeams)
@@ -175,7 +177,9 @@ namespace CycleManager.Services
                 FirstName = competitor.FirstName,
                 LastName = competitor.LastName,
                 PcsName = competitor.PcsName,
-                ScraperName = competitor.ScraperName,
+                PcsScraperName = competitor.PcsScraperName,
+                CyclingFlashScraperName = competitor.CyclingFlashScraperName,
+                CyclingFlahsLastScraped = competitor.CyclingFlashLastScraped,
                 CountryId = competitor.CountryId,
 
                 Countries = countries

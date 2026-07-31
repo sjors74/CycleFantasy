@@ -78,8 +78,8 @@ namespace CycleManager.Tests.Integration.Manager
             if (withRiders)
             {
                 // Competitors
-                var comp1 = new Competitor { FirstName = "Jan", LastName = "Jansen", CountryId = countryNl.CountryId, PcsName = "jan_jansen", ScraperName = "jan-jansen" };
-                var comp2 = new Competitor { FirstName = "Piet", LastName = "Pietersen", CountryId = countryBe.CountryId, PcsName = "piet_pietersen", ScraperName = "piet-pietersen" };
+                var comp1 = new Competitor { FirstName = "Jan", LastName = "Jansen", CountryId = countryNl.CountryId, PcsName = "jan_jansen", PcsScraperName = "jan-jansen" };
+                var comp2 = new Competitor { FirstName = "Piet", LastName = "Pietersen", CountryId = countryBe.CountryId, PcsName = "piet_pietersen", PcsScraperName = "piet-pietersen" };
                 db.Competitors.AddRange(comp1, comp2);
 
                 // CompetitorInTeam
