@@ -1,5 +1,4 @@
-﻿using CycleManager.Domain.Dto;
-using CycleManager.Services;
+﻿using CycleManager.Services;
 using CycleManager.Services.Interfaces;
 using Domain.Dto;
 using Domain.Models;
@@ -27,7 +26,11 @@ namespace WebCycleManager.Controllers
         }
 
         // GET: CompetitorsInEvents
-        public async Task<IActionResult> Index(int eventId, int? FilterTeam = 0, bool ShowRemovedFromStartList = false)
+        public async Task<IActionResult> Index(
+                int eventId, 
+                int? FilterTeam = 0, 
+                bool ShowRemovedFromStartList = false, 
+                bool ShowOutOfCompetition = true)
         {
             var deelnemers = await _competitorInEventService.GetCompetitors(eventId);
 
@@ -45,6 +48,12 @@ namespace WebCycleManager.Controllers
                     .ToList();
             }
 
+            if (!ShowOutOfCompetition)
+            {
+                deelnemers = deelnemers
+                    .Where(d => !d.OutOfCompetition)
+                    .ToList();
+            }
             var currentEvent = await _eventService.GetEventById(eventId);
             if (currentEvent == null) return NotFound();
 
@@ -89,7 +98,8 @@ namespace WebCycleManager.Controllers
                     Text = t.CurrentTeamName
                 }),
                 FilterTeam = FilterTeam ?? 0,
-                ShowRemovedFromStartlist = ShowRemovedFromStartList
+                ShowRemovedFromStartlist = ShowRemovedFromStartList,
+                ShowOutOfCompetition = ShowOutOfCompetition
             };
             return View(vm);
         }
