@@ -85,6 +85,7 @@
                 <th>In selectie</th>
                 <th>Verwijderd</th>
                 <th>@Html.DisplayName("Uitgevallen")</th>
+                <th># ratings</th>
                 <th></th>
             </tr>
         </thead>
@@ -94,28 +95,33 @@
                 <td>@Html.DisplayFor(modelItem => item.EventNumber)</td>
                 <td>@Html.DisplayFor(modelItem => item.CompetitorName)</td>
                 <td>@Html.DisplayFor(modelItem => item.TeamName)</td>
-                    <td>
-                        @if (item.InSelection)
-                        {
-                            <i class="bi bi-check-circle text-success" title="in selectie"></i>
-                        }
-                    </td>
-                    <td>
-                        @if (item.RemovedFromStartlist)
-                        {
-                            <i class="bi bi-check-circle text-success" title="van startlijst verwijderd"></i>
-                        }
-                    </td>
-                    <td>
-                        @if (item.OutOfCompetition)
-                        {
-                            <i class="bi bi-check-circle text-success" title="uitgevallen"></i>
-                        }
-
-                    </td>
+                <td>
+                    @if (item.InSelection)
+                    {
+                        <i class="bi bi-check-circle text-success" title="in selectie"></i>
+                    }
+                </td>
+                <td>
+                    @if (item.RemovedFromStartlist)
+                    {
+                        <i class="bi bi-check-circle text-success" title="van startlijst verwijderd"></i>
+                    }
+                </td>
+                <td>
+                    @if (item.OutOfCompetition)
+                    {
+                        <i class="bi bi-check-circle text-success" title="uitgevallen"></i>
+                    }
+                </td>
+                <td class ="text-center">
+                    @if(item.RatingCount > 0)
+                    {
+                        <span class="badge bg-success">@item.RatingCount</span>
+                    }
+                </td>
                 <td>
                     <div class="d-flex gap-2">
-                            <a asp-action="Edit" asp-route-id="@item.CompetitorInEventId" asp-route-eventId="@item.EventId" asp-route-FilterTeam="@Model.FilterTeam" title="Bewerken" aria-label="Bewerken">
+                        <a asp-action="Edit" asp-route-id="@item.CompetitorInEventId" asp-route-eventId="@item.EventId" asp-route-FilterTeam="@Model.FilterTeam" title="Bewerken" aria-label="Bewerken">
                             <i class="bi bi-pencil"></i>
                         </a>
                         <a asp-action="Delete" asp-route-id="@item.CompetitorInEventId" asp-route-eventId="@item.EventId" asp-route-FilterTeam="@Model.FilterTeam" title="Verwijderen" aria-label="Verwijderen">

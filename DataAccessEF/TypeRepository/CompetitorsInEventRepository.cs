@@ -37,6 +37,7 @@ namespace DataAccessEF.TypeRepository
                         .ThenInclude(ty => ty.Team)
                 .Include(cie => cie.CompetitorInTeam)
                     .ThenInclude(cit => cit.Competitor)
+                        .ThenInclude(c => c.Ratings)
                 .ToListAsync();
         }
 
