@@ -98,6 +98,11 @@ namespace CycleManager.Tests.Integration.Helpers
             throw new NotImplementedException();
         }
 
+        public Task RunRatingCompetitorScrapeAsync(int competitorId)
+        {
+            throw new NotImplementedException();
+        }
+
         public Task RunRatingsScrapeAsync()
         {
             throw new NotImplementedException();
