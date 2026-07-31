@@ -10,7 +10,8 @@ namespace CycleManager.Services
     public class CyclingFlashScraper : ICyclingFlashScraper
     {
         private readonly ILogger<CyclingFlashScraper> _logger;
-        private const string BaseUrl = "https://cyclingflash.com/cyclingflash-365-ranking";
+        private const string BaseUrl = "https://cyclingflash.com";
+        private const string RankingPath = "cyclingflash-365-ranking";
 
         public CyclingFlashScraper(ILogger<CyclingFlashScraper> logger)
         {
@@ -102,9 +103,72 @@ namespace CycleManager.Services
             return result;
         }
 
-        public Task<List<ScrapeCompetitorRating>> ScrapeCompetitorRatingsAsync(string profileUrl, DateTime ratingDate)
+        public async Task<List<ScrapeCompetitorRating>> ScrapeCompetitorRatingsAsync(string profileUrl, DateTime ratingDate)
         {
-            throw new NotImplementedException();
+            var result = new List<ScrapeCompetitorRating>();
+
+            using var playwright = await Playwright.CreateAsync();
+
+            await using var browser = await playwright.Chromium.LaunchAsync(
+                new BrowserTypeLaunchOptions
+                {
+                    Headless = false,
+                    Channel = "chrome"
+                });
+
+            var context = await browser.NewContextAsync(new BrowserNewContextOptions
+            {
+                Locale = "nl-NL",
+                ViewportSize = new ViewportSize
+                {
+                    Width = 1920,
+                    Height = 1080
+                }
+            });
+
+            var page = await context.NewPageAsync();
+
+            var url = BuildProfileUrl(profileUrl);
+
+            _logger.LogInformation("Scraping competitor profile {Url}", url);
+
+            await page.GotoAsync(url);
+
+            await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+            await page.WaitForTimeoutAsync(3000);
+
+            _logger.LogInformation("Current url = {Url}", page.Url);
+            _logger.LogInformation("Page title = {Title}", await page.TitleAsync());
+
+            var competitorName = (await page.TitleAsync())
+                .Replace(" - Profile & Career Stats", "")
+                .Replace(" | CyclingFlash", "")
+                .Trim();
+
+            var rows = await GetProfileRowsAsync(page);
+
+            foreach (var row in rows)
+            {
+                var parsed = await ParseProfileRowAsync(
+                    row,
+                    profileUrl,
+                    competitorName,
+                    ratingDate);
+
+                if (parsed != null)
+                {
+                    result.Add(parsed);
+                }
+            }
+
+            _logger.LogInformation(
+                "Profile {Profile} : {Count} ratings scraped.", 
+                profileUrl, 
+                result.Count);
+
+            return result;
+
         }
 
         private async Task<IReadOnlyList<ILocator>> GetRowsAsync(IPage page)
@@ -157,9 +221,63 @@ namespace CycleManager.Services
             };
         }
 
+        private async Task<IReadOnlyList<ILocator>> GetProfileRowsAsync(IPage page) 
+        { 
+            return await page.Locator("div.grid.grid-cols-2.gap-3.w-full.md\\:grid-cols-4 > a")
+                .AllAsync(); 
+        }
+
+        private async Task<ScrapeCompetitorRating?> ParseProfileRowAsync(
+            ILocator row, 
+            string profileUrl, 
+            string competitorName,
+            DateTime ratingDate)
+        {
+            try
+            {
+                var category = (await row
+                    .Locator("div.text-xs.font-sans.font-semibold.text-gray-500")
+                    .First
+                    .InnerTextAsync())
+                    .Trim(); 
+                
+                var ratingText = (await row
+                    .Locator("div.text-display-lg, div.lg\\:text-display-xl")
+                    .First
+                    .InnerTextAsync())
+                    .Trim(); 
+                
+                if (!int.TryParse(ratingText, out var rating)) 
+                { 
+                    return null; 
+                } 
+                
+                var code = category; 
+                
+                return new ScrapeCompetitorRating 
+                { 
+                    CompetitorName = competitorName,
+                    RatingCategoryCode = code, 
+                    Rating = rating, 
+                    ProfileUrl = profileUrl, 
+                    RatingDate = ratingDate, 
+                    Source = "CyclingFlashProfile" 
+                }; 
+            } 
+            catch 
+            { 
+                return null; 
+            } 
+        }
+
         private static string BuildUrl(string category, int page)
         {
-            return $"{BaseUrl}/{category}/men-elite?page={page}";
+            return $"{BaseUrl}/{RankingPath}/{category}/men-elite?page={page}";
+        }
+
+        private static string BuildProfileUrl(string profileUrl)
+        {
+            return $"{BaseUrl}/{profileUrl.TrimStart('/')}";
         }
     }
 }

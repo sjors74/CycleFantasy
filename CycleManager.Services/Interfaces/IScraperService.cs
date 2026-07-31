@@ -11,5 +11,6 @@ namespace CycleManager.Services.Interfaces
         Task SyncStartlistAsync(int eventId, List<ScrapedStartlistEntry> scrapedEntries);
         Task RefreshStartlistAsync(int eventId);
         Task RunRatingsScrapeAsync();
+        Task RunRatingCompetitorScrapeAsync(int competitorId);
     }
 }

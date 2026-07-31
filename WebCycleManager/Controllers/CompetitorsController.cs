@@ -19,13 +19,15 @@ namespace WebCycleManager.Controllers
         private readonly ITeamService _teamService;
         private readonly ICountryService _countryService;
         private readonly ISeasonYearService _seasonYearService;
+        private readonly IScraperService _scraperService;
 
-        public CompetitorsController(ICompetitorService competitorService, ITeamService teamService, ICountryService countryService, ISeasonYearService seasonYearService)
+        public CompetitorsController(ICompetitorService competitorService, ITeamService teamService, ICountryService countryService, ISeasonYearService seasonYearService, IScraperService scraperService)
         {
             _competitorService = competitorService;
             _teamService = teamService;
             _countryService = countryService;
             _seasonYearService = seasonYearService;
+            _scraperService = scraperService;
         }
 
         // GET: Competitors
@@ -414,6 +416,15 @@ namespace WebCycleManager.Controllers
             });
         }
 
+        [HttpPost]
+        public async Task<IActionResult> RunRatingCompetitorScrape(int competitorId)
+        {
+            await _scraperService.RunRatingCompetitorScrapeAsync(competitorId);
+
+            TempData["Success"] = "Rating scrape uitgevoerd.";
+
+            return RedirectToAction(nameof(Index));
+        }
         private bool CompetitorExists(int id)
         {
           return _competitorService.GetCompetitorById(id) != null;

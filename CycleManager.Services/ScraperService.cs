@@ -554,6 +554,32 @@ namespace CycleManager.Services
             await _db.SaveChangesAsync();
         }
 
+        public async Task RunRatingCompetitorScrapeAsync(int competitorId)
+        {
+            var competitor = await _db.Competitors
+                .FirstAsync(x => x.CompetitorId == competitorId);
+
+            if (string.IsNullOrWhiteSpace(competitor.CyclingFlashScraperName)) 
+            { 
+                throw new InvalidOperationException("Competitor heeft geen CyclingFlash profiel."); 
+            }
+
+            var batchId = Guid.NewGuid();
+
+            var ratings = await _cyclingFlashScraper.ScrapeCompetitorRatingsAsync(
+                competitor.CyclingFlashScraperName, 
+                DateTime.UtcNow);
+
+            await SaveScrapeRatingsAsync(ratings, batchId);
+
+            await _db.SaveChangesAsync();
+
+            await ProcessRatingsAsync(batchId);
+
+            competitor.CyclingFlashLastScraped = DateTime.UtcNow;
+
+            await _db.SaveChangesAsync();
+        }
 
         /// <summary>
         /// </summary>
@@ -848,25 +874,40 @@ namespace CycleManager.Services
                 .ToListAsync(); 
             
             // Eén keer alle competitors laden
-            var lookup = await _db.Competitors 
+            var nameLookup = await _db.Competitors 
                 .ToDictionaryAsync( 
                     x => Normalize($"{x.FirstName} {x.LastName}"),
-                    x => x); 
+                    x => x);
+
+            var profileLookup = await _db.Competitors
+                .Where(x => x.CyclingFlashScraperName != null)
+                .ToDictionaryAsync(x => x.CyclingFlashScraperName!, x => x);
+
+            var categories = await _db.RatingCategories
+                .ToDictionaryAsync(x => x.Code, x => x.RatingCategoryId);
 
             foreach (var rating in ratings) 
             { 
                 try 
                 { 
-                    var competitor = FindCompetitor(rating, lookup); 
+                    var competitor = FindCompetitor(rating, nameLookup, profileLookup); 
                     if (competitor == null) 
                     { 
                         continue; 
-                    } 
-                    var categoryId = await _db.RatingCategories 
-                        .Where(x => x.Code == rating.RatingCategoryCode) 
-                        .Select(x => x.RatingCategoryId) 
-                        .FirstAsync(); 
-                    
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(rating.ProfileUrl) &&
+                         competitor.CyclingFlashScraperName != rating.ProfileUrl)
+                    {
+                        competitor.CyclingFlashScraperName = rating.ProfileUrl;
+                    }
+
+                    if (!categories.TryGetValue(rating.RatingCategoryCode, out var categoryId))
+                    {
+                        _logger.LogWarning("Onbekende ratingcategorie {Code}", rating.RatingCategoryCode);
+                        continue;
+                    }
+
                     await UpdateCompetitorRatingAsync( competitor, rating, categoryId); 
                     
                     rating.Processed = true; 
@@ -879,17 +920,26 @@ namespace CycleManager.Services
             await _db.SaveChangesAsync(); 
         } 
         
-        private Competitor? FindCompetitor( ScrapeCompetitorRating rating, Dictionary<string, Competitor> lookup) 
-        { 
-            // 1. Exacte volledige naam
-            var fullKey = Normalize(rating.CompetitorName); 
+        private Competitor? FindCompetitor( 
+            ScrapeCompetitorRating rating, 
+            Dictionary<string, Competitor> nameLookup, 
+            Dictionary<string, Competitor> profileLookup) 
+        {
+            // 1. Eerst op profiel-URL
+            if (!string.IsNullOrWhiteSpace(rating.ProfileUrl) && 
+                profileLookup.TryGetValue(rating.ProfileUrl, out var byProfile)) 
+            { 
+                return byProfile; 
+            }
+            // 2. Exacte volledige naam
+            var key = Normalize(rating.CompetitorName); 
             
-            if (lookup.TryGetValue(fullKey, out var competitor)) 
+            if (nameLookup.TryGetValue(key, out var competitor)) 
             { 
                 return competitor; 
             } 
             
-            // 2. Spaanse dubbele achternaam: 
+            // 3. Spaanse dubbele achternaam: 
             // "Einer Rubio Reyes" -> "Einer Rubio"
             var parts = rating.CompetitorName 
                 .Split(' ', StringSplitOptions.RemoveEmptyEntries); 
@@ -897,7 +947,7 @@ namespace CycleManager.Services
             if (parts.Length >= 3) 
             { 
                 var shortKey = Normalize($"{parts[0]} {parts[1]}"); 
-                if (lookup.TryGetValue(shortKey, out competitor)) 
+                if (nameLookup.TryGetValue(shortKey, out competitor)) 
                 { 
                     return competitor; 
                 } 

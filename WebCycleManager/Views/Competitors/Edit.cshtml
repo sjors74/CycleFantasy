@@ -16,6 +16,17 @@
     var hasAnyRating = allCategories.Any(x => x.Rating.HasValue);
     const decimal maxRating = 2500m;
 }
+<div class="d-flex justify-content-between align-items-center mb-3">
+
+    <form asp-action="RunRatingCompetitorScrape" method="post" class="mb-0">
+        <input type="hidden" name="competitorId" value="@Model.CompetitorId" />
+
+        <button type="submit" class="btn btn-outline-primary">
+            <i class="bi bi-arrow-repeat"></i> Scrape CyclingFlash
+        </button>
+    </form>
+</div>
+
 <form asp-action="Edit">
     <input type="hidden" asp-for="CompetitorId" />
 
