@@ -1,5 +1,4 @@
-﻿using Domain.Models;
-using Microsoft.AspNetCore.Mvc.Rendering;
+﻿using Microsoft.AspNetCore.Mvc.Rendering;
 using System.ComponentModel;
 
 namespace WebCycleManager.Models
@@ -17,6 +16,7 @@ namespace WebCycleManager.Models
         public int ActiveCompetitors => Competitors.Count(c => c.InSelection);
         public int RemovedCompetitors => Competitors.Count(c => c.RemovedFromStartlist);
         public bool ShowRemovedFromStartlist { get; set; }
+        public bool ShowOutOfCompetition { get; set; }
 
         public string EventNameLong
         {

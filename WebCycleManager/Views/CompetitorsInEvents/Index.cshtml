@@ -13,7 +13,7 @@
                    value="@Model.EventId" />
 
             <button type="submit"
-                    class="btn btn-outine-primary">
+                    class="btn btn-outline-primary">
                 Renners synchroniseren
             </button>
         </form>
@@ -55,7 +55,6 @@
         </h4>
 
         <div class="form-check mb-0 d-flex align-items-center">
-
             <input class="form-check-input me-2"
                    type="checkbox"
                    id="showRemoved"
@@ -68,7 +67,23 @@
                    for="showRemoved">
                 Toon verwijderd
             </label>
+        </div>
 
+        <div class="form-check mb-0 d-flex align-items-center"> 
+            <input class="form-check-input me-2" 
+                type="checkbox" 
+                id="showOut" 
+                name="ShowOutOfCompetition" 
+                value="true" 
+                @(Model.ShowOutOfCompetition ? "checked" : "") 
+                onchange="this.form.submit()" />
+
+            <input type="hidden" name="ShowOutOfCompetition" value="false" />
+
+            <label class="form-check-label text-nowrap" 
+                for="showOut"> 
+                Toon uitgevallen 
+            </label> 
         </div>
 
     </form>
