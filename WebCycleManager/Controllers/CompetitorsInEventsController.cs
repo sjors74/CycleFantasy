@@ -76,6 +76,7 @@ namespace WebCycleManager.Controllers
                     InSelection = d.InSelectie,
                     RemovedFromStartlist = d.RemovedFromStartList,
                     TeamId = team?.TeamId ?? 0,
+                    RatingCount = competitor?.Ratings?.Count ?? 0
                 };
             })
             .OrderBy(x => x.EventNumber)
