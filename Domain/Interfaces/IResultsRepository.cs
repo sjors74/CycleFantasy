@@ -1,4 +1,5 @@
 ﻿using CycleManager.Domain.Dto;
+using CycleManager.Domain.Models;
 using Domain.Dto;
 using Domain.Models;
 
@@ -36,7 +37,7 @@ namespace Domain.Interfaces
         /// <param name="stageId"></param>
         /// <returns></returns>
         Task<int> GetResultsByStageId(int stageId);
-        Task<List<EtappeUitslagDto>?> GetEtappeUitslag(int stageId);
+        Task<EtappeResultaatDto>? GetEtappeUitslag(int stageId);
 
         //methodes voor manager
         Task<Stage?> GetStageByIdAsync(int stageId);
@@ -55,5 +56,9 @@ namespace Domain.Interfaces
         Task<List<PickDetailDto>> GetPickDetailsAsync(int eventId, int gameCompetitorEventId);
 
         Task<List<CompetitorScoreDto>> GetCompetitorResultsForEvent(int eventId);
+
+        Task SyncResultsAsync(int stageId, IEnumerable<Result> results, IEnumerable<SpecialResult> specialResults);
+
+        Task<List<DeelnemerScoreBreakdown>> GetScoreBreakdownByEventIdAsync(int eventId);
     }
 }

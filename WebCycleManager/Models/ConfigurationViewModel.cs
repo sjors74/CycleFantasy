@@ -29,6 +29,7 @@ namespace WebCycleManager.Models
         public int Id { get; set; }
         [DisplayName("Vraag")]
         public QuestionType Question { get; set; }
+        public string ColorName { get; set; } = "#FED500";
         public int Score { get; set; }
         [DisplayName("Configuratie")]
         public int ConfigurationId { get; set; }

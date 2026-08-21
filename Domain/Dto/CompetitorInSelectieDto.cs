@@ -6,5 +6,6 @@
         public string FirstName { get; set; } = string.Empty;
         public string LastName { get; set; } = string.Empty;
         public string PcsName { get; set; } = string.Empty;
+        public List<CompetitorRatingDto> Ratings { get; set; } = new();
     }
 }

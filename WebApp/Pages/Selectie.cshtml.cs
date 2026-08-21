@@ -27,6 +27,8 @@ namespace WebApp.Pages
         [BindProperty(SupportsGet = true)]
         public int PageIndex { get; set; }
 
+        public int MaxRating { get; }
+
         [BindProperty]
         public string SelectedRidersJson { get; set; } = "";
 
@@ -41,6 +43,12 @@ namespace WebApp.Pages
             _httpClient = httpClient;
             _configuration = configuration;
             _logger = logger;
+
+            if (!int.TryParse(configuration["ClientSettings:MaxRating"], out var maxRating))
+            {
+                maxRating = 0;
+            }
+            MaxRating = maxRating;
         }
 
         public void OnGet()
@@ -53,6 +61,7 @@ namespace WebApp.Pages
             SelectedRidersJson = JsonSerializer.Serialize(SelectedRiders);
 
             VisibleTeams = AllTeams.Skip(PageIndex * PageSize).Take(PageSize).ToList();
+
         }
 
         public void OnPost(string action)

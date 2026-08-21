@@ -21,6 +21,7 @@ namespace Domain.Dto
 
 
         public List<CompetitorInTeamDto> Teams { get; set; } = new();
+        public List<CompetitorRatingDto> Ratings { get; set; } = new();
 
     }
 }

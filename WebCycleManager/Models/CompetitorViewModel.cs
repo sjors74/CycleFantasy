@@ -33,6 +33,8 @@ namespace WebCycleManager.Models
         [DisplayName("Verwijderd van startlijst")]
         public bool RemovedFromStartlist { get; set; } = false;
         public int TeamId { get; set; }
+        [DisplayName("# ratings")]
+        public int RatingCount { get; set; }
     }
 
 }

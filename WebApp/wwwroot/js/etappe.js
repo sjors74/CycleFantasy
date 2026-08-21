@@ -16,9 +16,11 @@ document.addEventListener("DOMContentLoaded", () => {
     navigateToEtappe(etappeId, { replaceHistory: true });
 });
 function initTabSwitching() {
-    const tabHeaders = document.querySelectorAll(".tab-header li");
+    const tabHeaders = document.querySelectorAll(".etappe-tab-header li");
     tabHeaders.forEach(header => {
         header.addEventListener("click", () => {
+            console.log("tab klik:", header.dataset.tab);
+
             const newTab = header.dataset.tab;
             if (!newTab) return;
 
@@ -147,6 +149,7 @@ async function ensureStagesLoaded() {
 }
 
 async function laadEtappeData(stageId) {
+    console.log("laadEtappeData gestart:", stageId);
     if (!stageId) return;
     toggleGlobalLoader && toggleGlobalLoader(true);
 
@@ -155,6 +158,8 @@ async function laadEtappeData(stageId) {
     const geenUitslag = document.getElementById("geen-uitslag");
     const geenUitslagTitel = document.getElementById("geen-uitslag-titel");
     const geenUitslagBeschrijving = document.getElementById("geen-uitslag-beschrijving");
+    const specialsContainer = document.getElementById("specials-container");
+    const specialsLijst = document.getElementById("specials-lijst");
 
     try {
         const stage = stages.find(s => s.stageId === stageId);
@@ -168,8 +173,13 @@ async function laadEtappeData(stageId) {
         tabel.hidden = true;
         geenUitslag.hidden = true;
         lijst.innerHTML = "";
+        specialsContainer.hidden = true;
+        specialsLijst.innerHTML = "";
 
         const response = await fetch(`${API_BASE_URL}/api/Results/${stage.stageId}/uitslag`);
+
+        console.log("status:", response.status);
+
         if (!response.ok) {
             geenUitslag.textContent = "Fout bij laden uitslag";
             geenUitslag.hidden = false;
@@ -178,17 +188,22 @@ async function laadEtappeData(stageId) {
 
         const data = await response.json();
 
-        if (!Array.isArray(data) || data.length === 0) {
+        console.log("etappe response:", data);
+
+        const uitslag = data.uitslag ?? [];
+        const specials = data.specials ?? [];
+
+        if (uitslag.length === 0) {
             geenUitslag.textContent = "Geen resultaten";
             geenUitslag.hidden = false;
             return;
         }
 
-        if (data.length === 1 && data[0].noScore === true) {
+        if (uitslag.length === 1 && uitslag[0].noScore === true) {
             geenUitslagTitel.textContent = "Er is geen uitslag";
 
-            if (data[0].noScoreDescription) {
-                geenUitslagBeschrijving.textContent = data[0].noScoreDescription;
+            if (uitslag[0].noScoreDescription) {
+                geenUitslagBeschrijving.textContent = uitslag[0].noScoreDescription;
                 geenUitslagBeschrijving.hidden = false;
             } else {
                 geenUitslagBeschrijving.textContent = "";
@@ -201,7 +216,7 @@ async function laadEtappeData(stageId) {
 
         tabel.hidden = false;
 
-        data.forEach(item => {
+        uitslag.forEach(item => {
             const tr = document.createElement("tr");
             tr.innerHTML = `
                 <td>${item.positie ?? ""}</td>
@@ -211,6 +226,9 @@ async function laadEtappeData(stageId) {
             `;
             lijst.appendChild(tr);
         });
+
+        renderSpecials(specials);
+        
     } catch (err) {
         console.error("Fout bij laadEtappeData: ", err);
         geenUitslag.textContent = "Onverwachte fout";
@@ -295,4 +313,74 @@ function initTerugKnoppen() {
             }
         });
     });
+}
+
+function renderSpecials(specials) {
+    const container = document.getElementById("specials-container");
+    const lijst = document.getElementById("specials-lijst");
+
+    lijst.innerHTML = "";
+
+    if (!specials || specials.length === 0) {
+        container.hidden = true;
+        return;
+    }
+
+    container.hidden = false;
+
+    specials.forEach(s => {
+        const card = document.createElement("div");
+        card.className = "special-card";
+
+        card.innerHTML = `
+            <div class="special-jersey" style="--jersey-color:${s.color}">
+                <svg viewBox="0 0 64 64" aria-hidden="true">
+                    <!-- Trui -->
+                    <path class="jersey-body"
+                          d="M20 10
+                             L32 16
+                             L44 10
+                             L52 20
+                             L46 28
+                             L46 54
+                             L18 54
+                             L18 28
+                             L12 20
+                             Z"/>
+
+                    <!-- Kraag -->
+                    <path class="jersey-collar"
+                          d="M26 13
+                             L32 19
+                             L38 13"/>
+
+                    <!-- Rits -->
+                    <line class="jersey-zip"
+                          x1="32" y1="19"
+                          x2="32" y2="53"/>
+                </svg>
+            </div>
+
+            <div class="special-info">
+                <div class="special-title">${s.name}</div>
+                <div class="special-name">${s.competitorName}</div>
+                <div class="special-team">${s.teamName}</div>
+            </div>
+        `;
+
+        lijst.appendChild(card);
+    });
+}
+
+function getSpecialClass(type) {
+    switch (type) {
+        case "GC":
+            return "gc";
+        case "Points":
+            return "points";
+        case "KOM":
+            return "kom";
+        default:
+            return "";
+    }
 }

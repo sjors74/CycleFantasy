@@ -51,6 +51,7 @@ namespace WebCycleManager.Models
         public string StageDateMin => EventStartDate.ToString("yyyy-MM-dd");
         public string StageDateMax => EventEndDate.ToString("yyyy-MM-dd");
 
+        [DisplayName("Status van scrape")]
         public ScrapeStatus ScrapeStatus { get; set; }
         [ValidateNever]
         public IEnumerable<SelectListItem> AvailableStatuses { get; set; } = [];

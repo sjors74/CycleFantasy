@@ -45,34 +45,63 @@ namespace DataAccessEF.TypeRepository
         {
             var events = await context.Events
                 .Where(e => e.GameCompetitorEvents.Any(gce => gce.UserId == userId))
+
                 .Include(e => e.GameCompetitorEvents.Where(gce => gce.UserId == userId))
                     .ThenInclude(gce => gce.User)
-                .Include(e => e.GameCompetitorEvents.Where(gce => gce.UserId == userId))
-                    .ThenInclude(gce => gce.Renners)
-                        .ThenInclude(p => p.CompetitorsInEvent)
-                            .ThenInclude(c => c.CompetitorInTeam)
-                                    .ThenInclude(cit => cit.Team)
-                .Include(e => e.GameCompetitorEvents.Where(gce => gce.UserId == userId))
-                    .ThenInclude(gce => gce.Renners)
-                        .ThenInclude(p => p.CompetitorsInEvent)
-                            .ThenInclude(p => p.CompetitorInTeam)
-                            .ThenInclude(ci => ci.Competitor)
-                                .ThenInclude(c => c.Country)
-                .Include(e => e.GameCompetitorEvents.Where(gce => gce.UserId == userId))
-                    .ThenInclude(gce => gce.Renners)
-                        .ThenInclude(p => p.CompetitorsInEvent)
-                            .ThenInclude(ci => ci.Event)
-                .ToListAsync();
 
+                .Include(e => e.GameCompetitorEvents.Where(gce => gce.UserId == userId))
+                    .ThenInclude(gce => gce.Renners)
+                        .ThenInclude(p => p.CompetitorsInEvent)
+                            .ThenInclude(cie => cie.CompetitorInTeam)
+                                .ThenInclude(cit => cit.TeamYear)
+                                    .ThenInclude(ty => ty.Team)
+
+                .Include(e => e.GameCompetitorEvents.Where(gce => gce.UserId == userId))
+                    .ThenInclude(gce => gce.Renners)
+                        .ThenInclude(p => p.CompetitorsInEvent)
+                            .ThenInclude(cie => cie.CompetitorInTeam)
+                                .ThenInclude(cit => cit.Competitor)
+                                    .ThenInclude(c => c.Country)
+
+                .Include(e => e.GameCompetitorEvents.Where(gce => gce.UserId == userId))
+                    .ThenInclude(gce => gce.Renners)
+                        .ThenInclude(p => p.CompetitorsInEvent)
+                            .ThenInclude(cie => cie.Event)
+
+                .Include(e => e.GameCompetitorEvents.Where(gce => gce.UserId == userId))
+                    .ThenInclude(gce => gce.Renners)
+                        .ThenInclude(p => p.CompetitorsInEvent)
+                            .ThenInclude(cie => cie.CompetitorInTeam)
+                                .ThenInclude(cit => cit.Competitor)
+                                    .ThenInclude(c => c.Ratings)
+                                        .ThenInclude(r => r.RatingCategory)
+
+                .ToListAsync();
 
             return events;
         }
 
-        public async Task<GameCompetitorEvent> GetyCompetitorWithPicksById(int id)
+        public async Task<GameCompetitorEvent> GetCompetitorWithPicksById(int id)
         {
             return await context.GameCompetitorsEvent
                 .Include(p => p.Renners) // of Picks
                 .FirstOrDefaultAsync(p => p.Id == id);
+        }
+
+        public async Task<bool> RenamePoolAsync(int deelnemerId, string userId, string nieuweNaam)
+        {
+            var deelnemer = await context.GameCompetitorsEvent
+                 .FirstOrDefaultAsync(x =>
+                    x.Id == deelnemerId &&
+                    x.UserId == userId);
+            if (deelnemer == null)
+                return false;
+
+            deelnemer.TeamName = nieuweNaam.Trim();
+
+            await context.SaveChangesAsync();
+            
+            return true;
         }
     }
 }

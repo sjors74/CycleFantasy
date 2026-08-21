@@ -1,5 +1,4 @@
-﻿using CycleManager.Domain.Dto;
-using CycleManager.Services;
+﻿using CycleManager.Services;
 using CycleManager.Services.Interfaces;
 using Domain.Dto;
 using Domain.Models;
@@ -15,24 +14,30 @@ namespace WebCycleManager.Controllers
         private IEventService _eventService;
         private ITeamService _teamService;
         private ICompetitorService _competitorService;
+        private ISeasonYearService _seasonYearService;
 
-        public CompetitorsInEventsController(ICompetitorInEventService competitorInEventService, IEventService eventService, ITeamService teamService, ICompetitorService competitorService)
+        public CompetitorsInEventsController(ICompetitorInEventService competitorInEventService, IEventService eventService, ITeamService teamService, ICompetitorService competitorService, ISeasonYearService seasonYearService)
         {
             _competitorInEventService = competitorInEventService;
             _eventService = eventService;
             _teamService = teamService;
             _competitorService = competitorService;
+            _seasonYearService = seasonYearService;
         }
 
         // GET: CompetitorsInEvents
-        public async Task<IActionResult> Index(int eventId, int? FilterTeam = 0, bool ShowRemovedFromStartList = false)
+        public async Task<IActionResult> Index(
+                int eventId, 
+                int? FilterTeam = 0, 
+                bool ShowRemovedFromStartList = false, 
+                bool ShowOutOfCompetition = true)
         {
             var deelnemers = await _competitorInEventService.GetCompetitors(eventId);
 
             if (FilterTeam > 0)
             {
                 deelnemers = deelnemers
-                    .Where(t => t.CompetitorInTeam.Team.TeamId == FilterTeam)
+                    .Where(t => t.CompetitorInTeam.TeamYear.TeamId == FilterTeam)
                     .ToList();
             }
 
@@ -43,13 +48,19 @@ namespace WebCycleManager.Controllers
                     .ToList();
             }
 
+            if (!ShowOutOfCompetition)
+            {
+                deelnemers = deelnemers
+                    .Where(d => !d.OutOfCompetition)
+                    .ToList();
+            }
             var currentEvent = await _eventService.GetEventById(eventId);
             if (currentEvent == null) return NotFound();
 
             var deelnemersViewModel = deelnemers.Select(d =>
             {
                 var competitor = d.CompetitorInTeam.Competitor;
-                var team = d.CompetitorInTeam.Team;
+                var team = d.CompetitorInTeam.TeamYear.Team;
 
                 return new CompetitorInEventViewModel
                 {
@@ -65,6 +76,7 @@ namespace WebCycleManager.Controllers
                     InSelection = d.InSelectie,
                     RemovedFromStartlist = d.RemovedFromStartList,
                     TeamId = team?.TeamId ?? 0,
+                    RatingCount = competitor?.Ratings?.Count ?? 0
                 };
             })
             .OrderBy(x => x.EventNumber)
@@ -87,7 +99,8 @@ namespace WebCycleManager.Controllers
                     Text = t.CurrentTeamName
                 }),
                 FilterTeam = FilterTeam ?? 0,
-                ShowRemovedFromStartlist = ShowRemovedFromStartList
+                ShowRemovedFromStartlist = ShowRemovedFromStartList,
+                ShowOutOfCompetition = ShowOutOfCompetition
             };
             return View(vm);
         }
@@ -99,15 +112,18 @@ namespace WebCycleManager.Controllers
             var eventEntity = await _eventService.GetEventById(eventId);
             if (eventEntity == null || !eventEntity.IsActive)
                 return NotFound();
-
+            
             // Teams die meedoen aan het event
             var eventTeams = await _teamService.GetTeamsForEvent(eventId);
             var teamIds = eventTeams.Select(t => t.TeamId).ToList();
 
             // Haal alle renners op (van dit jaar)
-            var competitors = await _competitorService.GetAllCompetitors(DateTime.Now.Year);
+            var activeSeason = (await _seasonYearService.GetAllAsync()).SingleOrDefault(s => s.Active);
+
+            var competitors = await _competitorService.GetAllCompetitors(activeSeason.SeasonYearId);
 
             // Filter renners op teams die aan het event meedoen
+
             var filteredCompetitors = FilterCompetitors(competitors, teamIds, filterTeam);
 
             // Bouw de SelectList voor de view
@@ -129,6 +145,7 @@ namespace WebCycleManager.Controllers
             ViewBag.ListOfCompetitors = new SelectList(competitorsList, "CompetitorId", "CompetitorName");
             ViewBag.ListOfTeams = eventTeams.OrderBy(t => t.CurrentTeamName).ToList();
             ViewBag.EventId = eventId;
+            ViewBag.SeasonYearId = activeSeason.SeasonYearId;
 
             return View();
         }
@@ -212,7 +229,7 @@ namespace WebCycleManager.Controllers
             }
             var competitor = await  _competitorService.GetCompetitorById(competitorsInEvent.CompetitorInTeamId);
             var vm = GetViewModel(competitorsInEvent);
-            var team = competitor?.CompetitorInTeams.FirstOrDefault()?.Team;
+            var team = competitor?.CompetitorInTeams.FirstOrDefault()?.TeamYear?.Team;
             vm.TeamId = team?.TeamId ?? 0;
             ViewData["EventId"] = new SelectList(await _eventService.GetAllEvents(), "EventId", "EventName", competitorsInEvent.EventId);
             return View(vm);
@@ -311,17 +328,20 @@ namespace WebCycleManager.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetCompetitorForEvent(int teamId, int year)
+        public async Task<IActionResult> GetCompetitorForEvent(int teamId, int seasonYearId)
         {
-            var competitors = await _competitorService.GetByTeamId(teamId, year);
+            var competitors = await _competitorService.GetByTeamId(teamId);
+            competitors = competitors.Where(c => c.SeasonYearId == seasonYearId);
+
             var result = competitors
                 .OrderBy(c => c.LastName)
                 .ThenBy(c => c.FirstName)
                 .Select(c => new
-            {
-                value = c.CompetitorInTeamId,
-                text = $"{c.LastName}, {c.FirstName}"
-            });
+                {
+                    value = c.CompetitorInTeamId,
+                    text = $"{c.LastName}, {c.FirstName}"
+                });
+
             return Json(result);
         }
 
@@ -330,7 +350,7 @@ namespace WebCycleManager.Controllers
             var competitor = competitorsInEvent.CompetitorInTeam.Competitor;
 
             // Kies het eerste team (of filter op een specifiek jaar)
-            var team = competitor?.CompetitorInTeams.FirstOrDefault()?.Team;
+            var team = competitor?.CompetitorInTeams.FirstOrDefault()?.TeamYear?.Team;
 
             var vm = new CompetitorInEventViewModel
             {
@@ -353,12 +373,6 @@ namespace WebCycleManager.Controllers
         private async Task<Competitor> GetCompetitor(int id)
         {
             return await _competitorService.GetCompetitorById(id);
-        }
-
-        public async Task<CompetitorsInEvent> GetCompetitorInEvent(int eventId, int competitorId)
-        {
-            var c = await _competitorInEventService.GetCompetitorsInEventByIds(eventId, competitorId);
-            return c;
         }
 
         private async Task<Team> GetTeam(int id)

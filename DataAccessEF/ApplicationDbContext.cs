@@ -22,19 +22,26 @@ namespace Domain.Context
         public DbSet<ConfigurationItem> ConfigurationItems { get; set; }
         public DbSet<ConfigurationItemSpecial> ConfigurationItemSpecials { get; set; }
         public DbSet<Result> Results { get; set; }
+        public DbSet<SpecialResult> SpecialResults { get; set; }
         public DbSet<GameCompetitorEvent> GameCompetitorsEvent { get; set; }
         public DbSet<GameCompetitorEventPick> GameCompetitorEventPicks { get; set; }
         public DbSet<EventTeam> EventTeam { get; set; }
         public DbSet<ScrapedStageResult> ScrapedStageResults { get; set; }
-        public DbSet<StageSpecialResult> StageSpecialResults { get; set; }
+        public DbSet<ScrapedSpecialResult> ScrapedSpecialResults { get; set; }
         public DbSet<NewsItem> NewsItems { get; set; }
         public DbSet<DeelnemerScore> DeelnemerScores { get; set; }
         public DbSet<DeelnemerPickScore> DeelnemerPickScores { get; set; }
         public DbSet<DeelnemerStageScore> DeelnemerStageScores { get; set; }
         public DbSet<DeelnemerStagePickScore> DeelnemerStagePickScores { get; set; }
+        public DbSet<DeelnemerStagePickSpecialScore> DeelnemerStagePickSpecialScores { get; set; }
         public DbSet<ScrapedCompetitor> ScrapedCompetitors { get; set; }
         public DbSet<CompetitorInTeam> CompetitorInTeams { get; set; }
         public DbSet<TeamYear> TeamYear { get; set; }
+        public DbSet<SeasonYear> SeasonYears { get; set; }
+        public DbSet<RatingCategory> RatingCategories { get; set; }
+        public DbSet<CompetitorRating> CompetitorRatings { get; set; }
+        public DbSet<ScrapeCompetitorRating> ScrapeCompetitorRatings { get; set; }
+        public DbSet<RatingScrapeProgress> RatingScrapeProgress { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -50,10 +57,17 @@ namespace Domain.Context
                 .HasOne(e => e.Event)
                 .WithMany(s => s.Stages)
                 .HasForeignKey(e => e.EventId);
+
             modelBuilder.Entity<Stage>()
                 .HasMany(s => s.Results)
                 .WithOne(s => s.Stage)
                 .HasForeignKey(r => r.StageId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Stage>()
+                .HasMany(s => s.SpecialResults)
+                .WithOne(sr => sr.Stage)
+                .HasForeignKey(sr => sr.StageId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<Event>()
@@ -132,10 +146,22 @@ namespace Domain.Context
                 .HasForeignKey(cit => cit.CompetitorId);
 
             modelBuilder.Entity<CompetitorInTeam>()
-                .HasOne(cit => cit.Team)
+                .HasOne(cit => cit.TeamYear)
                 .WithMany(t => t.CompetitorInTeams)
-                .HasForeignKey(cit => cit.TeamId);
+                .HasForeignKey(cit => cit.TeamYearId)
+                .OnDelete(DeleteBehavior.Cascade);
 
+            modelBuilder.Entity<SpecialResult>()
+                .HasOne(s => s.CompetitorInEvent)
+                .WithMany()
+                .HasForeignKey(s => s.CompetitorInEventId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<SpecialResult>()
+                .HasOne(s => s.Special)
+                .WithMany()
+                .HasForeignKey(s => s.SpecialId)
+                .OnDelete(DeleteBehavior.NoAction);
 
             modelBuilder.Entity<IdentityUserToken<string>>(b =>
             {
@@ -148,6 +174,19 @@ namespace Domain.Context
                 b.Property(t => t.LoginProvider).HasMaxLength(450);
                 b.Property(t => t.ProviderKey).HasMaxLength(450);
             });
+
+            modelBuilder.Entity<CompetitorRating>()
+                .HasIndex(x => new
+                {
+                    x.CompetitorId,
+                    x.RatingCategoryId,
+                    x.RatingDate
+                })
+                .IsUnique();
+
+            modelBuilder.Entity<RatingScrapeProgress>()
+                .HasIndex(x => x.RatingCategoryId)
+                .IsUnique();
         }
     }
 }

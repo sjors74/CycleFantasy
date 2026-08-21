@@ -31,7 +31,7 @@ namespace CycleManager.Tests.Integration.DataAccess
             var gameEvent = new GameCompetitorEvent { Id = 1, UserId = user.Id, User = user, Renners = new List<GameCompetitorEventPick>() };
             var competitor = new Competitor { CompetitorId = 1, FirstName = "Rider" };
             var team = new Team { TeamId = 1, CurrentTeamName = "TeamA" };
-            var competitorInTeam = new CompetitorInTeam { CompetitorId = 1, TeamId = 1, Competitor = competitor, Team = team };
+            var competitorInTeam = new CompetitorInTeam {CompetitorId = 1 };
             var competitorsInEvent = new CompetitorsInEvent { Id = 1, EventId = 100, CompetitorInTeam = competitorInTeam };
 
             var pick = new GameCompetitorEventPick
@@ -76,7 +76,7 @@ namespace CycleManager.Tests.Integration.DataAccess
             var country = new Country { CountryId = 1, CountryNameShort = "NL" };
             var competitor = new Competitor { CompetitorId = 1, FirstName = "Rider", Country = country };
             var team = new Team { TeamId = 1, CurrentTeamName = "TeamA" };
-            var competitorInTeam = new CompetitorInTeam { CompetitorId = competitor.CompetitorId, TeamId = team.TeamId, Competitor = competitor, Team = team };
+            var competitorInTeam = new CompetitorInTeam {CompetitorId = competitor.CompetitorId };
 
             var eventEntity = new Event { EventId = 100, EventName = "Test Event" };
 
@@ -119,7 +119,6 @@ namespace CycleManager.Tests.Integration.DataAccess
             returnedPick.Id.Should().Be(pick.Id);
             returnedPick.GameCompetitorEvent.User.Should().NotBeNull();
             returnedPick.CompetitorsInEvent.CompetitorInTeam.Competitor.Should().NotBeNull();
-            returnedPick.CompetitorsInEvent.CompetitorInTeam.Team.Should().NotBeNull();
         }
 
         [Fact]

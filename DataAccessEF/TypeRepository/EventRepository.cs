@@ -64,6 +64,8 @@ namespace DataAccessEF.TypeRepository
                     .Include(e => e.EventTeams)
                         .ThenInclude(et => et.Team)
                     .Include(s => s.Stages)
+                    .Include(e => e.Configuration)
+                        .ThenInclude(c => c.ConfigurationItems)
                     .FirstOrDefaultAsync(e => e.EventId == id);
             return e;
         }
@@ -90,6 +92,7 @@ namespace DataAccessEF.TypeRepository
                             StartLocation = s.StartLocation,
                             FinishLocation = s.FinishLocation,
                             AantalPosities = s.Results.Count,
+                            AantalSpecials = s.SpecialResults.Count,
                             NoScore = s.NoScore
                         }).ToList()
                 })
@@ -99,12 +102,22 @@ namespace DataAccessEF.TypeRepository
 
         public async Task<IEnumerable<TeamDto>> GetTeamsForEvent(int id)
         {
-            var eventExists = await context.Events.AnyAsync(e => e.EventId == id);
-            if (!eventExists)
+            var currentEvent = await context.Events
+                .Where(e => e.EventId == id)
+                .FirstOrDefaultAsync();
+
+            if (currentEvent == null)
                 return Enumerable.Empty<TeamDto>();
+
+            var activeSeasonYear = await context.SeasonYears
+                .SingleAsync(s => s.Year == currentEvent.EventYear);
 
             var competitorsInEvent = await context.CompetitorsInEvent
                 .Where(cie => cie.EventId == id)
+                .Include(cie => cie.CompetitorInTeam)
+                    .ThenInclude(cie => cie.Competitor)
+                        .ThenInclude(c => c.Ratings)
+                            .ThenInclude(r => r.RatingCategory)
                 .Include(cie => cie.CompetitorInTeam)
                     .ThenInclude(cie => cie.Competitor)
                         .ThenInclude(c => c.Country)
@@ -113,33 +126,51 @@ namespace DataAccessEF.TypeRepository
             var eventTeams = await context.EventTeam
                 .Where(et => et.EventId == id)
                 .Include(et => et.Team)
+                    .ThenInclude(t => t.TeamYears)
                 .OrderBy(et => et.Team.CurrentTeamName)
                 .ToListAsync();
 
-            var teams = eventTeams.Select(et => new TeamDto
-            { 
-                   Id = et.Team.TeamId,
-                   Naam = et.Team.CurrentTeamName,
-                   Renners = competitorsInEvent
-                    .Where(cie => cie.CompetitorInTeam.TeamId == et.Team.TeamId)
-                    .OrderByDescending(cie => cie.InSelectie)
-                    .ThenBy(cie => cie.EventNumber)
-                    .ThenBy(cie => cie.CompetitorInTeam.Competitor.LastName)
-                    .Select(cie =>
-                    {
-                        var competitor = cie.CompetitorInTeam.Competitor;
-                        var team = cie.CompetitorInTeam.Team;
-                        return new CompetitorDto
+            var teams = eventTeams.Select(et => {
+
+                var teamYear = et.Team.TeamYears.SingleOrDefault(ty => ty.SeasonYearId == activeSeasonYear.SeasonYearId);
+                return new TeamDto
+                { 
+                    Id = et.Team.TeamId,
+                    TeamYearId = teamYear != null ? teamYear.TeamYearId : 0,
+                    Naam = et.Team.CurrentTeamName,
+                    Renners = competitorsInEvent
+                        .Where(cie => cie.CompetitorInTeam.TeamYear.TeamId == et.Team.TeamId)
+                        .OrderByDescending(cie => cie.InSelectie)
+                        .ThenBy(cie => cie.EventNumber)
+                        .ThenBy(cie => cie.CompetitorInTeam.Competitor.LastName)
+                        .Select(cie =>
                         {
-                            CompetitorInTeamId = cie.CompetitorInTeamId,
-                            FirstName = cie.CompetitorInTeam.Competitor.FirstName,
-                            LastName = cie.CompetitorInTeam.Competitor.LastName,
-                            PcsName = competitor.PcsName,
-                            CountryShort = competitor.Country.CountryNameShort,
-                            InSelectie = cie.InSelectie,
-                            RemovedFromStartlist = cie.RemovedFromStartList
-                        };
-                    }).ToList()
+                            var competitor = cie.CompetitorInTeam.Competitor;
+                            
+                            return new CompetitorDto
+                            {
+                                CompetitorInTeamId = cie.CompetitorInTeamId,
+                                FirstName = competitor.FirstName,
+                                LastName = competitor.LastName,
+                                PcsName = competitor.PcsName,
+                                CountryShort = competitor.Country.CountryNameShort,
+                                InSelectie = cie.InSelectie,
+                                RemovedFromStartlist = cie.RemovedFromStartList,
+                                Ratings = competitor.Ratings
+                                            .Where(r => r.RatingCategory.IsActive)
+                                            .OrderBy(r => r.RatingCategory.DisplayOrder)
+                                            .Select(r => new CompetitorRatingDto
+                                            {
+                                                Rating = (int)r.Rating,
+                                                RatingCategoryId = r.RatingCategoryId,
+                                                Code = r.RatingCategory.Code,
+                                                CategoryName = r.RatingCategory.Name,
+                                                Color = r.RatingCategory.Color
+                                            })
+                                            .ToList()
+                            };
+                        }).ToList()
+                };
             }).ToList();
             return teams;
         }

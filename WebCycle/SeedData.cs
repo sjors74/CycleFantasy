@@ -133,10 +133,8 @@ namespace WebCycle.Services
 
                     var cit = new CompetitorInTeam
                     {
-                        TeamId = ty.TeamId,
                         TeamYearId = ty.TeamYearId,
                         CompetitorId = competitor.CompetitorId,
-                        Year = 2025
                     };
                     context.CompetitorInTeams.Add(cit);
                     competitorInTeams.Add(cit);

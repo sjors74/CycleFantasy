@@ -168,7 +168,7 @@
                 console.warn("Scrape modal niet gevonden!");
                 return;
             }
-            scrapeModal.addEventListener('show.bs.modal', function (event) {
+            scrapeModal.addEventListener('show.bs.modal', async function(event) {
                 console.log("Modal wordt geopend...");
 
                 const button = event.relatedTarget;
@@ -189,14 +189,22 @@
                 scrapeText.textContent = `Renners scrapen voor team "${teamName}" voor jaar:`;
 
                 // Dropdown vullen
-                const currentYear = new Date().getFullYear();
                 yearSelect.innerHTML = "";
-                for (let y = currentYear; y <= currentYear + 3; y++) {
+
+                const response = await fetch('@Url.Action("GetSeasonYears", "SeasonYears")');
+                const years = await response.json();
+
+                years.forEach(y => {
                     const opt = document.createElement("option");
-                    opt.value = y;
-                    opt.text = y;
+                    opt.value = y.seasonYearId;
+                    opt.text = y.year;
+        
+                    if (y.active) {
+                        opt.selected = true;
+                    }
+    
                     yearSelect.appendChild(opt);
-                }
+                });
             });
 
             //Form submit
@@ -204,14 +212,15 @@
                 e.preventDefault();
                 loader.style.display = "block";
 
-                const teamId = teamIdInput.value;
-                const year = yearSelect.value;
+                const teamId = Number(teamIdInput.value);
+                const seasonYearId = Number(yearSelect.value);
+                console.log({ teamId, seasonYearId });
 
                 try {
                     const response = await fetch('@Url.Action("ScrapeCompetitors", "AdminScraper")',{
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ teamId, year })
+                        body: JSON.stringify({ teamId, seasonYearId })
                     });
 
                     if(response.ok) {

@@ -46,7 +46,10 @@ namespace CycleManager.Tests.Unit.Api
                 new EtappeUitslagDto { Positie = 2, CompetitorName = "Mathieu", Score = 30 }
             };
 
-            _mockResultService.Setup(s => s.GetEtappeUitslag(stageId)).ReturnsAsync(uitslag);
+            // Fix: Setup the mock to return a Task.FromResult(uitslag) for the correct return type
+            _mockResultService.Setup(s => s.GetEtappeUitslag(stageId)).ReturnsAsync(
+                new EtappeResultaatDto { Uitslag = uitslag }
+            );
 
             // Act
             var result = await _controller.GetEtappeUitslag(stageId);
@@ -62,10 +65,10 @@ namespace CycleManager.Tests.Unit.Api
         {
             // Arrange
             var eventId = 1;
-            var top15 = new List<ResultDto>
+            var top15 = new List<CompetitorRankingDto>
             {
-                new ResultDto { CompetitorName = "Pogacar",  Points = 150 },
-                new ResultDto { CompetitorName = "Vingegaard", Points = 145 }
+                new CompetitorRankingDto { CompetitorName = "Pogacar",  Points = 150 },
+                new CompetitorRankingDto { CompetitorName = "Vingegaard", Points = 145 }
             };
 
             _mockResultService.Setup(s => s.GetResultsByEventId(eventId, true)).ReturnsAsync(top15);
@@ -75,8 +78,8 @@ namespace CycleManager.Tests.Unit.Api
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
-            var data = Assert.IsAssignableFrom<IEnumerable<ResultDto>>(okResult.Value);
-            Assert.Equal(2, ((List<ResultDto>)data).Count);
+            var data = Assert.IsAssignableFrom<IEnumerable<CompetitorRankingDto>>(okResult.Value);
+            Assert.Equal(2, ((List<CompetitorRankingDto>)data).Count);
         }
 
         [Fact]

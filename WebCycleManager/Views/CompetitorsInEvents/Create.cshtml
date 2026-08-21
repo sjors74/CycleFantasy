@@ -6,7 +6,7 @@
     <div class="col-md-12">
         <form asp-action="Create" asp-controller="CompetitorsInEvents" method="post" class="form" role="form">
             @Html.AntiForgeryToken()
-            <input type="hidden" id="year" name="year" value="@(DateTime.Now.Year)" />
+            <input type="hidden" id="SeasonYearId" value="@ViewBag.SeasonYearId" />
             <input type="hidden" name="FilterTeam" value="@Context.Request.Query["FilterTeam"]" />
             <div class="form-group">
                 <div class="row">
@@ -45,7 +45,7 @@
             $('#SelectTeamId').change(function() {
                 var url = '@Url.Content("~/")' + "CompetitorsInEvents/GetCompetitorForEvent";
                 var ddlsource = "#SelectTeamId";
-                $.getJSON(url, { TeamId: $(ddlsource).val(), year: $('#year').val() }, function(data) {
+                $.getJSON(url, { teamId: $(ddlsource).val(), seasonYearId: $('#SeasonYearId').val() }, function(data) {
                     var items = '';
                     $("#SelectCompetitorId").empty();
                     $.each(data, function(i, competitor) {

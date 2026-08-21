@@ -68,25 +68,25 @@ namespace CycleManager.Tests.Unit.Api
         public async Task GetByTeamId_ReturnsCompetitorsForTeam()
         {
             // Arrange
-            int teamId = 12;
+            int teamYearId = 12;
             int year = 2025;
             var teamCompetitors = new List<CompetitorInTeamDto>
             {
-                new CompetitorInTeamDto { CompetitorInTeamId = 1, TeamId = teamId, Year = year },
-                new CompetitorInTeamDto { CompetitorInTeamId = 2, TeamId = teamId, Year = year }
+                new CompetitorInTeamDto { CompetitorInTeamId = 1, TeamYearId = teamYearId, Year = year },
+                new CompetitorInTeamDto { CompetitorInTeamId = 2, TeamYearId = teamYearId, Year = year }
             };
 
-            _mockService.Setup(s => s.GetByTeamId(teamId, year))
+            _mockService.Setup(s => s.GetByTeamId(teamYearId))
                         .ReturnsAsync(teamCompetitors);
 
             // Act
-            var result = await _controller.GetByTeamId(teamId, year);
+            var result = await _controller.GetByTeamId(teamYearId);
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
             var data = Assert.IsAssignableFrom<IEnumerable<CompetitorInTeamDto>>(okResult.Value);
             Assert.Equal(2, ((List<CompetitorInTeamDto>)data).Count);
-            Assert.All(data, d => Assert.Equal(teamId, d.TeamId));
+            Assert.All(data, d => Assert.Equal(teamYearId, d.TeamYearId));
         }
 
         [Fact]
@@ -137,12 +137,12 @@ namespace CycleManager.Tests.Unit.Api
         public async Task GetByTeamId_ReturnsEmptyList_WhenServiceReturnsNull()
         {
             // Arrange
-            int teamId = 10, year = 2025;
-            _mockService.Setup(s => s.GetByTeamId(teamId, year))
+            int teamYearId = 10, year = 2025;
+            _mockService.Setup(s => s.GetByTeamId(teamYearId))
                         .ReturnsAsync((List<CompetitorInTeamDto>)null);
 
             // Act
-            var result = await _controller.GetByTeamId(teamId, year);
+            var result = await _controller.GetByTeamId(teamYearId);
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
@@ -154,11 +154,11 @@ namespace CycleManager.Tests.Unit.Api
         public async Task GetByTeamId_Returns500_WhenServiceThrows()
         {
             // Arrange
-            _mockService.Setup(s => s.GetByTeamId(It.IsAny<int>(), It.IsAny<int>()))
+            _mockService.Setup(s => s.GetByTeamId(It.IsAny<int>()))
                         .ThrowsAsync(new Exception("DB error"));
 
             // Act
-            var result = await _controller.GetByTeamId(1, 2025);
+            var result = await _controller.GetByTeamId(1);
 
             // Assert
             var statusResult = Assert.IsType<ObjectResult>(result);

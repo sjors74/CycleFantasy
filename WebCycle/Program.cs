@@ -89,11 +89,14 @@ builder.Services.AddScoped<ICompetitorInTeamRepository, CompetitorInTeamReposito
 builder.Services.AddScoped<ICountryRepository, CountryRepository>();
 builder.Services.AddTransient<IEventRepository, EventRepository>();
 builder.Services.AddTransient<IResultsRepository, ResultsRepository>();
+builder.Services.AddTransient<ISpecialResultsRepository, SpecialResultsRepository>();
 builder.Services.AddTransient<IScoreRepository, ScoreRepository>();
 builder.Services.AddTransient<IStageRepository, StageRepository>();
 builder.Services.AddTransient<IGameCompetitorInEventRepository, GameCompetitorInEventRepository>();
 builder.Services.AddScoped<IGameCompetitorInEventService, GameCompetitorInEventService>();
 builder.Services.AddTransient<IGameCompetitorEventPickRepository, GameCompetitorEventPickRepository>();
+builder.Services.AddScoped<ISeasonYearRepository, SeasonYearRepository>();
+builder.Services.AddScoped<IRatingRepository, RatingRepository>();
 builder.Services.AddTransient<IResultService, ResultService>();
 builder.Services.AddTransient<IEventService, EventService>();
 builder.Services.AddScoped<ICompetitorService, CompetitorService>();
@@ -106,6 +109,8 @@ builder.Services.AddScoped<IEventDashboardService, EventDashboardService>();
 builder.Services.AddScoped<IScrapeScheduleService, EventScrapeJobRegistrationService>();
 builder.Services.AddScoped<IPcsScraper, PcsScraper>();
 builder.Services.AddScoped<IScraperService, ScraperService>();
+builder.Services.AddScoped<ICyclingFlashScraper, CyclingFlashScraper>();
+builder.Services.AddScoped<ISeasonYearService, SeasonYearService>();
 
 builder.Services.AddControllers();
 builder.Services.AddHttpClient();

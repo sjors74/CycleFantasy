@@ -28,7 +28,7 @@ namespace CycleManager.Tests.Integration.Helpers
                 {
                     FirstName = sc.RiderName.Split(' ')[0],
                     LastName = sc.RiderName.Split(' ')[1],
-                    ScraperName = sc.RiderName,
+                    PcsScraperName = sc.RiderName,
                     Country = await _db.Countries.FirstOrDefaultAsync(c => c.CountryNameShort == sc.CountryShortName)
                 };
 
@@ -37,8 +37,6 @@ namespace CycleManager.Tests.Integration.Helpers
                 _db.CompetitorInTeams.Add(new CompetitorInTeam
                 {
                     Competitor = competitor,
-                    TeamId = sc.TeamId,
-                    Year = sc.Year
                 });
 
                 sc.ProcessedAt = DateTime.UtcNow;
@@ -56,6 +54,7 @@ namespace CycleManager.Tests.Integration.Helpers
         {
             throw new NotImplementedException();
         }
+
 
         public Task RunCompetitorsAsync(int teamId, int year)
         {
@@ -89,7 +88,22 @@ namespace CycleManager.Tests.Integration.Helpers
             return Task.CompletedTask;
         }
 
+        public Task RunCompetitorsAsync(int teamYearId)
+        {
+            throw new NotImplementedException();
+        }
+
         public Task RunDropoutsAsync(int eventId, string eventName, int year)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task RunRatingCompetitorScrapeAsync(int competitorId)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task RunRatingsScrapeAsync()
         {
             throw new NotImplementedException();
         }

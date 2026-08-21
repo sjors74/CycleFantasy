@@ -72,5 +72,7 @@ namespace CycleManager.Services.Interfaces
         Task DeleteGameCompetitorEventAsync(int id);
 
         Task<IEnumerable<SelectListItem>> GetDropdownListAsync(int eventId);
+
+        Task<bool> RenamePoolAsync(RenamePoolDto dto);
     }
 }

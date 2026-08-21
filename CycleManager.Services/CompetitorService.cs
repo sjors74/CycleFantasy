@@ -1,4 +1,5 @@
 ﻿using CycleManager.Domain.Dto;
+using CycleManager.Domain.Interfaces;
 using CycleManager.Domain.Models;
 using CycleManager.Services.Interfaces;
 using Domain.Dto;
@@ -13,14 +14,23 @@ namespace CycleManager.Services
         private readonly ICompetitorInTeamRepository _competitorInTeamRepository;
         private readonly ITeamRepository _teamRepository;
         private readonly ICountryRepository _countryRepository;
-        public CompetitorService(ICompetitorRepository competitorRepository, 
+        private readonly ISeasonYearRepository _seasonYearRepository;
+        private readonly IRatingRepository _ratingRepository;
+
+        public CompetitorService(
+                ICompetitorRepository competitorRepository, 
                 ICompetitorInTeamRepository competitorInTeamRepository, 
-                ITeamRepository teamRepository, ICountryRepository countryRepository)
+                ITeamRepository teamRepository, 
+                ICountryRepository countryRepository,
+                ISeasonYearRepository seasonYearRepository,
+                IRatingRepository ratingRepository)
         {
             _competitorRepository = competitorRepository;
             _competitorInTeamRepository = competitorInTeamRepository;
             _teamRepository = teamRepository;
             _countryRepository = countryRepository;
+            _ratingRepository = ratingRepository;
+            _seasonYearRepository = seasonYearRepository;
         }
 
         /// <summary>
@@ -55,14 +65,14 @@ namespace CycleManager.Services
         /// Get all competitors
         /// </summary>
         /// <returns></returns>
-        public async Task<List<CompetitorDto>> GetAllCompetitors(int year)
+        public async Task<List<CompetitorDto>> GetAllCompetitors(int seasonYearId)
         {
-            return await _competitorRepository.GetAllCompetitors(year);
+            return await _competitorRepository.GetAllCompetitors(seasonYearId);
         }
 
-        public Task<List<int>> GetAvailableYears()
+        public Task<List<SeasonYearDto>> GetAvailableYears()
         {
-            return _competitorRepository.GetAvailableYears();
+            return _competitorRepository.GetAvailableSeasonYears();
         }
 
         /// <summary>
@@ -70,9 +80,9 @@ namespace CycleManager.Services
         /// </summary>
         /// <param name="teamId"></param>
         /// <returns></returns>
-        public async Task<IEnumerable<CompetitorInTeamDto>> GetByTeamId(int teamId, int year)
+        public async Task<IEnumerable<CompetitorInTeamDto>> GetByTeamId(int teamId)
         {
-            return await _competitorRepository.GetByTeamId(teamId, year);
+            return await _competitorRepository.GetByTeamId(teamId);
         }
 
         /// <summary>
@@ -112,9 +122,9 @@ namespace CycleManager.Services
             return await _competitorRepository.GetCompetitorByName(firstName, lastName, countryId);
         }
 
-        public async Task<bool> CheckCompetitorInTeam(int competitorId, int teamId, int year)
+        public async Task<bool> CheckCompetitorInTeam(int competitorId, int teamYearId)
         {
-            return await _competitorInTeamRepository.CheckCompetitorInTeam(competitorId, teamId, year);
+            return await _competitorInTeamRepository.CheckCompetitorInTeam(competitorId, teamYearId);
         }
 
         public IQueryable<Competitor> GetCompetitorsByTerm(string term)
@@ -130,44 +140,36 @@ namespace CycleManager.Services
             competitor.FirstName = dto.FirstName;
             competitor.LastName = dto.LastName;
             competitor.PcsName = dto.PcsName ?? string.Empty;
-            competitor.ScraperName = dto.ScraperName ?? string.Empty;
+            competitor.PcsScraperName = dto.PcsScraperName ?? string.Empty;
+            competitor.CyclingFlashScraperName = dto.CyclingFlashScraperName ?? string.Empty;
+            competitor.CyclingFlashLastScraped = dto.CyclingFlahsLastScraped ?? null;
             competitor.CountryId = dto.CountryId;
 
-            foreach (var dtoCit in dto.CompetitorInTeams)
+            foreach (var teamDto in dto.CompetitorInTeams)
             {
-                var existingCit = competitor.CompetitorInTeams
-                .FirstOrDefault(cit => cit.Id == dtoCit.CompetitorInTeamId);
+                var team = competitor.CompetitorInTeams
+                    .FirstOrDefault(t => t.Id == teamDto.CompetitorInTeamId);
 
-                if (existingCit != null)
+                if (team != null)
                 {
-                    existingCit.IsNationalChampion = dtoCit.IsNationalChampion;
-                    existingCit.TeamId = dtoCit.TeamId;
-                    existingCit.Year = dtoCit.Year;
-                }
-                else
-                {
-                    competitor.CompetitorInTeams.Add(new CompetitorInTeam
-                    {
-                        TeamId = dtoCit.TeamId,
-                        Year = dtoCit.Year,
-                        IsNationalChampion = dtoCit.IsNationalChampion
-                    });
+                    team.IsNationalChampion = teamDto.IsNationalChampion;
                 }
             }
 
             await _competitorRepository.UpdateCompetitorAsync(competitor);
 
         }
-
         public async Task<CompetitorEditDto> GetCompetitorForEdit(int competitorId)
         {
             var competitor = await _competitorRepository.GetById(competitorId);
-            if (competitor == null) return null;
 
-            var teams = await _teamRepository.GetAll();
-            var countries =  await _countryRepository.GetAll();
+            if (competitor == null)
+                return null;
 
-            var years = Enumerable.Range(DateTime.Now.Year - 3, 7);
+            var availableYears = await _seasonYearRepository.GetAllAsync();
+            var countries = await _countryRepository.GetAll();
+            var categories = await _ratingRepository.GetRatingCategories();
+            var ratings = await _ratingRepository.GetRatingsByCompetitorId(competitorId);
 
             return new CompetitorEditDto
             {
@@ -175,23 +177,58 @@ namespace CycleManager.Services
                 FirstName = competitor.FirstName,
                 LastName = competitor.LastName,
                 PcsName = competitor.PcsName,
-                ScraperName = competitor.ScraperName,
+                PcsScraperName = competitor.PcsScraperName,
+                CyclingFlashScraperName = competitor.CyclingFlashScraperName,
+                CyclingFlahsLastScraped = competitor.CyclingFlashLastScraped,
                 CountryId = competitor.CountryId,
-                SelectedTeamId = competitor.CompetitorInTeams.FirstOrDefault()?.TeamId ?? 0,
-                SelectedYear = competitor.CompetitorInTeams?.FirstOrDefault()?.Year ?? DateTime.Now.Year,
+
+                Countries = countries
+                    .Select(c => new CountryDto
+                    {
+                        Id = c.CountryId,
+                        CountryNameLong = c.CountryNameLong,
+                        CountryNameShort = c.CountryNameShort
+                    })
+                    .ToList(),
+                AvailableYears = availableYears
+                    .Select(y => new SeasonYearDto
+                    {
+                        SeasonYearId = y.SeasonYearId,
+                        Year = y.Year,
+                        Active = y.Active
+                    })
+                    .OrderByDescending(y => y.Year)
+                    .ToList(),
                 
-                AvailableYears = years,
-                Teams = teams.Select(t => new TeamDto { Id = t.TeamId, Naam = t.CurrentTeamName, Renners = new List<CompetitorDto>() }),
-                Countries = countries.Select(c => new CountryDto { Id = c.CountryId, CountryNameLong = c.CountryNameLong, CountryNameShort = c.CountryNameShort }),
+                RatingCategories = categories
+                    .Select(r => new RatingCategoryDto
+                    {
+                        RatingCategoryId = r.RatingCategoryId,
+                        Name = r.Name,
+                        IsActive = r.IsActive,
+                        Color = r.Color,
+                        DisplayOrder = r.DisplayOrder
+                    })
+                    .OrderBy(r => r.Name),
+
+                Ratings = ratings
+                    .Select(r => new CompetitorRatingDto
+                    {
+                        RatingCategoryId = r.RatingCategoryId,
+                        Rating = (int)r.Rating,
+                        CategoryName = r.RatingCategory.Name,
+                        Code = r.RatingCategory.Code
+                    })
+                    .ToList(),
                 CompetitorInTeams = competitor.CompetitorInTeams
                 .Select(cit => new CompetitorInTeamDto
                 {
                     CompetitorInTeamId = cit.Id,
-                    TeamId = cit.TeamId,
-                    TeamName = cit.Team.CurrentTeamName,
-                    TeamNameForYear = cit.Team.TeamYears.Where(ty => ty.Year == cit.Year).Select(ty => ty.Name).FirstOrDefault(),
-                    Year = cit.Year,
-                    IsNationalChampion = cit.IsNationalChampion
+                    TeamYearId = cit.TeamYearId,
+                    SeasonYearId = cit.TeamYear.SeasonYearId,
+                    Year = cit.TeamYear.Year,
+                    TeamName = cit.TeamYear.Team.CurrentTeamName,
+                   IsNationalChampion = cit.IsNationalChampion
                 })
                 .ToList()
             };
@@ -201,5 +238,10 @@ namespace CycleManager.Services
         {
             return await _competitorRepository.GetCompetitorInTeamsByIdsAsync(ids);
         }
+        public async Task<IEnumerable<CompetitorInTeamDto>> GetByTeamAndSeason(int teamId, int seasonYearId)
+        {
+            return await _competitorRepository.GetByTeamAndSeason(teamId, seasonYearId);
+        }
+
     }
 }

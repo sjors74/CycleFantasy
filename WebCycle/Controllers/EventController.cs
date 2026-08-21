@@ -1,11 +1,9 @@
 ﻿using AutoMapper;
-using AutoMapper.Internal;
 using CycleManager.Domain.Dto;
 using CycleManager.Services;
 using CycleManager.Services.Interfaces;
 using Domain.Dto;
 using Microsoft.AspNetCore.Mvc;
-using System.Linq;
 
 namespace WebCycle.Controllers
 {
@@ -18,14 +16,16 @@ namespace WebCycle.Controllers
         private readonly IGameCompetitorInEventService _deelnemerService;
         private readonly IEventDashboardService _eventDashboardService;
         private readonly ITeamService _teamService;
+        private readonly ISeasonYearService _seasonYearService;
         private readonly IMapper _mapper;
 
-        public EventController(IEventService eventService, IGameCompetitorInEventService deelnemerService, IEventDashboardService eventDashboardService, ITeamService teamService, IResultService resultService, IMapper mapper)
+        public EventController(IEventService eventService, IGameCompetitorInEventService deelnemerService, IEventDashboardService eventDashboardService, ITeamService teamService, IResultService resultService, ISeasonYearService seasonYearService, IMapper mapper)
         {
             _eventService = eventService;
             _deelnemerService = deelnemerService;
             _eventDashboardService = eventDashboardService;
             _resultService = resultService;
+            _seasonYearService = seasonYearService;
             _teamService = teamService;
             this._mapper = mapper;
         }
@@ -40,15 +40,13 @@ namespace WebCycle.Controllers
             {
                 if (cEvent.Deelnemers != null)
                 {
-                    var totalScores = await _resultService.GetTotalScoresByEventIdAsync(cEvent.EventId);
+                    var scoreBreakdown = await _resultService.GetScoreBreakdownByEventIdAsync(cEvent.EventId);
 
                     var stageScores = await _resultService.GetScoresByEventIdAsync(cEvent.EventId);
 
                     foreach (var deelnemer in cEvent.Deelnemers)
                     {
-
-
-                        var total = totalScores
+                        var score  = scoreBreakdown
                             .FirstOrDefault(s => s.GameCompetitorEventId == deelnemer.Id);
 
                         var lastStageScore = stageScores
@@ -56,7 +54,9 @@ namespace WebCycle.Controllers
                             .OrderByDescending(s => s.StageId)
                             .FirstOrDefault();
 
-                        deelnemer.Punten = total != null ? total.TotalScore : 0;
+                        deelnemer.NormalePunten = score?.NormalScore ?? 0;
+                        deelnemer.SpecialePunten = score?.SpecialScore?? 0;
+                        deelnemer.Punten = score?.TotalPoints ?? 0;
                         deelnemer.LaatsteScore = lastStageScore?.Score ?? 0;
                     }
                 }
@@ -147,28 +147,35 @@ namespace WebCycle.Controllers
         }
 
 
-        [HttpGet("team/{teamId}/teams-with-more-renners")]
-        public async Task<ActionResult<IEnumerable<CompetitorDto>>> GetTeamsWithRennersFromTeam(int teamId)
+        [HttpGet("teamyear/{teamYearId}/teams-with-more-renners")]
+        public async Task<ActionResult<IEnumerable<CompetitorInSelectieDto>>> GetTeamsWithRennersFromTeam(int teamYearId)
         {
-            var year = DateTime.Now.Year;
-            var team = await _teamService.GetTeamForCurrentYear(teamId, year);
+            var teamYear = await _teamService.GetTeamYearById(teamYearId);
 
-            if (team == null)
+            if (teamYear == null)
             {
                 return NotFound();
             }
 
-            // Haal competitors via CompetitorInTeams
-            var competitors = team.CompetitorInTeams
-                .Where(cit => cit.Year == year)
+            var competitors = teamYear.CompetitorInTeams
                 .Select(cit => new CompetitorInSelectieDto
                 {
                     CompetitorInTeamId = cit.Id,
                     FirstName = cit.Competitor.FirstName,
                     LastName = cit.Competitor.LastName,
-                    PcsName = cit.Competitor.PcsName
-                }).ToList();
-
+                    PcsName = cit.Competitor.PcsName,
+                    Ratings = cit.Competitor.Ratings
+                        .Select(r => new CompetitorRatingDto
+                        {
+                            Code = r.RatingCategory.Code,
+                            Rating = (int)r.Rating,
+                            Color = r.RatingCategory.Color
+                        })
+                        .ToList()
+                })
+                .OrderBy(c => c.LastName)
+                .ThenBy(c => c.FirstName)
+                .ToList();
             return Ok(competitors);
         }
 
@@ -240,21 +247,5 @@ namespace WebCycle.Controllers
             return await _eventService.GetAantalDeelnemers(id);
         }
 
-        [HttpPut("renamepool")]
-        public async Task<IActionResult> RenamePool([FromBody] RenamePoolDto dto)
-        {
-            if (string.IsNullOrWhiteSpace(dto.NieuweNaam))
-                return BadRequest("Naam mag niet leeg zijn.");
-            
-            try
-            {
-                await _eventService.RenamePoolAsync(dto);
-                return Ok();
-            }
-            catch(InvalidOperationException ex)
-            {
-                return BadRequest(ex.Message);
-            }
-        }
     }
 }

@@ -1,9 +1,11 @@
 ﻿using CycleManager.Domain.Models;
+using Microsoft.EntityFrameworkCore;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
 namespace Domain.Models
 {
+    [Index(nameof(EventId), nameof(UserId), nameof(TeamName), IsUnique = true)]
     public class GameCompetitorEvent
     {
         [Key]

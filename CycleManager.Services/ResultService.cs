@@ -8,10 +8,12 @@ namespace CycleManager.Services
     public class ResultService : IResultService
     {
         private readonly IResultsRepository _resultsRepository;
+        private readonly ISpecialResultsRepository _specialResultsRepository;
         private readonly IScoreRepository _scoreRepository;
-        public ResultService(IResultsRepository resultsRepository, IScoreRepository scoreRepository)
+        public ResultService(IResultsRepository resultsRepository, ISpecialResultsRepository specialResultsRepository, IScoreRepository scoreRepository)
         {
             _resultsRepository = resultsRepository;
+            _specialResultsRepository = specialResultsRepository;
             _scoreRepository = scoreRepository;
         }
 
@@ -20,39 +22,47 @@ namespace CycleManager.Services
         /// </summary>
         /// <param name="eventId"></param>
         /// <returns></returns>
-        public async Task<IEnumerable<ResultDto>> GetResultsByEventId(int eventId, bool onlyTop15 = false)
+        public async Task<IEnumerable<CompetitorRankingDto>> GetResultsByEventId(int eventId, bool onlyTop15 = false)
         {
             var results = await _resultsRepository.GetResultsByEventId(eventId);
+            var specialResults = await _specialResultsRepository.GetByEventId(eventId);
+
+            var specialLookup = specialResults.GroupBy(s => s.CompetitorInEventId).ToDictionary(g => g.Key, g => g.Sum(x => x.Special.Score));
 
             var groupedList = results
                 .GroupBy(g => g.CompetitorInEventId)
                 .Select(c =>
                 {
-                    var first = c.FirstOrDefault();
-                    var competitor = first?.CompetitorInEvent?.CompetitorInTeam.Competitor;
-                    var team = competitor?.CompetitorInTeams.FirstOrDefault()?.Team;
+                    var first = c.First();
 
-                    return new ResultDto
+                    var competitorInTeam = first?.CompetitorInEvent?.CompetitorInTeam;
+                    var competitor = competitorInTeam?.Competitor;
+
+                    var normalPoints = c.Sum(a => a.ConfigurationItem?.Score ?? 0);
+                    var specialPoints = specialLookup.GetValueOrDefault(first?.CompetitorInEventId ?? 0, 0);
+
+                    return new CompetitorRankingDto
                     {
                         CompetitorName = competitor?.CompetitorName ?? "onbekend",
                         EventId = first?.Stage?.EventId ?? 0,
                         CompetitorInEventId = first?.CompetitorInEventId ?? 0,
-                        Points = c.Sum(a => a.ConfigurationItem?.Score ?? 0),
-                        CompetitorTeam = team?.CurrentTeamName ?? "onbekend"
+                        CompetitorTeam = competitorInTeam?.TeamYear?.Name ?? "onbekend",
+                        NormalPoints = normalPoints,
+                        SpecialPoints = specialPoints,
                     };
-            })
-                .OrderByDescending(c => c.Points)
+                })
+                .OrderByDescending(c => c.TotalPoints)
                 .ThenBy(c => c.CompetitorName)
                 .ToList();
 
             if (onlyTop15 && groupedList.Any())
             {
                 var top15 = groupedList.Take(15).ToList();
-                int minScoreInTop15 = top15.LastOrDefault()?.Points ?? 0;
+                int minScoreInTop15 = top15.LastOrDefault()?.TotalPoints ?? 0;
 
                 var extendedTop15 = groupedList
                     .Skip(15)
-                    .TakeWhile(x => x.Points == minScoreInTop15)
+                    .TakeWhile(x => x.TotalPoints == minScoreInTop15)
                     .ToList();
 
                 groupedList = top15.Concat(extendedTop15).ToList();
@@ -62,20 +72,21 @@ namespace CycleManager.Services
             int actualRank = -1;
             int? previousScore = null;
 
-            foreach(var item in groupedList)
+            foreach (var item in groupedList)
             {
-                if(previousScore != item.Points)
+                if (previousScore != item.TotalPoints)
                 {
                     actualRank = rank;
                 }
 
                 item.Position = actualRank;
-                previousScore = item.Points;
+                previousScore = item.TotalPoints;
                 rank++;
             }
 
             return groupedList;
         }
+
 
         /// <summary>
         /// Get a list of all results for an event and competitorId
@@ -114,7 +125,7 @@ namespace CycleManager.Services
         /// </summary>
         /// <param name="stageId"></param>
         /// <returns></returns>
-        public Task<List<EtappeUitslagDto>> GetEtappeUitslag(int stageId)
+        public Task<EtappeResultaatDto> GetEtappeUitslag(int stageId)
         {
             return _resultsRepository.GetEtappeUitslag(stageId);
         }
@@ -142,6 +153,12 @@ namespace CycleManager.Services
             return await _resultsRepository.GetResultsByStageAsync(stageId);
         }
 
+        //TODO: maak een StageResultDto-object met Results en SpecialResults, zodat je in 1 call alle resultaten van een etappe kan ophalen.
+        public async Task<List<SpecialResult>> GetSpecialResultsByStageAsync(int stageId)
+        {
+            return await _specialResultsRepository.GetByStageAsync(stageId);
+        }
+
         public async Task<List<CompetitorsInEvent>> GetCompetitorsInEventAsync(int eventId)
         {
             return await _resultsRepository.GetCompetitorsInEventAsync(eventId);
@@ -152,9 +169,19 @@ namespace CycleManager.Services
             return await _resultsRepository.GetConfigurationItemsByConfigAsync(configId);
         }
 
+        public async Task<List<ConfigurationItemSpecial>> GetConfigurationItemSpecialsAsync(int configId)
+        {
+            return await _specialResultsRepository.GetConfigurationItemsByConfigAsync(configId);
+        }
+
         public async Task AddResultsAsync(IEnumerable<Result> results)
         {
             await _resultsRepository.AddResultsAsync(results);
+        }
+
+        public async Task AddSpecialResultsAsync(IEnumerable<SpecialResult> specialResults)
+        {
+            await _specialResultsRepository.AddResultsAsync(specialResults);
         }
 
         public async Task<Result?> GetResultByIdAsync(int id)
@@ -201,6 +228,33 @@ namespace CycleManager.Services
         public Task<List<CompetitorScoreDto>> GetCompetitorResultsForEvent(int eventId)
         {
             return _resultsRepository.GetCompetitorResultsForEvent(eventId);
+        }
+
+        public Task<SpecialResult?> GetSpecialResultByIdAsync(int id)
+        {
+            return _specialResultsRepository.GetByIdAsync(id);
+        }
+
+        public Task DeleteSpecialResultAsync(int id)
+        {
+            return _specialResultsRepository.DeleteAsync(id);
+        }
+
+        public Task SyncResultsAsync(int stageId, IEnumerable<Result> results, IEnumerable<SpecialResult> specialResults)
+        {
+            return _resultsRepository.SyncResultsAsync(stageId, results, specialResults);
+        }
+
+        public async Task<List<DeelnemerScoreDto>> GetScoreBreakdownByEventIdAsync(int eventId)
+        {
+            var scores = await _resultsRepository.GetScoreBreakdownByEventIdAsync(eventId);
+
+            return scores.Select(x => new DeelnemerScoreDto
+            {
+                GameCompetitorEventId = x.GameCompetitorEventId,
+                NormalScore = x.NormalPoints,
+                SpecialScore = x.SpecialPoints,
+            }).ToList();
         }
     }
 }

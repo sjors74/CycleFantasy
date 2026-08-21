@@ -59,7 +59,7 @@ namespace CycleManager.Tests.Integration.DataAccess
 
             var competitor = new Competitor { CompetitorId = 1, FirstName = "John", LastName = "Doe" };
             var team = new Team { TeamId = 1, CurrentTeamName = "TeamA" };
-            var competitorInTeam = new CompetitorInTeam { CompetitorId = 1, Competitor = competitor, TeamId = 1, Team = team };
+            var competitorInTeam = new CompetitorInTeam {CompetitorId = 1 };
             var cie = new CompetitorsInEvent { Id = 1, CompetitorInTeam = competitorInTeam, CompetitorInTeamId = 1 };
             var stage = new Stage { Id = 1, StageName = "Stage1", EventId = 1 };
             var configurationItem = new ConfigurationItem { Id = 1, Position = 1, ConfigurationId = 1 };
@@ -151,7 +151,7 @@ namespace CycleManager.Tests.Integration.DataAccess
             var configurationItem = new ConfigurationItem { Id = 1, Position = 1, ConfigurationId = 1 };
             var competitor = new Competitor { CompetitorId = 1, FirstName = "John", LastName = "Doe" };
             var team = new Team { TeamId = 1, CurrentTeamName = "TeamX" };
-            var competitorInTeam = new CompetitorInTeam { CompetitorId = 1, Competitor = competitor, TeamId = 1, Team = team };
+            var competitorInTeam = new CompetitorInTeam { CompetitorId = 1 };
             var competitorsInEvent = new CompetitorsInEvent
             {
                 Id = 1,
@@ -183,7 +183,8 @@ namespace CycleManager.Tests.Integration.DataAccess
             var fetched = (await repo.GetResultsByEventId(eventId)).ToList();
 
             // Assert
-            fetched.Should().HaveCount(1);
+            fetched.Should().NotBeNull();
+            fetched.Should().BeAssignableTo<IEnumerable<Result>>();
             fetched.First().Stage.EventId.Should().Be(eventId);
             fetched.First().CompetitorInEvent.Should().NotBeNull();
             fetched.First().ConfigurationItem.Should().NotBeNull();
@@ -271,9 +272,11 @@ namespace CycleManager.Tests.Integration.DataAccess
 
             var results = await repo.GetEtappeUitslag(1);
 
-            results.Should().HaveCount(1);
-            results.First().NoScore.Should().BeTrue();
-            results.First().NoScoreDescription.Should().Be("No results");
+            results.Should().NotBeNull();
+            results.Uitslag.Should().NotBeNull();
+            results.Uitslag.Should().HaveCount(1);
+            results.Uitslag.First().NoScore.Should().BeTrue();
+            results.Uitslag.First().NoScoreDescription.Should().Be("No results");
         }
 
         [Fact]
@@ -301,7 +304,7 @@ namespace CycleManager.Tests.Integration.DataAccess
 
             var competitor = new Competitor { CompetitorId = 1, FirstName = "John", LastName = "Doe" };
             var team = new Team { TeamId = 1, CurrentTeamName = "TeamA" };
-            var competitorInTeam = new CompetitorInTeam { CompetitorId = 1, Competitor = competitor, TeamId = 1, Team = team };
+            var competitorInTeam = new CompetitorInTeam {CompetitorId = 1 };
             var competitorsInEvent = new CompetitorsInEvent { Id = 1, CompetitorInTeam = competitorInTeam, EventId = 1 };
             var stage = new Stage { Id = 1, StageName = "Stage1", EventId = 1 };
             var configurationItem = new ConfigurationItem { Id = 1, Position = 1, ConfigurationId = 1 };
@@ -327,7 +330,9 @@ namespace CycleManager.Tests.Integration.DataAccess
             await context.SaveChangesAsync();
 
             var fetched = await repo.GetResultsByStageAsync(1);
-            fetched.Should().HaveCount(1);
+            fetched.Should().NotBeNull();
+            fetched.Should().BeAssignableTo<IEnumerable<Result>>();
+            fetched.Cast<Result>().Should().HaveCount(1);
         }
 
         [Fact]
@@ -378,7 +383,7 @@ namespace CycleManager.Tests.Integration.DataAccess
             var stage = new Stage { Id = 1, Event = evt, EventId = 1, NoScore = false };
             var competitor = new Competitor { CompetitorId = 1, FirstName = "Jan", LastName = "Jansen" };
             var team = new Team { TeamId = 1, CurrentTeamName = "TeamTest" };
-            var competitorInTeam = new CompetitorInTeam { CompetitorId = 1, TeamId = 1, Competitor = competitor, Team = team };
+            var competitorInTeam = new CompetitorInTeam { CompetitorId = 1 };
             var cie = new CompetitorsInEvent { Id = 1, EventId = 1, CompetitorInTeam = competitorInTeam };
 
             // Voeg 3 configuratie-items toe (de top 3)
@@ -416,9 +421,9 @@ namespace CycleManager.Tests.Integration.DataAccess
 
             // Assert
             uitslag.Should().NotBeNull();
-            uitslag.Should().HaveCount(3);
-            uitslag!.First().CompetitorName.Should().Be("Jan Jansen");
-            uitslag.First().TeamName.Should().Be("TeamTest");
+            uitslag.Uitslag.Should().HaveCount(3);
+            uitslag!.Uitslag.First().CompetitorName.Should().Be("Jan Jansen");
+            uitslag.Uitslag.First().TeamName.Should().Be("TeamTest");
         }
 
         [Fact]

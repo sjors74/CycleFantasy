@@ -1,4 +1,5 @@
-﻿using CycleManager.Services.Interfaces;
+﻿using CycleManager.Domain.Models;
+using CycleManager.Services.Interfaces;
 using Domain.Interfaces;
 using Domain.Models;
 
@@ -23,6 +24,11 @@ namespace CycleManager.Services
         public async Task<Team?> GetTeamByIdAsync(int teamId)
         {
             return await _teamRepository.GetTeamById(teamId);
+        }
+
+        public async Task<TeamYear?> GetTeamYearByIdAsync(int teamYearId)
+        {
+            return await _teamRepository.GetTeamYearByIdAsync(teamYearId);
         }
 
         public async Task ImportScrapedCompetitorsAsync()

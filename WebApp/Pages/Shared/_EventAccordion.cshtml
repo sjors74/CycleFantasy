@@ -55,7 +55,7 @@
                                         data-bs-target="#@poolId">
 
                                     <div>
-                                        <strong>
+                                        <strong id="poolName-@deelnemer.Id">
                                             @deelnemer.PoolNaam
                                         </strong>
                                         <br />
@@ -77,16 +77,59 @@
 
                                     @if (Model.CanCreatePool)
                                     {
-                                        <div class="d-flex justify-content-end mb-2">
+                                        <div class="d-flex justify-content-end gap-2 mb-3">
+
+                                            <button class="btn btn-outline-secondary btn-sm"
+                                                    type="button"
+                                                    onclick="editPoolName(@deelnemer.Id)">
+                                                <i class="bi bi-pencil"></i>
+                                                Naam wijzigen
+                                            </button>
+
                                             <a class="btn btn-primary btn-sm"
                                                href="/Selectie?evenementId=@Model.EventId&deelnemerId=@deelnemer.Id">
-                                                Bewerk je team
+                                                Bewerk team
                                             </a>
 
-                                            <button class="btn btn-danger btn-sm ms-2"
+                                            <button class="btn btn-danger btn-sm"
+                                                    type="button"
                                                     onclick="verwijderDeelnemer(@deelnemer.Id)">
                                                 Verwijder
                                             </button>
+
+                                        </div>
+                                        <div id="editPool-@deelnemer.Id"
+                                             class="card card-body mb-3 d-none">
+
+                                            <label class="form-label fw-semibold">
+                                                Poolnaam
+                                            </label>
+
+                                            <div class="input-group">
+
+                                                <input type="text"
+                                                       id="poolInput-@deelnemer.Id"
+                                                       class="form-control"
+                                                       value="@deelnemer.PoolNaam"
+                                                       maxlength="50" />
+
+                                                <button class="btn btn-success"
+                                                        type="button"
+                                                        onclick="savePoolName(@deelnemer.Id)">
+                                                    Opslaan
+                                                </button>
+
+                                                <button class="btn btn-outline-secondary"
+                                                        type="button"
+                                                        onclick="cancelPoolName(@deelnemer.Id)">
+                                                    Annuleren
+                                                </button>
+
+                                            </div>
+
+                                            <div id="poolError-@deelnemer.Id"
+                                                 class="text-danger small mt-2 d-none">
+                                            </div>
 
                                         </div>
                                     }
@@ -109,6 +152,8 @@
 
                                                         <td class="fw-semibold small">
                                                             @($"{renner.FirstName} {renner.LastName}")
+
+                                                            @await Component.InvokeAsync("CompetitorRatings", new { ratings = renner.Ratings })
                                                         </td>
 
                                                         <td class="text-muted small">
@@ -169,7 +214,8 @@
                          id="createPool-@Model.EventId">
 
                         <form method="post"
-                              asp-page-handler="CreatePool">
+                              asp-page-handler="CreatePool"
+                              onsubmit="this.querySelector('button[type=submit]').disabled = true;">
 
                             <input type="hidden"
                                    name="CurrentEventId"
@@ -181,7 +227,7 @@
                                    placeholder="Pool naam"
                                    required />
 
-                            <button class="btn btn-primary btn-sm">
+                            <button type="submit" class="btn btn-primary btn-sm">
                                 Toevoegen
                             </button>
 

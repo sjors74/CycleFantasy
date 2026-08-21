@@ -279,7 +279,22 @@ document.addEventListener('DOMContentLoaded', function () {
         const isOut = pick.outOfCompetition === true;
         const rowStyle = isOut ? 'background-color: #eee; text-decoration: line-through;' : '';
         const flagUrl = `${FLAGS_BASE_URL}/24x18/${pick.countryCode.toLowerCase()}.png`;
+        const maxRating = window.appSettings?.maxRating ?? 2500;
+        const specialBadges = (pick.specials || [])
+            .map(s => {
+                const name = s.name.toLowerCase();
 
+                if (name.includes("kom")) {
+                    return `<span class="special-badge kom" title="KOM +${s.score}">KOM</span>`;
+                }
+
+                if (name.includes("gc")) {
+                    return `<span class="special-badge gc" title="GC +${s.score}">GC</span>`;
+                }
+
+                return `<span class="special-badge points" title="${s.name} +${s.score}">P</span>`;
+            })
+            .join("");
         return `
         <div class="renner-item border-bottom py-2 mb-2" style="${rowStyle}">
             <div class="d-flex justify-content-between align-items-start">
@@ -291,16 +306,29 @@ document.addEventListener('DOMContentLoaded', function () {
                          style="display: grid; grid-template-columns: 1fr 250px; gap: 0.5rem;">
                         <div class="fw-bold">${pick.pcsName
                             ? `<a href="https://procyclingstats.com/rider/${pick.pcsName}" target="_blank" class="text-dark text-decoration-none">${pick.competitorName}</a>`
-                            : pick.competitorName} ${pick.isNationalChampion ? `<span class="nc-badge">NC</span>` : ''}</div>
+            : pick.competitorName} 
+                ${window.renderRatings(pick.ratings, maxRating)}
+                ${pick.isNationalChampion ? `<span class="nc-badge">NC</span>` : ''}
+                ${specialBadges}            
+                </div>
                         <div class="text-muted small">${pick.competitorTeam}</div>
                     </div>
                 </div>
+                <div class="text-end ms-2" style="min-width: 120px;">
+                    <div class="small text-muted">
+                        Normaal: <span class="fw-bold">${pick.normalPoints ?? 0}</span>
+                    </div>
 
-                <div class="text-end ms-2" style="min-width: 70px; display: flex; justify-content: flex-end; align-items: center; gap: 0.25rem;">
-                    ${pick.latestPoints > 0
+                    <div class="small text-muted">
+                        Klassementen: <span class="fw-bold">${pick.specialPoints ?? 0}</span>
+                    </div>
+
+                    <div class="border-top mt-1 pt-1">
+                        ${pick.latestPoints > 0
                                 ? `<span class="fs-7 text-success">(+${pick.latestPoints})</span>`
                                 : ''}
-                    <span class="fw-bold fs-5">${pick.points}</span>
+                        <span class="fw-bold fs-5">${pick.points ?? 0}</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -387,7 +415,21 @@ document.addEventListener('DOMContentLoaded', function () {
             <div class="col-md-4 text-uppercase">${deelnemer.poolNaam || "onbekende pool"}</div>
             <div class="col-md-4 text-uppercase">${deelnemer.deelnemerNaam || "onbekende deelnemer"}</div>
             <div class="col-md-2 position-relative">
-                <div class="fw-bold fs-4 text-end pe-5">${punten}</div>
+                <div class="d-flex justify-content-end align-items-center pe-4">
+                    <div class="text-end me-3">
+                        <div class="fw-bold">
+                            ${deelnemer.normalePunten ?? 0}
+                        </div>
+                        <div class="fw-bold">
+                            ${deelnemer.specialePunten ?? 0}
+                        </div>
+                    </div>
+                    <div class="border-start ps-3">
+                        <div class="fw-bold fs-3">
+                            ${deelnemer.punten ?? 0}
+                        </div>
+                    </div>
+                </div>
                 ${laatsteScoreHtml}
             </div>        
         </div>        

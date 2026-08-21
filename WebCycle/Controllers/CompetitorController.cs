@@ -48,12 +48,12 @@ namespace WebCycle.Controllers
             
         }
 
-        [HttpGet("{id}/team", Name = "GetCompetitorsByTeamId")]
-        public async Task<IActionResult> GetByTeamId(int id, int year)
+        [HttpGet("{id}/team", Name = "GetCompetitorsByTeamYearId")]
+        public async Task<IActionResult> GetByTeamId(int id)
         {
             try
             {
-                var competitors = await _competitorService.GetByTeamId(id, year) ?? new List<CompetitorInTeamDto>();
+                var competitors = await _competitorService.GetByTeamId(id) ?? new List<CompetitorInTeamDto>();
                 return Ok(competitors);
             }
             catch (Exception)
@@ -61,6 +61,5 @@ namespace WebCycle.Controllers
                 return StatusCode(500, "Fout bij ophalen van renners/team.");
             }
         }
-
     }
 }

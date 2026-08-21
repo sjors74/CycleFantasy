@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using CycleManager.Domain.Dto;
+using CycleManager.Domain.Models;
 using Domain.Dto;
 using Domain.Models;
 
@@ -56,14 +57,15 @@ namespace Domain.Mapping
 
             CreateMap<GameCompetitorEvent, DeelnemerCreateDto>().ReverseMap();
 
-            CreateMap<GameCompetitorEventPick, ResultDto>()
+            CreateMap<GameCompetitorEventPick, CompetitorRankingDto>()
                 .ForMember(c => c.CompetitorName, d => d.MapFrom(s => s.CompetitorsInEvent.CompetitorInTeam.Competitor.CompetitorName))
-                .ForMember(c => c.CompetitorTeam, d => d.MapFrom(s => s.CompetitorsInEvent.CompetitorInTeam.Team.CurrentTeamName))
+                .ForMember(c => c.CompetitorTeam, d => d.MapFrom(s => s.CompetitorsInEvent.CompetitorInTeam.TeamYear.Team.CurrentTeamName))
                 .ForMember(c => c.CompetitorInEventId, d => d.MapFrom(s => s.CompetitorsInEvent.Id))
                 .ForMember(c => c.OutOfCompetition, d => d.MapFrom(s => s.CompetitorsInEvent.OutOfCompetition))
                 .ForMember(c => c.CountryCode, d => d.MapFrom(s => s.CompetitorsInEvent.CompetitorInTeam.Competitor.Country.CountryNameShort))
                 .ForMember(c => c.PcsName, d => d.MapFrom(s => s.CompetitorsInEvent.CompetitorInTeam.Competitor.PcsName))
                 .ForMember(c => c.IsNationalChampion, d => d.MapFrom(s => s.CompetitorsInEvent.CompetitorInTeam.IsNationalChampion))
+                .ForMember(c => c.Ratings, d => d.MapFrom(s => s.CompetitorsInEvent.CompetitorInTeam.Competitor.Ratings.Where(r => r.RatingCategory.IsActive)))
                 .ForMember(d => d.StageNumber, o => o.Ignore())
                 .ForMember(d => d.Position, o => o.Ignore())
                 .ForMember(d => d.Points, o => o.Ignore())  
@@ -102,6 +104,9 @@ namespace Domain.Mapping
 
             CreateMap<NewsItem, NewsItemDto>();
 
+            CreateMap<CompetitorRating, CompetitorRatingDto>()
+                .ForMember(d => d.Code, opt => opt.MapFrom(s => s.RatingCategory.Code))
+                .ForMember(d => d.Color, opt => opt.MapFrom(s => s.RatingCategory.Color));
         }
     }
 }

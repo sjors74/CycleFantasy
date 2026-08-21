@@ -9,7 +9,6 @@ using Domain.Interfaces;
 using Domain.Mapping;
 using Hangfire;
 using Hangfire.Dashboard;
-using Humanizer.Localisation;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -44,7 +43,7 @@ builder.Services.AddSingleton<IBrowser>(sp =>
 
     return playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
     {
-        Headless = true,
+        Headless = false,
         ExecutablePath = chromePath, // null lokaal = default Playwright browser
         Args = new[]
         {
@@ -83,6 +82,8 @@ builder.Services.AddScoped<IGameCompetitorEventPickRepository, GameCompetitorEve
 builder.Services.AddScoped<IGameCompetitorInEventRepository, GameCompetitorInEventRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<INewsItemRepository, NewsItemRepository>();
+builder.Services.AddScoped<ISeasonYearRepository, SeasonYearRepository>();
+builder.Services.AddScoped<IRatingRepository, RatingRepository>();
 //Service
 builder.Services.AddScoped<IEventService, EventService>();
 builder.Services.AddScoped<IStageService, StageService>();
@@ -95,6 +96,7 @@ builder.Services.AddScoped<ITeamService, TeamService>();
 builder.Services.AddScoped<IGameCompetitorInEventService, GameCompetitorInEventService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IScoreRepository, ScoreRepository>();
+builder.Services.AddScoped<ISpecialResultsRepository, SpecialResultsRepository>();
 builder.Services.AddScoped<IScraperService, ScraperService>();
 builder.Services.AddScoped<IPcsScraper, PcsScraper>();
 builder.Services.AddScoped<IScoreService, ScoreService>();
@@ -104,6 +106,9 @@ builder.Services.AddScoped<IScrapeScheduleService, EventScrapeJobRegistrationSer
 builder.Services.AddScoped<IEventScrapeSchedulerService, EventScrapeSchedulerService>();
 builder.Services.AddScoped<IScrapeOrchestratorService, ScrapeOrchestratorService>();
 builder.Services.AddScoped<IDropoutOrchestratorService, DropoutOrchestratorService>();
+builder.Services.AddScoped<ISeasonYearService, SeasonYearService>();
+builder.Services.AddScoped<ICyclingFlashScraper, CyclingFlashScraper>();
+builder.Services.AddScoped<IRatingService, RatingService>();
 
 builder.Services.AddControllersWithViews()
     .AddDataAnnotationsLocalization(options =>

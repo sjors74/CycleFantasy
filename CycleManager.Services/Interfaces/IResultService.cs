@@ -33,14 +33,14 @@ namespace CycleManager.Services.Interfaces
         /// </summary>
         /// <param name="eventId"></param>
         /// <returns></returns>
-        Task<IEnumerable<ResultDto>> GetResultsByEventId(int eventId, bool onlyTop15 = false);
+        Task<IEnumerable<CompetitorRankingDto>> GetResultsByEventId(int eventId, bool onlyTop15 = false);
 
         /// <summary>
         /// 
         /// </summary>
         /// <param name="stageId"></param>
         /// <returns></returns>
-        Task<List<EtappeUitslagDto>> GetEtappeUitslag(int stageId);
+        Task<EtappeResultaatDto> GetEtappeUitslag(int stageId);
 
         /// <summary>
         /// Get pool ranking for a given event and stage number
@@ -57,11 +57,17 @@ namespace CycleManager.Services.Interfaces
         //methodes for manager
         Task<Stage?> GetStageByIdAsync(int stageId);
         Task<List<Result>> GetResultsByStageAsync(int stageId);
+        Task<List<SpecialResult>> GetSpecialResultsByStageAsync(int stageId);
         Task<List<CompetitorsInEvent>> GetCompetitorsInEventAsync(int eventId);
         Task<List<ConfigurationItem>> GetConfigurationItemsByConfigAsync(int configId);
+        Task<List<ConfigurationItemSpecial>> GetConfigurationItemSpecialsAsync(int configId);
         Task AddResultsAsync(IEnumerable<Result> results);
+        Task AddSpecialResultsAsync(IEnumerable<SpecialResult> specialResults);
         Task<Result?> GetResultByIdAsync(int id);
+        Task<SpecialResult?> GetSpecialResultByIdAsync(int id);
         Task DeleteResultAsync(Result result);
+        Task DeleteSpecialResultAsync(int id);
+
         Task<bool> ResultExistsAsync(int id);
         string GetCompetitorFullName(int competitorId);
         Task RecalculateEventScoresAsync(int eventId);
@@ -69,5 +75,9 @@ namespace CycleManager.Services.Interfaces
         Task<List<PickDetailDto>> GetPickDetailsAsync(int eventId, int competitorInEventId);
 
         Task<List<CompetitorScoreDto>> GetCompetitorResultsForEvent(int eventId);
+
+        Task SyncResultsAsync(int stageId, IEnumerable<Result> results, IEnumerable<SpecialResult> specialResults);
+
+        Task<List<DeelnemerScoreDto>> GetScoreBreakdownByEventIdAsync(int eventId);
     }
 }

@@ -3,7 +3,7 @@ using Domain.Models;
 
 namespace CycleManager.Domain.Models
 {
-    public class StageSpecialResult
+    public class ScrapedSpecialResult
     {
         public Guid Id { get; set; }
 

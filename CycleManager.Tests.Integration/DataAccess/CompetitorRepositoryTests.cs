@@ -56,23 +56,30 @@ namespace CycleManager.Tests.Integration.DataAccess
             context.Teams.AddRange(team2024, team2023);
 
             context.Competitors.AddRange(remco, wout);
-
             context.CompetitorInTeams.AddRange(
                 new CompetitorInTeam
                 {
                     Id = 1,
                     CompetitorId = 1,
-                    TeamId = 1,
-                    Year = 2024,
-                    Team = team2024
+                    TeamYear = new TeamYear
+                    {
+                        TeamYearId = 1,
+                        TeamId = 1,
+                        Year = 2024,
+                        Team = team2024
+                    }
                 },
                 new CompetitorInTeam
                 {
                     Id = 2,
                     CompetitorId = 2,
-                    TeamId = 2,
-                    Year = 2023,
-                    Team = team2023
+                    TeamYear = new TeamYear
+                    {
+                        TeamYearId = 2,
+                        TeamId = 2,
+                        Year = 2023,
+                        Team = team2023
+                    }
                 });
 
             await context.SaveChangesAsync();
@@ -116,9 +123,13 @@ namespace CycleManager.Tests.Integration.DataAccess
             {
                 Id = 1,
                 CompetitorId = 1,
-                TeamId = 1,
-                Year = 2023,
-                Team = team
+                TeamYear = new TeamYear
+                {
+                    TeamYearId = 1,
+                    TeamId = 1,
+                    Year = 2023,
+                    Team = team
+                }
             });
 
             await context.SaveChangesAsync();
@@ -152,9 +163,13 @@ namespace CycleManager.Tests.Integration.DataAccess
             {
                 Id = 1,
                 CompetitorId = 1,
-                TeamId = 1,
-                Year = 2024,
-                Team = team
+                TeamYear = new TeamYear
+                {
+                    TeamYearId = 1,
+                    TeamId = 1,
+                    Year = 2024,
+                    Team = team
+                }
             };
 
             context.AddRange(country, team, competitor, cit);
@@ -181,6 +196,37 @@ namespace CycleManager.Tests.Integration.DataAccess
             var country = new Country { CountryId = 1, CountryNameShort = "ITA" };
             var team1 = new Team { TeamId = 1, CurrentTeamName = "Team Ineos" };
             var team2 = new Team { TeamId = 2, CurrentTeamName = "Astana Qazaqstan" };
+            var seasonYear2024 = new SeasonYear
+            {
+                SeasonYearId = 1,
+                Year = 2024
+            };
+
+            var seasonYear2023 = new SeasonYear
+            {
+                SeasonYearId = 2,
+                Year = 2023
+            };
+
+            var teamYear1 = new TeamYear
+            {
+                TeamYearId = 1,
+                TeamId = 1,
+                Team = team1,
+                SeasonYearId = 1,
+                SeasonYear = seasonYear2024,
+                Name = "Team Ineos"
+            };
+
+            var teamYear2 = new TeamYear
+            {
+                TeamYearId = 2,
+                TeamId = 2,
+                Team = team2,
+                SeasonYearId = 2,
+                SeasonYear = seasonYear2023,
+                Name = "Astana Qazaqstan"
+            };
 
             var competitor = new Competitor
             {
@@ -194,21 +240,21 @@ namespace CycleManager.Tests.Integration.DataAccess
             {
                 Id = 1,
                 CompetitorId = 1,
-                TeamId = 1,
-                Year = 2024,
-                Team = team1
+                TeamYearId = 1,
+                TeamYear = teamYear1,
+                Competitor = competitor
             };
 
             var cit2 = new CompetitorInTeam
             {
                 Id = 2,
                 CompetitorId = 1,
-                TeamId = 2,
-                Year = 2023,
-                Team = team2
+                TeamYearId = 2,
+                TeamYear = teamYear2,
+                Competitor = competitor
             };
 
-            context.AddRange(country, team1, team2, competitor, cit1, cit2);
+            context.AddRange(country, team1, team2, seasonYear2024, seasonYear2024, teamYear1, teamYear2, competitor, cit1, cit2);
             await context.SaveChangesAsync();
 
             var repo = new CompetitorRepository(context);
@@ -226,12 +272,12 @@ namespace CycleManager.Tests.Integration.DataAccess
             Assert.NotNull(result.CompetitorInTeams);
             Assert.Equal(2, result.CompetitorInTeams.Count);
 
-            var teamIds = result.CompetitorInTeams.Select(cit => cit.TeamId).ToList();
+            var teamIds = result.CompetitorInTeams.Select(cit => cit.TeamYear.TeamId).ToList();
             Assert.Contains(1, teamIds);
             Assert.Contains(2, teamIds);
 
             // Controleer dat Team-navigatie geladen is
-            var teamNames = result.CompetitorInTeams.Select(cit => cit.Team.CurrentTeamName).ToList();
+            var teamNames = result.CompetitorInTeams.Select(cit => cit.TeamYear.Team.CurrentTeamName).ToList();
             Assert.Contains("Team Ineos", teamNames);
             Assert.Contains("Astana Qazaqstan", teamNames);
         }
@@ -250,18 +296,51 @@ namespace CycleManager.Tests.Integration.DataAccess
 
             var competitor1 = new Competitor { CompetitorId = 1, FirstName = "Filippo", LastName = "Ganna",  Country = country1 };
             var competitor2 = new Competitor { CompetitorId = 2, FirstName = "Remco", LastName = "Evenepoel", Country = country2 };
+            var cit1 = new CompetitorInTeam
+            {
+                Id = 1,
+                CompetitorId = 1,
+                TeamYear = new TeamYear
+                {
+                    TeamId = 1,
+                    Year = 2024,
+                    Team = team1
+                },
+                Competitor = competitor1
+            };
 
-            var cit1 = new CompetitorInTeam { Id = 1, CompetitorId = 1, TeamId = 1, Year = 2024, Competitor = competitor1, Team = team1 };
-            var cit2 = new CompetitorInTeam { Id = 2, CompetitorId = 2, TeamId = 1, Year = 2024, Competitor = competitor2, Team = team1 };
-            var cit3 = new CompetitorInTeam { Id = 3, CompetitorId = 2, TeamId = 2, Year = 2024, Competitor = competitor2, Team = team2 }; // andere team
+            var cit2 = new CompetitorInTeam
+            {
+                Id = 2,
+                CompetitorId = 2,
+                TeamYear = new TeamYear
+                {
+                    TeamId = 1,
+                    Year = 2024,
+                    Team = team1
+                },
+                Competitor = competitor2
+            };
 
+            var cit3 = new CompetitorInTeam
+            {
+                Id = 3,
+                CompetitorId = 2,
+                TeamYear = new TeamYear
+                {
+                    TeamId = 2,
+                    Year = 2024,
+                    Team = team2
+                },
+                Competitor = competitor2
+            };
             context.AddRange(country1, country2, team1, team2, competitor1, competitor2, cit1, cit2, cit3);
             await context.SaveChangesAsync();
 
             var repo = new CompetitorRepository(context);
 
             // Act
-            var result = await repo.GetByTeamId(1, 2024);
+            var result = await repo.GetByTeamId(1);
 
             // Assert
             Assert.NotNull(result);
@@ -310,33 +389,49 @@ namespace CycleManager.Tests.Integration.DataAccess
         }
 
         [Fact]
-        public async Task GetAvailableYears_ReturnsDistinctYearsInDescendingOrder()
+        public async Task GetAvailableSeasonYears_ReturnsYearsInDescendingOrder()
         {
             // Arrange
             using var context = CreateContext();
 
-            var team1 = new Team { TeamId = 1, CurrentTeamName = "Team A" };
-            var team2 = new Team { TeamId = 2, CurrentTeamName = "Team B" };
+            context.SeasonYears.AddRange(
+                new SeasonYear
+                {
+                    SeasonYearId = 1,
+                    Year = 2021,
+                    Active = false
+                },
+                new SeasonYear
+                {
+                    SeasonYearId = 2,
+                    Year = 2023,
+                    Active = true
+                },
+                new SeasonYear
+                {
+                    SeasonYearId = 3,
+                    Year = 2022,
+                    Active = false
+                });
 
-            var competitor1 = new Competitor { CompetitorId = 1, FirstName = "Alice", LastName = "Smith" };
-            var competitor2 = new Competitor { CompetitorId = 2, FirstName = "Bob", LastName = "Johnson" };
-
-            var cit1 = new CompetitorInTeam { Id = 1, Competitor = competitor1, Team = team1, Year = 2022 };
-            var cit2 = new CompetitorInTeam { Id = 2, Competitor = competitor1, Team = team1, Year = 2023 };
-            var cit3 = new CompetitorInTeam { Id = 3, Competitor = competitor2, Team = team2, Year = 2023 };
-            var cit4 = new CompetitorInTeam { Id = 4, Competitor = competitor2, Team = team2, Year = 2021 };
-
-            context.AddRange(team1, team2, competitor1, competitor2, cit1, cit2, cit3, cit4);
             await context.SaveChangesAsync();
 
             var repo = new CompetitorRepository(context);
 
             // Act
-            var years = await repo.GetAvailableYears();
+            var result = await repo.GetAvailableSeasonYears();
 
             // Assert
-            var expectedYears = new List<int> { 2023, 2022, 2021 };
-            Assert.Equal(expectedYears, years);
+            Assert.NotNull(result);
+            Assert.Equal(3, result.Count);
+
+            Assert.Equal(2023, result[0].Year);
+            Assert.Equal(2022, result[1].Year);
+            Assert.Equal(2021, result[2].Year);
+
+            Assert.True(result[0].Active);
+            Assert.False(result[1].Active);
+            Assert.False(result[2].Active);
         }
 
         [Fact]
@@ -498,7 +593,7 @@ namespace CycleManager.Tests.Integration.DataAccess
         }
 
         [Fact]
-        public async Task UpdateCompetitorWithTeam_UpdatesExistingLink_WhenYearExists()
+        public async Task UpdateCompetitorWithTeam_UpdatesExistingLink_WhenSeasonYearExists()
         {
             using var context = CreateContext();
             var repo = new CompetitorRepository(context);
@@ -513,18 +608,27 @@ namespace CycleManager.Tests.Integration.DataAccess
                 LastName = "Evenepoel",
                 CountryId = 1,
                 PcsName = "REvenepoel",
-                ScraperName = "evenepoel",
-                SelectedTeamId = 2, // wijziging naar Jumbo-Visma
-                SelectedYear = 2024
+                PcsScraperName = "evenepoel",
+
+                SelectedSeasonYearId = 2024,
+                SelectedTeamYearId = 2
             };
 
             // Act
             await repo.UpdateCompetitorWithTeam(dto);
 
             // Assert
-            var updated = await context.CompetitorInTeams.FirstOrDefaultAsync(c => c.CompetitorId == 10 && c.Year == 2024);
+            var updated = await context.CompetitorInTeams
+                .Include(cit => cit.TeamYear)
+                    .ThenInclude(ty => ty.Team)
+                .FirstOrDefaultAsync(cit =>
+                    cit.CompetitorId == 10 &&
+                    cit.TeamYear.SeasonYearId == 2024);
+
             Assert.NotNull(updated);
-            Assert.Equal(2, updated.TeamId); // team is bijgewerkt
+
+            Assert.Equal(2, updated.TeamYearId);
+            Assert.Equal(2, updated.TeamYear.TeamId);
         }
 
         [Fact]
@@ -542,19 +646,22 @@ namespace CycleManager.Tests.Integration.DataAccess
                 FirstName = "Remco",
                 LastName = "Evenepoel",
                 CountryId = 1,
-                SelectedTeamId = 1,
-                SelectedYear = 2025 // nieuw jaar
+                SelectedSeasonYearId = 2025,
+                SelectedTeamYearId = 2
             };
 
             // Act
             await repo.UpdateCompetitorWithTeam(dto);
 
-            // Assert
+            //Assert
             var newLink = await context.CompetitorInTeams
-                .FirstOrDefaultAsync(c => c.CompetitorId == 10 && c.Year == 2025);
+                    .Include(cit => cit.TeamYear)
+                    .FirstOrDefaultAsync(cit =>
+                        cit.CompetitorId == 10 &&
+                        cit.TeamYear.SeasonYearId == 2025);
 
-            Assert.NotNull(newLink);
-            Assert.Equal(1, newLink.TeamId);
+            Assert.Equal(2, newLink.TeamYearId);
+            Assert.Equal(2, newLink.TeamYear.TeamId);
         }
 
         [Fact]
@@ -571,8 +678,8 @@ namespace CycleManager.Tests.Integration.DataAccess
                 CompetitorId = 999,
                 FirstName = "Fake",
                 LastName = "Rider",
-                SelectedTeamId = 1,
-                SelectedYear = 2024
+                SelectedTeamYearId = 1,
+                SelectedSeasonYearId = 2
             };
 
             // Act & Assert
@@ -592,8 +699,26 @@ namespace CycleManager.Tests.Integration.DataAccess
                 LastName = "Vingegaard",
                 CompetitorInTeams = new List<CompetitorInTeam>
                 {
-                    new CompetitorInTeam { Id = 10, TeamId = 100, Year = 2024 },
-                    new CompetitorInTeam { Id = 11, TeamId = 101, Year = 2025 }
+                    new CompetitorInTeam
+                    {
+                        Id = 10,
+                        TeamYear = new TeamYear
+                        {
+                            TeamYearId = 100,
+                            TeamId = 100,
+                            SeasonYearId = 2024
+                        }
+                    },
+                    new CompetitorInTeam
+                    {
+                        Id = 11,
+                        TeamYear = new TeamYear
+                        {
+                            TeamYearId = 101,
+                            TeamId = 101,
+                            SeasonYearId = 2025
+                        }
+                    }
                 }
             };
 
@@ -611,7 +736,7 @@ namespace CycleManager.Tests.Integration.DataAccess
             Assert.NotNull(result.CompetitorInTeams);
             Assert.Equal(2, result.CompetitorInTeams.Count);
 
-            var teamIds = result.CompetitorInTeams.Select(cit => cit.TeamId).ToList();
+            var teamIds = result.CompetitorInTeams.Select(cit => cit.TeamYear.TeamId).ToList();
             Assert.Contains(100, teamIds);
             Assert.Contains(101, teamIds);
         }
@@ -637,23 +762,42 @@ namespace CycleManager.Tests.Integration.DataAccess
             using var context = CreateContext();
             var repository = new CompetitorRepository(context);
 
-            // Voeg eerst een Competitor toe met een gekoppeld team
+            var teamYear2023 = new TeamYear
+            {
+                TeamYearId = 1,
+                TeamId = 100,
+                Year = 2023
+            };
+
+            var teamYear2024 = new TeamYear
+            {
+                TeamYearId = 2,
+                TeamId = 101,
+                Year = 2024
+            };
+
             var competitor = new Competitor
             {
                 CompetitorId = 1,
                 FirstName = "Remco",
                 LastName = "Evenepoel",
                 CompetitorInTeams = new List<CompetitorInTeam>
-                {
-                    new CompetitorInTeam { TeamId = 100, Year = 2023, IsNationalChampion = false }
-                }
+        {
+            new CompetitorInTeam
+            {
+                Id = 1,
+                TeamYear = teamYear2023,
+                IsNationalChampion = false
+            }
+        }
             };
 
             context.Competitors.Add(competitor);
             await context.SaveChangesAsync();
 
-            // Haal opnieuw op vanuit database (tracked instance)
+            // Haal opnieuw op vanuit database
             var existing = await repository.GetByIdWithTeamsAsync(1);
+
             Assert.NotNull(existing);
             Assert.Single(existing.CompetitorInTeams);
 
@@ -662,11 +806,11 @@ namespace CycleManager.Tests.Integration.DataAccess
             existing.LastName = "van Aert";
             existing.CompetitorInTeams.First().IsNationalChampion = true;
 
-            // Voeg er een tweede team aan toe
+            // Voeg er een tweede teamYear aan toe
             existing.CompetitorInTeams.Add(new CompetitorInTeam
             {
-                TeamId = 101,
-                Year = 2024,
+                Id = 2,
+                TeamYear = teamYear2024,
                 IsNationalChampion = false
             });
 
@@ -675,15 +819,18 @@ namespace CycleManager.Tests.Integration.DataAccess
 
             // Assert
             var updated = await repository.GetByIdWithTeamsAsync(1);
+
             Assert.NotNull(updated);
             Assert.Equal("Wout", updated.FirstName);
             Assert.Equal("van Aert", updated.LastName);
             Assert.Equal(2, updated.CompetitorInTeams.Count);
 
             var firstTeam = updated.CompetitorInTeams.First();
-            Assert.True(firstTeam.IsNationalChampion);
-        }
 
+            Assert.True(firstTeam.IsNationalChampion);
+            Assert.Equal(2023, firstTeam.TeamYear.Year);
+            Assert.Equal(100, firstTeam.TeamYear.TeamId);
+        }
         [Fact]
         public async Task UpdateCompetitorAsync_DoesNothing_WhenCompetitorDoesNotExist()
         {
@@ -691,15 +838,26 @@ namespace CycleManager.Tests.Integration.DataAccess
             using var context = CreateContext();
             var repository = new CompetitorRepository(context);
 
+            var teamYear2025 = new TeamYear
+            {
+                TeamYearId = 200,
+                TeamId = 200,
+                Year = 2025
+            };
+
             var competitor = new Competitor
             {
                 CompetitorId = 999,
                 FirstName = "Jonas",
                 LastName = "Vingegaard",
                 CompetitorInTeams = new List<CompetitorInTeam>
-                {
-                    new CompetitorInTeam { Id = 20, TeamId = 200, Year = 2025 }
-                }
+        {
+            new CompetitorInTeam
+            {
+                Id = 20,
+                TeamYear = teamYear2025
+            }
+        }
             };
 
             // Act
@@ -707,15 +865,64 @@ namespace CycleManager.Tests.Integration.DataAccess
 
             // Assert
             var count = await context.Competitors.CountAsync();
-            Assert.Equal(0, count); // geen nieuwe toegevoegd
+
+            Assert.Equal(0, count);
         }
 
 
         private void SeedData(ApplicationDbContext context)
         {
-            var country = new Country { CountryId = 1, CountryNameShort = "BEL" };
-            var teamA = new Team { TeamId = 1, CurrentTeamName = "Soudal Quick-Step" };
-            var teamB = new Team { TeamId = 2, CurrentTeamName = "Jumbo-Visma" };
+            var country = new Country
+            {
+                CountryId = 1,
+                CountryNameShort = "BEL"
+            };
+
+            var teamA = new Team
+            {
+                TeamId = 1,
+                CurrentTeamName = "Soudal Quick-Step"
+            };
+
+            var teamB = new Team
+            {
+                TeamId = 2,
+                CurrentTeamName = "Jumbo-Visma"
+            };
+
+            var seasonYear2024 = new SeasonYear
+            {
+                SeasonYearId = 2024,
+                Year = 2024,
+                Active = false
+            };
+
+            var seasonYear2025 = new SeasonYear
+            {
+                SeasonYearId = 2025,
+                Year = 2025,
+                Active = true
+            };
+
+            var teamYearA2024 = new TeamYear
+            {
+                TeamYearId = 100,
+                TeamId = teamA.TeamId,
+                Team = teamA,
+                SeasonYearId = seasonYear2024.SeasonYearId,
+                SeasonYear = seasonYear2024,
+                Year = 2024
+            };
+
+            var teamYearB2025 = new TeamYear
+            {
+                TeamYearId = 101,
+                TeamId = teamB.TeamId,
+                Team = teamB,
+                SeasonYearId = seasonYear2025.SeasonYearId,
+                SeasonYear = seasonYear2025,
+                Year = 2025
+            };
 
             var competitor = new Competitor
             {
@@ -725,14 +932,32 @@ namespace CycleManager.Tests.Integration.DataAccess
                 CountryId = 1,
                 Country = country,
                 CompetitorInTeams = new List<CompetitorInTeam>
-                {
-                    new CompetitorInTeam { Id = 100, CompetitorId = 10, TeamId = 1, Year = 2024 }
-                }
+        {
+            new CompetitorInTeam
+            {
+                Id = 100,
+                CompetitorId = 10,
+                TeamYear = teamYearA2024
+            }
+        }
             };
 
             context.Countries.Add(country);
-            context.Teams.AddRange(teamA, teamB);
+
+            context.Teams.AddRange(
+                teamA,
+                teamB);
+
+            context.SeasonYears.AddRange(
+                seasonYear2024,
+                seasonYear2025);
+
+            context.TeamYear.AddRange(
+                teamYearA2024,
+                teamYearB2025);
+
             context.Competitors.Add(competitor);
+
             context.SaveChanges();
         }
     }

@@ -163,7 +163,7 @@ namespace CycleManager.Services
             var competitors = new List<SelectListItem>();
             var competitorsDb = await _competitorRepo.GetCompetitorsInEventList(eventId);
             var groupedCompetitors = competitorsDb
-                .GroupBy(x => x.CompetitorInTeam?.Team?.CurrentTeamName ?? "onbekend");
+            .GroupBy(x => x.CompetitorInTeam?.TeamYear?.Name ?? "onbekend");
 
             foreach (var group in groupedCompetitors)
             {
@@ -179,6 +179,14 @@ namespace CycleManager.Services
                 }
             }
             return competitors;
+        }
+
+        public async Task<bool> RenamePoolAsync(RenamePoolDto dto)
+        {
+            if (string.IsNullOrWhiteSpace(dto.NieuweNaam))
+                return false;
+
+            return await _repo.RenamePoolAsync(dto.DeelnemerId, dto.UserId, dto.NieuweNaam);
         }
     }
 }

@@ -15,12 +15,16 @@ namespace Domain.Models
         [DisplayName("Achternaam")]
         public string LastName { get; set; } = string.Empty;
         public string PcsName { get; set; } = string.Empty;
-        public string? ScraperName { get; set; }
+        public string? PcsScraperName { get; set; }
+        public string? CyclingFlashScraperName { get; set; }
+        public DateTime? CyclingFlashLastScraped { get; set; }
+
         [DisplayName("Land")]
         public int CountryId { get; set; }
         [DisplayName("Land")]
         public Country? Country { get; set; }
         public virtual ICollection<CompetitorInTeam> CompetitorInTeams { get; set; } = [];
+        public virtual ICollection<CompetitorRating> Ratings { get; set; } = [];
 
         [NotMapped]
         [DisplayName("Naam")]

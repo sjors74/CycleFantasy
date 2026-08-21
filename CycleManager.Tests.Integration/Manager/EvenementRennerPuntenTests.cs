@@ -112,7 +112,7 @@ namespace CycleManager.Tests.Integration.Manager
             db.Competitors.AddRange(competitors);
             await db.SaveChangesAsync();
 
-            var citList = competitors.Select(c => new CompetitorInTeam { CompetitorId = c.CompetitorId, TeamId = team.TeamId, Year = 2025 }).ToList();
+            var citList = competitors.Select(c => new CompetitorInTeam {CompetitorId = c.CompetitorId }).ToList();
             db.CompetitorInTeams.AddRange(citList);
             await db.SaveChangesAsync();
 
@@ -206,7 +206,7 @@ namespace CycleManager.Tests.Integration.Manager
             db.Competitors.AddRange(competitors);
             await db.SaveChangesAsync();
 
-            var citList = competitors.Select(c => new CompetitorInTeam { CompetitorId = c.CompetitorId, TeamId = team.TeamId, Year = 2025 }).ToList();
+            var citList = competitors.Select(c => new CompetitorInTeam { CompetitorId = c.CompetitorId }).ToList();
             db.CompetitorInTeams.AddRange(citList);
             await db.SaveChangesAsync();
 
@@ -394,7 +394,7 @@ namespace CycleManager.Tests.Integration.Manager
                 db.Competitors.Add(comp);
                 await db.SaveChangesAsync();
 
-                var cit = new CompetitorInTeam { CompetitorId = comp.CompetitorId, TeamId = team.TeamId, Year = 2025 };
+                var cit = new CompetitorInTeam { CompetitorId = comp.CompetitorId };
                 db.CompetitorInTeams.Add(cit);
                 await db.SaveChangesAsync();
 

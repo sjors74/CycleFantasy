@@ -1,4 +1,6 @@
-﻿using Domain.Models;
+﻿using CycleManager.Domain.Dto;
+using CycleManager.Domain.Models;
+using Domain.Models;
 using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace CycleManager.Services.Interfaces
@@ -33,5 +35,11 @@ namespace CycleManager.Services.Interfaces
         Task<bool> HasUnprocessedScrapedTeams();
 
         Task<int> CountUnprocessedScrapedCompetitors();
+
+        Task<List<TeamYearDto>> GetTeamYears(int seasonYearId);
+
+        Task<TeamYearDto?> GetByTeamAndSeasonAsync(int teamId, int seasonYearId);
+
+        Task<TeamYear?> GetTeamYearById(int teamYearId);
     }
 }

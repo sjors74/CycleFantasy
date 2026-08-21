@@ -1,9 +1,8 @@
 using CycleManager.Domain.Dto;
-using Domain.Dto;
+using Humanizer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using System.Net.Http;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
@@ -54,10 +53,10 @@ namespace WebApp.Pages.Account
                 return Page(); // Je kunt eventueel de pagina opnieuw renderen
             }
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var dto = new
+            var dto = new DeelnemerDto
             {
                 Id = DeelnemerId,
-                PoolNaam,
+                PoolNaam = PoolNaam,
                 UserId = userId,
                 EventId = CurrentEventId
             };
@@ -78,53 +77,52 @@ namespace WebApp.Pages.Account
             {
                 // Foutmelding bij falen
                 ModelState.AddModelError(string.Empty, "Er is iets misgegaan bij het aanmaken van de pool.");
-                return Page();
+                TempData["Error"] = "Er is iets misgegaan bij het aanmaken van de pool.";
+                return RedirectToPage(new { id = CurrentEventId });
             }
         }
 
-        [ValidateAntiForgeryToken]
         public async Task<IActionResult> OnPostRenamePoolAsync([FromBody] RenamePoolDto request)
         {
-            if (string.IsNullOrWhiteSpace(request.NieuweNaam))
-            {
-                return new JsonResult(new { success = false, message = "De poolnaam mag niet leeg zijn." });
-            }
-
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-            var dto = new
-            {
-                PoolId = request.PoolId,
-                NieuweNaam = request.NieuweNaam.Trim(),
-                UserId = userId
-            };
-
-            var content = new StringContent(
-                JsonSerializer.Serialize(dto),
-                Encoding.UTF8,
-                "application/json");
-
-            var client = _clientFactory.CreateClient();
-            var apiBaseUrl = _configuration["ClientSettings:ApiBaseUrl"];
-
-            var result = await client.PutAsync(
-                $"{apiBaseUrl}/api/event/renamepool",
-                content);
-
-            if (result.IsSuccessStatusCode)
-            {
-                return new JsonResult(new { success = true });
-            }
-            else
+            if(request == null)
             {
                 return new JsonResult(new
                 {
                     success = false,
-                    message = "Er is iets misgegaan bij het hernoemen van de pool."
                 });
             }
+
+            request.UserId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+
+            var client = _clientFactory.CreateClient();
+
+            var apiBaseUrl = _configuration["ClientSettings:ApiBaseUrl"];
+
+            var json = JsonSerializer.Serialize(request);
+
+            var content = new StringContent(
+                json,
+                Encoding.UTF8,
+                "application/json");
+
+            var response = await client.PutAsync(
+                $"{apiBaseUrl}/api/deelnemer/renamepool",
+                content);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return new JsonResult(new
+                {
+                    success = false,
+                    message = "Poolnaam kon niet worden gewijzigd."
+                });
+            }
+
+            return new JsonResult(new
+            {
+                success = true,
+                poolNaam = request.NieuweNaam.Trim()
+            });
         }
-
-
     }
 }

@@ -1,4 +1,5 @@
 ﻿using CycleManager.Domain.Dto;
+using CycleManager.Domain.Models;
 using CycleManager.Services;
 using CycleManager.Services.Interfaces;
 using Domain.Models;
@@ -14,6 +15,7 @@ namespace CycleManager.Tests.Unit.Manager
         private readonly Mock<IAdminScraperService> _adminScraperServiceMock;
         private readonly Mock<IScoreService> _scoreServiceMock;
         private readonly Mock<IScraperService> _scraperServiceMock;
+        private readonly Mock<ITeamService> _teamServiceMock;
         private readonly AdminScraperController _controller;
 
         public AdminScraperControllerTests()
@@ -21,11 +23,13 @@ namespace CycleManager.Tests.Unit.Manager
             _adminScraperServiceMock = new Mock<IAdminScraperService>();
             _scoreServiceMock = new Mock<IScoreService>();
             _scraperServiceMock = new Mock<IScraperService>();
+            _teamServiceMock = new Mock<ITeamService>();    
 
             _controller = new AdminScraperController(
                 _scraperServiceMock.Object,
                 _scoreServiceMock.Object,
-                _adminScraperServiceMock.Object
+                _adminScraperServiceMock.Object,
+                _teamServiceMock.Object
             );
 
             _controller.TempData = new Microsoft.AspNetCore.Mvc.ViewFeatures.TempDataDictionary(
@@ -103,9 +107,9 @@ namespace CycleManager.Tests.Unit.Manager
         public async Task ScrapeCompetitors_TeamNotFound_ThrowsException()
         {
             // Arrange
-            var dto = new ScrapeRequestDto { TeamId = 5, Year = 2025 };
-            _adminScraperServiceMock.Setup(s => s.GetTeamByIdAsync(5))
-                .ReturnsAsync((Team?)null);
+            var dto = new ScrapeRequestDto { TeamId = 5 };
+            _teamServiceMock.Setup(s => s.GetByTeamAndSeasonAsync(5, It.IsAny<int>()))
+                .ReturnsAsync((TeamYearDto?)null);
 
             // Act & Assert
             await Assert.ThrowsAsync<Exception>(() => _controller.ScrapeCompetitors(dto));
@@ -115,17 +119,17 @@ namespace CycleManager.Tests.Unit.Manager
         public async Task ScrapeCompetitors_ValidTeam_CallsService_AndReturnsOk()
         {
             // Arrange
-            var dto = new ScrapeRequestDto { TeamId = 5, Year = 2025 };
-            _adminScraperServiceMock.Setup(s => s.GetTeamByIdAsync(5))
-                .ReturnsAsync(new Team { TeamId = 5 });
-            _scraperServiceMock.Setup(s => s.RunCompetitorsAsync(5, 2025))
+            var dto = new ScrapeRequestDto { TeamId = 5 };
+            _adminScraperServiceMock.Setup(s => s.GetTeamYearByIdAsync(5))
+                .ReturnsAsync(new TeamYear { TeamYearId = 5 });
+            _scraperServiceMock.Setup(s => s.RunCompetitorsAsync(5))
                 .Returns(Task.CompletedTask);
 
             // Act
             var result = await _controller.ScrapeCompetitors(dto);
 
             // Assert
-            _scraperServiceMock.Verify(s => s.RunCompetitorsAsync(5, 2025), Times.Once);
+            _scraperServiceMock.Verify(s => s.RunCompetitorsAsync(5), Times.Once);
             Assert.IsType<OkResult>(result);
         }
 

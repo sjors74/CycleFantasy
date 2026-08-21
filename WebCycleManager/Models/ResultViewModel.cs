@@ -6,7 +6,7 @@ namespace WebCycleManager.Models
     {
         public ResultViewModel()
         {
-            Results = new List<ResultItemViewModel>();
+            Rows = new List<StageResultRowViewModel>();
         }
 
         public ResultViewModel(
@@ -17,7 +17,7 @@ namespace WebCycleManager.Models
             bool noScore,
             string noScoreDescription,
             int configurationItems, 
-            List<ResultItemViewModel> results,
+            List<StageResultRowViewModel> rows,
             List<CompetitorsInEvent> competitorsInEvent
             )
         {
@@ -28,7 +28,7 @@ namespace WebCycleManager.Models
             NoScore = noScore;
             NoScoreDescription = noScoreDescription;
             ConfigurationItems = configurationItems;
-            Results = results;
+            Rows = rows;
             Competitors = competitorsInEvent;
         }
 
@@ -42,7 +42,6 @@ namespace WebCycleManager.Models
         public bool NoScore { get; set; }
         public string? NoScoreDescription { get; set; }
         public int ConfigurationItems { get; set; }
-
-        public List<ResultItemViewModel> Results { get; set; } = [];
+        public List<StageResultRowViewModel> Rows { get; set; }
     }
 }

@@ -11,12 +11,14 @@
                     <th>Naam</th>
                     <th>Achternaam</th>
                     <th>Score</th>
+                    <th>Detail</th>
+                    <th>Totaal</th>
                     <th>Status</th>
                     <th></th>
                 </tr>
             </thead>
             <tbody>
-                @for (int i = 0; i < Model.CompetitorsInEvent.Count; i++)
+                @for (int i = 0; i < Model.NumberOfPicks; i++)
                 {
                     var pick = Model.CompetitorsInEvent[i];
                     <input type="hidden" asp-for="CompetitorsInEvent[@i].PickId" />
@@ -36,7 +38,9 @@
                             }
                         </td>
                         <td>@(pick.PickId > 0 ? pick.LastName : "")</td>
-                        <td>@(pick.PickId > 0 ? pick.Score.ToString() : "")</td>
+                        <td>@(pick.PickId > 0 ? pick.NormalScore : "")</td>
+                        <td>@(pick.PickId > 0 ? pick.SpecialQuestionScore : "")</td>
+                        <td>@(pick.PickId > 0 ? pick.TotalScore : "")</td>
                         <td>
                             @if (pick.PickId > 0)
                             {

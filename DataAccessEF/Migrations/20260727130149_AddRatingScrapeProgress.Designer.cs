@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DataAccessEF.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260527075859_removeSchedule")]
-    partial class removeSchedule
+    [Migration("20260727130149_AddRatingScrapeProgress")]
+    partial class AddRatingScrapeProgress
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -112,24 +112,46 @@ namespace DataAccessEF.Migrations
                     b.Property<bool>("IsNationalChampion")
                         .HasColumnType("bit");
 
-                    b.Property<int>("TeamId")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("TeamYearId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Year")
+                    b.Property<int>("TeamYearId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
 
                     b.HasIndex("CompetitorId");
 
-                    b.HasIndex("TeamId");
-
                     b.HasIndex("TeamYearId");
 
                     b.ToTable("CompetitorInTeams");
+                });
+
+            modelBuilder.Entity("CycleManager.Domain.Models.CompetitorRating", b =>
+                {
+                    b.Property<int>("CompetitorRatingId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("CompetitorRatingId"));
+
+                    b.Property<int>("CompetitorId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("Rating")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("RatingCategoryId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("RatingDate")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("CompetitorRatingId");
+
+                    b.HasIndex("RatingCategoryId");
+
+                    b.HasIndex("CompetitorId", "RatingCategoryId", "RatingDate")
+                        .IsUnique();
+
+                    b.ToTable("CompetitorRatings");
                 });
 
             modelBuilder.Entity("CycleManager.Domain.Models.EventTeam", b =>
@@ -145,6 +167,121 @@ namespace DataAccessEF.Migrations
                     b.HasIndex("TeamId");
 
                     b.ToTable("EventTeam");
+                });
+
+            modelBuilder.Entity("CycleManager.Domain.Models.RatingCategory", b =>
+                {
+                    b.Property<int>("RatingCategoryId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("RatingCategoryId"));
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("MaxPages")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("RefreshOrder")
+                        .HasColumnType("int");
+
+                    b.HasKey("RatingCategoryId");
+
+                    b.ToTable("RatingCategories");
+                });
+
+            modelBuilder.Entity("CycleManager.Domain.Models.RatingScrapeProgress", b =>
+                {
+                    b.Property<int>("RatingScrapeProgressId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("RatingScrapeProgressId"));
+
+                    b.Property<int>("ErrorCount")
+                        .HasColumnType("int");
+
+                    b.Property<string>("LastError")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int>("LastPage")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("LastScrapeDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("RatingCategoryId")
+                        .HasColumnType("int");
+
+                    b.HasKey("RatingScrapeProgressId");
+
+                    b.HasIndex("RatingCategoryId")
+                        .IsUnique();
+
+                    b.ToTable("RatingScrapeProgress");
+                });
+
+            modelBuilder.Entity("CycleManager.Domain.Models.ScrapeCompetitorRating", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<Guid>("BatchId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int?>("CompetitorId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("CompetitorName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ErrorMessage")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("ImportedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("Processed")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("ProcessedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ProfileUrl")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal>("Rating")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("RatingCategoryId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("RatingDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RatingCategoryId");
+
+                    b.ToTable("ScrapeCompetitorRatings");
                 });
 
             modelBuilder.Entity("CycleManager.Domain.Models.ScrapedCompetitor", b =>
@@ -177,6 +314,34 @@ namespace DataAccessEF.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("ScrapedCompetitors");
+                });
+
+            modelBuilder.Entity("CycleManager.Domain.Models.ScrapedSpecialResult", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("BibNumber")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("CompetitorInEventId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("ImportedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("QuestionType")
+                        .HasColumnType("int");
+
+                    b.Property<int>("StageId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CompetitorInEventId");
+
+                    b.ToTable("ScrapedSpecialResults");
                 });
 
             modelBuilder.Entity("CycleManager.Domain.Models.ScrapedStageResult", b =>
@@ -220,6 +385,25 @@ namespace DataAccessEF.Migrations
                     b.ToTable("ScrapedStageResults");
                 });
 
+            modelBuilder.Entity("CycleManager.Domain.Models.SeasonYear", b =>
+                {
+                    b.Property<int>("SeasonYearId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("SeasonYearId"));
+
+                    b.Property<bool>("Active")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("Year")
+                        .HasColumnType("int");
+
+                    b.HasKey("SeasonYearId");
+
+                    b.ToTable("SeasonYears");
+                });
+
             modelBuilder.Entity("CycleManager.Domain.Models.TeamYear", b =>
                 {
                     b.Property<int>("TeamYearId")
@@ -232,6 +416,9 @@ namespace DataAccessEF.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int>("SeasonYearId")
+                        .HasColumnType("int");
+
                     b.Property<int>("TeamId")
                         .HasColumnType("int");
 
@@ -239,6 +426,8 @@ namespace DataAccessEF.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("TeamYearId");
+
+                    b.HasIndex("SeasonYearId");
 
                     b.HasIndex("TeamId");
 
@@ -301,6 +490,9 @@ namespace DataAccessEF.Migrations
                     b.Property<bool>("OutOfCompetition")
                         .HasColumnType("bit");
 
+                    b.Property<bool>("RemovedFromStartList")
+                        .HasColumnType("bit");
+
                     b.HasKey("Id");
 
                     b.HasIndex("CompetitorInTeamId");
@@ -349,6 +541,34 @@ namespace DataAccessEF.Migrations
                     b.HasIndex("ConfigurationId");
 
                     b.ToTable("ConfigurationItems");
+                });
+
+            modelBuilder.Entity("Domain.Models.ConfigurationItemSpecial", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Color")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("ConfigurationId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Question")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Score")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ConfigurationId");
+
+                    b.ToTable("ConfigurationItemSpecials");
                 });
 
             modelBuilder.Entity("Domain.Models.Country", b =>
@@ -452,6 +672,34 @@ namespace DataAccessEF.Migrations
                     b.ToTable("DeelnemerStagePickScores");
                 });
 
+            modelBuilder.Entity("Domain.Models.DeelnemerStagePickSpecialScore", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("GameCompetitorEventPickId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("LastUpdated")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("QuestionType")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Score")
+                        .HasColumnType("int");
+
+                    b.Property<int>("StageId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GameCompetitorEventPickId");
+
+                    b.ToTable("DeelnemerStagePickSpecialScores");
+                });
+
             modelBuilder.Entity("Domain.Models.DeelnemerStageScore", b =>
                 {
                     b.Property<Guid>("Id")
@@ -543,16 +791,18 @@ namespace DataAccessEF.Migrations
 
                     b.Property<string>("TeamName")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("UserId")
                         .HasColumnType("nvarchar(450)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("EventId");
-
                     b.HasIndex("UserId");
+
+                    b.HasIndex("EventId", "UserId", "TeamName")
+                        .IsUnique()
+                        .HasFilter("[UserId] IS NOT NULL");
 
                     b.ToTable("GameCompetitorsEvent");
                 });
@@ -633,6 +883,34 @@ namespace DataAccessEF.Migrations
                     b.HasIndex("StageId");
 
                     b.ToTable("Results");
+                });
+
+            modelBuilder.Entity("Domain.Models.SpecialResult", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CompetitorInEventId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("SpecialId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("StageId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CompetitorInEventId");
+
+                    b.HasIndex("SpecialId");
+
+                    b.HasIndex("StageId");
+
+                    b.ToTable("SpecialResults");
                 });
 
             modelBuilder.Entity("Domain.Models.Stage", b =>
@@ -856,21 +1134,34 @@ namespace DataAccessEF.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Domain.Models.Team", "Team")
+                    b.HasOne("CycleManager.Domain.Models.TeamYear", "TeamYear")
                         .WithMany("CompetitorInTeams")
-                        .HasForeignKey("TeamId")
+                        .HasForeignKey("TeamYearId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("CycleManager.Domain.Models.TeamYear", "TeamYear")
+                    b.Navigation("Competitor");
+
+                    b.Navigation("TeamYear");
+                });
+
+            modelBuilder.Entity("CycleManager.Domain.Models.CompetitorRating", b =>
+                {
+                    b.HasOne("Domain.Models.Competitor", "Competitor")
+                        .WithMany("Ratings")
+                        .HasForeignKey("CompetitorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("CycleManager.Domain.Models.RatingCategory", "RatingCategory")
                         .WithMany()
-                        .HasForeignKey("TeamYearId");
+                        .HasForeignKey("RatingCategoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Competitor");
 
-                    b.Navigation("Team");
-
-                    b.Navigation("TeamYear");
+                    b.Navigation("RatingCategory");
                 });
 
             modelBuilder.Entity("CycleManager.Domain.Models.EventTeam", b =>
@@ -892,6 +1183,37 @@ namespace DataAccessEF.Migrations
                     b.Navigation("Team");
                 });
 
+            modelBuilder.Entity("CycleManager.Domain.Models.RatingScrapeProgress", b =>
+                {
+                    b.HasOne("CycleManager.Domain.Models.RatingCategory", "RatingCategory")
+                        .WithMany()
+                        .HasForeignKey("RatingCategoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("RatingCategory");
+                });
+
+            modelBuilder.Entity("CycleManager.Domain.Models.ScrapeCompetitorRating", b =>
+                {
+                    b.HasOne("CycleManager.Domain.Models.RatingCategory", "RatingCategory")
+                        .WithMany()
+                        .HasForeignKey("RatingCategoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("RatingCategory");
+                });
+
+            modelBuilder.Entity("CycleManager.Domain.Models.ScrapedSpecialResult", b =>
+                {
+                    b.HasOne("Domain.Models.CompetitorsInEvent", "CompetitorInEvent")
+                        .WithMany()
+                        .HasForeignKey("CompetitorInEventId");
+
+                    b.Navigation("CompetitorInEvent");
+                });
+
             modelBuilder.Entity("CycleManager.Domain.Models.ScrapedStageResult", b =>
                 {
                     b.HasOne("Domain.Models.CompetitorsInEvent", "MatchedCompetitorInEvent")
@@ -903,11 +1225,19 @@ namespace DataAccessEF.Migrations
 
             modelBuilder.Entity("CycleManager.Domain.Models.TeamYear", b =>
                 {
+                    b.HasOne("CycleManager.Domain.Models.SeasonYear", "SeasonYear")
+                        .WithMany()
+                        .HasForeignKey("SeasonYearId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("Domain.Models.Team", "Team")
                         .WithMany("TeamYears")
                         .HasForeignKey("TeamId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("SeasonYear");
 
                     b.Navigation("Team");
                 });
@@ -953,6 +1283,17 @@ namespace DataAccessEF.Migrations
                     b.Navigation("Configuration");
                 });
 
+            modelBuilder.Entity("Domain.Models.ConfigurationItemSpecial", b =>
+                {
+                    b.HasOne("Domain.Models.Configuration", "Configuration")
+                        .WithMany("Specials")
+                        .HasForeignKey("ConfigurationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Configuration");
+                });
+
             modelBuilder.Entity("Domain.Models.DeelnemerPickScore", b =>
                 {
                     b.HasOne("Domain.Models.GameCompetitorEventPick", "Pick")
@@ -981,6 +1322,17 @@ namespace DataAccessEF.Migrations
                     b.Navigation("Pick");
 
                     b.Navigation("Stage");
+                });
+
+            modelBuilder.Entity("Domain.Models.DeelnemerStagePickSpecialScore", b =>
+                {
+                    b.HasOne("Domain.Models.GameCompetitorEventPick", "Pick")
+                        .WithMany()
+                        .HasForeignKey("GameCompetitorEventPickId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Pick");
                 });
 
             modelBuilder.Entity("Domain.Models.Event", b =>
@@ -1050,6 +1402,32 @@ namespace DataAccessEF.Migrations
                     b.Navigation("CompetitorInEvent");
 
                     b.Navigation("ConfigurationItem");
+
+                    b.Navigation("Stage");
+                });
+
+            modelBuilder.Entity("Domain.Models.SpecialResult", b =>
+                {
+                    b.HasOne("Domain.Models.CompetitorsInEvent", "CompetitorInEvent")
+                        .WithMany()
+                        .HasForeignKey("CompetitorInEventId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Models.ConfigurationItemSpecial", "Special")
+                        .WithMany()
+                        .HasForeignKey("SpecialId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("Domain.Models.Stage", "Stage")
+                        .WithMany("SpecialResults")
+                        .HasForeignKey("StageId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("CompetitorInEvent");
+
+                    b.Navigation("Special");
 
                     b.Navigation("Stage");
                 });
@@ -1125,9 +1503,16 @@ namespace DataAccessEF.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("CycleManager.Domain.Models.TeamYear", b =>
+                {
+                    b.Navigation("CompetitorInTeams");
+                });
+
             modelBuilder.Entity("Domain.Models.Competitor", b =>
                 {
                     b.Navigation("CompetitorInTeams");
+
+                    b.Navigation("Ratings");
                 });
 
             modelBuilder.Entity("Domain.Models.CompetitorsInEvent", b =>
@@ -1138,6 +1523,8 @@ namespace DataAccessEF.Migrations
             modelBuilder.Entity("Domain.Models.Configuration", b =>
                 {
                     b.Navigation("ConfigurationItems");
+
+                    b.Navigation("Specials");
                 });
 
             modelBuilder.Entity("Domain.Models.Event", b =>
@@ -1159,12 +1546,12 @@ namespace DataAccessEF.Migrations
             modelBuilder.Entity("Domain.Models.Stage", b =>
                 {
                     b.Navigation("Results");
+
+                    b.Navigation("SpecialResults");
                 });
 
             modelBuilder.Entity("Domain.Models.Team", b =>
                 {
-                    b.Navigation("CompetitorInTeams");
-
                     b.Navigation("EventTeams");
 
                     b.Navigation("TeamYears");

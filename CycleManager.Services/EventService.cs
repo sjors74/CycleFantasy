@@ -5,6 +5,7 @@ using CycleManager.Services.Interfaces;
 using Domain.Dto;
 using Domain.Interfaces;
 using Domain.Models;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 
 namespace CycleManager.Services
@@ -150,9 +151,17 @@ namespace CycleManager.Services
                             EventNumber = renner.CompetitorsInEvent.EventNumber.ToString(),
                             PcsName = renner.CompetitorsInEvent.CompetitorInTeam.Competitor.PcsName,
                             Punten = punten,
-                            CurrentTeamName = renner.CompetitorsInEvent.CompetitorInTeam.Team.CurrentTeamName,
+                            CurrentTeamName = renner.CompetitorsInEvent.CompetitorInTeam.TeamYear.Name,
                             IsNationalChampion = renner.CompetitorsInEvent.CompetitorInTeam.IsNationalChampion,
-                            CompetitorInTeamId = renner.CompetitorsInEvent.CompetitorInTeam.Id
+                            CompetitorInTeamId = renner.CompetitorsInEvent.CompetitorInTeam.Id,
+                            Ratings = renner.CompetitorsInEvent.CompetitorInTeam.Competitor.Ratings.Select(r => new CompetitorRatingDto
+                            {
+                                RatingCategoryId = r.RatingCategoryId,
+                                Code = r.RatingCategory.Code,
+                                CategoryName = r.RatingCategory.Name,
+                                Color = r.RatingCategory.Color,
+                                Rating = (int)r.Rating
+                            }).ToList()
                         });
                     }
 
@@ -224,19 +233,26 @@ namespace CycleManager.Services
         {
             var gameCompetitorEvent = new DeelnemerCreateDto
             {
-                TeamName = deelnemerDto.PoolNaam,
+                TeamName = deelnemerDto.PoolNaam.Trim(),
                 UserId = deelnemerDto.UserId,
                 EventId = deelnemerDto.EventId,
             };
 
-            var createdEvent = await _deelnemersRepository.CreateGameCompetitorEventAsync(gameCompetitorEvent);
-            deelnemerDto.Id = createdEvent.Id;
-            return deelnemerDto;
+            try
+            {
+                var createdEvent = await _deelnemersRepository.CreateGameCompetitorEventAsync(gameCompetitorEvent);
+                deelnemerDto.Id = createdEvent.Id;
+                return deelnemerDto;
+            }
+            catch(DbUpdateException ex) when (IsUniqueConstraintViolation(ex)) 
+            {
+                throw new InvalidOperationException("Je hebt al een pool met deze naam.");
+            }
         }
 
         public async Task DeletePoolAsync(int id)
         {
-            var deelnemer = await _deelnemersRepository.GetyCompetitorWithPicksById(id);
+            var deelnemer = await _deelnemersRepository.GetCompetitorWithPicksById(id);
 
             if(deelnemer != null)
             {
@@ -295,22 +311,6 @@ namespace CycleManager.Services
             await _eventRepository.AddTeamToEvent(eventId, teamId);
         }
 
-        public async Task<RenamePoolDto> RenamePoolAsync(RenamePoolDto renamePoolDto)
-        {
-            var pool = await _deelnemersRepository.GetById(renamePoolDto.PoolId);
-            if (pool == null)
-                throw new InvalidOperationException("Pool niet gevonden.");
-
-            var evenement = await _eventRepository.GetEventById(pool.EventId);
-            if (!evenement.CanSubscribe)
-                throw new InvalidOperationException("Inschrijving voor dit evenement is gesloten.");
-
-            pool.TeamName = renamePoolDto.NieuweNaam;
-            await _deelnemersRepository.SaveChangesAsync();
-
-            return renamePoolDto;
-        }
-
         public async Task EnsureCanSubscribeAsync(int eventId)
         {
             var ev = await _eventRepository.GetEventById(eventId);
@@ -323,6 +323,12 @@ namespace CycleManager.Services
             {
                 throw new UnauthorizedAccessException("Inschrijven is gesloten.");
             }
+        }
+
+        private static bool IsUniqueConstraintViolation(DbUpdateException ex)
+        {
+            return ex.InnerException is SqlException sqlEx &&
+                   (sqlEx.Number == 2601 || sqlEx.Number == 2627);
         }
     }
 }

@@ -26,6 +26,7 @@ namespace CycleManager.Tests.Unit.Api
             var mockDashboardService = new Mock<IEventDashboardService>();
             var mockDeelnemerService = new Mock<IGameCompetitorInEventService>();
             var mockTeamService = new Mock<ITeamService>();
+            var mockSeasonYearService = new Mock<ISeasonYearService>();
 
             // 1️⃣ Actieve events uit service
             var activeEvents = new List<Event>
@@ -75,7 +76,9 @@ namespace CycleManager.Tests.Unit.Api
                 mockDashboardService.Object,
                 mockTeamService.Object,
                 mockResultService.Object,
+                mockSeasonYearService.Object,
                 mockMapper.Object
+
             );
 
             // Act
@@ -100,6 +103,7 @@ namespace CycleManager.Tests.Unit.Api
             var mockDashboardService = new Mock<IEventDashboardService>();
             var mockTeamService = new Mock<ITeamService>();
             var mockResultService = new Mock<IResultService>();
+            var mockSeasonYearService = new Mock<ISeasonYearService>();
             var mockMapper = new Mock<IMapper>();
 
 
@@ -145,15 +149,15 @@ namespace CycleManager.Tests.Unit.Api
 
             mockResultService
                 .Setup(s => s.GetCompetitorResultsByEventId(1, 100))
-                .ReturnsAsync(new CompetitorScoreDto { TotalScore = 5 });
+                .ReturnsAsync(new CompetitorScoreDto { NormalScore = 5 });
 
             mockResultService
             .Setup(s => s.GetCompetitorResultsByEventId(1, 200))
-            .ReturnsAsync(new CompetitorScoreDto { TotalScore = 10 });
+            .ReturnsAsync(new CompetitorScoreDto { NormalScore = 10 });
 
             mockResultService
             .Setup(s => s.GetCompetitorResultsByEventId(1, 300))
-            .ReturnsAsync(new CompetitorScoreDto { TotalScore = 20 });
+            .ReturnsAsync(new CompetitorScoreDto { NormalScore = 20 });
 
             var controller = new EventController(
                 mockEventService.Object,
@@ -161,6 +165,7 @@ namespace CycleManager.Tests.Unit.Api
                 mockDashboardService.Object,
                 mockTeamService.Object,
                 mockResultService.Object,
+                mockSeasonYearService.Object,
                 mockMapper.Object);
 
             //Act
@@ -198,11 +203,12 @@ namespace CycleManager.Tests.Unit.Api
             var mockResultService = new Mock<IResultService>();
             var mockMapper = new Mock<IMapper>();
             var mockDashboardService = new Mock<IEventDashboardService>();
+            var mockSeasonYearService = new Mock<ISeasonYearService>();
 
             mockEventService.Setup(s => s.GetEventById(99))
                 .ReturnsAsync((Event?)null);
 
-            var controller = new EventController(mockEventService.Object, mockDeelnemerService.Object, mockDashboardService.Object, mockTeamService.Object, mockResultService.Object, mockMapper.Object);
+            var controller = new EventController(mockEventService.Object, mockDeelnemerService.Object, mockDashboardService.Object, mockTeamService.Object, mockResultService.Object, mockSeasonYearService.Object, mockMapper.Object);
 
             //act
             var result = await controller.GetEvent(99);
@@ -223,6 +229,7 @@ namespace CycleManager.Tests.Unit.Api
             var mockDeelnemerService = new Mock<IGameCompetitorInEventService>();
             var mockTeamService = new Mock<ITeamService>();
             var mockResultService = new Mock<IResultService>();
+            var mockSeasonYearService = new Mock<ISeasonYearService>();
             var mockMapper = new Mock<IMapper>();
 
             mockEventService
@@ -235,6 +242,7 @@ namespace CycleManager.Tests.Unit.Api
                 mockDashboardService.Object,
                 mockTeamService.Object,
                 mockResultService.Object,
+                mockSeasonYearService.Object,
                 mockMapper.Object
             );
 
@@ -268,7 +276,7 @@ namespace CycleManager.Tests.Unit.Api
                 new Mock<IEventDashboardService>().Object,
                 new Mock<ITeamService>().Object,
                 new Mock<IResultService>().Object,
-
+                new Mock<ISeasonYearService>().Object,
                 new Mock<IMapper>().Object
             );
 
@@ -301,6 +309,7 @@ namespace CycleManager.Tests.Unit.Api
                 new Mock<IEventDashboardService>().Object,
                 new Mock<ITeamService>().Object,
                 new Mock<IResultService>().Object,
+                new Mock<ISeasonYearService>().Object,
                 new Mock<IMapper>().Object
             );
 
@@ -329,6 +338,7 @@ namespace CycleManager.Tests.Unit.Api
                 new Mock<IEventDashboardService>().Object,
                 new Mock<ITeamService>().Object,
                 new Mock<IResultService>().Object,
+                new Mock<ISeasonYearService>().Object,
                 new Mock<IMapper>().Object
             );
 
@@ -381,6 +391,7 @@ namespace CycleManager.Tests.Unit.Api
                 Mock.Of<IEventDashboardService>(),
                 Mock.Of<ITeamService>(),
                 Mock.Of<IResultService>(),
+                Mock.Of<ISeasonYearService>(),
                 mockMapper.Object
             );
 
@@ -456,6 +467,7 @@ namespace CycleManager.Tests.Unit.Api
                 Mock.Of<IEventDashboardService>(),
                 Mock.Of<ITeamService>(),
                 Mock.Of<IResultService>(),
+                Mock.Of<ISeasonYearService>(),
                 Mock.Of<IMapper>()
             );
 
@@ -483,6 +495,7 @@ namespace CycleManager.Tests.Unit.Api
                 Mock.Of<IEventDashboardService>(),
                 Mock.Of<ITeamService>(),
                 Mock.Of<IResultService>(),
+                Mock.Of<ISeasonYearService>(),
                 Mock.Of<IMapper>()
             );
 
@@ -510,6 +523,7 @@ namespace CycleManager.Tests.Unit.Api
                 Mock.Of<IEventDashboardService>(),
                 Mock.Of<ITeamService>(),
                 Mock.Of<IResultService>(),
+                Mock.Of<ISeasonYearService>(),
                 Mock.Of<IMapper>()
             );
 
@@ -531,33 +545,31 @@ namespace CycleManager.Tests.Unit.Api
             {
                 TeamId = teamId,
                 CurrentTeamName = "Team A",
-                CompetitorInTeams = new List<CompetitorInTeam>
-                {
-                    new CompetitorInTeam
-                    {
-                        Id = 10,
-                        Year = year,
-                        Competitor = new Competitor
-                        {
-                            CompetitorId = 101,
-                            FirstName = "John",
-                            LastName = "Doe",
-                            PcsName = "JD123"
-                        }
-                    },
-                    new CompetitorInTeam
-                    {
-                        Id = 11,
-                        Year = year,
-                        Competitor = new Competitor
-                        {
-                            CompetitorId = 102,
-                            FirstName = "Jane",
-                            LastName = "Smith",
-                            PcsName = "JS456"
-                        }
-                    }
-                }
+                //CompetitorInTeams = new List<CompetitorInTeam>
+                //{
+                //    new CompetitorInTeam
+                //    {
+                //        Id = 10,
+                //        Competitor = new Competitor
+                //        {
+                //            CompetitorId = 101,
+                //            FirstName = "John",
+                //            LastName = "Doe",
+                //            PcsName = "JD123"
+                //        }
+                //    },
+                //    new CompetitorInTeam
+                //    {
+                //        Id = 11,
+                //        Competitor = new Competitor
+                //        {
+                //            CompetitorId = 102,
+                //            FirstName = "Jane",
+                //            LastName = "Smith",
+                //            PcsName = "JS456"
+                //        }
+                //    }
+                //}
             };
 
             var mockTeamService = new Mock<ITeamService>();
@@ -570,6 +582,7 @@ namespace CycleManager.Tests.Unit.Api
                 Mock.Of<IEventDashboardService>(),
                 mockTeamService.Object,
                 Mock.Of<IResultService>(),
+                Mock.Of<ISeasonYearService>(),
                 Mock.Of<IMapper>()
             );
 
@@ -602,6 +615,7 @@ namespace CycleManager.Tests.Unit.Api
                 Mock.Of<IEventDashboardService>(),
                 mockTeamService.Object,
                 Mock.Of<IResultService>(),
+                Mock.Of<ISeasonYearService>(),
                 Mock.Of<IMapper>()
             );
 
@@ -623,6 +637,7 @@ namespace CycleManager.Tests.Unit.Api
                 Mock.Of<IEventDashboardService>(),
                 Mock.Of<ITeamService>(),
                 Mock.Of<IResultService>(),
+                Mock.Of<ISeasonYearService>(),
                 Mock.Of<IMapper>()
             );
 
@@ -649,6 +664,7 @@ namespace CycleManager.Tests.Unit.Api
                 Mock.Of<IEventDashboardService>(),
                 Mock.Of<ITeamService>(),
                 Mock.Of<IResultService>(),
+                Mock.Of<ISeasonYearService>(),
                 Mock.Of<IMapper>()
             );
 
@@ -677,6 +693,7 @@ namespace CycleManager.Tests.Unit.Api
                 Mock.Of<IEventDashboardService>(),
                 Mock.Of<ITeamService>(),
                 Mock.Of<IResultService>(),
+                Mock.Of<ISeasonYearService>(),
                 Mock.Of<IMapper>()
             );
 
@@ -700,6 +717,7 @@ namespace CycleManager.Tests.Unit.Api
                 Mock.Of<IEventDashboardService>(),
                 Mock.Of<ITeamService>(),
                 Mock.Of<IResultService>(),
+                Mock.Of<ISeasonYearService>(),
                 Mock.Of<IMapper>()
             );
 
@@ -729,6 +747,7 @@ namespace CycleManager.Tests.Unit.Api
                 Mock.Of<IEventDashboardService>(),
                 Mock.Of<ITeamService>(),
                 Mock.Of<IResultService>(),
+                Mock.Of<ISeasonYearService>(),
                 Mock.Of<IMapper>()
             );
 
@@ -758,6 +777,7 @@ namespace CycleManager.Tests.Unit.Api
                 Mock.Of<IEventDashboardService>(),
                 Mock.Of<ITeamService>(),
                 Mock.Of<IResultService>(),
+                Mock.Of<ISeasonYearService>(),
                 Mock.Of<IMapper>()
             );
 
@@ -780,6 +800,7 @@ namespace CycleManager.Tests.Unit.Api
                 Mock.Of<IEventDashboardService>(),
                 Mock.Of<ITeamService>(),
                 Mock.Of<IResultService>(),
+                Mock.Of<ISeasonYearService>(),
                 Mock.Of<IMapper>()
             );
 
@@ -806,6 +827,7 @@ namespace CycleManager.Tests.Unit.Api
                 Mock.Of<IEventDashboardService>(),
                 Mock.Of<ITeamService>(),
                 Mock.Of<IResultService>(),
+                Mock.Of<ISeasonYearService>(),
                 Mock.Of<IMapper>()
             );
 
@@ -834,6 +856,7 @@ namespace CycleManager.Tests.Unit.Api
                 Mock.Of<IEventDashboardService>(),
                 Mock.Of<ITeamService>(),
                 Mock.Of<IResultService>(),
+                Mock.Of<ISeasonYearService>(),
                 Mock.Of<IMapper>()
             );
 
@@ -861,6 +884,7 @@ namespace CycleManager.Tests.Unit.Api
                 Mock.Of<IEventDashboardService>(),
                 Mock.Of<ITeamService>(),
                 Mock.Of<IResultService>(),
+                Mock.Of<ISeasonYearService>(),
                 Mock.Of<IMapper>()
             );
 
@@ -886,6 +910,7 @@ namespace CycleManager.Tests.Unit.Api
                 Mock.Of<IEventDashboardService>(),
                 Mock.Of<ITeamService>(),
                 Mock.Of<IResultService>(),
+                Mock.Of<ISeasonYearService>(),
                 Mock.Of<IMapper>()
             );
 
