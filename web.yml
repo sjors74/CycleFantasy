@@ -18,6 +18,10 @@ steps:
     packageType: 'sdk'
     version: '8.x'
 
+# 2.5 DEBUG LOGGING
+- script: dir
+  displayName: "Show repo root"
+
 # 3. Restore
 - script: dotnet restore CycleFantasy.sln
   displayName: 'Restore'

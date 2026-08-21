@@ -1,0 +1,49 @@
+trigger:
+- master
+
+pool:
+  vmImage: 'windows-latest'
+
+variables:
+  buildConfiguration: 'Release'
+
+stages:
+
+- stage: BuildAndDeployAPI
+  displayName: Build and Deploy API
+
+  jobs:
+  - job: BuildDeploy
+    steps:
+
+    - checkout: self
+
+    - task: UseDotNet@2
+      inputs:
+        packageType: 'sdk'
+        version: '8.x'
+
+    - script: dotnet restore CycleFantasy.sln
+      displayName: Restore
+
+    - script: dotnet build CycleFantasy.sln --configuration $(buildConfiguration) --no-restore
+      displayName: Build
+
+    - script: >
+        dotnet publish WebCycle/WebCycleApi.csproj
+        -c $(buildConfiguration)
+        -o $(Build.ArtifactStagingDirectory)/api
+      displayName: Publish API
+
+    - task: ArchiveFiles@2
+      inputs:
+        rootFolderOrFile: '$(Build.ArtifactStagingDirectory)/api'
+        includeRootFolder: false
+        archiveType: zip
+        archiveFile: '$(Build.ArtifactStagingDirectory)/api.zip'
+
+    - task: AzureWebApp@1
+      inputs:
+        azureSubscription: 'azure-cyclefantasy-prod'
+        appName: 'WebCycleApi20250508145015'
+        package: '$(Build.ArtifactStagingDirectory)/api.zip'
