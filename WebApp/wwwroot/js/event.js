@@ -280,21 +280,65 @@ document.addEventListener('DOMContentLoaded', function () {
         const rowStyle = isOut ? 'background-color: #eee; text-decoration: line-through;' : '';
         const flagUrl = `${FLAGS_BASE_URL}/24x18/${pick.countryCode.toLowerCase()}.png`;
         const maxRating = window.appSettings?.maxRating ?? 2500;
-        const specialBadges = (pick.specials || [])
-            .map(s => {
+        const specialBadges = (() => {
+            const groups = {
+                kom: [],
+                gc: [],
+                points: []
+            };
+
+            (pick.specials || []).forEach(s => {
                 const name = s.name.toLowerCase();
 
                 if (name.includes("kom")) {
-                    return `<span class="special-badge kom" title="KOM +${s.score}">KOM</span>`;
+                    groups.kom.push(s);
                 }
-
-                if (name.includes("gc")) {
-                    return `<span class="special-badge gc" title="GC +${s.score}">GC</span>`;
+                else if (name.includes("gc")) {
+                    groups.gc.push(s);
                 }
+                else {
+                    groups.points.push(s);
+                }
+            });
 
-                return `<span class="special-badge points" title="${s.name} +${s.score}">P</span>`;
-            })
-            .join("");
+            const badges = [];
+
+            if (groups.kom.length > 0) {
+                badges.push(`
+            <span class="special-badge-wrapper" title="${groups.kom.map(s => `${s.name} +${s.score}`).join('\n')}">
+                <span class="special-badge kom">KOM</span>
+                ${groups.kom.length > 1
+                        ? `<span class="special-count">${groups.kom.length}</span>`
+                        : ''}
+            </span>
+        `);
+            }
+
+            if (groups.gc.length > 0) {
+                badges.push(`
+            <span class="special-badge-wrapper" title="${groups.gc.map(s => `${s.name} +${s.score}`).join('\n')}">
+                <span class="special-badge gc">GC</span>
+                ${groups.gc.length > 1
+                        ? `<span class="special-count">${groups.gc.length}</span>`
+                        : ''}
+            </span>
+        `);
+            }
+
+            if (groups.points.length > 0) {
+                badges.push(`
+            <span class="special-badge-wrapper" title="${groups.points.map(s => `${s.name} +${s.score}`).join('\n')}">
+                <span class="special-badge points">P</span>
+                ${groups.points.length > 1
+                        ? `<span class="special-count">${groups.points.length}</span>`
+                        : ''}
+            </span>
+        `);
+            }
+
+            return badges.join("");
+        })();
+        //    .join("");
         return `
         <div class="renner-item border-bottom py-2 mb-2" style="${rowStyle}">
             <div class="d-flex justify-content-between align-items-start">

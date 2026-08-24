@@ -244,6 +244,28 @@
     vertical-align: super;
 }
 
+.special-badge-wrapper {
+    position: relative;
+    display: inline-block;
+    margin-left: 3px;
+}
+
+.special-count {
+    position: absolute;
+    top: -7px;
+    right: -7px;
+    min-width: 14px;
+    height: 14px;
+    padding: 0 3px;
+    border-radius: 7px;
+    background: #555;
+    color: white;
+    font-size: 9px;
+    font-weight: bold;
+    line-height: 14px;
+    text-align: center;
+}
+
 .special-badge {
     display: inline-flex;
     align-items: center;
