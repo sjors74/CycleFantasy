@@ -43,7 +43,7 @@ builder.Services.AddSingleton<IBrowser>(sp =>
 
     return playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
     {
-        Headless = false,
+        Headless = true,
         ExecutablePath = chromePath, // null lokaal = default Playwright browser
         Args = new[]
         {
