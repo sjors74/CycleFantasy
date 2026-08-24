@@ -514,6 +514,11 @@ namespace CycleManager.Services
         {
             var batchId = Guid.NewGuid();
 
+            var seasonYear = await _db.SeasonYears
+                .Where(x => x.Active)
+                .Select(x => x.Year)
+                .SingleAsync();
+
             var category = await _db.RatingCategories
                 .Where(x => x.IsActive)
                 .OrderBy(x =>
@@ -536,7 +541,7 @@ namespace CycleManager.Services
 
             await SaveScrapeRatingsAsync(ratings, batchId);
 
-            await ProcessRatingsAsync(batchId);
+            await ProcessRatingsAsync(batchId, seasonYear);
 
             if (progress == null)
             {
@@ -559,6 +564,11 @@ namespace CycleManager.Services
             var competitor = await _db.Competitors
                 .FirstAsync(x => x.CompetitorId == competitorId);
 
+            var seasonYear = await _db.SeasonYears
+                 .Where(x => x.Active)
+                 .Select(x => x.Year)
+                .SingleAsync();
+
             if (string.IsNullOrWhiteSpace(competitor.CyclingFlashScraperName)) 
             { 
                 throw new InvalidOperationException("Competitor heeft geen CyclingFlash profiel."); 
@@ -574,7 +584,7 @@ namespace CycleManager.Services
 
             await _db.SaveChangesAsync();
 
-            await ProcessRatingsAsync(batchId);
+            await ProcessRatingsAsync(batchId, seasonYear);
 
             competitor.CyclingFlashLastScraped = DateTime.UtcNow;
 
@@ -867,21 +877,27 @@ namespace CycleManager.Services
             await _db.SaveChangesAsync();
         }
 
-        public async Task ProcessRatingsAsync(Guid batchId)
+        public async Task ProcessRatingsAsync(Guid batchId, int seasonYear)
         {
             var ratings = await _db.ScrapeCompetitorRatings
                 .Where(x => x.BatchId == batchId && !x.Processed)
-                .ToListAsync(); 
-            
-            // Eén keer alle competitors laden
-            var nameLookup = await _db.Competitors 
-                .ToDictionaryAsync( 
+                .ToListAsync();
+
+            var competitors = await _db.Competitors
+                .Where(c => c.CompetitorInTeams
+                    .Any(cit => cit.TeamYear.Year == seasonYear))
+                .ToListAsync();
+
+            var nameLookup = competitors
+                .ToDictionary(
                     x => Normalize($"{x.FirstName} {x.LastName}"),
                     x => x);
 
-            var profileLookup = await _db.Competitors
-                .Where(x => x.CyclingFlashScraperName != null)
-                .ToDictionaryAsync(x => x.CyclingFlashScraperName!, x => x);
+            var profileLookup = competitors
+                .Where(x => !string.IsNullOrWhiteSpace(x.CyclingFlashScraperName))
+                .ToDictionary(
+                    x => x.CyclingFlashScraperName!, 
+                    x => x);
 
             var categories = await _db.RatingCategories
                 .ToDictionaryAsync(x => x.Code, x => x.RatingCategoryId);
