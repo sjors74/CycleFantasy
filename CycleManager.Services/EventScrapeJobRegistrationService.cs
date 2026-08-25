@@ -41,7 +41,7 @@ namespace CycleManager.Services
                     RecurringJob.AddOrUpdate<IEventScrapeSchedulerService>(
                         $"event-scraper-{e.EventId}",
                         x => x.RunEventScrapeAsync(e.EventId),
-                        "*/5 * * * *",
+                        "*/5 16-17 * * *",
                         new RecurringJobOptions
                         {
                             TimeZone = timezone
