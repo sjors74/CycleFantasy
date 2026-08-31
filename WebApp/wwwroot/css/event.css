@@ -244,59 +244,82 @@
     vertical-align: super;
 }
 
+.renner-info {
+    display: grid;
+    grid-template-columns: 1fr 250px;
+    gap: 0.5rem;
+}
+
+.renner-name {
+    grid-column: 1;
+}
+
+.renner-team {
+    grid-column: 2;
+    grid-row: 1;
+}
+
+.renner-specials {
+    grid-column: 1;
+    grid-row: 2;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+
+/* Specials */
+.special-badge {
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 1px solid #aaa;
+}
+
 .special-badge-wrapper {
     position: relative;
-    display: inline-block;
+    display: inline-flex;
     margin-left: 3px;
+    line-height: 1;
 }
 
 .special-count {
     position: absolute;
-    top: -7px;
-    right: -7px;
-    min-width: 14px;
-    height: 14px;
-    padding: 0 3px;
-    border-radius: 7px;
-    background: #555;
-    color: white;
-    font-size: 9px;
-    font-weight: bold;
-    line-height: 14px;
-    text-align: center;
-}
-
-.special-badge {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 24px;
-    height: 24px;
+    top: -3px;
+    right: -5px;
+    min-width: 13px;
+    height: 13px;
+    padding: 0 2px;
     border-radius: 50%;
-    font-size: 10px;
+    background-color: #dc3545;
+    color: #fff;
+    border: 1px solid #fff;
+    font-size: 8px;
     font-weight: bold;
-    margin-left: 4px;
-    vertical-align: middle;
-    border: 1px solid #aaa;
+    line-height: 11px;
+    text-align: center;
+    z-index: 2;
 }
 
-    /* Gele trui / GC */
-    .special-badge.gc {
-        background-color: #ffd700;
-        color: #000;
-    }
 
-    /* KOM */
-    .special-badge.kom {
-        background: repeating-linear-gradient( 45deg, #fff, #fff 5px, #e00000 5px, #e00000 10px );
-        color: #000;
-    }
+/* GC */
+.special-badge.gc {
+    background-color: #ffd700;
+}
 
-    /* Puntenklasse */
-    .special-badge.points {
-        background-color: #198754;
-        color: #fff;
-    }
+/* KOM */
+.special-badge.kom {
+    background-color: #fff;
+    background-image: radial-gradient(#e00000 1.5px, transparent 1.5px);
+    background-size: 7px 7px;
+}
+
+/* Points */
+.special-badge.points {
+    background-color: #198754;
+}
+
 
 @keyframes spin {
     0% {
@@ -369,4 +392,22 @@
         display: none;
     }
 
+    .renner-info {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .renner-name {
+        order: 1;
+    }
+
+    .renner-team {
+        order: 2;
+    }
+
+    .renner-specials {
+        order: 3;
+        margin-top: 2px;
+    }
 }

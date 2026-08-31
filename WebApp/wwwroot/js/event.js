@@ -305,78 +305,89 @@ document.addEventListener('DOMContentLoaded', function () {
 
             if (groups.kom.length > 0) {
                 badges.push(`
-            <span class="special-badge-wrapper" title="${groups.kom.map(s => `${s.name} +${s.score}`).join('\n')}">
-                <span class="special-badge kom">KOM</span>
-                ${groups.kom.length > 1
+        <span class="special-badge-wrapper" title="${groups.kom.map(s => `${s.name} +${s.score}`).join('\n')}">
+            <span class="special-badge kom"></span>
+            ${groups.kom.length > 1
                         ? `<span class="special-count">${groups.kom.length}</span>`
                         : ''}
-            </span>
-        `);
+        </span>
+    `);
             }
 
             if (groups.gc.length > 0) {
                 badges.push(`
-            <span class="special-badge-wrapper" title="${groups.gc.map(s => `${s.name} +${s.score}`).join('\n')}">
-                <span class="special-badge gc">GC</span>
-                ${groups.gc.length > 1
+        <span class="special-badge-wrapper" title="${groups.gc.map(s => `${s.name} +${s.score}`).join('\n')}">
+            <span class="special-badge gc"></span>
+            ${groups.gc.length > 1
                         ? `<span class="special-count">${groups.gc.length}</span>`
                         : ''}
-            </span>
-        `);
+        </span>
+    `);
             }
 
             if (groups.points.length > 0) {
                 badges.push(`
-            <span class="special-badge-wrapper" title="${groups.points.map(s => `${s.name} +${s.score}`).join('\n')}">
-                <span class="special-badge points">P</span>
-                ${groups.points.length > 1
+        <span class="special-badge-wrapper" title="${groups.points.map(s => `${s.name} +${s.score}`).join('\n')}">
+            <span class="special-badge points"></span>
+            ${groups.points.length > 1
                         ? `<span class="special-count">${groups.points.length}</span>`
                         : ''}
-            </span>
-        `);
+        </span>
+    `);
             }
 
             return badges.join("");
         })();
-        //    .join("");
         return `
-        <div class="renner-item border-bottom py-2 mb-2" style="${rowStyle}">
-            <div class="d-flex justify-content-between align-items-start">
-                <!-- Linkerzijde -->
-                <div class="d-flex w-100">
-                    <img src="${flagUrl}" class="img-fluid me-2 mt-1" style="max-height: 24px; width: 24px;" />
+            <div class="renner-item border-bottom py-2 mb-2" style="${rowStyle}">
+                <div class="d-flex justify-content-between align-items-start">
 
-                    <div class="d-flex flex-column flex-md-row d-md-grid w-100"
-                         style="display: grid; grid-template-columns: 1fr 250px; gap: 0.5rem;">
-                        <div class="fw-bold">${pick.pcsName
-                            ? `<a href="https://procyclingstats.com/rider/${pick.pcsName}" target="_blank" class="text-dark text-decoration-none">${pick.competitorName}</a>`
-            : pick.competitorName} 
-                ${window.renderRatings(pick.ratings, maxRating)}
-                ${pick.isNationalChampion ? `<span class="nc-badge">NC</span>` : ''}
-                ${specialBadges}            
-                </div>
-                        <div class="text-muted small">${pick.competitorTeam}</div>
-                    </div>
-                </div>
-                <div class="text-end ms-2" style="min-width: 120px;">
-                    <div class="small text-muted">
-                        Normaal: <span class="fw-bold">${pick.normalPoints ?? 0}</span>
+                    <!-- Linkerzijde -->
+                    <div class="d-flex w-100">
+                        <img src="${flagUrl}" class="img-fluid me-2 mt-1"
+                             style="max-height: 24px; width: 24px;" />
+
+                        <div class="renner-info w-100">
+
+                            <div class="renner-name fw-bold">
+                                ${pick.pcsName
+                        ? `<a href="https://procyclingstats.com/rider/${pick.pcsName}" target="_blank" class="text-dark text-decoration-none">${pick.competitorName}</a>`
+                        : pick.competitorName}
+                                ${window.renderRatings(pick.ratings, maxRating)}
+                                ${pick.isNationalChampion ? `<span class="nc-badge">NC</span>` : ''}
+                            </div>
+
+                            <div class="renner-team text-muted small">
+                                ${pick.competitorTeam}
+                            </div>
+
+                            ${specialBadges
+                        ? `<div class="renner-specials">${specialBadges}</div>`
+                        : ''}
+                        </div>
                     </div>
 
-                    <div class="small text-muted">
-                        Klassementen: <span class="fw-bold">${pick.specialPoints ?? 0}</span>
+                    <!-- Punten -->
+                    <div class="text-end ms-2" style="min-width: 120px;">
+                        <div class="small text-muted">
+                            Normaal: <span class="fw-bold">${pick.normalPoints ?? 0}</span>
+                        </div>
+
+                        <div class="small text-muted">
+                            Klassementen: <span class="fw-bold">${pick.specialPoints ?? 0}</span>
+                        </div>
+
+                        <div class="border-top mt-1 pt-1">
+                            ${pick.latestPoints > 0
+                        ? `<span class="fs-7 text-success">(+${pick.latestPoints})</span>`
+                        : ''}
+                            <span class="fw-bold fs-5">${pick.points ?? 0}</span>
+                        </div>
                     </div>
 
-                    <div class="border-top mt-1 pt-1">
-                        ${pick.latestPoints > 0
-                                ? `<span class="fs-7 text-success">(+${pick.latestPoints})</span>`
-                                : ''}
-                        <span class="fw-bold fs-5">${pick.points ?? 0}</span>
-                    </div>
                 </div>
             </div>
-        </div>
-    `;
+        `;
     }
     function handlePodiumClick(deelnemer, plaats, eventId) {
         const lijst = document.getElementById("deelnemer-list");
