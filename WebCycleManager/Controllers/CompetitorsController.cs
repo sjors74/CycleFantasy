@@ -419,11 +419,17 @@ namespace WebCycleManager.Controllers
         [HttpPost]
         public async Task<IActionResult> RunRatingCompetitorScrape(int competitorId)
         {
-            await _scraperService.RunRatingCompetitorScrapeAsync(competitorId);
+            try
+            {
+                await _scraperService.RunRatingCompetitorScrapeAsync(competitorId);
 
-            TempData["Success"] = "Rating scrape uitgevoerd.";
-
-            return RedirectToAction(nameof(Index));
+                TempData["SuccessMessage"] = "Cycling Flash ratings succesvol opgehaald.";
+            }
+            catch(Exception)
+            {
+                TempData["ErrorMessage"] = "Het ophalen van de Cycling Flash ratings is mislukt.";
+            }
+            return RedirectToAction(nameof(Edit),  new { id = competitorId });
         }
         private bool CompetitorExists(int id)
         {
