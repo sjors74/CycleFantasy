@@ -480,3 +480,63 @@ function updateSuggestieButton() {
 
     button.disabled = aantalGeselecteerd >= MAX_SELECTED;
 }
+
+export function toonGeselecteerdeRenners() {
+
+    const selected = getSelected();
+
+    const container =
+        document.getElementById("selectedRidersList");
+
+    if (!container) {
+        return;
+    }
+
+    const selectedSet = new Set(
+        selected.map(id => Number(id))
+    );
+
+    const renners = (window.allRenners || [])
+        .filter(r =>
+            selectedSet.has(Number(r.CompetitorInTeamId))
+    );
+
+    container.innerHTML = renners.map(r => {
+
+        const flagUrl = r.CountryShort
+            ? `${FLAGS_BASE_URL}/24x18/${r.CountryShort.toLowerCase()}.png`
+            : null;
+
+        return `
+            <div class="border-bottom py-2 d-flex align-items-center">
+
+                ${flagUrl
+                ? `<img src="${flagUrl}"
+                            class="me-2"
+                            style="width: 24px; height: 18px;"
+                            alt="">`
+                : ''
+            }
+
+                <div>
+                    <div class="fw-bold">
+                        ${r.CompetitorName}
+                    </div>
+
+                    <div class="small text-muted">
+                        ${r.CurrentTeamName ?? ''}
+                    </div>
+                </div>
+
+            </div>
+        `;
+    }).join("");
+
+    const modalElement =
+        document.getElementById("selectedRidersModal");
+
+    const modal =
+        bootstrap.Modal.getOrCreateInstance(modalElement);
+
+    modal.show();
+}
