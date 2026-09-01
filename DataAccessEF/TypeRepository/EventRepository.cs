@@ -43,6 +43,9 @@ namespace DataAccessEF.TypeRepository
                 .Include(e => e.Configuration)
                 .Include(e => e.GameCompetitorEvents)
                     .ThenInclude(e => e.User)
+                .Include(e => e.GameCompetitorEvents)
+                    .ThenInclude(gce => gce.Renners)
+                        .ThenInclude(r => r.CompetitorsInEvent)
                 .Where(e => e.IsActive.Equals(true))
                 .AsNoTracking()
                 .ToListAsync();

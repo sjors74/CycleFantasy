@@ -14,5 +14,7 @@ namespace CycleManager.Domain.Dto
         public int Punten { get; set;}
         public int LaatsteScore { get; set; }
         public int EventId { get; set; }
+        public int RennersActief { get; set; }
+        public int RennersUitgevallen { get; set; }
     }
 }
