@@ -44,6 +44,8 @@ namespace WebCycle.Controllers
 
                     var stageScores = await _resultService.GetScoresByEventIdAsync(cEvent.EventId);
 
+                    var sourceEvent = events.FirstOrDefault(e => e.EventId == cEvent.EventId);
+
                     foreach (var deelnemer in cEvent.Deelnemers)
                     {
                         var score  = scoreBreakdown
@@ -58,6 +60,22 @@ namespace WebCycle.Controllers
                         deelnemer.SpecialePunten = score?.SpecialScore?? 0;
                         deelnemer.Punten = score?.TotalPoints ?? 0;
                         deelnemer.LaatsteScore = lastStageScore?.Score ?? 0;
+
+                        var gameCompetitorEvent = sourceEvent?.GameCompetitorEvents
+                            .FirstOrDefault(g => g.Id == deelnemer.Id);
+
+                        if (gameCompetitorEvent != null)
+                        {
+                            deelnemer.RennersUitgevallen =
+                                gameCompetitorEvent.Renners
+                                    .Count(r =>
+                                        r.CompetitorsInEvent?.OutOfCompetition == true);
+
+                            deelnemer.RennersActief =
+                                gameCompetitorEvent.Renners
+                                    .Count(r =>
+                                        r.CompetitorsInEvent?.OutOfCompetition != true);
+                        }
                     }
                 }
             }
