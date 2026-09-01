@@ -467,7 +467,20 @@ document.addEventListener('DOMContentLoaded', function () {
             data-deelnemer-id="${deelnemer.id}"
             data-event-id="${eventId}">
             <div class="col-md-1">${plaats}</div>
-            <div class="col-md-4 text-uppercase">${deelnemer.poolNaam || "onbekende pool"}</div>
+            <div class="col-md-4">
+                <div class="text-uppercase">
+                    ${deelnemer.poolNaam || "onbekende pool"}
+                </div>
+                <div class="small text-muted">
+                    <span class="text-success">
+                        ${deelnemer.rennersActief} actief
+                    </span>
+                    ·
+                    <span class="text-danger">
+                        ${deelnemer.rennersUitgevallen} uitgevallen
+                    </span>
+                </div>
+            </div>
             <div class="col-md-4 text-uppercase">${deelnemer.deelnemerNaam || "onbekende deelnemer"}</div>
             <div class="col-md-2 position-relative">
                 <div class="d-flex justify-content-end align-items-center pe-4">
@@ -486,7 +499,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     </div>
                 </div>
                 ${laatsteScoreHtml}
-            </div>        
+            </div>     
         </div>        
         <div class="collapse mt-2" id="${collapseId}" data-bs-parent="#deelnemer-list">
             <div class="card card-body details-content" data-loaded="false"></div>

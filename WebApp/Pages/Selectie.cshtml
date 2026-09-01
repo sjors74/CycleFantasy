@@ -20,6 +20,7 @@
         <button type="submit" asp-page-handler="Bevestigen" class="btn btn-primary">Bevestig selectie</button>
         <a href="/Account/Profiel" class="btn btn-outline-danger">Annuleren</a>
         <button type="button" id="suggestieBtn" class="btn btn-outline-dark" onclick="voegWillekeurigeRennersToe(@Model.EvenementId)">Doe een suggestie</button>
+        <button type="button" id="toonLijstBtn" class="btn btn-outline-dark">Toon lijst</button>
     </div>
 
     <!-- Navigatie boven de teams -->
@@ -137,10 +138,125 @@
     </div>
     
 </form>
+<!-- modal voor suggesties -->
+<div class="modal fade" id="randomModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    Willekeurige suggestie
+                </h5>
+
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Sluiten">
+                </button>
+            </div>
+
+            <div class="modal-body">
+
+                <p class="text-muted mb-3">
+                    De volgende renners worden voorgesteld:
+                </p>
+
+                <div id="randomRenners"></div>
+
+            </div>
+
+            <div class="modal-footer">
+
+                <button type="button"
+                        class="btn btn-outline-secondary"
+                        id="btnRandomAgain">
+                    Nogmaals
+                </button>
+
+                <button type="button"
+                        class="btn btn-secondary"
+                        data-bs-dismiss="modal">
+                    Annuleren
+                </button>
+
+                <button type="button"
+                        class="btn btn-primary"
+                        id="btnRandomOk">
+                    OK
+                </button>
+
+            </div>
+
+        </div>
+    </div>
+</div>
+<!-- modal voor lijst van opgeslagen renners -->
+<div class="modal fade"
+     id="selectedRidersModal"
+     tabindex="-1"
+     aria-hidden="true">
+
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    Mijn renners
+                </h5>
+
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Sluiten">
+                </button>
+            </div>
+
+            <div class="modal-body">
+
+                <div id="selectedRidersList"></div>
+
+            </div>
+
+            <div class="modal-footer">
+
+                <button type="button"
+                        class="btn btn-secondary"
+                        data-bs-dismiss="modal">
+                    Sluiten
+                </button>
+
+            </div>
+
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <script type="module">
-        import { voegWillekeurigeRennersToe } from '/js/selectie.js';
+        import { 
+            voegWillekeurigeRennersToe,
+            toonGeselecteerdeRenners 
+        } from '/js/selectie.js';
+        
         window.voegWillekeurigeRennersToe = voegWillekeurigeRennersToe;
+
+        window.toonGeselecteerdeRenners = toonGeselecteerdeRenners;
+    </script>
+    <script>
+        window.allRenners = @Html.Raw(
+                            JsonSerializer.Serialize(
+                                    Model.AllTeams.SelectMany(t => t.Renners)
+                            )
+                    );
+    </script>
+    <script>
+        document
+            .getElementById("toonLijstBtn")
+            ?.addEventListener("click", () => {
+
+                toonGeselecteerdeRenners();
+
+            });
     </script>
     <script>
         document.addEventListener("click", async (e) => {
