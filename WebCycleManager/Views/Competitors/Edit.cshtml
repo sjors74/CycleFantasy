@@ -21,7 +21,7 @@
     <form asp-action="RunRatingCompetitorScrape" method="post" class="mb-0">
         <input type="hidden" name="competitorId" value="@Model.CompetitorId" />
 
-        <button type="submit" class="btn btn-outline-primary">
+        <button type="submit" class="btn btn-outline-primary" @(string.IsNullOrWhiteSpace(Model.CyclingFlashScraperName) ? "disabled" : "")>
             <i class="bi bi-arrow-repeat"></i> Scrape CyclingFlash
         </button>
     </form>
