@@ -104,74 +104,113 @@ namespace CycleManager.Services
 
         public async Task<List<ScrapeCompetitorRating>> ScrapeCompetitorRatingsAsync(string profileUrl, DateTime ratingDate)
         {
-            var result = new List<ScrapeCompetitorRating>();
+            const int maxAttempts = 3;
 
-            using var playwright = await Playwright.CreateAsync();
-
-            await using var browser = await playwright.Chromium.LaunchAsync(
-                new BrowserTypeLaunchOptions
-                {
-                    Headless = false,
-                    Channel = "chrome"
-                });
-
-            var context = await browser.NewContextAsync(new BrowserNewContextOptions
+            for (int attempt = 1; attempt <= maxAttempts; attempt++)
             {
-                Locale = "nl-NL",
-                ViewportSize = new ViewportSize
+                try
                 {
-                    Width = 1920,
-                    Height = 1080
+                    _logger.LogInformation("Scraping competitor profile {Url}, attempt {Attempt}/{MaxAttempts}",
+                        profileUrl,
+                        attempt,
+                        maxAttempts);
+
+                    using var playwright = await Playwright.CreateAsync();
+
+                    await using var browser = await playwright.Chromium.LaunchAsync(
+                        new BrowserTypeLaunchOptions
+                        {
+                            Headless = false,
+                            Channel = "chrome"
+                        });
+
+                    var context = await browser.NewContextAsync(
+                        new BrowserNewContextOptions
+                        {
+                            Locale = "nl-NL",
+                            ViewportSize = new ViewportSize
+                            {
+                                Width = 1920,
+                                Height = 1080
+                            }
+                        });
+
+                    var page = await context.NewPageAsync();
+
+                    var url = BuildProfileUrl(profileUrl);
+
+                    await page.GotoAsync(url, new PageGotoOptions
+                    {
+                        WaitUntil = WaitUntilState.DOMContentLoaded,
+                        Timeout = 30000
+                    });
+
+                    _logger.LogInformation("Current url = {Url}", page.Url);
+                    _logger.LogInformation("Page title = {Title}", await page.TitleAsync());
+
+                    var bodyText = await page.Locator("body").InnerTextAsync();
+
+                    _logger.LogInformation(
+                        "Body length: {Length}",
+                        bodyText.Length);
+
+                    var competitorName = (await page.TitleAsync())
+                        .Replace(" - Profile & Career Stats", "")
+                        .Replace(" | CyclingFlash", "")
+                        .Trim();
+
+                    var rows = await GetProfileRowsAsync(page);
+
+                    var ratings = await ParseProfileRowsAsync(
+                        rows,
+                        profileUrl,
+                        competitorName,
+                        ratingDate);
+
+                    if (ratings.Count > 0)
+                    {
+                        _logger.LogInformation(
+                            "Profile {Profile} : {Count} ratings scraped on attempt {Attempt}.",
+                            profileUrl,
+                            ratings.Count,
+                            attempt);
+
+                        return ratings;
+                    }
+
+                    _logger.LogWarning(
+                        "Profile {Profile}: 0 ratings scraped on attempt {Attempt}/{MaxAttempts}",
+                        profileUrl,
+                        attempt,
+                        maxAttempts);
+
+                    if (attempt < maxAttempts)
+                    {
+                        await Task.Delay(TimeSpan.FromSeconds(2));
+                    }
                 }
-            });
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(
+                        ex,
+                        "Error scraping profile {Profile} on attempt {Attempt}/{MaxAttempts}",
+                        profileUrl,
+                        attempt,
+                        maxAttempts);
 
-            var page = await context.NewPageAsync();
+                    if (attempt < maxAttempts)
+                    {
+                        await Task.Delay(TimeSpan.FromSeconds(2));
+                    }
+                }
+            }
 
-            var url = BuildProfileUrl(profileUrl);
-
-            _logger.LogInformation("Scraping competitor profile {Url}", url);
-
-            await page.GotoAsync(url, new PageGotoOptions
-            {
-                WaitUntil = WaitUntilState.DOMContentLoaded,
-                Timeout = 30000
-            });
-
-            _logger.LogInformation("Current url = {Url}", page.Url);
-            _logger.LogInformation("Page title = {Title}", await page.TitleAsync());
-
-            var bodyText = await page.Locator("body").InnerTextAsync();
-
-            _logger.LogInformation(
-                "Body length: {Length}",
-                bodyText.Length);
-
-            _logger.LogInformation(
-                "Body text:\n{Body}",
-                bodyText);
-
-            var competitorName = (await page.TitleAsync())
-                .Replace(" - Profile & Career Stats", "")
-                .Replace(" | CyclingFlash", "")
-                .Trim();
-
-            var rows = await GetProfileRowsAsync(page);
-
-            var ratings = await ParseProfileRowsAsync(
-                rows,
+            _logger.LogWarning(
+                "Profile {Profile}: no ratings scraped after {MaxAttempts} attempts",
                 profileUrl,
-                competitorName,
-                ratingDate);
+                maxAttempts);
 
-            result.AddRange(ratings);
-
-            _logger.LogInformation(
-                "Profile {Profile} : {Count} ratings scraped.", 
-                profileUrl, 
-                result.Count);
-
-            return result;
-
+            return new List<ScrapeCompetitorRating>();
         }
 
         private async Task<IReadOnlyList<ILocator>> GetRowsAsync(IPage page)
