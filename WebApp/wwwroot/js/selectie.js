@@ -116,9 +116,6 @@ async function haalWillekeurigeRenners(eventId) {
 
     const nogNodig = MAX_SELECTED - selected.length;
 
-    console.log("Aantal geselecteerd:", selected.length);
-    console.log("Nog nodig:", nogNodig);
-
     if (nogNodig <= 0) {
         return [];
     }
@@ -135,16 +132,9 @@ async function haalWillekeurigeRenners(eventId) {
 
     const candidates = await response.json();
 
-    console.log("Aantal kandidaten:", candidates.length);
-
     // Renners die al geselecteerd zijn uitsluiten
     let available = candidates.filter(r =>
         !selectedSet.has(r.competitorInTeamId)
-    );
-
-    console.log(
-        "Beschikbare kandidaten:",
-        available.length
     );
 
     // Willekeurig schudden
@@ -169,8 +159,6 @@ async function haalWillekeurigeRenners(eventId) {
  */
 function updateRandomModal(renners) {
 
-    console.log("MODAL RENNER DATA:", renners[0]);
-
     currentRandomSelection = renners;
 
     const container =
@@ -189,24 +177,33 @@ function updateRandomModal(renners) {
             ? `${FLAGS_BASE_URL}/24x18/${r.countryShort.toLowerCase()}.png`
             : '';
 
+        const maxRating =
+            window.appSettings?.maxRating ?? 2500;
+
+        const ratingsHtml = window.renderRatings
+            ? window.renderRatings(r.ratings, maxRating)
+            : '';
+
         return `
-        <div class="border-bottom py-2 d-flex align-items-center">
+        <div class="border-bottom py-1 d-flex align-items-center">
 
             ${flagUrl
                 ? `<img src="${flagUrl}"
                         class="me-2"
-                        style="width: 24px; height: 18px;"
+                        style="width: 20px; height: 15px;"
                         alt="">`
                 : ''
             }
 
-            <div>
-                <div class="fw-bold">
+            <div class="flex-grow-1 min-width-0">
+                <div class="fw-semibold small">
                     ${r.competitorName}
-                </div>
 
-                <div class="small text-muted">
-                    ${r.competitorTeam ?? ''}
+                    <span class="text-muted fw-normal ms-2">
+                        ${r.currentTeamName ?? ''}
+                    </span>
+
+                    ${ratingsHtml}
                 </div>
             </div>
 
@@ -220,12 +217,6 @@ function updateRandomModal(renners) {
  * Opent de modal met de eerste suggestie.
  */
 function toonRandomModal(renners) {
-
-    console.log(
-        "Modal openen met",
-        renners.length,
-        "renners"
-    );
 
     updateRandomModal(renners);
 
@@ -266,25 +257,10 @@ function toonRandomModal(renners) {
  */
 export async function voegWillekeurigeRennersToe(eventId) {
 
-    console.log(
-        "Suggestie aangeklikt. EventId:",
-        eventId
-    );
-
     const selected = getSelected();
 
     const nogNodig =
         MAX_SELECTED - selected.length;
-
-    console.log(
-        "Huidige selectie:",
-        selected.length
-    );
-
-    console.log(
-        "Nog nodig:",
-        nogNodig
-    );
 
     if (nogNodig <= 0) {
 
@@ -301,11 +277,6 @@ export async function voegWillekeurigeRennersToe(eventId) {
 
         const renners =
             await haalWillekeurigeRenners(eventId);
-
-        console.log(
-            "Willekeurige suggestie:",
-            renners
-        );
 
         if (renners.length === 0) {
 
@@ -624,7 +595,7 @@ export async function toonGeselecteerdeRenners() {
                     }
 
             <div class="flex-grow-1 min-width-0">
-                <div class="fw-semibold small text-truncate">
+                <div class="fw-semibold small">
                     ${pick.competitorName}
                     <span class="text-muted fw-normal ms-1">
                         ${pick.competitorTeam ?? ''}

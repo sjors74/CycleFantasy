@@ -44,12 +44,12 @@ namespace Domain.Mapping
                     o => o.MapFrom(s => s.CompetitorInTeam.Competitor.PcsName))
                 .ForMember(d => d.CountryShort,
                     o => o.MapFrom(s => s.CompetitorInTeam.Competitor.Country.CountryNameShort))
+                .ForMember(d => d.Ratings, o => o.MapFrom(s => s.CompetitorInTeam.Competitor.Ratings))
+                .ForMember(d => d.CurrentTeamName, o => o.MapFrom(s => s.CompetitorInTeam.TeamYear.Team.CurrentTeamName))
                 .ForMember(d => d.ScraperName, o => o.Ignore())
                 .ForMember(d => d.Punten, o => o.Ignore())
-                .ForMember(d => d.CurrentTeamName, o => o.Ignore())
                 .ForMember(d => d.IsNationalChampion, o => o.Ignore())
                 .ForMember(d => d.Teams, o => o.Ignore())
-                //.ForMember(d => d.CompetitorInTeamId, o => o.Ignore())
                 .ForMember(d => d.EventNumber, o => o.Ignore())
                 .ForMember(d => d.InSelectie, o => o.Ignore())
                 .ForMember(d => d.RemovedFromStartlist, o => o.Ignore());
