@@ -37,7 +37,12 @@
                                 </select>
                             }
                         </td>
-                        <td>@(pick.PickId > 0 ? pick.LastName : "")</td>
+                        <td>@(pick.PickId > 0 ? pick.LastName : "")
+
+                            @await Component.InvokeAsync(
+                            "CompetitorRatings",
+                                                new { ratings = pick.Ratings })
+                        </td>
                         <td>@(pick.PickId > 0 ? pick.NormalScore : "")</td>
                         <td>@(pick.PickId > 0 ? pick.SpecialQuestionScore : "")</td>
                         <td>@(pick.PickId > 0 ? pick.TotalScore : "")</td>

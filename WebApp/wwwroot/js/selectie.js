@@ -9,8 +9,14 @@ function getSelected() {
     return window.state.selected || [];
 }
 
-function setSelected(selected) {
-    window.state.selected = selected;
+function setSelected(ids) {
+    window.state.selected = ids;
+
+    const input = document.getElementById("SelectedRidersJson");
+
+    if (input) {
+        input.value = JSON.stringify(ids);
+    }
 
     updateSuggestieButton();
 }
@@ -481,9 +487,7 @@ function updateSuggestieButton() {
     button.disabled = aantalGeselecteerd >= MAX_SELECTED;
 }
 
-export function toonGeselecteerdeRenners() {
-
-    const selected = getSelected();
+export async function toonGeselecteerdeRenners() {
 
     const container =
         document.getElementById("selectedRidersList");
@@ -492,45 +496,169 @@ export function toonGeselecteerdeRenners() {
         return;
     }
 
-    const selectedSet = new Set(
-        selected.map(id => Number(id))
-    );
+    const eventId = window.eventId;
+    const deelnemerId = window.deelnemerId;
 
-    const renners = (window.allRenners || [])
-        .filter(r =>
-            selectedSet.has(Number(r.CompetitorInTeamId))
-    );
+    if (!eventId || !deelnemerId) {
+        container.innerHTML = `
+            <p class="text-danger">Event of deelnemer ontbreekt.</p>`;
 
-    container.innerHTML = renners.map(r => {
 
-        const flagUrl = r.CountryShort
-            ? `${FLAGS_BASE_URL}/24x18/${r.CountryShort.toLowerCase()}.png`
+        bootstrap.Modal
+            .getOrCreateInstance(document.getElementById("selectedRidersModal"))
+            .show();
+
+        return;
+    }
+
+    try {
+        // Haal dezelfde pick-data op als de deelnemerspagina.
+        // Hierin zitten ook de ratings per renner. 
+        const picksResponse = await fetch(
+            `${API_BASE_URL}/api/Deelnemer/Picks/${deelnemerId}/event/${eventId}`
+        );
+
+        if (!picksResponse.ok) {
+            throw new Error("Fout bij ophalen van de renners.");
+        }
+
+        const picks = await picksResponse.json();
+
+        const selectedIds = getSelected();
+
+        const renners = picks.filter(
+            pick => selectedIds.includes(pick.competitorInTeamId)
+        );
+
+        // Haal de reeds berekende ratings van het GameCompetitorEvent op. 
+        const ratingsResponse = await fetch(
+            `${API_BASE_URL}/api/Deelnemer/Rating/${deelnemerId}?eventId=${eventId}`
+        );
+
+        let teamRatings = [];
+
+        if (ratingsResponse.ok) {
+            teamRatings = await ratingsResponse.json();
+        }
+
+        const maxRating =
+            window.appSettings?.maxRating ?? 2500;
+
+        /*
+         * De Overall - rating is al door de backend berekend
+         * als gemiddelde van de picks van dit GameCompetitorEvent. 
+         */
+        const bestRating = teamRatings.length > 0
+            ? teamRatings.reduce((best, current) =>
+                current.rating > best.rating ? current : best
+            )
             : null;
 
-        return `
-            <div class="border-bottom py-2 d-flex align-items-center">
+        const teamRatingHtml = bestRating
+            ? `
+        <div class="small text-muted mb-2">
+            Beste categorie:
+            <span class="rating-trigger">
+                <span class="fw-semibold text-dark">
+                    ${bestRating.ratingCategoryName}
+                </span>
 
-                ${flagUrl
-                ? `<img src="${flagUrl}"
-                            class="me-2"
-                            style="width: 24px; height: 18px;"
-                            alt="">`
-                : ''
-            }
+                <span class="rating-dot bg-${bestRating.color} ms-1"></span>
 
-                <div>
-                    <div class="fw-bold">
-                        ${r.CompetitorName}
-                    </div>
+                <span class="rating-tooltip">
+                    ${teamRatings
+                .slice()
+                .sort((a, b) => a.displayOrder - b.displayOrder)
+                .map(rating => {
+                    const percentage =
+                        ((rating.rating / maxRating) * 100);
 
-                    <div class="small text-muted">
-                        ${r.CurrentTeamName ?? ''}
-                    </div>
+                    return `
+                                <div class="rating-row">
+                                    <span class="rating-name">
+                                        ${rating.ratingCategoryName}
+                                    </span>
+
+                                    <div class="rating-progress">
+                                        <div class="rating-progress-bar bg-${rating.color}"
+                                             style="width:${percentage.toFixed(1)}%">
+                                        </div>
+                                    </div>
+
+                                    <span class="rating-value">
+                                        ${Math.round(rating.rating)}
+                                    </span>
+                                </div>
+                            `;
+                }).join("")}
+                </span>
+            </span>
+        </div>
+      `
+            : '';
+
+        if (renners.length === 0) {
+            container.innerHTML = teamRatingHtml +
+                `<p class="text-muted fst-italic mb-0">
+                    Geen renners geselecteerd.
+                 </p>`;
+        } else {
+
+            container.innerHTML =
+                teamRatingHtml +
+            renners.map(pick => {
+
+                const flagUrl = pick.countryCode
+                    ? `${FLAGS_BASE_URL}/24x18/${pick.countryCode.toLowerCase()}.png`
+                    : null;
+
+                return `
+        <div class="border-bottom py-1 d-flex align-items-center">
+
+            ${flagUrl
+                        ? `<img src="${flagUrl}"
+                        class="me-2"
+                        style="width: 20px; height: 15px;"
+                        alt="">`
+                        : ''
+                    }
+
+            <div class="flex-grow-1 min-width-0">
+                <div class="fw-semibold small text-truncate">
+                    ${pick.competitorName}
+                    <span class="text-muted fw-normal ms-1">
+                        ${pick.competitorTeam ?? ''}
+                    </span>
+
+                    ${window.renderRatings
+                        ? window.renderRatings(pick.ratings, maxRating)
+                        : ''
+                    }
                 </div>
-
             </div>
-        `;
-    }).join("");
+
+            <div class="ms-2 flex-shrink-0" style="width: 28px; text-align: right;">
+                <button type="button"
+                        class="btn btn-sm btn-outline-danger py-0 px-1"
+                        style="font-size: 0.7rem; line-height: 1.2;"
+                        onclick="verwijderRennerUitModal(this, ${pick.competitorInTeamId})">
+                    ×
+                </button>
+            </div>
+
+        </div>
+    `;
+            }).join("")
+        }
+    }
+    catch (err) {
+        console.error(err);
+
+        container.innerHTML =
+            `<p class="text-danger"> 
+                Renners ophalen mislukt.
+             </p>`;
+    }
 
     const modalElement =
         document.getElementById("selectedRidersModal");
@@ -539,4 +667,16 @@ export function toonGeselecteerdeRenners() {
         bootstrap.Modal.getOrCreateInstance(modalElement);
 
     modal.show();
+}
+
+export function verwijderRennerUitModal(button, competitorInTeamId) {
+
+    const selected = getSelected();
+    const nieuweSelectie = selected.filter(
+        id => id !== competitorInTeamId
+    );
+
+    setSelected(nieuweSelectie);
+
+    button.closest(".border-bottom").remove();
 }

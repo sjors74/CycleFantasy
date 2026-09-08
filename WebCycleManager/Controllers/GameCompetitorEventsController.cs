@@ -16,14 +16,19 @@ namespace WebCycleManager.Controllers
         private readonly ICompetitorInEventService _competitorInEventService;
         private readonly IEventService _eventService;
         private readonly IUserService _userService;
+        private readonly IRatingService _ratingService;
         private List<ResultLineViewModel> _resultLines = new List<ResultLineViewModel>();
 
         public GameCompetitorEventsController(IGameCompetitorInEventService gameCompetitorInEventService, 
             IResultService resultService, IEventService eventService, IUserService userService,
-            ICompetitorInEventService competitorInEventService)
+            ICompetitorInEventService competitorInEventService, IRatingService ratingService)
         {
             _gameCompetitorEventService = gameCompetitorInEventService;
             _resultService = resultService;
+            _eventService = eventService;
+            _userService = userService;
+            _competitorInEventService = competitorInEventService;
+            _ratingService = ratingService;
             _eventService = eventService;
             _userService = userService;
             _competitorInEventService = competitorInEventService;
@@ -45,6 +50,15 @@ namespace WebCycleManager.Controllers
             // 3. Alle teams / game competitors
             var allGameCompetitors =
                 await _gameCompetitorEventService.GetAllCompetitorsInEvent(eventId);
+
+            // 3b. Alle ratings ophalen voor dit event
+            var ratings = await _ratingService.GetGameCompetitorRatings(eventId);
+
+            var ratingsLookup = ratings
+                .GroupBy(r => r.GameCompetitorEventId)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.ToList());
 
             // 4. ViewModel opbouwen
             var model = allGameCompetitors
@@ -78,7 +92,21 @@ namespace WebCycleManager.Controllers
                         GameCompetitorName = $"{gameCompetitor?.User?.FirstName} {gameCompetitor?.User?.LastName}",
 
                         NormalScore = normalScore,
-                        SpecialScore = specialScore
+                        SpecialScore = specialScore,
+
+                        Ratings = ratingsLookup.TryGetValue(
+                            gameCompetitor.Id, 
+                            out var competitorRatings) 
+                            ? competitorRatings
+                                .Select(r => new GameCompetitorRatingViewModel
+                                {
+                                    RatingCategoryId = r.RatingCategoryId,
+                                    RatingCategoryName = r.RatingCategoryName,
+                                    Color = r.Color,
+                                    Rating = r.Rating,
+                                })
+                                .ToList()
+                            : new List<GameCompetitorRatingViewModel>()
                     };
                 })
                 .OrderByDescending(m => m.Score)
@@ -158,6 +186,11 @@ namespace WebCycleManager.Controllers
                 .Where(p => p.GameCompetitorEventId == id)
                 .ToList();
 
+            var competitorIds = teamPicks
+                .Select(p => p.CompetitorsInEvent.CompetitorInTeam.CompetitorId)
+                .Distinct()
+                .ToList();      
+
             // Alle mogelijke competitors voor de dropdown
             var competitors = await _competitorInEventService.GetCompetitors(eventId.Value);
 
@@ -170,6 +203,22 @@ namespace WebCycleManager.Controllers
                 })
                 .ToList();
 
+            var ratings = await _ratingService.GetRatingsByCompetitorIds(competitorIds);
+
+            var ratingsLookup = ratings
+                .Where(r => r.RatingCategory.IsActive)
+                .GroupBy(r => new
+                {
+                    r.CompetitorId,
+                    r.RatingCategoryId
+                })
+                .ToDictionary(
+                    g => g.Key,
+                    g => g
+                        .OrderByDescending(r => r.RatingDate)
+                        .ThenByDescending(r => r.CompetitorRatingId)
+                        .First());
+
             model.DropdownList = dropdownList;
             model.TeamName = teamPicks.FirstOrDefault()?.GameCompetitorEvent?.TeamName ?? "onbekend";
 
@@ -177,12 +226,27 @@ namespace WebCycleManager.Controllers
             var picks = teamPicks
                 .Select(p =>
                 {
-                    var competitorId = p.CompetitorsInEventId;
-                    resultsByCompetitor.TryGetValue(competitorId, out var result);
+                    var competitorInEventId = p.CompetitorsInEventId;
+                    var competitorId = p.CompetitorsInEvent.CompetitorInTeam.CompetitorId;
+
+                    resultsByCompetitor.TryGetValue(competitorInEventId, out var result);
+
+                    var competitorRatings = ratingsLookup
+                        .Where(x => x.Key.CompetitorId == competitorId)
+                        .OrderBy(x => x.Value.RatingCategory.DisplayOrder)
+                        .Select(x => new CompetitorRatingViewModel
+                        {
+                            RatingCategoryId = x.Value.RatingCategoryId,
+                            Code = x.Value.RatingCategory.Code,
+                            Color = x.Value.RatingCategory.Color,
+                            DisplayOrder = x.Value.RatingCategory.DisplayOrder,
+                            Rating = x.Value.Rating
+                        })
+                        .ToList();
 
                     return new PickDetailViewModel
                     {
-                        CompetitorInEventId = competitorId,
+                        CompetitorInEventId = competitorInEventId,
                         FirstName = p.CompetitorsInEvent.CompetitorInTeam.Competitor.FirstName ?? "onbekend",
                         LastName = p.CompetitorsInEvent.CompetitorInTeam.Competitor.LastName ?? "onbekend",
                         CompetitorName = p.CompetitorsInEvent.CompetitorInTeam.Competitor.CompetitorName ?? "onbekend",
@@ -192,7 +256,8 @@ namespace WebCycleManager.Controllers
                         TotalScore = result?.TotalPoints ?? 0,
                         PickId = p.Id,
                         SelectedCompetitorId = competitorId,
-                        Competitors = dropdownList
+                        Competitors = dropdownList,
+                        Ratings = competitorRatings
                     };
                 })
                 .OrderByDescending(p => p.TotalScore)

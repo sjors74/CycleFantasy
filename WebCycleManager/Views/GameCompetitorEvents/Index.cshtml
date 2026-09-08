@@ -39,6 +39,10 @@
         </td>
         <td>
             @Html.DisplayFor(modelItem => item.GameCompetitorName)
+
+                    @await Component.InvokeAsync(
+                    "GameCompetitorRatings",
+                                new { ratings = item.Ratings })
         </td>
         <td>
             @Html.DisplayFor(modelItem => item.NormalScore)

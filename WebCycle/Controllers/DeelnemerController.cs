@@ -15,13 +15,15 @@ namespace WebCycle.Controllers
         private readonly IGameCompetitorInEventService deelnemerService;
         private readonly IEventService _eventService;
         private readonly IResultService resultService;
+        private readonly IRatingService _ratingService;
         private readonly IMapper _mapper;
         private readonly IMemoryCache _cache;
 
-        public DeelnemerController(IGameCompetitorInEventService deelnemerService, IEventService eventService, IResultService resultService, IMapper mapper, IMemoryCache cache)
+        public DeelnemerController(IGameCompetitorInEventService deelnemerService, IEventService eventService, IResultService resultService, IRatingService ratingService, IMapper mapper, IMemoryCache cache)
         {
             this.deelnemerService = deelnemerService;
             this.resultService = resultService;
+            _ratingService = ratingService;
             _eventService = eventService;
             _mapper = mapper;
             _cache = cache;
@@ -222,6 +224,20 @@ namespace WebCycle.Controllers
             if (!success)
                 BadRequest();
 
-            return Ok();        }
+            return Ok();        
+        }
+
+        [HttpGet("Rating/{deelnemerId}")]
+        public async Task<IActionResult> GetRatingForDeelnemer(int deelnemerId, [FromQuery] int eventId)
+        {
+            var ratings = await _ratingService
+                .GetGameCompetitorRatings(eventId);
+
+            var deelnemerRatings = ratings
+                .Where(r => r.GameCompetitorEventId == deelnemerId)
+                .ToList();
+
+            return Ok(deelnemerRatings);
+        }
     }
 }
