@@ -16,6 +16,7 @@ namespace CycleManager.Tests.Unit.Api
         private readonly Mock<IGameCompetitorInEventService> _mockDeelnemerService;
         private readonly Mock<IEventService> _mockEventService;
         private readonly Mock<IResultService> _mockResultService;
+        private readonly Mock<IRatingService> _mockRatingService;
         private readonly Mock<IMapper> _mockMapper;
         private readonly IMemoryCache _memoryCache;
         private readonly DeelnemerController _controller;
@@ -25,12 +26,14 @@ namespace CycleManager.Tests.Unit.Api
             _mockDeelnemerService = new Mock<IGameCompetitorInEventService>();
             _mockEventService = new Mock<IEventService>();
             _mockResultService = new Mock<IResultService>();
+            _mockRatingService = new Mock<IRatingService>();
             _mockMapper = new Mock<IMapper>();
             _memoryCache = new MemoryCache(new MemoryCacheOptions());
             _controller = new DeelnemerController(
                 _mockDeelnemerService.Object,
                 _mockEventService.Object,
                 _mockResultService.Object,
+                _mockRatingService.Object,
                 _mockMapper.Object,
                 _memoryCache
             );

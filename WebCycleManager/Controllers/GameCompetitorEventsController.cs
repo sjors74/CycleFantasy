@@ -29,9 +29,6 @@ namespace WebCycleManager.Controllers
             _userService = userService;
             _competitorInEventService = competitorInEventService;
             _ratingService = ratingService;
-            _eventService = eventService;
-            _userService = userService;
-            _competitorInEventService = competitorInEventService;
         }
 
         // GET: GameCompetitorEvents
