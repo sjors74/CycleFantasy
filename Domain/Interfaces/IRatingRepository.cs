@@ -1,4 +1,5 @@
-﻿using CycleManager.Domain.Models;
+﻿using CycleManager.Domain.Dto;
+using CycleManager.Domain.Models;
 
 namespace CycleManager.Domain.Interfaces
 {
@@ -9,5 +10,9 @@ namespace CycleManager.Domain.Interfaces
         Task<IEnumerable<RatingCategory>> GetRatingCategories();
 
         Task<IEnumerable<CompetitorRating>> GetRatingsByCompetitorId(int competitorId);
+
+        Task<IEnumerable<DeelnemerRatingDto>> GetGameCompetitorRatings(int eventId);
+
+        Task<IEnumerable<CompetitorRating>> GetRatingsByCompetitorIds(IEnumerable<int> competitorIds);
     }
 }

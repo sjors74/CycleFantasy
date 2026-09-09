@@ -44,12 +44,12 @@ namespace Domain.Mapping
                     o => o.MapFrom(s => s.CompetitorInTeam.Competitor.PcsName))
                 .ForMember(d => d.CountryShort,
                     o => o.MapFrom(s => s.CompetitorInTeam.Competitor.Country.CountryNameShort))
+                .ForMember(d => d.Ratings, o => o.MapFrom(s => s.CompetitorInTeam.Competitor.Ratings))
+                .ForMember(d => d.CurrentTeamName, o => o.MapFrom(s => s.CompetitorInTeam.TeamYear.Team.CurrentTeamName))
                 .ForMember(d => d.ScraperName, o => o.Ignore())
                 .ForMember(d => d.Punten, o => o.Ignore())
-                .ForMember(d => d.CurrentTeamName, o => o.Ignore())
                 .ForMember(d => d.IsNationalChampion, o => o.Ignore())
                 .ForMember(d => d.Teams, o => o.Ignore())
-                //.ForMember(d => d.CompetitorInTeamId, o => o.Ignore())
                 .ForMember(d => d.EventNumber, o => o.Ignore())
                 .ForMember(d => d.InSelectie, o => o.Ignore())
                 .ForMember(d => d.RemovedFromStartlist, o => o.Ignore());
@@ -60,6 +60,7 @@ namespace Domain.Mapping
             CreateMap<GameCompetitorEventPick, CompetitorRankingDto>()
                 .ForMember(c => c.CompetitorName, d => d.MapFrom(s => s.CompetitorsInEvent.CompetitorInTeam.Competitor.CompetitorName))
                 .ForMember(c => c.CompetitorTeam, d => d.MapFrom(s => s.CompetitorsInEvent.CompetitorInTeam.TeamYear.Team.CurrentTeamName))
+                .ForMember(c => c.CompetitorInTeamId, d => d.MapFrom(s => s.CompetitorsInEvent.CompetitorInTeamId))
                 .ForMember(c => c.CompetitorInEventId, d => d.MapFrom(s => s.CompetitorsInEvent.Id))
                 .ForMember(c => c.OutOfCompetition, d => d.MapFrom(s => s.CompetitorsInEvent.OutOfCompetition))
                 .ForMember(c => c.CountryCode, d => d.MapFrom(s => s.CompetitorsInEvent.CompetitorInTeam.Competitor.Country.CountryNameShort))
