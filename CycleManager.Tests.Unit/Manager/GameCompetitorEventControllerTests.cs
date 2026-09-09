@@ -18,6 +18,7 @@ namespace CycleManager.Tests.Unit.Manager
         private readonly Mock<IResultService> _mockResultService;
         private readonly Mock<IEventService> _mockEventService;
         private readonly Mock<IUserService> _mockUserService;
+        private readonly Mock<IRatingService> _mockRatingService;
         private readonly Mock<ICompetitorInEventService> _mockCompetitorInEventService;
         private readonly GameCompetitorEventsController _controller;
 
@@ -27,6 +28,7 @@ namespace CycleManager.Tests.Unit.Manager
             _mockResultService = new Mock<IResultService>();
             _mockEventService = new Mock<IEventService>();
             _mockUserService = new Mock<IUserService>();
+            _mockRatingService = new Mock<IRatingService>();
             _mockCompetitorInEventService = new Mock<ICompetitorInEventService>();
 
             _controller = new GameCompetitorEventsController(
@@ -34,7 +36,8 @@ namespace CycleManager.Tests.Unit.Manager
                 _mockResultService.Object,
                 _mockEventService.Object,
                 _mockUserService.Object,
-                _mockCompetitorInEventService.Object
+                _mockCompetitorInEventService.Object,
+                _mockRatingService.Object
             );
         }
 

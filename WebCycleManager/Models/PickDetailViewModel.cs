@@ -16,5 +16,6 @@ namespace WebCycleManager.Models
         public int PickId { get; set; }
         public int? SelectedCompetitorId { get; set; }
         public IEnumerable<SelectListItem> Competitors { get; set; } = new List<SelectListItem>();
+        public List<CompetitorRatingViewModel> Ratings { get; set; } = new();
     }
 }

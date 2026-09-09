@@ -20,5 +20,7 @@ namespace WebCycleManager.Models
         public int NumberOfPicks { get; set; } = 0;
 
         public List<CompetitorsInEvent> SuggestedCompetitors { get; set; } = new List<CompetitorsInEvent>();
+
+        public List<GameCompetitorRatingViewModel> Ratings { get; set; } = new();
     }
 }
