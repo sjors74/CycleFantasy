@@ -9,7 +9,9 @@ using Domain.Interfaces;
 using Domain.Mapping;
 using Hangfire;
 using Hangfire.Dashboard;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.Playwright;
@@ -63,6 +65,16 @@ builder.Services.AddDbContext<ApplicationDbContext>(x =>
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
+
+builder.Services.ConfigureApplicationCookie(options =>
+{
+ options.LoginPath = "/Account/Login";
+    options.AccessDeniedPath = "/Account/AccessDenied";
+
+    options.ExpireTimeSpan = TimeSpan.FromHours(8);
+    options.SlidingExpiration = true;
+});
+
 builder.Services.AddAutoMapper(cfg =>
 {
     cfg.AddProfile<DomainToResponseMappingProfile>();
@@ -110,12 +122,19 @@ builder.Services.AddScoped<ISeasonYearService, SeasonYearService>();
 builder.Services.AddScoped<ICyclingFlashScraper, CyclingFlashScraper>();
 builder.Services.AddScoped<IRatingService, RatingService>();
 
-builder.Services.AddControllersWithViews()
-    .AddDataAnnotationsLocalization(options =>
-    {
-        options.DataAnnotationLocalizerProvider = (type, factory) =>
-            factory.Create(typeof(WebCycleManager.Resources.SharedResources));
-    });
+builder.Services.AddControllersWithViews(options =>
+{
+    var policy = new AuthorizationPolicyBuilder()
+        .RequireAuthenticatedUser()
+        .Build();
+
+    options.Filters.Add(new AuthorizeFilter(policy));
+})
+.AddDataAnnotationsLocalization(options =>
+{
+    options.DataAnnotationLocalizerProvider = (type, factory) =>
+        factory.Create(typeof(WebCycleManager.Resources.SharedResources));
+});
 builder.Services.Configure<ApiSettings>(
 builder.Configuration.GetSection("ApiSettings"));
 builder.Services.Configure<ScraperSettings>(builder.Configuration.GetSection("ScraperSettings"));
@@ -148,6 +167,7 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.UseHangfireDashboard("/hangfire", new DashboardOptions
