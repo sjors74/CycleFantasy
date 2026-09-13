@@ -52,6 +52,28 @@
                             <a class="nav-link text-dark" asp-area="" asp-controller="Rating" asp-action="Index">Ratings</a>
                         </li>
                     </ul>
+
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        <div class="d-flex align-items-center">
+                            <span class="me-3 text-muted">
+                                <i class="bi bi-person-circle"></i>
+                                @User.Identity.Name
+                            </span>
+
+                            <form asp-controller="Account"
+                                  asp-action="Logout"
+                                  method="post"
+                                  class="d-inline">
+                                @Html.AntiForgeryToken()
+
+                                <button type="submit" class="btn btn-outline-secondary btn-sm">
+                                    <i class="bi bi-box-arrow-right"></i>
+                                    Uitloggen
+                                </button>
+                            </form>
+                        </div>
+                    }
                 </div>
             </div>
         </nav>

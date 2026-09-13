@@ -9,10 +9,13 @@ using Domain.Interfaces;
 using Domain.Mapping;
 using Hangfire;
 using Hangfire.Dashboard;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.Playwright;
+using WebCycleManager;
 using WebCycleManager.Config;
 using WebCycleManager.Helpers;
 
@@ -63,6 +66,16 @@ builder.Services.AddDbContext<ApplicationDbContext>(x =>
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
+
+builder.Services.ConfigureApplicationCookie(options =>
+{
+ options.LoginPath = "/Account/Login";
+    options.AccessDeniedPath = "/Account/AccessDenied";
+
+    options.ExpireTimeSpan = TimeSpan.FromHours(8);
+    options.SlidingExpiration = true;
+});
+
 builder.Services.AddAutoMapper(cfg =>
 {
     cfg.AddProfile<DomainToResponseMappingProfile>();
@@ -110,12 +123,19 @@ builder.Services.AddScoped<ISeasonYearService, SeasonYearService>();
 builder.Services.AddScoped<ICyclingFlashScraper, CyclingFlashScraper>();
 builder.Services.AddScoped<IRatingService, RatingService>();
 
-builder.Services.AddControllersWithViews()
-    .AddDataAnnotationsLocalization(options =>
-    {
-        options.DataAnnotationLocalizerProvider = (type, factory) =>
-            factory.Create(typeof(WebCycleManager.Resources.SharedResources));
-    });
+builder.Services.AddControllersWithViews(options =>
+{
+    var policy = new AuthorizationPolicyBuilder()
+        .RequireAuthenticatedUser()
+        .Build();
+
+    options.Filters.Add(new AuthorizeFilter(policy));
+})
+.AddDataAnnotationsLocalization(options =>
+{
+    options.DataAnnotationLocalizerProvider = (type, factory) =>
+        factory.Create(typeof(WebCycleManager.Resources.SharedResources));
+});
 builder.Services.Configure<ApiSettings>(
 builder.Configuration.GetSection("ApiSettings"));
 builder.Services.Configure<ScraperSettings>(builder.Configuration.GetSection("ScraperSettings"));
@@ -148,11 +168,35 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+app.UseAuthentication();
 app.UseAuthorization();
+
+app.Use(async (context, next) =>
+{
+    if(context.Request.Path.StartsWithSegments("/hangfire"))
+    {
+        if(context.User.Identity?.IsAuthenticated != true)
+        {
+            context.Response.Redirect("/Account/Login?returnUrl=/hangfire");
+            return;
+        }
+
+        if(!context.User.IsInRole("Admin"))
+        {
+            context.Response.Redirect("/Account/AccessDenied");
+            return;
+        }
+    }
+
+    await next();
+});
 
 app.UseHangfireDashboard("/hangfire", new DashboardOptions
 {
-    Authorization = new[] { new AllowAllDashboardAuthorizationFilter() }
+    Authorization = new[] 
+    { 
+        new HangfireAuthorizationFilter() 
+    }
 });
 
 app.MapControllerRoute(
@@ -161,6 +205,8 @@ app.MapControllerRoute(
 
 using (var scope = app.Services.CreateScope())
 {
+    await IdentitySeeder.SeedAsync(scope.ServiceProvider);
+
     var scheduler = scope.ServiceProvider
         .GetRequiredService<IScrapeScheduleService>();
 
@@ -193,8 +239,3 @@ app.MapGet("/competitors", async (IPcsScraper scraper, string team, int teamId, 
 
 // Alleen nodig voor integratietests
 public partial class Program { }
-
-public class AllowAllDashboardAuthorizationFilter : IDashboardAuthorizationFilter
-{
-    public bool Authorize(DashboardContext context) => true;
-}
