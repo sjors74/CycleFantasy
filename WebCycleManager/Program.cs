@@ -15,6 +15,7 @@ using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.Playwright;
+using WebCycleManager;
 using WebCycleManager.Config;
 using WebCycleManager.Helpers;
 
@@ -181,6 +182,8 @@ app.MapControllerRoute(
 
 using (var scope = app.Services.CreateScope())
 {
+    await IdentitySeeder.SeedAsync(scope.ServiceProvider);
+
     var scheduler = scope.ServiceProvider
         .GetRequiredService<IScrapeScheduleService>();
 
