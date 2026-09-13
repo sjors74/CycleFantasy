@@ -171,9 +171,32 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.Use(async (context, next) =>
+{
+    if(context.Request.Path.StartsWithSegments("/hangfire"))
+    {
+        if(context.User.Identity?.IsAuthenticated != true)
+        {
+            context.Response.Redirect("/Account/Login?returnUrl=/hangfire");
+            return;
+        }
+
+        if(!context.User.IsInRole("Admin"))
+        {
+            context.Response.Redirect("/Account/AccessDenied");
+            return;
+        }
+    }
+
+    await next();
+});
+
 app.UseHangfireDashboard("/hangfire", new DashboardOptions
 {
-    Authorization = new[] { new AllowAllDashboardAuthorizationFilter() }
+    Authorization = new[] 
+    { 
+        new HangfireAuthorizationFilter() 
+    }
 });
 
 app.MapControllerRoute(
@@ -216,8 +239,3 @@ app.MapGet("/competitors", async (IPcsScraper scraper, string team, int teamId, 
 
 // Alleen nodig voor integratietests
 public partial class Program { }
-
-public class AllowAllDashboardAuthorizationFilter : IDashboardAuthorizationFilter
-{
-    public bool Authorize(DashboardContext context) => true;
-}
