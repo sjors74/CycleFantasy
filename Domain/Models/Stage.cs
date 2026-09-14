@@ -24,7 +24,7 @@ namespace Domain.Models
         public ScrapeStatus ScrapeStatus { get; set; }
         public DateTime? LastScrapeAttempt { get; set; }
         public DateTime? LastSuccessfulScrape { get; set; }
-        public virtual Event Event{ get; set; } 
+        public virtual Event Event{ get; set; } = null!;
         public virtual ICollection<Result> Results { get; set; } = [];
         public virtual ICollection<SpecialResult> SpecialResults { get; set; } = [];
     }

@@ -54,7 +54,7 @@ namespace CycleManager.Services
         /// <returns></returns>
         public async Task<CompetitorsInEvent> GetCompetitorById(int id)
         {
-            return await _competitorsInEventRepository.GetById(id);
+            return await _competitorsInEventRepository.GetByCompetitorId(id);
         }
 
         /// <summary>

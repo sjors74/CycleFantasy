@@ -14,7 +14,7 @@ namespace Domain.Models
 
         public DateTime LastUpdate { get;set; }
 
-        public virtual GameCompetitorEventPick Pick { get; set; }
+        public virtual GameCompetitorEventPick Pick { get; set; } = null!;
 
     }
 }

@@ -23,7 +23,7 @@ namespace Domain.Mapping
                 .ForMember(d => d.IsIngeschreven, o => o.Ignore());
 
             CreateMap<Competitor, CompetitorDto>()
-                .ForMember(c => c.CountryShort, d => d.MapFrom(s => s.Country.CountryNameShort))
+                .ForMember(c => c.CountryShort, d => d.MapFrom(s => s.Country!.CountryNameShort))
                 .ForMember(c => c.CompetitorId, o => o.Ignore())
                 .ForMember(c => c.CompetitorInTeamId, o => o.Ignore())
                 .ForMember(c => c.EventNumber, o => o.Ignore())
@@ -43,7 +43,7 @@ namespace Domain.Mapping
                 .ForMember(d => d.PcsName,
                     o => o.MapFrom(s => s.CompetitorInTeam.Competitor.PcsName))
                 .ForMember(d => d.CountryShort,
-                    o => o.MapFrom(s => s.CompetitorInTeam.Competitor.Country.CountryNameShort))
+                    o => o.MapFrom(s => s.CompetitorInTeam.Competitor.Country!.CountryNameShort))
                 .ForMember(d => d.Ratings, o => o.MapFrom(s => s.CompetitorInTeam.Competitor.Ratings))
                 .ForMember(d => d.CurrentTeamName, o => o.MapFrom(s => s.CompetitorInTeam.TeamYear.Team.CurrentTeamName))
                 .ForMember(d => d.ScraperName, o => o.Ignore())
@@ -63,13 +63,12 @@ namespace Domain.Mapping
                 .ForMember(c => c.CompetitorInTeamId, d => d.MapFrom(s => s.CompetitorsInEvent.CompetitorInTeamId))
                 .ForMember(c => c.CompetitorInEventId, d => d.MapFrom(s => s.CompetitorsInEvent.Id))
                 .ForMember(c => c.OutOfCompetition, d => d.MapFrom(s => s.CompetitorsInEvent.OutOfCompetition))
-                .ForMember(c => c.CountryCode, d => d.MapFrom(s => s.CompetitorsInEvent.CompetitorInTeam.Competitor.Country.CountryNameShort))
+                .ForMember(c => c.CountryCode, d => d.MapFrom(s => s.CompetitorsInEvent.CompetitorInTeam.Competitor.Country!.CountryNameShort))
                 .ForMember(c => c.PcsName, d => d.MapFrom(s => s.CompetitorsInEvent.CompetitorInTeam.Competitor.PcsName))
                 .ForMember(c => c.IsNationalChampion, d => d.MapFrom(s => s.CompetitorsInEvent.CompetitorInTeam.IsNationalChampion))
                 .ForMember(c => c.Ratings, d => d.MapFrom(s => s.CompetitorsInEvent.CompetitorInTeam.Competitor.Ratings.Where(r => r.RatingCategory.IsActive)))
                 .ForMember(d => d.StageNumber, o => o.Ignore())
                 .ForMember(d => d.Position, o => o.Ignore())
-                .ForMember(d => d.Points, o => o.Ignore())  
                 .ForMember(d => d.LatestPoints, o => o.Ignore())
                 .ForMember(d => d.ConfigurationItems, o => o.Ignore())
                 .ForMember(d => d.EventId, o => o.Ignore());
@@ -97,7 +96,7 @@ namespace Domain.Mapping
                 .ForMember(c => c.VanNaar, d => d.MapFrom(s => $"{s.StartLocation}-{s.FinishLocation}"));
 
             CreateMap<GameCompetitorEvent, DeelnemerDto>()
-                .ForMember(c => c.DeelnemerNaam, d => d.MapFrom(s => $"{s.User.FirstName} {s.User.LastName}"))
+                .ForMember(c => c.DeelnemerNaam, d => d.MapFrom(s => $"{s.User!.FirstName} {s.User!.LastName}"))
                 .ForMember(c => c.PoolNaam, d => d.MapFrom(s => s.TeamName))
                 .ForMember(c => c.Renners, d => d.MapFrom(s => s.Renners))
                 .ForMember(d => d.Punten, o => o.Ignore())
