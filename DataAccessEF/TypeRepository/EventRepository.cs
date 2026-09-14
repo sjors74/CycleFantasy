@@ -80,7 +80,7 @@ namespace DataAccessEF.TypeRepository
                 .Select(e => new EventDetailsViewModel
                 {
                     EventId = e.EventId,
-                    EventCode = e.EventCode,
+                    EventCode = e.EventCode ?? string.Empty,
                     EventName = e.EventName,
                     Slogan = e.Slogan,
                     StartDate = e.StartDate,
@@ -156,7 +156,7 @@ namespace DataAccessEF.TypeRepository
                                 FirstName = competitor.FirstName,
                                 LastName = competitor.LastName,
                                 PcsName = competitor.PcsName,
-                                CountryShort = competitor.Country.CountryNameShort,
+                                CountryShort = competitor.Country!.CountryNameShort,
                                 InSelectie = cie.InSelectie,
                                 RemovedFromStartlist = cie.RemovedFromStartList,
                                 Ratings = competitor.Ratings

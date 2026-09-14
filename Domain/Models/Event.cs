@@ -35,6 +35,6 @@ namespace Domain.Models
         public virtual ICollection<Stage> Stages { get; set; } = [];
         public virtual ICollection<GameCompetitorEvent> GameCompetitorEvents { get; set; } = [];
         public virtual ICollection<CompetitorsInEvent> CompetitorsInEvent { get; set; } = [];
-        public ICollection<EventTeam>? EventTeams { get; set; }
+        public ICollection<EventTeam> EventTeams { get; set; } = [];
     }
 }

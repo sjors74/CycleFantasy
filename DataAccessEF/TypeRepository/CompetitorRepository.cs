@@ -25,7 +25,7 @@ namespace DataAccessEF.TypeRepository
                     LastName = c.LastName,
                     PcsName = c.PcsName,
                     ScraperName = c.PcsScraperName,
-                    CountryShort = c.Country.CountryNameShort,
+                    CountryShort = c.Country!.CountryNameShort,
 
                     Teams = c.CompetitorInTeams
                         .Where(cit => cit.TeamYear.SeasonYearId == seasonYearId)
