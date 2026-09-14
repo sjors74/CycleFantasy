@@ -1,8 +1,6 @@
-﻿using CycleManager.Services;
-using CycleManager.Services.Interfaces;
+﻿using CycleManager.Services.Interfaces;
 using Domain.Context;
 using Domain.Models;
-using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Playwright;

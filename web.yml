@@ -16,7 +16,7 @@ steps:
 - task: UseDotNet@2
   inputs:
     packageType: 'sdk'
-    version: '8.x'
+    version: '10.x'
 
 # 2.5 DEBUG LOGGING
 - script: dir

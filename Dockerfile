@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 
 WORKDIR /src
 
@@ -12,6 +12,11 @@ RUN dotnet publish WebCycleManager/WebCycleManager.csproj \
 
 # Runtime image
 FROM mcr.microsoft.com/playwright/dotnet:v1.56.0-jammy
+
+# Install .NET 10 runtime
+RUN curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin \
+    --install-dir /usr/share/dotnet \
+    --channel 10.0
 
 WORKDIR /app
 
