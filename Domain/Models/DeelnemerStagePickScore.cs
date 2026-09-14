@@ -18,7 +18,7 @@ namespace Domain.Models
 
         public DateTime LastUpdated { get; set; } = DateTime.UtcNow;
 
-        public virtual GameCompetitorEventPick Pick { get; set; }
-        public virtual Stage Stage { get; set; }
+        public virtual GameCompetitorEventPick Pick { get; set; } = null!;
+        public virtual Stage Stage { get; set; } = null!;
     }
 }

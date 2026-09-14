@@ -16,7 +16,7 @@ namespace CycleManager.Domain.Dto
         [Obsolete("Use TotalPoints instead.")]
         public int Points { get; set; }
         public int LatestPoints { get; set; }
-        public string PcsName { get; set; }
+        public string PcsName { get; set; } = string.Empty;
         public bool IsNationalChampion { get; set; }
         public List<ConfigurationItem> ConfigurationItems { get; set; } = [];
         public int EventId { get; set; }

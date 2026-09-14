@@ -9,10 +9,10 @@ namespace Domain.Models
         [Key]
         public int Id { get; set; }
         public int CompetitorInTeamId { get; set; }
-        public CompetitorInTeam CompetitorInTeam { get; set; }
+        public CompetitorInTeam CompetitorInTeam { get; set; } = null!;
 
         public int EventId { get; set; }
-        public Event Event { get; set; }
+        public Event Event { get; set; } = null!;
 
         [NotMapped]
         public string FilterTeam { get; set; } = string.Empty;

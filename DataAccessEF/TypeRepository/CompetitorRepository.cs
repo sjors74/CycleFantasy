@@ -47,7 +47,7 @@ namespace DataAccessEF.TypeRepository
             return competitors;
         }
 
-        public async Task<Competitor> GetById(int competitorId)
+        public async Task<Competitor> GetByCompetitorId(int competitorId)
         {
             var competitor = await context.Competitors
                 .Include(c => c.Country)

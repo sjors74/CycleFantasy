@@ -8,6 +8,6 @@ namespace CycleManager.Domain.Dto
 {
     public class ErrorResponse
     {
-        public IEnumerable<string> Errors { get; set; }
+        public IEnumerable<string> Errors { get; set; } = Enumerable.Empty<string>();
     }
 }
