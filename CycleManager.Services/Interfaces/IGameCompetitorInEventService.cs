@@ -60,11 +60,11 @@ namespace CycleManager.Services.Interfaces
 
         Task<IEnumerable<CompetitorsInEvent>> GetCompetitors(int id, int number);
 
-        Task<CompetitorsInEvent> GetCompetitorInEventById(int id);
+        Task<CompetitorsInEvent?> GetCompetitorInEventById(int id);
 
         Task<IEnumerable<int>> GetAllPicksAsCompetitorIds(int id);
 
-        Task<GameCompetitorEvent> CreateGameCompetitorEventAsync(DeelnemerCreateDto dto);
+        Task<GameCompetitorEvent?> CreateGameCompetitorEventAsync(DeelnemerCreateDto dto);
 
         Task RemovePickFromEvent(int id);
         Task AddPicks(List<GameCompetitorEventPick> picks);

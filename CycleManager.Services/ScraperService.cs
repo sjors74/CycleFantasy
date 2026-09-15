@@ -40,7 +40,7 @@ namespace CycleManager.Services
             var stage = await _db.Stages
                 .Include(s => s.Event)
                     .ThenInclude(e => e.Configuration)
-                        .ThenInclude(c => c.ConfigurationItems)
+                        .ThenInclude(c => c!.ConfigurationItems)
                 .FirstOrDefaultAsync(s =>
                     s.StageName == stageNumber.ToString() &&
                     s.EventId == eventId);
@@ -48,7 +48,11 @@ namespace CycleManager.Services
             if (stage == null)
                 throw new Exception("Stage niet gevonden");
 
-            var configurationItems = stage.Event.Configuration.ConfigurationItems;
+            var configuration = stage.Event.Configuration
+                ?? throw new InvalidOperationException(
+                    $"Event {stage.EventId} heeft geen configuratie.");
+
+            var configurationItems = configuration.ConfigurationItems;
             var topLimit = configurationItems.Count;
 
             // =========================================
@@ -102,9 +106,9 @@ namespace CycleManager.Services
             // =========================================
 
             var configuredSpecials = await _db.Events
-    .Where(e => e.EventId == eventId)
-    .SelectMany(e => e.Configuration.Specials)
-    .ToListAsync();
+                .Where(e => e.EventId == eventId)
+                .SelectMany(e => e.Configuration!.Specials)
+                .ToListAsync();
 
             var specialResults = new List<ScrapedStageSpecialResult>();
 
@@ -255,7 +259,7 @@ namespace CycleManager.Services
 
             var configurationByQuestionType = await _db.Events
                 .Where(e => e.EventId == eventId)
-                .SelectMany(e => e.Configuration.Specials)
+                .SelectMany(e => e.Configuration!.Specials)
                 .ToDictionaryAsync(x => x.Question);
 
             foreach (var scrapedSpecial in scrapedSpecialResults)
@@ -374,7 +378,7 @@ namespace CycleManager.Services
 
             var competitorByScraperName = competitors
                 .Where(c => !string.IsNullOrEmpty(c.PcsScraperName))
-                .GroupBy(c => c.PcsScraperName.ToLowerInvariant())
+                .GroupBy(c => c.PcsScraperName!.ToLowerInvariant())
                 .ToDictionary(g => g.Key, g => g.First());
 
             foreach (var c in competitors)
@@ -413,7 +417,7 @@ namespace CycleManager.Services
 
             foreach (var sc in scraped)
             {
-                Country country = null;
+                Country? country = null;
 
                 if (!string.IsNullOrEmpty(sc.CountryShortName))
                 {
@@ -430,7 +434,7 @@ namespace CycleManager.Services
                     }
                 }
 
-                Competitor competitor = null;
+                Competitor? competitor = null;
                 var scraperKey = sc.RiderName.ToLower();
 
                 if (competitorByScraperName.TryGetValue(scraperKey, out competitor))
@@ -449,6 +453,12 @@ namespace CycleManager.Services
                     // Zoek bestaande competitor (case-insensitive)
                     if (!competitorLookup.TryGetValue(key, out competitor))
                     {
+                        if(country == null)
+                        {
+                            throw new InvalidOperationException(
+                                $"Geen land gevonden voor competitor {firstName} {lastName}.");
+                        }
+                        
                         competitor = new Competitor
                         {
                             FirstName = firstName,
@@ -466,7 +476,9 @@ namespace CycleManager.Services
                     {
                         competitor.PcsScraperName = sc.RiderName;
                         if (country != null)
+                        {
                             competitor.Country = country;
+                        }
 
                         competitorByScraperName[scraperKey] = competitor;
                     }
@@ -526,6 +538,11 @@ namespace CycleManager.Services
                         ? DateTime.MinValue
                         : x.ScrapeProgress.LastScrapeDate)
                 .FirstOrDefaultAsync();
+
+            if (category == null)
+            {
+                return;
+            }
 
             var progress = await _db.RatingScrapeProgress
                 .FirstOrDefaultAsync(x => x.RatingCategoryId == category.RatingCategoryId);
@@ -640,7 +657,7 @@ namespace CycleManager.Services
                     !string.IsNullOrWhiteSpace(x.Competitor.PcsName) &&
                     !string.IsNullOrWhiteSpace(x.TeamYear.Team.PcsName))
                 .GroupBy(x =>
-                    $"{x.Competitor.PcsName.ToLower()}|{x.TeamYear.Team.PcsName.ToLower()}")
+                    $"{x.Competitor.PcsName!.ToLowerInvariant()}|{x.TeamYear.Team.PcsName!.ToLowerInvariant()}")
                 .ToDictionary(g => g.Key, g => g.First());
 
             var byPcs =

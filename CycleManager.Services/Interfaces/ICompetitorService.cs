@@ -19,7 +19,7 @@ namespace CycleManager.Services.Interfaces
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
-        Task<Competitor> GetCompetitorById(int id);
+        Task<Competitor?> GetCompetitorById(int id);
         
         /// <summary>
         /// Get all competitors
@@ -65,7 +65,7 @@ namespace CycleManager.Services.Interfaces
         Task<bool> CheckCompetitorInTeam(int competitorId, int teamYearId);
         IQueryable<Competitor> GetCompetitorsByTerm(string term);
         Task UpdateCompetitorWithTeam(CompetitorEditDto dto);
-        Task<CompetitorEditDto> GetCompetitorForEdit(int competitorId);
+        Task<CompetitorEditDto?> GetCompetitorForEdit(int competitorId);
         Task<List<CompetitorInTeam>> GetCompetitorInTeamsByIdsAsync(List<int> ids);
         Task<IEnumerable<CompetitorInTeamDto>> GetByTeamAndSeason(int teamId, int seasonYearId);
     }

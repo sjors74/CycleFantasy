@@ -62,7 +62,7 @@ namespace CycleManager.Services
                 .ToListAsync();
         }
 
-        public async Task<Event> GetEventById(int id)
+        public async Task<Event?> GetEventById(int id)
         {
             return await _eventRepository.GetEventById(id);
         }
@@ -231,6 +231,11 @@ namespace CycleManager.Services
 
         public async Task<DeelnemerDto> CreatePoolAsync(DeelnemerDto deelnemerDto)
         {
+            if (string.IsNullOrWhiteSpace(deelnemerDto.UserId))
+            {
+                throw new InvalidOperationException("Er is geen gebruiker gekoppeld aan deze pool.");
+            }
+
             var gameCompetitorEvent = new DeelnemerCreateDto
             {
                 TeamName = deelnemerDto.PoolNaam.Trim(),
@@ -241,6 +246,12 @@ namespace CycleManager.Services
             try
             {
                 var createdEvent = await _deelnemersRepository.CreateGameCompetitorEventAsync(gameCompetitorEvent);
+                if (createdEvent == null)
+                {
+                    throw new InvalidOperationException(
+                        "Het aanmaken van de pool is mislukt.");
+                }
+
                 deelnemerDto.Id = createdEvent.Id;
                 return deelnemerDto;
             }
@@ -253,22 +264,32 @@ namespace CycleManager.Services
         public async Task DeletePoolAsync(int id)
         {
             var deelnemer = await _deelnemersRepository.GetCompetitorWithPicksById(id);
-
-            if(deelnemer != null)
+            if (deelnemer == null)
             {
-                var eventInfo = await _eventRepository.GetEventById(deelnemer.EventId);
-                if(!eventInfo.CanSubscribe)
-                {
-                    throw new InvalidOperationException("Inschrijven is gesloten.");
-                }
-                if (deelnemer.Renners.Any())
-                {
-                    _picksRepository.RemoveRange(deelnemer.Renners);
-                    await _picksRepository.SaveChangesAsync();
-                }
-                _deelnemersRepository.Remove(deelnemer);
-                await _deelnemersRepository.SaveChangesAsync();
+                throw new KeyNotFoundException($"Pool {id} niet gevonden.");
             }
+
+            var eventInfo = await _eventRepository.GetEventById(deelnemer.EventId);
+            if (eventInfo == null)
+            {
+                throw new InvalidOperationException(
+                    $"Event {deelnemer.EventId} niet gevonden.");
+            }
+
+            if (!eventInfo.CanSubscribe)
+            {
+                throw new InvalidOperationException("Inschrijven is gesloten.");
+            }
+
+            if (deelnemer.Renners.Any())
+            {
+                _picksRepository.RemoveRange(deelnemer.Renners);
+                await _picksRepository.SaveChangesAsync();
+            }
+
+            _deelnemersRepository.Remove(deelnemer);
+            await _deelnemersRepository.SaveChangesAsync();
+
         }
 
         public async Task<EventDetailsViewModel?> GetEventDetailsViewModelById(int eventId)

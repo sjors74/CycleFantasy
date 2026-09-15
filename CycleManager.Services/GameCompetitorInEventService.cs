@@ -130,12 +130,12 @@ namespace CycleManager.Services
             return competitorPicks;
         }
 
-        public async Task<CompetitorsInEvent> GetCompetitorInEventById(int id)
+        public async Task<CompetitorsInEvent?> GetCompetitorInEventById(int id)
         {
             return await _competitorRepo.GetById(id);
         }
 
-        public async Task<GameCompetitorEvent> CreateGameCompetitorEventAsync(DeelnemerCreateDto dto)
+        public async Task<GameCompetitorEvent?> CreateGameCompetitorEventAsync(DeelnemerCreateDto dto)
         {
             return await _repo.CreateGameCompetitorEventAsync(dto);
         }

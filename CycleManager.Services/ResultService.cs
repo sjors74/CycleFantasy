@@ -100,17 +100,6 @@ namespace CycleManager.Services
         }
 
         /// <summary>
-        /// Get result in latest stage for competitor
-        /// </summary>
-        /// <param name="eventId"></param>
-        /// <param name="competitorInEventId"></param>
-        /// <returns></returns>
-        public async Task<int> GetCompetitorScoreByEventAndStageIdAsync(int eventId, int competitorInEventId)
-        {
-            return await _resultsRepository.GetCompetitorLatestScore(eventId, competitorInEventId);
-        }
-
-        /// <summary>
         ///  Get number of results for a given stage
         /// </summary>
         /// <param name="stageId"></param>
@@ -121,11 +110,11 @@ namespace CycleManager.Services
         }
 
         /// <summary>
-        /// 
+        /// Get the stage result for a given stage
         /// </summary>
         /// <param name="stageId"></param>
         /// <returns></returns>
-        public Task<EtappeResultaatDto> GetEtappeUitslag(int stageId)
+        public Task<EtappeResultaatDto?> GetEtappeUitslag(int stageId)
         {
             return _resultsRepository.GetEtappeUitslag(stageId);
         }

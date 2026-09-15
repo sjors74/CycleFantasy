@@ -23,6 +23,12 @@ namespace CycleManager.Services
 
         public string CreateToken(IdentityUser user)
         {
+            if (string.IsNullOrWhiteSpace(user.Email))
+            {
+                throw new InvalidOperationException(
+                    $"Gebruiker {user.Id} heeft geen e-mailadres.");
+            }
+
             var claims = new[]
             {
                 new Claim(JwtRegisteredClaimNames.Sub, user.Id),
@@ -30,7 +36,13 @@ namespace CycleManager.Services
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
 
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
+            var jwtKey = _config["Jwt:Key"]
+                ?? throw new InvalidOperationException(
+                    "Jwt:Key is niet geconfigureerd.");
+
+            var key = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(jwtKey));
+
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
             var token = new JwtSecurityToken(
