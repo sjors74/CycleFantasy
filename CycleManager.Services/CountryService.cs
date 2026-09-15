@@ -30,7 +30,7 @@ namespace CycleManager.Services
             return await _countryRepository.GetAll();
         }
 
-        public async Task<Country> GetById(int id)
+        public async Task<Country?> GetById(int id)
         {
             return await _countryRepository.GetById(id);
         }

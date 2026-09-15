@@ -9,7 +9,7 @@ namespace CycleManager.Services
     {
         Task<IEnumerable<Event>> GetAllEvents();
 
-        Task<Event> GetEventById(int id);
+        Task<Event?> GetEventById(int id);
 
         /// <summary>
         /// Add and save a new event

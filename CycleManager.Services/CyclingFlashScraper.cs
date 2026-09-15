@@ -220,7 +220,7 @@ namespace CycleManager.Services
                 .AllAsync();
         }
 
-        private async Task<ScrapeCompetitorRating> ParseRowAsync(
+        private async Task<ScrapeCompetitorRating?> ParseRowAsync(
             ILocator row,
             string category,
             DateTime ratingDate)

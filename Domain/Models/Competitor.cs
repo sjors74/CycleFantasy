@@ -22,9 +22,9 @@ namespace Domain.Models
         [DisplayName("Land")]
         public int CountryId { get; set; }
         [DisplayName("Land")]
-        public Country? Country { get; set; }
-        public virtual ICollection<CompetitorInTeam> CompetitorInTeams { get; set; } = [];
-        public virtual ICollection<CompetitorRating> Ratings { get; set; } = [];
+        public Country Country { get; set; } = null!;
+        public virtual ICollection<CompetitorInTeam> CompetitorInTeams { get; set; } = new List<CompetitorInTeam>();
+        public virtual ICollection<CompetitorRating> Ratings { get; set; } = new List<CompetitorRating>();
 
         [NotMapped]
         [DisplayName("Naam")]

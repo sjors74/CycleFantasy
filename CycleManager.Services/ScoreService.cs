@@ -409,6 +409,14 @@ namespace CycleManager.Services
             }
             await _context.SaveChangesAsync();
 
+            var lastStage = stagesOrdered.LastOrDefault();
+
+            if (lastStage == null)
+            {
+                throw new InvalidOperationException(
+                    $"Er zijn geen stages gevonden voor event {eventId}.");
+            }
+
             // persist participant totals
             foreach (var gceId in participantTotals.Keys)
             {
@@ -418,7 +426,7 @@ namespace CycleManager.Services
                     GameCompetitorEventId = gceId,
                     TotalScore = participantTotals[gceId],
                     LaatsteStageScore = lastStageScoreByParticipant.ContainsKey(gceId) ? lastStageScoreByParticipant[gceId] : 0,
-                    LaatsteStageId = (int)(stagesOrdered.LastOrDefault()?.Id),
+                    LaatsteStageId = lastStage.Id,
                     LastUpdated = DateTime.UtcNow
                 });
             }

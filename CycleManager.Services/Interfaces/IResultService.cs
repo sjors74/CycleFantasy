@@ -21,14 +21,6 @@ namespace CycleManager.Services.Interfaces
         Task<CompetitorScoreDto?> GetCompetitorResultsByEventId(int eventId, int competitorInEventId);
 
         /// <summary>
-        /// Get latest (stage) score for a competitor in an event
-        /// </summary>
-        /// <param name="eventId"></param>
-        /// <param name="competitorInEventId"></param>
-        /// <returns></returns>
-        Task<int> GetCompetitorScoreByEventAndStageIdAsync(int eventId, int competitorInEventId);
-
-        /// <summary>
         /// Get a list of all results for an event
         /// </summary>
         /// <param name="eventId"></param>
@@ -40,7 +32,7 @@ namespace CycleManager.Services.Interfaces
         /// </summary>
         /// <param name="stageId"></param>
         /// <returns></returns>
-        Task<EtappeResultaatDto> GetEtappeUitslag(int stageId);
+        Task<EtappeResultaatDto?> GetEtappeUitslag(int stageId);
 
         /// <summary>
         /// Get pool ranking for a given event and stage number
