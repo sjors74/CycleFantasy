@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace DataAccessEF.Migrations
 {
     /// <inheritdoc />
+#pragma warning disable CS8981
     public partial class scraper : Migration
     {
         /// <inheritdoc />
@@ -48,4 +49,5 @@ namespace DataAccessEF.Migrations
                 name: "ScrapedStageResults");
         }
     }
+#pragma warning restore CS8981
 }

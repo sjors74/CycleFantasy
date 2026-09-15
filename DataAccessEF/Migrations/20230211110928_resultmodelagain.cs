@@ -5,6 +5,8 @@
 namespace DataAccessEF.Migrations
 {
     /// <inheritdoc />
+#pragma warning disable CS8981
+
     public partial class resultmodelagain : Migration
     {
         /// <inheritdoc />
@@ -110,4 +112,5 @@ namespace DataAccessEF.Migrations
                 name: "Configurations");
         }
     }
+#pragma warning restore CS8981
 }

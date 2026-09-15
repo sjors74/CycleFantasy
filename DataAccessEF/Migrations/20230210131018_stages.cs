@@ -4,6 +4,7 @@
 
 namespace DataAccessEF.Migrations
 {
+#pragma warning disable CS8981
     /// <inheritdoc />
     public partial class stages : Migration
     {
@@ -45,4 +46,5 @@ namespace DataAccessEF.Migrations
                 name: "Stages");
         }
     }
+#pragma warning restore CS8981
 }

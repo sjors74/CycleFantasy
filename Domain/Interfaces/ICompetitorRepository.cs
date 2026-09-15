@@ -8,7 +8,7 @@ namespace Domain.Interfaces
     public interface ICompetitorRepository : IGenericRepository<Competitor> 
     {
         Task<List<CompetitorDto>> GetAllCompetitors(int year);
-        Task<Competitor> GetByCompetitorId(int competitorId);
+        Task<Competitor?> GetByCompetitorId(int competitorId);
         Task<IEnumerable<CompetitorInTeamDto>> GetByTeamId(int teamId);
         Task<int> GetCompetitorsByCountry(int countryId);
         Task<List<SeasonYearDto>> GetAvailableSeasonYears();

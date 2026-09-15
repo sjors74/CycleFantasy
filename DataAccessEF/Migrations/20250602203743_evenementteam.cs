@@ -5,6 +5,7 @@
 namespace DataAccessEF.Migrations
 {
     /// <inheritdoc />
+#pragma warning disable CS8981
     public partial class evenementteam : Migration
     {
         /// <inheritdoc />
@@ -47,4 +48,5 @@ namespace DataAccessEF.Migrations
                 name: "EventTeam");
         }
     }
+#pragma warning restore CS8981
 }

@@ -61,14 +61,14 @@ namespace DataAccessEF.TypeRepository
                 .AsNoTracking();
          }
 
-        public async Task<Event> GetEventById(int id)
+        public async Task<Event?> GetEventById(int id)
         {
             var e = await context.Events
                     .Include(e => e.EventTeams)
                         .ThenInclude(et => et.Team)
                     .Include(s => s.Stages)
                     .Include(e => e.Configuration)
-                        .ThenInclude(c => c.ConfigurationItems)
+                        .ThenInclude(c => c!.ConfigurationItems)
                     .FirstOrDefaultAsync(e => e.EventId == id);
             return e;
         }

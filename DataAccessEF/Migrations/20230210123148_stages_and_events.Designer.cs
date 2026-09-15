@@ -13,6 +13,7 @@ namespace DataAccessEF.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
     [Migration("20230210123148_stages_and_events")]
+#pragma warning disable CS8981
     partial class stagesandevents
     {
         /// <inheritdoc />
@@ -205,4 +206,5 @@ namespace DataAccessEF.Migrations
 #pragma warning restore 612, 618
         }
     }
+#pragma warning restore CS8981
 }
