@@ -83,6 +83,11 @@ namespace WebCycleApi.Controllers
                     Sjors</p>
                 ";
 
+                if (string.IsNullOrWhiteSpace(model.Email))
+                {
+                    throw new InvalidOperationException("Er is geen e-mailadres opgegeven.");
+                }
+
                 await _emailSender.SendEmailAsync(model.Email, subject, body);
             }
             catch (Exception ex)
