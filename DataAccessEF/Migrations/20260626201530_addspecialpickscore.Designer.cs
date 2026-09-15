@@ -13,6 +13,7 @@ namespace DataAccessEF.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
     [Migration("20260626201530_addspecialpickscore")]
+#pragma warning disable CS8981
     partial class addspecialpickscore
     {
         /// <inheritdoc />
@@ -1288,4 +1289,5 @@ namespace DataAccessEF.Migrations
 #pragma warning restore 612, 618
         }
     }
+#pragma warning restore CS8981
 }

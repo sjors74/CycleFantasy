@@ -13,6 +13,7 @@ namespace DataAccessEF.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
     [Migration("20230630144944_gamecompetitors")]
+#pragma warning disable CS8981
     partial class gamecompetitors
     {
         /// <inheritdoc />
@@ -488,4 +489,5 @@ namespace DataAccessEF.Migrations
 #pragma warning restore 612, 618
         }
     }
+#pragma warning restore CS8981
 }

@@ -13,6 +13,8 @@ namespace DataAccessEF.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
     [Migration("20230211110635_resultmodel")]
+#pragma warning disable CS8981
+
     partial class resultmodel
     {
         /// <inheritdoc />
@@ -249,4 +251,5 @@ namespace DataAccessEF.Migrations
 #pragma warning restore 612, 618
         }
     }
+#pragma warning restore CS8981
 }

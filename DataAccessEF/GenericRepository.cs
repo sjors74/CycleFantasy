@@ -34,7 +34,7 @@ namespace DataAccessEF
             return await context.Set<T>().ToListAsync();
         }
 
-        public async Task<T> GetById(int id)
+        public async Task<T?> GetById(int id)
         {
             return await context.Set<T>().FindAsync(id);
         }

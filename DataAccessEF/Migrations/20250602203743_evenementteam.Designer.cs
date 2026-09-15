@@ -13,6 +13,7 @@ namespace DataAccessEF.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
     [Migration("20250602203743_evenementteam")]
+#pragma warning disable CS8981
     partial class evenementteam
     {
         /// <inheritdoc />
@@ -796,4 +797,5 @@ namespace DataAccessEF.Migrations
 #pragma warning restore 612, 618
         }
     }
+#pragma warning restore CS8981
 }

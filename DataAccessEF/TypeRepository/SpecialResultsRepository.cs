@@ -19,7 +19,7 @@ namespace DataAccessEF.TypeRepository
             return await context.SpecialResults
                 .Include(s => s.Special)
                 .Include(s => s.CompetitorInEvent)
-                    .ThenInclude(c => c.CompetitorInTeam)
+                    .ThenInclude(c => c!.CompetitorInTeam)
                         .ThenInclude(ct => ct.Competitor)
                 .Include(s => s.Stage)
                 .FirstOrDefaultAsync(r => r.Id == id);

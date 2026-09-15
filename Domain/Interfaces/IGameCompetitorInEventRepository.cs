@@ -8,8 +8,8 @@ namespace CycleManager.Domain.Interfaces
     {
         Task<IEnumerable<GameCompetitorEvent>> GetAllGameCompetitorsInEventByEventId(int eventId);
         Task<List<Event>> GetEventsByUserId(string userId);
-        Task<GameCompetitorEvent> CreateGameCompetitorEventAsync(DeelnemerCreateDto dto);
-        Task<GameCompetitorEvent> GetCompetitorWithPicksById(int id);
+        Task<GameCompetitorEvent?> CreateGameCompetitorEventAsync(DeelnemerCreateDto dto);
+        Task<GameCompetitorEvent?> GetCompetitorWithPicksById(int id);
         Task<GameCompetitorEvent?> GetGameCompetitorInEventById(int id);
 
         Task<bool> RenamePoolAsync(int deelnemerId, string userId, string nieuweNaam);
