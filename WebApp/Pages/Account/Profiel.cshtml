@@ -1,6 +1,4 @@
 ﻿@page
-@using WebApp.Pages.ViewModels
-@using CycleManager.Domain.Dto
 @model WebApp.Pages.Account.ProfielModel
 @{
 }
@@ -15,7 +13,7 @@
                     </div>
                 }
 
-                @if (User.Identity.IsAuthenticated)
+                @if (User.Identity?.IsAuthenticated == true)
                 {
                     @await Html.PartialAsync("_EventsForUser", Model.Dashboard)
 

@@ -15,7 +15,7 @@ namespace WebApp.Pages.Account
         }
 
         [BindProperty]
-        public string Message { get; set; }
+        public string Message { get; set; } = string.Empty;
 
         public async Task<IActionResult> OnGetAsync(string userId, string token)
         {

@@ -17,7 +17,7 @@ namespace WebApp.Pages.Account
         }
 
         [BindProperty]
-        public ForgotPasswordDto Input { get; set; }
+        public ForgotPasswordDto Input { get; set; } = new();
 
         public async Task<IActionResult> OnPostAsync()
         {

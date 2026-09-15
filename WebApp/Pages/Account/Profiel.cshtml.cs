@@ -25,12 +25,12 @@ namespace WebApp.Pages.Account
         public int DeelnemerId { get; set; }
 
         [BindProperty]
-        public string PoolNaam { get; set; }
+        public string PoolNaam { get; set; } = string.Empty;
 
         [BindProperty]
         public int CurrentEventId { get; set; }
 
-        public EventDashboardDto Dashboard { get; set; }
+        public EventDashboardDto? Dashboard { get; set; }
         public async Task OnGetAsync()
         {
             if(User.Identity != null && User.Identity.IsAuthenticated)
