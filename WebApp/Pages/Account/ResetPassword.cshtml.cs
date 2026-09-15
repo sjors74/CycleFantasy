@@ -16,24 +16,24 @@ namespace WebApp.Pages.Account
         }
 
         [BindProperty]
-        public InputModel Input { get; set; }
+        public InputModel Input { get; set; } = new();
 
         public class InputModel
         {
-            public string Email { get; set; }
-            public string Token { get; set; }
+            public string Email { get; set; } = string.Empty;
+            public string Token { get; set; } = string.Empty;
 
             [Required(ErrorMessage = "Wachtwoord is verplicht")]
             [StringLength(100, MinimumLength = 6, ErrorMessage = "Wachtwoord moet minstens 6 tekens zijn.")]
             [DataType(DataType.Password)]
             [Display(Name ="Wachtwoord")]
-            public string Password { get; set; }
+            public string Password { get; set; } = string.Empty;
 
             [Required(ErrorMessage = "Bevestig je wachtwoord")]
             [DataType(DataType.Password)]
             [Compare("Password", ErrorMessage = "Wachtwoorden komen niet overeen")]
             [Display(Name ="Bevestig wachtwoord")]
-            public string ConfirmPassword { get; set; }
+            public string ConfirmPassword { get; set; } = string.Empty;
         }
 
         public void OnGet(string email, string token)

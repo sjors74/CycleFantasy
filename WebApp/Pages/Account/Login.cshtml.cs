@@ -18,9 +18,9 @@ namespace WebApp.Pages.Account
         }
 
         [BindProperty]
-        public LoginDto Input { get; set; }
+        public LoginDto Input { get; set; } = new();
 
-        public string Message { get; set; }
+        public string Message { get; set; } = string.Empty;
 
         public async Task<IActionResult> OnPostAsync()
         {
@@ -33,7 +33,12 @@ namespace WebApp.Pages.Account
             {
                 var result = await response.Content.ReadFromJsonAsync<LoginResponseDto>();
 
-                // Voor nu: JWT-token lokaal opslaan (evt in cookie / session later)
+                if (result == null)
+                {
+                    ModelState.AddModelError(string.Empty, "Ongeldige reactie van de server.");
+                    return Page();
+                }
+
                 var claims = new List<Claim>
                 {
                     new Claim(ClaimTypes.Name, Input.Email),
@@ -44,8 +49,7 @@ namespace WebApp.Pages.Account
                 var principal = new ClaimsPrincipal(identity);
 
                 await HttpContext.SignInAsync("MyCookieAuth", principal);
-                //
-                //HttpContext.Session.SetString("JwtToken", result.Token);
+
                 return RedirectToPage("/Account/Profiel");
             }
 

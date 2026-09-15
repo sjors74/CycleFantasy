@@ -1,5 +1,4 @@
-﻿@using CycleManager.Domain.Dto
-@using Domain.Dto
+﻿@using Domain.Dto
 @model EventForUserDto
 
 @{
@@ -61,7 +60,7 @@
                                         <br />
 
                                         <small class="text-muted">
-                                            @deelnemer.Renners.Count renners geselecteerd
+                                            @deelnemer.Renners?.Count ?? 0 renners geselecteerd
                                         </small>
                                     </div>
 
