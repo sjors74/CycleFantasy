@@ -118,7 +118,13 @@ namespace WebCycleManager.Controllers
             var teamIds = eventTeams.Select(t => t.TeamId).ToList();
 
             // Haal alle renners op (van dit jaar)
-            var activeSeason = (await _seasonYearService.GetAllAsync()).SingleOrDefault(s => s.Active);
+            var activeSeason = (await _seasonYearService.GetAllAsync())
+                .SingleOrDefault(s => s.Active);
+
+            if (activeSeason == null)
+            {
+                return NotFound("Er is geen actief seizoen gevonden.");
+            }
 
             var competitors = await _competitorService.GetAllCompetitors(activeSeason.SeasonYearId);
 
@@ -370,7 +376,7 @@ namespace WebCycleManager.Controllers
             return vm;
         }
 
-        private async Task<Competitor> GetCompetitor(int id)
+        private async Task<Competitor?> GetCompetitor(int id)
         {
             return await _competitorService.GetCompetitorById(id);
         }
@@ -381,7 +387,7 @@ namespace WebCycleManager.Controllers
             return t;
         }
 
-        public async Task<Event> GetEvent(int id)
+        public async Task<Event?> GetEvent(int id)
         {
             var e = await _eventService.GetEventById(id);
             return e;
@@ -389,11 +395,16 @@ namespace WebCycleManager.Controllers
 
         private static List<int> ParseSelectedCompetitorIds(IFormCollection formCollection)
         {
-            return formCollection["SelectCompetitorId"]
-                .Select(id => int.TryParse(id, out var parsed) ? parsed : (int?)null)
-                .Where(id => id.HasValue)
-                .Select(id => id.Value)
-                .ToList();
+            var result = new List<int>();
+
+            foreach (var id in formCollection["SelectCompetitorId"])
+            {
+                if(int.TryParse(id, out var parsed))
+                { 
+                    result.Add(parsed);
+                }
+            }
+            return result;
         }
     }
 }

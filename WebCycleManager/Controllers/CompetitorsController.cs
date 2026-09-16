@@ -200,7 +200,7 @@ namespace WebCycleManager.Controllers
                 return await ReturnViewAsync();
             }
 
-            Competitor competitor;
+            Competitor? competitor = null;
             if (model.CompetitorId > 0)
             {
                 competitor = await _competitorService.GetCompetitorById(model.CompetitorId);
@@ -324,6 +324,12 @@ namespace WebCycleManager.Controllers
             if (!ModelState.IsValid)
             {
                 var dto = await _competitorService.GetCompetitorForEdit(input.CompetitorId);
+
+                if (dto == null)
+                {
+                    return NotFound();
+                }
+
                 var vm = MapDtoToViewModel(dto);
                 return View(vm);
             }
