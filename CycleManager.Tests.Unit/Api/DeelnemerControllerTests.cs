@@ -269,12 +269,12 @@ namespace CycleManager.Tests.Unit.Api
         }
 
         [Fact]
-        public async Task GetDeelnemerListByEventId_ReturnsEmptyList_WhenServiceReturnsNull()
+        public async Task GetDeelnemerListByEventId_ReturnsEmptyList_WhenServiceReturnsEmptyList()
         {
             // Arrange
             int eventId = 1;
             _mockDeelnemerService.Setup(s => s.GetAllCompetitorsInEvent(eventId))
-                                 .ReturnsAsync((List<GameCompetitorEvent>)null);
+                                 .ReturnsAsync(Enumerable.Empty<GameCompetitorEvent>());
 
             _mockMapper.Setup(m => m.Map<List<DeelnemerDto>>(It.IsAny<List<GameCompetitorEvent>>()))
                .Returns((List<GameCompetitorEvent> src) => src?.ConvertAll(c => new DeelnemerDto { Id = c.Id })
@@ -741,7 +741,7 @@ namespace CycleManager.Tests.Unit.Api
             int deelnemerId = 7;
             _mockDeelnemerService
                 .Setup(s => s.GetAllPicksAsCompetitorIds(deelnemerId))
-                .ReturnsAsync((List<int>)null);
+                .ReturnsAsync(new List<int>());
 
             _mockMapper
                 .Setup(m => m.Map<List<int>>(It.IsAny<List<int>>()))

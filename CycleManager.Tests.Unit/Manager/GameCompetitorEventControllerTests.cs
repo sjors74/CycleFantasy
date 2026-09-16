@@ -281,7 +281,14 @@ namespace CycleManager.Tests.Unit.Manager
 
             var result = await _controller.Details(model) as RedirectToActionResult;
 
-            _mockGameCompetitorEventService.Verify(s => s.AddPicks(It.Is<List<GameCompetitorEventPick>>(l => l.Count == 1 && l[0].CompetitorsInEventId == 11)), Times.Once);
+            _mockGameCompetitorEventService.Verify(
+                s => s.AddPicks(
+                    It.Is<List<GameCompetitorEventPick>>(l => 
+                        l.Count == 1 && 
+                        l[0].CompetitorsInEventId == 11)), 
+                Times.Once);
+
+            Assert.NotNull(result);
             Assert.Equal("Details", result.ActionName);
         }
 

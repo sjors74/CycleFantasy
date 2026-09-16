@@ -264,7 +264,7 @@ namespace CycleManager.Tests.Unit.Manager
 
             _configurationServiceMock
                 .Setup(s => s.GetConfigurationItemById(vm.Id))
-                .ReturnsAsync((ConfigurationItem)null); // item bestaat niet
+                .ReturnsAsync((ConfigurationItem?)null); // item bestaat niet
 
             // Act
             var result = await _controller.Edit(vm.Id, vm);

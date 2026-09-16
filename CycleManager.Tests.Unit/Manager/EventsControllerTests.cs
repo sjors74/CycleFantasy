@@ -281,7 +281,9 @@ namespace CycleManager.Tests.Unit.Manager
         [Fact]
         public async Task DeleteConfirmed_NotFound_RedirectsToIndexWithoutDelete()
         {
-            _eventServiceMock.Setup(s => s.GetEventById(1)).ReturnsAsync((Event)null);
+            _eventServiceMock
+                .Setup(s => s.GetEventById(1))
+                .ReturnsAsync((Event?)null);
 
             var result = await _controller.DeleteConfirmed(1);
 
