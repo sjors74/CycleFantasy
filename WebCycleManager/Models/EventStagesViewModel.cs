@@ -8,6 +8,6 @@ namespace WebCycleManager.Models
         public string EventName { get; set; } = string.Empty;
         public DateTime EventStartDate { get; set; }
         public DateTime EventEndDate { get; set; }
-        public IEnumerable<Stage>? Stages { get; set; }
+        public IEnumerable<Stage> Stages { get; set; } = new List<Stage>();
     }
 }

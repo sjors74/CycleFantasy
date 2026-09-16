@@ -14,7 +14,7 @@ namespace Domain.Models
         public int CompetitorInEventId { get; set; }
         public CompetitorsInEvent CompetitorInEvent { get; set; } = null!;
         
-        public int? SpecialId { get; set; }
+        public int SpecialId { get; set; }
         public ConfigurationItemSpecial Special { get; set; } = null!;
         
     }

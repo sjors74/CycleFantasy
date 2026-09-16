@@ -8,7 +8,7 @@
         public int? Position { get; set; }
 
         // Special
-        public int? SpecialId { get; set; }
+        public int SpecialId { get; set; }
         public string? SpecialName { get; set; }
 
         // Gemeenschappelijk

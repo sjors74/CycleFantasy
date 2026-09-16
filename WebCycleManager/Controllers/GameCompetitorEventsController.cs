@@ -86,7 +86,7 @@ namespace WebCycleManager.Controllers
                         EventId = gameCompetitor.EventId,
 
                         TeamName = gameCompetitor.TeamName,
-                        GameCompetitorName = $"{gameCompetitor?.User?.FirstName} {gameCompetitor?.User?.LastName}",
+                        GameCompetitorName = $"{gameCompetitor.User?.FirstName} {gameCompetitor.User?.LastName}",
 
                         NormalScore = normalScore,
                         SpecialScore = specialScore,
@@ -138,11 +138,11 @@ namespace WebCycleManager.Controllers
 
 
             var newPicks = model.CompetitorsInEvent
-                    .Where(p => p.PickId == 0 && p.SelectedCompetitorId.HasValue)
+                    .Where(p => p.PickId == 0 && p.SelectedCompetitorId is int competitorId)
                     .Select(p => new GameCompetitorEventPick
                     {
                         GameCompetitorEventId = model.Id,
-                        CompetitorsInEventId = p.SelectedCompetitorId.Value
+                        CompetitorsInEventId = p.SelectedCompetitorId!.Value
                     })
                     .ToList();
 

@@ -237,9 +237,8 @@ namespace DataAccessEF.TypeRepository
                 .ToListAsync();
 
             var specialLookup = specialResults
-                .Where(r => r.SpecialId.HasValue)
                 .ToDictionary(
-                    r => r.SpecialId!.Value,
+                    r => r.SpecialId,
                     r => r
                 );
             var uitslag = configItems.Select(ci =>
@@ -581,7 +580,7 @@ namespace DataAccessEF.TypeRepository
                     g => g.Key,
                     g => g.ToDictionary(
                         x => x.CompetitorInEventId,
-                        x => specialScoreById[x.SpecialId!.Value]
+                        x => specialScoreById[x.SpecialId!]
                     )
                 );
 

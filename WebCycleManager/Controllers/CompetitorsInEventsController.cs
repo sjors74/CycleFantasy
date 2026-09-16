@@ -118,7 +118,13 @@ namespace WebCycleManager.Controllers
             var teamIds = eventTeams.Select(t => t.TeamId).ToList();
 
             // Haal alle renners op (van dit jaar)
-            var activeSeason = (await _seasonYearService.GetAllAsync()).SingleOrDefault(s => s.Active);
+            var activeSeason = (await _seasonYearService.GetAllAsync())
+                .SingleOrDefault(s => s.Active);
+
+            if (activeSeason == null)
+            {
+                return NotFound("Er is geen actief seizoen gevonden.");
+            }
 
             var competitors = await _competitorService.GetAllCompetitors(activeSeason.SeasonYearId);
 

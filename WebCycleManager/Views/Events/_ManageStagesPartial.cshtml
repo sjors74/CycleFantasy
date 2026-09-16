@@ -102,10 +102,14 @@
                 <tr>
                     <td colspan="4" class="text-center">Geen etappes beschikbaar</td>
                 </tr>
-            }
+            }   
         </tbody>
     </table>
+    @{
+        var stages = Model.EventStages.Stages;
+        var aantalStages = stages?.Count() ?? 0;
+    }
     <div id="stageCount"
-         data-stage-count="@Model.EventStages.Stages.Count()">
+         data-stage-count="@aantalStages">
     </div>
 </div>

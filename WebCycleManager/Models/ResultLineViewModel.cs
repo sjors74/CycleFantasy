@@ -13,7 +13,7 @@ namespace WebCycleManager.Models
         public int CompetitorInEventId { get; set; }
         public int EventId { get; set; }
         public int SelectedCompetitorId { get; set; }
-        public IEnumerable<SelectListItem> DropdownList { get; set; }
+        public IEnumerable<SelectListItem> DropdownList { get; set; } = Enumerable.Empty<SelectListItem>();
 
     }
 }

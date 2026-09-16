@@ -30,6 +30,11 @@ namespace WebCycleManager.Controllers
             var currentEvent = stage.Event;
             var config = currentEvent.Configuration;
 
+            if (config == null)
+            {
+                return NotFound("Geen configuratie gevonden voor dit event.");
+            }
+
             // Data
             var results = await _resultService.GetResultsByStageAsync(stageId);
             var specialResults = await _resultService.GetSpecialResultsByStageAsync(stageId);
@@ -94,7 +99,7 @@ namespace WebCycleManager.Controllers
                 config.Id,
                 $"Etappe {stage.StageName}: {stage.StartLocation}-{stage.FinishLocation}",
                 stage.NoScore,
-                stage.NoScoreDescription,
+                stage.NoScoreDescription ?? string.Empty,
                 configItems.Count,
                 rows,
                 competitorsInEvent
@@ -217,7 +222,7 @@ namespace WebCycleManager.Controllers
             var vm = new SpecialResultItemViewModel
             {
                 Id = special.Id,
-                SpecialId = special.SpecialId ?? 0,
+                SpecialId = special.SpecialId,
                 StageId = special.StageId,
                 SpecialName = special.Special.Question.ToString(),
                 CompetitorName = special.CompetitorInEvent?.CompetitorInTeam?.Competitor?.CompetitorName ?? string.Empty
