@@ -169,7 +169,8 @@ namespace WebCycleManager.Controllers
         public async Task<IActionResult> EditAjax(StageViewModel model)
         {
             bool isAjax = Request.Headers["X-Requested-With"] == "XMLHttpRequest"
-                || Request.Headers["Accept"].Any(h => h.Contains("application/json"));
+                || Request.Headers["Accept"].ToString()
+                    .Contains("application/json", StringComparison.OrdinalIgnoreCase);
             if (!ModelState.IsValid)
             {
                 if (isAjax)
@@ -312,14 +313,21 @@ namespace WebCycleManager.Controllers
             string? uiErrorMessage = null)
         {
             var eventEntity = await _eventService.GetEventById(eventId);
-            var stages = await _stageService.GetStagesByEventId(eventId) ?? new List<Stage>();
+
+            if (eventEntity == null)
+            {
+                throw new InvalidOperationException(
+                    $"Event {eventId} niet gevonden.");
+            }
+
+            var stages = await _stageService.GetStagesByEventId(eventId) ?? [];
 
             return new ManageStageViewModel
             {
                 EventStages = new EventStagesViewModel
                 {
                     EventId = eventId,
-                    EventName = eventEntity.EventName ?? "Onbekend evenement",
+                    EventName = eventEntity.EventName,
                     EventStartDate = eventEntity.StartDate ?? DateTime.Today,
                     EventEndDate = eventEntity.EndDate ?? DateTime.Today.AddDays(1),
                     Stages = stages

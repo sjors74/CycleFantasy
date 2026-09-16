@@ -171,7 +171,18 @@ namespace WebCycleManager.Controllers
 
             // Event inclusief configuratie ophalen
             var gameEvent = await _eventService.GetEventById(eventId.Value);
-            var numberOfPicks = gameEvent.Configuration.ConfigurationItems.Count();
+            if (gameEvent == null)
+            {
+                return NotFound($"Event {eventId.Value} niet gevonden.");
+            }
+
+            var configuration = gameEvent.Configuration;
+            if (configuration == null)
+            {
+                return BadRequest($"Event {eventId.Value} heeft geen configuratie.");
+            }
+
+            var numberOfPicks = configuration.ConfigurationItems.Count;
 
             // Resultaten ophalen
             var resultDtos = (await _resultService.GetResultsByEventId(eventId.Value)).ToList();
@@ -372,8 +383,8 @@ namespace WebCycleManager.Controllers
             {
                 Id = entity.Id,
                 TeamName = entity.TeamName,
-                UserName = $"{entity?.User?.FirstName} {entity?.User?.LastName}",
-                EventName = entity?.Event?.EventName,
+                UserName = $"{entity.User?.FirstName} {entity.User?.LastName}",
+                EventName = entity.Event.EventName,
                 EventId = entity.EventId
             };
             return View(dto);

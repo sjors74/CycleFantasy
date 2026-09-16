@@ -13,7 +13,7 @@ namespace Domain.Models
 
         [DisplayName("Teamnaam")]
         public string TeamName { get; set; } = string.Empty;
-        public string? UserId { get; set; } = string.Empty;
+        public string UserId { get; set; } = null!;
         public virtual ApplicationUser User { get; set; } = null!;
         public int EventId { get; set; }
         public virtual Event Event { get; set; } = null!;
