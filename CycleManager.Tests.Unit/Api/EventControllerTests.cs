@@ -367,8 +367,8 @@ namespace CycleManager.Tests.Unit.Api
             // Events die de user heeft
             var eventsForUser = new List<EventForUserDto>
             {
-                new EventForUserDto { EventId = 1, StartDate = (DateTime)allEvents[0].StartDate, EndDate = (DateTime)allEvents[0].EndDate, IsIngeschreven = true }, // Actief
-                new EventForUserDto { EventId = 3, StartDate = (DateTime)allEvents[2].StartDate, EndDate = (DateTime)allEvents[2].EndDate, IsIngeschreven = true }  // Historisch
+                new EventForUserDto { EventId = 1, StartDate = allEvents[0].StartDate!.Value, EndDate = allEvents[0].EndDate!.Value, IsIngeschreven = true }, // Actief
+                new EventForUserDto { EventId = 3, StartDate = allEvents[2].StartDate!.Value, EndDate = allEvents[2].EndDate!.Value, IsIngeschreven = true }  // Historisch
             };
 
             var mockEventService = new Mock<IEventService>();
@@ -487,7 +487,7 @@ namespace CycleManager.Tests.Unit.Api
             int eventId = 1;
             var mockEventService = new Mock<IEventService>();
             mockEventService.Setup(s => s.GetEventById(eventId))
-                            .ReturnsAsync((Event)null);
+                            .ReturnsAsync((Event?)null);
 
             var controller = new EventController(
                 mockEventService.Object,

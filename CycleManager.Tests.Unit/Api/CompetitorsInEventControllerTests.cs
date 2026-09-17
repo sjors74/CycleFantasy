@@ -65,7 +65,7 @@ namespace CycleManager.Tests.Unit.Api
             // Arrange
             int id = 99;
             _mockService.Setup(s => s.GetCompetitorById(id))
-                        .ReturnsAsync((CompetitorsInEvent)null);
+                        .ReturnsAsync((CompetitorsInEvent?)null);
 
             // Act
             var result = await _controller.GetById(id);
@@ -97,7 +97,7 @@ namespace CycleManager.Tests.Unit.Api
             // Arrange
             int id = 42;
             _mockService.Setup(s => s.GetCompetitorById(id))
-                        .ReturnsAsync((CompetitorsInEvent)null);
+                        .ReturnsAsync((CompetitorsInEvent?)null);
 
             // Act
             var result = await _controller.GetById(id);
@@ -154,14 +154,15 @@ namespace CycleManager.Tests.Unit.Api
             int number = 5;
 
             _mockService.Setup(s => s.GetRandomNumberofCompetitors(eventId, number))
-                        .ReturnsAsync((List<CompetitorsInEvent>)null);
+                        .ReturnsAsync(new List<CompetitorsInEvent>());
 
             // Act
             var result = await _controller.GetRandomById(eventId, number);
 
             // Assert
             var notFound = Assert.IsType<NotFoundObjectResult>(result);
-            Assert.Contains("Geen renners gevonden", notFound.Value.ToString());
+            var message = Assert.IsType<string>(notFound.Value);
+            Assert.Contains("Geen renners gevonden", message);
         }
 
         [Fact]

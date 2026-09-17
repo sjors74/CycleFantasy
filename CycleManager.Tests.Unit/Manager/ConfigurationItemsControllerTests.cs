@@ -215,8 +215,9 @@ namespace CycleManager.Tests.Unit.Manager
         [Fact]
         public async Task Delete_Get_InvalidId_ReturnsNotFound()
         {
-            _configurationServiceMock.Setup(s => s.GetConfigurationItemById(It.IsAny<int>()))
-                .ReturnsAsync((ConfigurationItem)null);
+            _configurationServiceMock
+                .Setup(s => s.GetConfigurationItemById(It.IsAny<int>()))
+                .ReturnsAsync((ConfigurationItem?)null);
 
             var result = await _controller.Delete(99);
 

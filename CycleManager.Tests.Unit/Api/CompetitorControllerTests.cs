@@ -109,7 +109,7 @@ namespace CycleManager.Tests.Unit.Api
         {
             // Arrange
             int id = 99;
-            _mockService.Setup(s => s.GetCompetitorById(id)).ReturnsAsync((Competitor)null);
+            _mockService.Setup(s => s.GetCompetitorById(id)).ReturnsAsync((Competitor?)null);
 
             // Act
             var result = await _controller.GetById(id);
@@ -134,12 +134,13 @@ namespace CycleManager.Tests.Unit.Api
         }
 
         [Fact]
-        public async Task GetByTeamId_ReturnsEmptyList_WhenServiceReturnsNull()
+        public async Task GetByTeamId_ReturnsEmptyList_WhenServiceReturnsEmptyList()
         {
             // Arrange
-            int teamYearId = 10, year = 2025;
-            _mockService.Setup(s => s.GetByTeamId(teamYearId))
-                        .ReturnsAsync((List<CompetitorInTeamDto>)null);
+            int teamYearId = 10;
+            _mockService
+                .Setup(s => s.GetByTeamId(teamYearId))
+                .ReturnsAsync(new List<CompetitorInTeamDto>());
 
             // Act
             var result = await _controller.GetByTeamId(teamYearId);
