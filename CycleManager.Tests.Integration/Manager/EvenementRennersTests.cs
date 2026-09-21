@@ -604,8 +604,18 @@ namespace CycleManager.Tests.Integration.Manager
         private static List<int> InvokeParseMethod(IFormCollection form)
         {
             var method = typeof(CompetitorsInEventsController)
-                .GetMethod("ParseSelectedCompetitorIds", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
-            return (List<int>)method.Invoke(null, new object[] { form });
+                .GetMethod(
+                    "ParseSelectedCompetitorIds", 
+                    System.Reflection.BindingFlags.NonPublic | 
+                    System.Reflection.BindingFlags.Static);
+
+            Assert.NotNull(method);
+
+            var result = method.Invoke(null, new object[] { form });
+            
+            Assert.NotNull(result);
+
+            return Assert.IsType<List<int>>(result);
         }
 
         private static string ExtractAntiForgeryToken(string html)

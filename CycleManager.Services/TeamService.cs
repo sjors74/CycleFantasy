@@ -69,7 +69,7 @@ namespace CycleManager.Services
             return await _teamRepository.GetTeamById(id);
         }
 
-        public async Task<Team> GetTeamForCurrentYear(int id, int year)
+        public async Task<Team?> GetTeamForCurrentYear(int id, int year)
         {
             return await _teamRepository.GetTeamForCurrentYear(id, year);
         }

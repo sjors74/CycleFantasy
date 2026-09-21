@@ -266,7 +266,7 @@ namespace CycleManager.Tests.E2E
 
             // --- 1. Haal bestaand event en deelnemer op ---
             var ev = await db.Events
-                .Include(e => e.Configuration)
+                .Include(e => e.Configuration!)
                     .ThenInclude(c => c.ConfigurationItems)
                 .Include(e => e.Stages)
                 .Include(e => e.GameCompetitorEvents)

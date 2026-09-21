@@ -24,7 +24,6 @@ namespace CycleManager.Tests.E2E
         public string ApiBaseUrl { get; private set; } = "https://localhost:44302";
 
         private bool _initialized = false;
-        private bool _isRunning = false;
 
         public IServiceProvider Services { get; private set; } = null!;
 
@@ -83,10 +82,8 @@ namespace CycleManager.Tests.E2E
             // Database reset + seed
             await ResetDatabaseAsync();
 
-
             _initialized = true;
-            _isRunning = true;
-
+            
             Console.WriteLine("AppFixture ready!");
         }
 
@@ -126,8 +123,6 @@ namespace CycleManager.Tests.E2E
                 _apiProcess = StartProcess("WebCycle", "https://localhost:44302", "Test");
                 await WaitForUrl(ApiBaseUrl);
             }
-
-            _isRunning = true;
         }
 
         //Correct afsluiten

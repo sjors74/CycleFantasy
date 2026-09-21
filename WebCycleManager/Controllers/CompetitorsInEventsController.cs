@@ -157,7 +157,7 @@ namespace WebCycleManager.Controllers
         }
 
 
-        public static List<CompetitorDto> FilterCompetitors(IEnumerable<CompetitorDto> competitors, List<int> teamIds, int? filterTeam)
+        public static List<CompetitorDto> FilterCompetitors(IEnumerable<CompetitorDto>? competitors, List<int> teamIds, int? filterTeam)
         {
             if (competitors == null)
                 return new();

@@ -30,7 +30,7 @@ namespace CycleManager.Services.Interfaces
 
         Task<IEnumerable<Team>> GetTeamsForEvent(int eventId);
 
-        Task<Team> GetTeamForCurrentYear(int id, int year);
+        Task<Team?> GetTeamForCurrentYear(int id, int year);
 
         Task<bool> HasUnprocessedScrapedTeams();
 

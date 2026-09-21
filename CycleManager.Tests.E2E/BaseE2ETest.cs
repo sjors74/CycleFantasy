@@ -6,10 +6,10 @@ namespace CycleManager.Tests.E2E;
 [TestClass]
 public abstract class BaseE2ETest
 {
-    protected static AppFixture Fixture = null;
+    protected static AppFixture Fixture = null!;
     protected IBrowser Browser => Fixture.Browser;
     protected IPage Page = null!;
-    protected IBrowserContext Context = null;
+    protected IBrowserContext Context = null!;
 
     public string WebBaseUrl => Fixture.WebBaseUrl;
 

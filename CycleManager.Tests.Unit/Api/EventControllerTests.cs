@@ -515,7 +515,7 @@ namespace CycleManager.Tests.Unit.Api
             mockEventService.Setup(s => s.GetEventById(eventId))
                             .ReturnsAsync(new Event { EventId = eventId });
             mockEventService.Setup(s => s.GetTeamsForEvent(eventId))
-                            .ReturnsAsync((List<TeamDto>)null);
+                            .ReturnsAsync(new List<TeamDto>());
 
             var controller = new EventController(
                 mockEventService.Object,
