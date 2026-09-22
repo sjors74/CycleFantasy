@@ -20,7 +20,7 @@ namespace Domain.Models
 
         public int? ConfigurationItemId { get; set; }
         [JsonIgnore]
-        public virtual ConfigurationItem ConfigurationItem { get; set; } = null!;
+        public virtual ConfigurationItem? ConfigurationItem { get; set; }
         
     }
 }

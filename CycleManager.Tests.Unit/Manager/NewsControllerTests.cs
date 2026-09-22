@@ -78,7 +78,9 @@ namespace CycleManager.Tests.Unit.Manager
         [Fact]
         public async Task Edit_Get_InvalidId_ReturnsNotFound()
         {
-            _mockNewsService.Setup(s => s.GetByIdAsync(It.IsAny<int>())).ReturnsAsync((NewsItem)null);
+            _mockNewsService
+                .Setup(s => s.GetByIdAsync(It.IsAny<int>()))
+                .ReturnsAsync((NewsItem?)null);
 
             var result = await _controller.Edit(1);
 
@@ -170,7 +172,9 @@ namespace CycleManager.Tests.Unit.Manager
         [Fact]
         public async Task Delete_Get_InvalidId_ReturnsNotFound()
         {
-            _mockNewsService.Setup(s => s.GetByIdAsync(It.IsAny<int>())).ReturnsAsync((NewsItem)null);
+            _mockNewsService
+                .Setup(s => s.GetByIdAsync(It.IsAny<int>()))
+                .ReturnsAsync((NewsItem?)null);
 
             var result = await _controller.Delete(1);
 
@@ -205,7 +209,9 @@ namespace CycleManager.Tests.Unit.Manager
         [Fact]
         public async Task DeleteConfirmed_ItemNotFound_DoesNotCallDelete()
         {
-            _mockNewsService.Setup(s => s.GetByIdAsync(1)).ReturnsAsync((NewsItem)null);
+            _mockNewsService
+                .Setup(s => s.GetByIdAsync(1))
+                .ReturnsAsync((NewsItem?)null);
 
             var result = await _controller.DeleteConfirmed(1);
 

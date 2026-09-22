@@ -381,7 +381,7 @@ namespace WebCycleManager.Controllers
             return await _competitorService.GetCompetitorById(id);
         }
 
-        private async Task<Team> GetTeam(int id)
+        private async Task<Team?> GetTeam(int id)
         {
             var t = await _teamService.GetTeamById(id);
             return t;

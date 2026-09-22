@@ -53,7 +53,9 @@ namespace WebCycleManager.Controllers
             // Normale uitslag
             rows.AddRange(configItems.Select(ci =>
             {
-                var result = results.FirstOrDefault(r => r.ConfigurationItem.Position == ci.Position);
+                var result = results.FirstOrDefault(
+                   r => r.ConfigurationItem != null &&
+                        r.ConfigurationItem.Position == ci.Position);
 
                 return new StageResultRowViewModel
                 {
@@ -187,7 +189,10 @@ namespace WebCycleManager.Controllers
 
             var result = await _resultService.GetResultByIdAsync(id.Value);
             if (result == null) return NotFound();
-            
+
+            if (result.ConfigurationItem == null)
+                return NotFound();
+
             var vm = new ResultItemViewModel
             {
                 Id = result.Id,

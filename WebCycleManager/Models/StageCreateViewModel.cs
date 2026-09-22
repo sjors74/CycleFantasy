@@ -36,6 +36,6 @@ namespace WebCycleManager.Models
         [Display(Name ="Evenement")]
         public int EventId { get; set; }
 
-        public IEnumerable<SelectListItem>? Events { get; set; }
+        public IEnumerable<SelectListItem> Events { get; set; } = Enumerable.Empty<SelectListItem>();
     }
 }

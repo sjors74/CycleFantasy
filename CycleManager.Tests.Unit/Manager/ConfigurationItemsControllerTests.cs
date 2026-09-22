@@ -61,7 +61,7 @@ namespace CycleManager.Tests.Unit.Manager
         public async Task Details_InvalidId_ReturnsNotFound()
         {
             _configurationServiceMock.Setup(s => s.GetConfigurationItemById(It.IsAny<int>()))
-                .ReturnsAsync((ConfigurationItem)null);
+                .ReturnsAsync((ConfigurationItem?)null);
 
             var result = await _controller.Details(99);
 
@@ -101,7 +101,7 @@ namespace CycleManager.Tests.Unit.Manager
             var redirect = Assert.IsType<RedirectToActionResult>(result);
             Assert.Equal("Details", redirect.ActionName);
             Assert.Equal("Configurations", redirect.ControllerName);
-            Assert.Equal(3, redirect.RouteValues["id"]);
+            Assert.Equal(3, redirect.RouteValues?["id"]);
         }
 
         [Fact]

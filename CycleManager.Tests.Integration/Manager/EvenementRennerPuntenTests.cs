@@ -294,7 +294,7 @@ namespace CycleManager.Tests.Integration.Manager
             {
                 var expectedPoints = await db.Results
                     .Where(r => r.CompetitorInEventId == cie.Id)
-                    .SumAsync(r => r.ConfigurationItem.Score);
+                    .SumAsync(r => r.ConfigurationItem!.Score);
 
                 var row = rows.Cast<Match>().FirstOrDefault(m => m.Groups[2].Value.Trim() == cie.CompetitorInTeam.Competitor.FirstName + " " + cie.CompetitorInTeam.Competitor.LastName);
                 row.Should().NotBeNull("de renner moet in de ranglijst voorkomen");
