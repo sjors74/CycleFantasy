@@ -154,6 +154,7 @@ namespace CycleManager.Tests.Integration.DataAccess
             await repository.SaveChangesAsync();
 
             var saved = await context.ConfigurationItems.FindAsync(1);
+            saved.Should().NotBeNull();
             saved.Score.Should().Be(99);
         }
 

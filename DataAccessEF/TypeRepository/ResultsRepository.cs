@@ -30,8 +30,8 @@ namespace DataAccessEF.TypeRepository
                 .Include(r => r.Stage)
                 .Include(r => r.ConfigurationItem)
 
-                .Where(r => r.Stage.EventId == eventId)
-                .OrderBy(r => r.ConfigurationItem.Position)
+                .Where(r => r.Stage.EventId == eventId && r.ConfigurationItem != null)
+                .OrderBy(r => r.ConfigurationItem!.Position)
                 .ToListAsync();
 
             return results;
@@ -332,7 +332,7 @@ namespace DataAccessEF.TypeRepository
                 {
                     r.CompetitorInEventId,
                     r.StageId,
-                    Score = r.ConfigurationItem.Score
+                    Score = r.ConfigurationItem!.Score
                 })
                 .ToListAsync();
 
@@ -528,7 +528,7 @@ namespace DataAccessEF.TypeRepository
                     continue;
 
                 var oldCi = result.ConfigurationItem;
-                var newCi = configItems.FirstOrDefault(ci => ci.Position == oldCi.Position);
+                var newCi = configItems.FirstOrDefault(ci => ci.Position == oldCi!.Position);
 
                 result.ConfigurationItemId = newCi?.Id;
             }

@@ -24,12 +24,17 @@ namespace CycleManager.Tests.Integration.Helpers
 
             foreach (var sc in scraped)
             {
+                var country = await _db.Countries
+                    .FirstOrDefaultAsync(c => c.CountryNameShort == sc.CountryShortName)
+                    ?? throw new InvalidOperationException(
+                        $"Country '{sc.CountryShortName}' niet gevonden.");
+
                 var competitor = new Competitor
                 {
                     FirstName = sc.RiderName.Split(' ')[0],
                     LastName = sc.RiderName.Split(' ')[1],
                     PcsScraperName = sc.RiderName,
-                    Country = await _db.Countries.FirstOrDefaultAsync(c => c.CountryNameShort == sc.CountryShortName)
+                    Country = country
                 };
 
                 _db.Competitors.Add(competitor);

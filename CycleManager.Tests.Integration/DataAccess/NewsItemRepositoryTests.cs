@@ -101,6 +101,7 @@ namespace CycleManager.Tests.Integration.DataAccess
             await repo.UpdateAsync(news);
 
             var updated = await context.NewsItems.FindAsync(1);
+            updated.Should().NotBeNull();
             updated.Title.Should().Be("Updated");
             updated.Message.Should().Be("Updated Msg");
             updated.IsActive.Should().BeFalse();

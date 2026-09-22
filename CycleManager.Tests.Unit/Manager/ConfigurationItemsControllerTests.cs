@@ -61,7 +61,7 @@ namespace CycleManager.Tests.Unit.Manager
         public async Task Details_InvalidId_ReturnsNotFound()
         {
             _configurationServiceMock.Setup(s => s.GetConfigurationItemById(It.IsAny<int>()))
-                .ReturnsAsync((ConfigurationItem)null);
+                .ReturnsAsync((ConfigurationItem?)null);
 
             var result = await _controller.Details(99);
 
@@ -101,7 +101,7 @@ namespace CycleManager.Tests.Unit.Manager
             var redirect = Assert.IsType<RedirectToActionResult>(result);
             Assert.Equal("Details", redirect.ActionName);
             Assert.Equal("Configurations", redirect.ControllerName);
-            Assert.Equal(3, redirect.RouteValues["id"]);
+            Assert.Equal(3, redirect.RouteValues?["id"]);
         }
 
         [Fact]
@@ -146,7 +146,7 @@ namespace CycleManager.Tests.Unit.Manager
         public async Task Edit_Get_InvalidId_ReturnsNotFound()
         {
             _configurationServiceMock.Setup(s => s.GetConfigurationItemById(It.IsAny<int>()))
-                .ReturnsAsync((ConfigurationItem)null);
+                .ReturnsAsync((ConfigurationItem?)null);
 
             var result = await _controller.Edit(999);
 
@@ -215,8 +215,9 @@ namespace CycleManager.Tests.Unit.Manager
         [Fact]
         public async Task Delete_Get_InvalidId_ReturnsNotFound()
         {
-            _configurationServiceMock.Setup(s => s.GetConfigurationItemById(It.IsAny<int>()))
-                .ReturnsAsync((ConfigurationItem)null);
+            _configurationServiceMock
+                .Setup(s => s.GetConfigurationItemById(It.IsAny<int>()))
+                .ReturnsAsync((ConfigurationItem?)null);
 
             var result = await _controller.Delete(99);
 
@@ -235,6 +236,7 @@ namespace CycleManager.Tests.Unit.Manager
             var redirect = Assert.IsType<RedirectToActionResult>(result);
             Assert.Equal("Details", redirect.ActionName);
             Assert.Equal("Configurations", redirect.ControllerName);
+            Assert.NotNull(redirect.RouteValues);
             Assert.Equal(8, redirect.RouteValues["id"]);
             _configurationServiceMock.Verify(s => s.DeleteItem(item), Times.Once);
         }
@@ -243,7 +245,7 @@ namespace CycleManager.Tests.Unit.Manager
         public async Task DeleteConfirmed_ItemNotFound_ReturnsNotFound()
         {
             _configurationServiceMock.Setup(s => s.GetConfigurationItemById(It.IsAny<int>()))
-                .ReturnsAsync((ConfigurationItem)null);
+                .ReturnsAsync((ConfigurationItem?)null);
 
             var result = await _controller.DeleteConfirmed(99);
 
@@ -264,7 +266,7 @@ namespace CycleManager.Tests.Unit.Manager
 
             _configurationServiceMock
                 .Setup(s => s.GetConfigurationItemById(vm.Id))
-                .ReturnsAsync((ConfigurationItem)null); // item bestaat niet
+                .ReturnsAsync((ConfigurationItem?)null); // item bestaat niet
 
             // Act
             var result = await _controller.Edit(vm.Id, vm);

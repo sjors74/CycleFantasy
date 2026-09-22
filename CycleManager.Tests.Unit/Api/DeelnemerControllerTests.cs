@@ -98,7 +98,7 @@ namespace CycleManager.Tests.Unit.Api
             // Arrange
             int eventId = 1;
             _mockDeelnemerService.Setup(s => s.GetAllCompetitorsInEvent(eventId))
-                .ReturnsAsync((List<GameCompetitorEvent>?)null);
+                .ReturnsAsync(new List<GameCompetitorEvent>());
 
             // Mapper moet null kunnen verwerken
             _mockMapper.Setup(m => m.Map<List<DeelnemerDto>>(It.IsAny<List<GameCompetitorEvent>>()))
@@ -194,9 +194,14 @@ namespace CycleManager.Tests.Unit.Api
 
             // Assert cache
             string cacheKey = $"deelnemers_{eventId}";
-            Assert.True(_memoryCache.TryGetValue(cacheKey, out List<DeelnemerDto> cachedValue));
-            Assert.Single(cachedValue);
-            Assert.Equal(1, cachedValue[0].Id);
+            Assert.True(_memoryCache.TryGetValue(cacheKey, out List<DeelnemerDto>? cachedValue));
+            Assert.NotNull(cachedValue);
+
+            var cached = cachedValue!;
+            Assert.Single(cached);
+
+
+            Assert.Equal(1, cached[0].Id);
         }
 
         [Fact]
@@ -251,7 +256,8 @@ namespace CycleManager.Tests.Unit.Api
 
             // Cache moet gevuld zijn
             string cacheKey = $"deelnemers_{eventId}";
-            Assert.True(_memoryCache.TryGetValue(cacheKey, out List<DeelnemerDto> cachedValue));
+            Assert.True(_memoryCache.TryGetValue(cacheKey, out List<DeelnemerDto>? cachedValue));
+            Assert.NotNull(cachedValue);
             Assert.Equal(2, cachedValue.Count);
 
             // Act - tweede call (moet cache gebruiken, service NIET opnieuw aanroepen)
@@ -269,12 +275,12 @@ namespace CycleManager.Tests.Unit.Api
         }
 
         [Fact]
-        public async Task GetDeelnemerListByEventId_ReturnsEmptyList_WhenServiceReturnsNull()
+        public async Task GetDeelnemerListByEventId_ReturnsEmptyList_WhenServiceReturnsEmptyList()
         {
             // Arrange
             int eventId = 1;
             _mockDeelnemerService.Setup(s => s.GetAllCompetitorsInEvent(eventId))
-                                 .ReturnsAsync((List<GameCompetitorEvent>)null);
+                                 .ReturnsAsync(Enumerable.Empty<GameCompetitorEvent>());
 
             _mockMapper.Setup(m => m.Map<List<DeelnemerDto>>(It.IsAny<List<GameCompetitorEvent>>()))
                .Returns((List<GameCompetitorEvent> src) => src?.ConvertAll(c => new DeelnemerDto { Id = c.Id })
@@ -421,9 +427,9 @@ namespace CycleManager.Tests.Unit.Api
             var data = Assert.IsAssignableFrom<List<CompetitorRankingDto>>(okResult.Value);
 
             Assert.Equal(2, data.Count);
-            Assert.Equal(10, data[0].Points);
+            Assert.Equal(10, data[0].TotalPoints);
             Assert.Equal(5, data[0].LatestPoints);
-            Assert.Equal(20, data[1].Points);
+            Assert.Equal(20, data[1].TotalPoints);
             Assert.Equal(15, data[1].LatestPoints);
         }
 
@@ -434,7 +440,7 @@ namespace CycleManager.Tests.Unit.Api
             int id = 1;
             int eventId = 5;
 
-            _mockDeelnemerService.Setup(s => s.GetAllPicks(id)).ReturnsAsync((List<GameCompetitorEventPick>)null);
+            _mockDeelnemerService.Setup(s => s.GetAllPicks(id)).ReturnsAsync(new List<GameCompetitorEventPick>());
 
             // Act
             var result = await _controller.GetListOfCompetitorsPicksForDeelnemer(id, eventId);
@@ -463,7 +469,7 @@ namespace CycleManager.Tests.Unit.Api
                        .Returns(picks.ConvertAll(p => new CompetitorRankingDto { CompetitorInEventId = p.CompetitorsInEvent.Id }));
 
             _mockResultService.Setup(s => s.GetCompetitorResultsByEventId(eventId, 1))
-                              .ReturnsAsync((CompetitorScoreDto)null);
+                              .ReturnsAsync((CompetitorScoreDto?)null);
 
             // Act
             var result = await _controller.GetListOfCompetitorsPicksForDeelnemer(id, eventId);
@@ -473,7 +479,7 @@ namespace CycleManager.Tests.Unit.Api
             var data = Assert.IsAssignableFrom<List<CompetitorRankingDto>>(okResult.Value);
 
             Assert.Single(data);
-            Assert.Equal(0, data[0].Points);
+            Assert.Equal(0, data[0].TotalPoints);
             Assert.Equal(0, data[0].LatestPoints);
         }
 
@@ -541,7 +547,7 @@ namespace CycleManager.Tests.Unit.Api
             Assert.Equal("Remco Evenepoel", deelnemer.DeelnemerNaam);
             Assert.Equal("Team A", deelnemer.PoolNaam);
             Assert.Single(deelnemer.Picks);
-            Assert.Equal(25, deelnemer.Picks[0].Points);
+            Assert.Equal(25, deelnemer.Picks[0].TotalPoints);
         }
 
         [Fact]
@@ -549,7 +555,7 @@ namespace CycleManager.Tests.Unit.Api
         {
             // Arrange
             int eventId = 99;
-            _mockEventService.Setup(s => s.GetEventById(eventId)).ReturnsAsync((Event)null);
+            _mockEventService.Setup(s => s.GetEventById(eventId)).ReturnsAsync((Event?)null);
 
             // Act
             var result = await _controller.GetDeelnemersMetPicks(eventId);
@@ -583,7 +589,7 @@ namespace CycleManager.Tests.Unit.Api
 
             _mockEventService.Setup(s => s.GetEventById(eventId)).ReturnsAsync(eventObj);
             _mockDeelnemerService.Setup(s => s.GetAllPicks(22))
-                                 .ReturnsAsync((List<GameCompetitorEventPick>)null);
+                                 .ReturnsAsync(new List<GameCompetitorEventPick>());
             _mockMapper.Setup(m => m.Map<List<CompetitorRankingDto>>(It.IsAny<List<GameCompetitorEventPick>>()))
                        .Returns(new List<CompetitorRankingDto>());
 
@@ -645,7 +651,7 @@ namespace CycleManager.Tests.Unit.Api
         {
             // Arrange
             int eventId = 99;
-            _mockEventService.Setup(s => s.GetEventById(eventId)).ReturnsAsync((Event)null);
+            _mockEventService.Setup(s => s.GetEventById(eventId)).ReturnsAsync((Event?)null);
 
             // Act
             var result = await _controller.GetDeelnemersMetPuntenVoorEvent(eventId);
@@ -671,7 +677,7 @@ namespace CycleManager.Tests.Unit.Api
             };
 
             _mockEventService.Setup(s => s.GetEventById(eventId)).ReturnsAsync(eventObj);
-            _mockDeelnemerService.Setup(s => s.GetAllPicks(1)).ReturnsAsync((List<GameCompetitorEventPick>)null);
+            _mockDeelnemerService.Setup(s => s.GetAllPicks(1)).ReturnsAsync(new List<GameCompetitorEventPick>());
             _mockMapper.Setup(m => m.Map<DeelnemerDto>(It.IsAny<GameCompetitorEvent>()))
                        .Returns(new DeelnemerDto { Id = 1, DeelnemerNaam = "Test" });
 
@@ -741,7 +747,7 @@ namespace CycleManager.Tests.Unit.Api
             int deelnemerId = 7;
             _mockDeelnemerService
                 .Setup(s => s.GetAllPicksAsCompetitorIds(deelnemerId))
-                .ReturnsAsync((List<int>)null);
+                .ReturnsAsync(new List<int>());
 
             _mockMapper
                 .Setup(m => m.Map<List<int>>(It.IsAny<List<int>>()))

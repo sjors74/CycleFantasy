@@ -209,7 +209,9 @@ namespace CycleManager.Tests.Integration.Manager
             await scraperService.RunCompetitorsAsync(dto.TeamId);
             await scraperService.ImportScrapedCompetitorsAsync();
 
-            var competitor = db.Competitors.FirstOrDefault(c => c.PcsScraperName.Contains("_2025"));
+            var competitor = db.Competitors
+                .FirstOrDefault(c => c.PcsScraperName != null &&
+                                     c.PcsScraperName.Contains("_2025"));
             competitor.Should().NotBeNull();
 
             var cit = db.CompetitorInTeams.FirstOrDefault(c => c.TeamYear.TeamId == 1 && c.CompetitorId == competitor.CompetitorId && c.TeamYear.Year == 2025);
@@ -239,7 +241,7 @@ namespace CycleManager.Tests.Integration.Manager
                 ["__RequestVerificationToken"] = token,
                 ["TeamId"] = team.TeamId.ToString(),
                 ["CurrentTeamName"] = team.CurrentTeamName,
-                ["CountryId"] = team.CountryId.ToString(),
+                ["CountryId"] = team.CountryId!.Value.ToString(),
                 ["PcsName"] = team.PcsName,
                 ["TeamYears[0].Year"] = "2025",
                 ["TeamYears[0].Name"] = "Team2025Renamed",
@@ -277,7 +279,7 @@ namespace CycleManager.Tests.Integration.Manager
                 ["__RequestVerificationToken"] = token,
                 ["TeamId"] = team.TeamId.ToString(),
                 ["CurrentTeamName"] = team.CurrentTeamName,
-                ["CountryId"] = team.CountryId.ToString(),
+                ["CountryId"] = team.CountryId!.Value.ToString(),
                 ["PcsName"] = team.PcsName,
                 ["TeamYears[0].Year"] = "2025",
                 ["TeamYears[0].Name"] = "Team2025Renamed",

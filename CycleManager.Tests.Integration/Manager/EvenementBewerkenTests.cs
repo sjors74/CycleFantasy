@@ -66,6 +66,10 @@ namespace CycleManager.Tests.Integration.Manager
             var getHtml = await (await _client.GetAsync($"/Events/Edit/{ev.EventId}")).Content.ReadAsStringAsync();
             var token = TokenHelper.ExtractAntiForgeryToken(getHtml);
 
+            Assert.NotNull(ev.StartDate);
+            Assert.NotNull(ev.EndDate);
+            Assert.NotNull(ev.ConfigurationId);
+
             var formData = new Dictionary<string, string>
             {
                 ["__RequestVerificationToken"] = token,
@@ -73,12 +77,12 @@ namespace CycleManager.Tests.Integration.Manager
                 ["Name"] = ev.EventName + "_Edited",
                 ["Code"] = ev.EventCode ?? "TE",
                 ["Year"] = ev.EventYear.ToString(),
-                ["StartDate"] = ev.StartDate?.ToString("yyyy-MM-dd"),
-                ["EndDate"] = ev.EndDate?.ToString("yyyy-MM-dd"),
+                ["StartDate"] = ev.StartDate!.Value.ToString("yyyy-MM-dd"),
+                ["EndDate"] = ev.EndDate!.Value.ToString("yyyy-MM-dd"),
                 ["Slogan"] = "Updated Slogan",
                 ["CountryCode"] = "BE",
                 ["ColorName"] = "Blue",
-                ["ConfigurationId"] = ev.ConfigurationId.ToString(),
+                ["ConfigurationId"] = ev.ConfigurationId!.Value.ToString(),
                 ["IsActive"] = "true",
                 ["ShowPodium"] = "true"
             };
@@ -100,6 +104,9 @@ namespace CycleManager.Tests.Integration.Manager
         {
             var ev = await EnsureTestEventAsync();
 
+            Assert.NotNull(ev.StartDate);
+            Assert.NotNull(ev.EndDate);
+
             var getHtml = await (await _client.GetAsync($"/Events/Edit/{ev.EventId}")).Content.ReadAsStringAsync();
             var token = TokenHelper.ExtractAntiForgeryToken(getHtml);
 
@@ -110,8 +117,8 @@ namespace CycleManager.Tests.Integration.Manager
                 ["Name"] = "", // Ongeldige naam
                 ["Code"] = ev.EventCode ?? "TE",
                 ["Year"] = ev.EventYear.ToString(),
-                ["StartDate"] = ev.StartDate?.ToString("yyyy-MM-dd"),
-                ["EndDate"] = ev.EndDate?.ToString("yyyy-MM-dd")
+                ["StartDate"] = ev.StartDate!.Value.ToString("yyyy-MM-dd"),
+                ["EndDate"] = ev.EndDate!.Value.ToString("yyyy-MM-dd")
             };
 
             var postResponse = await _client.PostAsync($"/Events/Edit/{ev.EventId}", new FormUrlEncodedContent(formData));

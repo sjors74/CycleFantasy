@@ -157,7 +157,7 @@ namespace WebCycleManager.Controllers
         }
 
 
-        public static List<CompetitorDto> FilterCompetitors(IEnumerable<CompetitorDto> competitors, List<int> teamIds, int? filterTeam)
+        public static List<CompetitorDto> FilterCompetitors(IEnumerable<CompetitorDto>? competitors, List<int> teamIds, int? filterTeam)
         {
             if (competitors == null)
                 return new();
@@ -381,7 +381,7 @@ namespace WebCycleManager.Controllers
             return await _competitorService.GetCompetitorById(id);
         }
 
-        private async Task<Team> GetTeam(int id)
+        private async Task<Team?> GetTeam(int id)
         {
             var t = await _teamService.GetTeamById(id);
             return t;

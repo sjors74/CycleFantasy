@@ -660,6 +660,7 @@ namespace CycleManager.Tests.Integration.DataAccess
                         cit.CompetitorId == 10 &&
                         cit.TeamYear.SeasonYearId == 2025);
 
+            Assert.NotNull(newLink);
             Assert.Equal(2, newLink.TeamYearId);
             Assert.Equal(2, newLink.TeamYear.TeamId);
         }

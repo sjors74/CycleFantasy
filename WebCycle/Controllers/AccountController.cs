@@ -99,7 +99,7 @@ namespace WebCycleApi.Controllers
         }
 
         [HttpGet("confirmemail")]
-        public async Task<IActionResult> ConfirmEmail(string userId, string token)
+        public async Task<IActionResult> ConfirmEmail(string? userId, string? token)
         {
             if (userId == null || token == null)
                 return BadRequest("Ongeldige bevestigingsgegevens.");

@@ -22,7 +22,7 @@ namespace CycleManager.Tests.Unit.Api
         {
             var userStoreMock = new Mock<IUserStore<ApplicationUser>>();
             _mockUserManager = new Mock<UserManager<ApplicationUser>>(
-                userStoreMock.Object, null, null, null, null, null, null, null, null);
+                userStoreMock.Object, null!, null!, null!, null!, null!, null!, null!, null!);
 
             _mockEmailSender = new Mock<IEmailSender>();
             _mockConfiguration = new Mock<IConfiguration>();
@@ -146,10 +146,14 @@ namespace CycleManager.Tests.Unit.Api
             var badRequest = Assert.IsType<BadRequestObjectResult>(result);
             var value = badRequest.Value;
 
+            Assert.NotNull(value);
+
             // Fallback-check, of controller een ErrorResponse of anonieme errors terugstuurt
             var errorsProp = value.GetType().GetProperty("Errors");
             Assert.NotNull(errorsProp);
+
             var errors = errorsProp.GetValue(value) as IEnumerable<string>;
+            Assert.NotNull(errors);
             Assert.Contains("Email is verplicht", errors);
         }
 
@@ -180,10 +184,14 @@ namespace CycleManager.Tests.Unit.Api
             // Assert
             var badRequest = Assert.IsType<BadRequestObjectResult>(result);
             var value = badRequest.Value;
+            Assert.NotNull(value);
 
             var errorsProp = value.GetType().GetProperty("Errors");
             Assert.NotNull(errorsProp);
-            var errors = errorsProp.GetValue(value) as IEnumerable<string>;
+
+            var errors = Assert.IsAssignableFrom<IEnumerable<string>>(
+                errorsProp.GetValue(value));
+
             Assert.Contains("E-mailadres niet toegestaan.", errors);
         }
 
@@ -210,7 +218,7 @@ namespace CycleManager.Tests.Unit.Api
             string token = "token123";
 
             _mockUserManager.Setup(u => u.FindByIdAsync(userId))
-                            .ReturnsAsync((ApplicationUser)null);
+                            .ReturnsAsync((ApplicationUser?)null);
 
             // Act
             var result = await _controller.ConfirmEmail(userId, token);
@@ -347,7 +355,7 @@ namespace CycleManager.Tests.Unit.Api
             // Arrange
             var loginDto = new LoginDto { Email = email, Password = password };
             _mockUserManager.Setup(u => u.FindByEmailAsync(loginDto.Email))
-                            .ReturnsAsync((ApplicationUser)null);
+                            .ReturnsAsync((ApplicationUser?)null);
 
             // Act
             var result = await _controller.Login(loginDto);
@@ -424,7 +432,7 @@ namespace CycleManager.Tests.Unit.Api
             var dto = new ForgotPasswordDto { Email = "unknown@example.com" };
 
             _mockUserManager.Setup(u => u.FindByEmailAsync(dto.Email))
-                            .ReturnsAsync((ApplicationUser)null);
+                            .ReturnsAsync((ApplicationUser?)null);
 
             // Act
             var result = await _controller.ForgotPassword(dto);
@@ -515,7 +523,7 @@ namespace CycleManager.Tests.Unit.Api
             };
 
             _mockUserManager.Setup(u => u.FindByEmailAsync(dto.Email))
-                            .ReturnsAsync((ApplicationUser)null);
+                            .ReturnsAsync((ApplicationUser?)null);
 
             // Act
             var result = await _controller.ResetPassword(dto);

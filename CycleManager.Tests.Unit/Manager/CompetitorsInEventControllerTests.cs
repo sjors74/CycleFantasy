@@ -231,7 +231,7 @@ namespace CycleManager.Tests.Unit.Manager
             // Assert redirect
             var redirect = Assert.IsType<RedirectToActionResult>(result);
             Assert.Equal("Index", redirect.ActionName);
-            Assert.Equal(eventId, redirect.RouteValues["eventId"]);
+            Assert.Equal(eventId, redirect.RouteValues?["eventId"]);
 
             // Assert dat de service werd aangeroepen met de juiste CompetitorInTeamIds
             _competitorInEventServiceMock.Verify(s => s.Create(It.Is<List<CompetitorsInEvent>>(list =>
@@ -351,8 +351,8 @@ namespace CycleManager.Tests.Unit.Manager
             // Assert
             var redirect = Assert.IsType<RedirectToActionResult>(result);
             Assert.Equal("Index", redirect.ActionName);
-            Assert.Equal(vm.EventId, redirect.RouteValues["eventId"]);
-            Assert.Equal(3, redirect.RouteValues["FilterTeam"]);
+            Assert.Equal(vm.EventId, redirect.RouteValues?["eventId"]);
+            Assert.Equal(3, redirect.RouteValues?["FilterTeam"]);
         }
 
         [Fact]
@@ -370,7 +370,7 @@ namespace CycleManager.Tests.Unit.Manager
             // Setup zodat GetCompetitorById eerst werkt, maar daarna null oplevert bij Exists-check
             _competitorInEventServiceMock.SetupSequence(s => s.GetCompetitorById(id))
                 .ReturnsAsync(new CompetitorsInEvent { Id = id })
-                .ReturnsAsync((CompetitorsInEvent)null);
+                .ReturnsAsync((CompetitorsInEvent?)null);
 
             _competitorInEventServiceMock.Setup(s => s.Update(It.IsAny<CompetitorsInEvent>()))
                 .ThrowsAsync(new Exception("Database error"));
@@ -415,7 +415,7 @@ namespace CycleManager.Tests.Unit.Manager
             var vm = new CompetitorInEventViewModel { CompetitorInEventId = id, EventId = 10 };
 
             _competitorInEventServiceMock.Setup(s => s.GetCompetitorById(id))
-                .ReturnsAsync((CompetitorsInEvent)null); // Simuleer niet gevonden
+                .ReturnsAsync((CompetitorsInEvent?)null); // Simuleer niet gevonden
 
             // Act
             var result = await _controller.Edit(id, null, vm);
@@ -459,7 +459,7 @@ namespace CycleManager.Tests.Unit.Manager
             // Assert
             var json = Assert.IsType<JsonResult>(result);
             var list = Assert.IsAssignableFrom<IEnumerable<object>>(json.Value);
-            Assert.Contains(list, i => i.ToString().Contains("Jansen, Jan"));
+            Assert.Contains(list, i => i.ToString()?.Contains("Jansen, Jan") == true);
         }
 
         [Fact]
@@ -488,7 +488,9 @@ namespace CycleManager.Tests.Unit.Manager
         [Fact]
         public async Task Delete_Get_InvalidId_ReturnsNotFound()
         {
-            _competitorInEventServiceMock.Setup(s => s.GetCompetitorById(It.IsAny<int>())).ReturnsAsync((CompetitorsInEvent)null);
+            _competitorInEventServiceMock
+                .Setup(s => s.GetCompetitorById(It.IsAny<int>()))
+                .ReturnsAsync((CompetitorsInEvent?)null);
 
             var result = await _controller.Delete(99, 2);
 
@@ -526,7 +528,7 @@ namespace CycleManager.Tests.Unit.Manager
             // Assert
             var redirect = Assert.IsType<RedirectToActionResult>(result);
             Assert.Equal("Index", redirect.ActionName);
-            Assert.Equal(10, redirect.RouteValues["eventId"]);
+            Assert.Equal(10, redirect.RouteValues?["eventId"]);
         }
 
         [Fact]
@@ -543,7 +545,7 @@ namespace CycleManager.Tests.Unit.Manager
             // Assert
             var redirect = Assert.IsType<RedirectToActionResult>(result);
             Assert.Equal("Index", redirect.ActionName);
-            Assert.Equal(5, redirect.RouteValues["eventId"]);
+            Assert.Equal(5, redirect.RouteValues?["eventId"]);
             Assert.Equal("Cannot delete", _controller.TempData["ErrorMessage"]);
         }
 
@@ -552,7 +554,7 @@ namespace CycleManager.Tests.Unit.Manager
         {
             // Arrange
             _competitorInEventServiceMock.Setup(s => s.GetCompetitorById(It.IsAny<int>()))
-                .ReturnsAsync((CompetitorsInEvent)null);
+                .ReturnsAsync((CompetitorsInEvent?)null);
 
             // Act
             var result = await _controller.DeleteConfirmed(99, null);
@@ -567,7 +569,7 @@ namespace CycleManager.Tests.Unit.Manager
             var entity = new CompetitorsInEvent { Id = 1, EventId = 5 };
             _competitorInEventServiceMock.SetupSequence(s => s.GetCompetitorById(1))
                 .ReturnsAsync(entity)
-                .ReturnsAsync((CompetitorsInEvent)null); // tweede keer null
+                .ReturnsAsync((CompetitorsInEvent?)null); // tweede keer null
 
             _competitorInEventServiceMock.Setup(s => s.Delete(entity))
                 .ThrowsAsync(new Exception("DB failure"));
