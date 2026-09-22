@@ -88,11 +88,14 @@ namespace WebCycle.Controllers
             if (picks == null)
                 return Ok(new List<CompetitorRankingDto>());
 
-            var competitorResponse = _mapper.Map<List<CompetitorRankingDto>>(picks);
+            var competitorResponse = 
+                _mapper.Map<List<CompetitorRankingDto>>(picks) 
+                ?? new List<CompetitorRankingDto>();
 
             var pickDetails = await resultService.GetPickDetailsAsync(eventId, id);
 
-            var scoreLookup = pickDetails.ToDictionary(p => p.CompetitorInEventId);
+            var scoreLookup = (pickDetails ?? new List<PickDetailDto>())
+                .ToDictionary(p => p.CompetitorInEventId);
 
             foreach (var pick in competitorResponse)
             {

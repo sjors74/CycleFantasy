@@ -408,19 +408,40 @@ namespace CycleManager.Tests.Unit.Api
                 new GameCompetitorEventPick { CompetitorsInEvent = new CompetitorsInEvent { Id = 2 } }
             };
 
-            _mockDeelnemerService.Setup(s => s.GetAllPicks(id)).ReturnsAsync(picks);
+            _mockDeelnemerService
+                .Setup(s => s.GetAllPicks(id))
+                .ReturnsAsync(picks);
 
-            _mockMapper.Setup(m => m.Map<List<CompetitorRankingDto>>(picks))
-                       .Returns((List<GameCompetitorEventPick> src) =>
-                           src.ConvertAll(p => new CompetitorRankingDto { CompetitorInEventId = p.CompetitorsInEvent.Id }));
+            _mockMapper
+                .Setup(m => m.Map<List<CompetitorRankingDto>>(picks))
+                .Returns(picks.ConvertAll(p => new CompetitorRankingDto 
+                { 
+                    CompetitorInEventId = p.CompetitorsInEvent.Id 
+                }));
 
-            _mockResultService.Setup(s => s.GetCompetitorResultsByEventId(eventId, 1))
-                              .ReturnsAsync(new CompetitorScoreDto { NormalScore = 10, LaatsteScore = 5 });
-            _mockResultService.Setup(s => s.GetCompetitorResultsByEventId(eventId, 2))
-                              .ReturnsAsync(new CompetitorScoreDto { NormalScore = 20, LaatsteScore = 15 });
+            _mockResultService
+                .Setup(s => s.GetPickDetailsAsync(eventId, id))
+                .ReturnsAsync(new List<PickDetailDto>
+                { 
+                    new PickDetailDto
+                    {
+                        CompetitorInEventId = 1,
+                        NormalScore = 10,
+                        SpecialScore = 2,
+                        LastScore = 5
+                    },
+                    new PickDetailDto
+                    {
+                        CompetitorInEventId = 2,
+                        NormalScore = 20,
+                        SpecialScore = 3,
+                        LastScore = 15
+                    }
+                });
 
             // Act
-            var result = await _controller.GetListOfCompetitorsPicksForDeelnemer(id, eventId);
+            var result = await _controller
+                .GetListOfCompetitorsPicksForDeelnemer(id, eventId);
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
