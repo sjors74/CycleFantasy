@@ -13,6 +13,7 @@ namespace DataAccessEF.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
     [Migration("20250620125144_scraper")]
+#pragma warning disable CS8981
     partial class scraper
     {
         /// <inheritdoc />
@@ -849,4 +850,5 @@ namespace DataAccessEF.Migrations
 #pragma warning restore 612, 618
         }
     }
+#pragma warning restore CS8981
 }

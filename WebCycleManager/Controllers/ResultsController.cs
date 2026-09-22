@@ -30,6 +30,11 @@ namespace WebCycleManager.Controllers
             var currentEvent = stage.Event;
             var config = currentEvent.Configuration;
 
+            if (config == null)
+            {
+                return NotFound("Geen configuratie gevonden voor dit event.");
+            }
+
             // Data
             var results = await _resultService.GetResultsByStageAsync(stageId);
             var specialResults = await _resultService.GetSpecialResultsByStageAsync(stageId);
@@ -48,7 +53,9 @@ namespace WebCycleManager.Controllers
             // Normale uitslag
             rows.AddRange(configItems.Select(ci =>
             {
-                var result = results.FirstOrDefault(r => r.ConfigurationItem.Position == ci.Position);
+                var result = results.FirstOrDefault(
+                   r => r.ConfigurationItem != null &&
+                        r.ConfigurationItem.Position == ci.Position);
 
                 return new StageResultRowViewModel
                 {
@@ -94,7 +101,7 @@ namespace WebCycleManager.Controllers
                 config.Id,
                 $"Etappe {stage.StageName}: {stage.StartLocation}-{stage.FinishLocation}",
                 stage.NoScore,
-                stage.NoScoreDescription,
+                stage.NoScoreDescription ?? string.Empty,
                 configItems.Count,
                 rows,
                 competitorsInEvent
@@ -182,7 +189,10 @@ namespace WebCycleManager.Controllers
 
             var result = await _resultService.GetResultByIdAsync(id.Value);
             if (result == null) return NotFound();
-            
+
+            if (result.ConfigurationItem == null)
+                return NotFound();
+
             var vm = new ResultItemViewModel
             {
                 Id = result.Id,
@@ -217,7 +227,7 @@ namespace WebCycleManager.Controllers
             var vm = new SpecialResultItemViewModel
             {
                 Id = special.Id,
-                SpecialId = special.SpecialId ?? 0,
+                SpecialId = special.SpecialId,
                 StageId = special.StageId,
                 SpecialName = special.Special.Question.ToString(),
                 CompetitorName = special.CompetitorInEvent?.CompetitorInTeam?.Competitor?.CompetitorName ?? string.Empty

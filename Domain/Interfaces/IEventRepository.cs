@@ -8,7 +8,7 @@ namespace Domain.Interfaces
     {
         Task<IEnumerable<Event>> GetActiveEvents();
         IQueryable<Event> GetAllEvents();
-        Task<Event> GetEventById(int id);
+        Task<Event?> GetEventById(int id);
         Task<EventDetailsViewModel?> GetEventDetailsViewModelById(int eventId);
         Task<IEnumerable<TeamDto>> GetTeamsForEvent(int eventId);
         Task<int> GetAantalDeelnemers(int eventId);

@@ -5,6 +5,7 @@
 namespace DataAccessEF.Migrations
 {
     /// <inheritdoc />
+    #pragma warning disable CS8981
     public partial class teamnametogamecompetitorevent : Migration
     {
         /// <inheritdoc />
@@ -48,4 +49,5 @@ namespace DataAccessEF.Migrations
                 defaultValue: "");
         }
     }
+#pragma warning restore CS8981
 }

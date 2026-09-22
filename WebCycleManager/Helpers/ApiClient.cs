@@ -7,7 +7,15 @@
         public ApiClient(HttpClient httpClient, IConfiguration config)
         {
             _httpClient = httpClient;
-            _httpClient.BaseAddress = new Uri(config["ApiSettings:BaseUrl"]);
+            var baseUrl = config["ApiSettings:BaseUrl"];
+
+            if (string.IsNullOrWhiteSpace(baseUrl))
+            {
+                throw new InvalidOperationException(
+                    "APISettings:BaseUrl is niet geconfigureerd.");
+            }
+
+            _httpClient.BaseAddress = new Uri(baseUrl);
         }
 
         public async Task<HttpResponseMessage> PostToApiAsync(string endpoint)

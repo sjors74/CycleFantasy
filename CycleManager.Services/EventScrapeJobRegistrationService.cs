@@ -3,16 +3,19 @@ using CycleManager.Services.Interfaces;
 using Domain.Context;
 using Hangfire;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace CycleManager.Services
 {
     public class EventScrapeJobRegistrationService : IScrapeScheduleService
     {
         private readonly ApplicationDbContext _db;
+        private readonly ILogger<EventScrapeJobRegistrationService> _logger;
 
-        public EventScrapeJobRegistrationService(ApplicationDbContext db)
+        public EventScrapeJobRegistrationService(ApplicationDbContext db, ILogger<EventScrapeJobRegistrationService> logger)
         {
             _db = db;
+            _logger = logger;
         }
 
         public async Task RegisterSchedulesAsync()
@@ -54,6 +57,15 @@ namespace CycleManager.Services
 
                 if (e.IsActive && e.StartDate <= today && e.EndDate >= today)
                 {
+                    if (string.IsNullOrWhiteSpace(e.EventCode))
+                    {
+                        _logger.LogWarning(
+                            "Event {EventId} is active but has no EventCode. Dropout scrape not scheduled.",
+                            e.EventId);
+
+                        continue;
+                    }
+
                     RecurringJob.RemoveIfExists($"event-dropout-{e.EventId}");
 
                     RecurringJob.AddOrUpdate<IDropoutOrchestratorService>(

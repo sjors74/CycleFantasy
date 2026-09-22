@@ -5,7 +5,7 @@
         public int CompetitorId { get; set; }
         public string FirstName { get; set; } = string.Empty;
         public string LastName { get; set; }= string.Empty;
-        public string? PcsName { get; set; }
+        public string? PcsName { get; set; } = string.Empty;
         public string? PcsScraperName { get; set; }
         public string? CyclingFlashScraperName { get; set; }
         public DateTime? CyclingFlahsLastScraped { get; set; }

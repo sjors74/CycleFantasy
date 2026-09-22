@@ -1,6 +1,5 @@
 ﻿using CycleManager.Domain.Enums;
 using CycleManager.Domain.Interfaces;
-using CycleManager.Domain.Models;
 using CycleManager.Services.Interfaces;
 using Domain.Context;
 using Domain.Models;
@@ -30,10 +29,10 @@ namespace CycleManager.Services
             var stage = await _db.Stages
                 .Include(s => s.Event)
                     .ThenInclude(e => e.Configuration)
-                        .ThenInclude(c => c.ConfigurationItems)
+                        .ThenInclude(c => c!.ConfigurationItems)
                 .Include(s => s.Event)
                     .ThenInclude(e => e.Configuration)
-                        .ThenInclude(c => c.Specials)
+                        .ThenInclude(c => c!.Specials)
                 .Where(s =>
                     s.EventId == eventId &&
                     (s.ScrapeStatus == ScrapeStatus.Pending || s.ScrapeStatus == ScrapeStatus.Partial))
@@ -68,6 +67,12 @@ namespace CycleManager.Services
 
             try
             {
+                if (string.IsNullOrWhiteSpace(stage.Event.EventCode))
+                {
+                    throw new InvalidOperationException(
+                        $"Event {stage.EventId} has no EventCode.");
+                }
+
                 await _orchestrator.RunStageScrapeAsync(
                     stage.EventId,
                     stage.Event.EventCode,

@@ -67,8 +67,8 @@ namespace CycleManager.Tests.Unit.Api
             var eventId = 1;
             var top15 = new List<CompetitorRankingDto>
             {
-                new CompetitorRankingDto { CompetitorName = "Pogacar",  Points = 150 },
-                new CompetitorRankingDto { CompetitorName = "Vingegaard", Points = 145 }
+                new CompetitorRankingDto { CompetitorName = "Pogacar", NormalPoints =100, SpecialPoints = 50 },
+                new CompetitorRankingDto { CompetitorName = "Vingegaard", NormalPoints = 90, SpecialPoints = 55 }
             };
 
             _mockResultService.Setup(s => s.GetResultsByEventId(eventId, true)).ReturnsAsync(top15);
@@ -115,7 +115,7 @@ namespace CycleManager.Tests.Unit.Api
 
             _mockResultService
                 .Setup(s => s.GetPoolRankingForStage(eventId, stageId))
-                .ReturnsAsync((List<DeelnemerDto>)null); // simuleer geen resultaten
+                .ReturnsAsync(new List<DeelnemerDto>());
 
             // Act
             var result = await _controller.GetResultsByEventAndStageNumber(eventId, stageId);

@@ -86,7 +86,7 @@ namespace WebCycleManager.Controllers
                         EventId = gameCompetitor.EventId,
 
                         TeamName = gameCompetitor.TeamName,
-                        GameCompetitorName = $"{gameCompetitor?.User?.FirstName} {gameCompetitor?.User?.LastName}",
+                        GameCompetitorName = $"{gameCompetitor.User?.FirstName} {gameCompetitor.User?.LastName}",
 
                         NormalScore = normalScore,
                         SpecialScore = specialScore,
@@ -138,11 +138,11 @@ namespace WebCycleManager.Controllers
 
 
             var newPicks = model.CompetitorsInEvent
-                    .Where(p => p.PickId == 0 && p.SelectedCompetitorId.HasValue)
+                    .Where(p => p.PickId == 0 && p.SelectedCompetitorId is int competitorId)
                     .Select(p => new GameCompetitorEventPick
                     {
                         GameCompetitorEventId = model.Id,
-                        CompetitorsInEventId = p.SelectedCompetitorId.Value
+                        CompetitorsInEventId = p.SelectedCompetitorId!.Value
                     })
                     .ToList();
 
@@ -171,7 +171,18 @@ namespace WebCycleManager.Controllers
 
             // Event inclusief configuratie ophalen
             var gameEvent = await _eventService.GetEventById(eventId.Value);
-            var numberOfPicks = gameEvent.Configuration.ConfigurationItems.Count();
+            if (gameEvent == null)
+            {
+                return NotFound($"Event {eventId.Value} niet gevonden.");
+            }
+
+            var configuration = gameEvent.Configuration;
+            if (configuration == null)
+            {
+                return BadRequest($"Event {eventId.Value} heeft geen configuratie.");
+            }
+
+            var numberOfPicks = configuration.ConfigurationItems.Count;
 
             // Resultaten ophalen
             var resultDtos = (await _resultService.GetResultsByEventId(eventId.Value)).ToList();
@@ -372,8 +383,8 @@ namespace WebCycleManager.Controllers
             {
                 Id = entity.Id,
                 TeamName = entity.TeamName,
-                UserName = $"{entity?.User?.FirstName} {entity?.User?.LastName}",
-                EventName = entity?.Event?.EventName,
+                UserName = $"{entity.User?.FirstName} {entity.User?.LastName}",
+                EventName = entity.Event.EventName,
                 EventId = entity.EventId
             };
             return View(dto);

@@ -191,7 +191,7 @@ namespace WebCycleManager.Controllers
                 return NotFound();
 
             team.CurrentTeamName = model.CurrentTeamName;
-            team.PcsName = model.PcsName;
+            team.PcsName = model.PcsName ?? string.Empty;
             team.CountryId = model.CountryId;
 
             foreach (var posted in model.TeamYears)

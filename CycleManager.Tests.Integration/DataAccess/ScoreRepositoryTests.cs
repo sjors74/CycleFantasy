@@ -281,7 +281,7 @@ namespace CycleManager.Tests.Integration.DataAccess
                 Id = 1,
                 EventId = 1,
                 TeamName = "GhostTeam",
-                User = null
+                User = null!
             };
 
             context.Events.Add(evt);

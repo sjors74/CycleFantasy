@@ -198,7 +198,7 @@ namespace WebCycle.Controllers
         }
 
         [HttpPost("selectie")]
-        public async Task<IActionResult> SlaSelectieOp([FromBody] SelectieDto dto)
+        public async Task<IActionResult> SlaSelectieOp([FromBody] SelectieDto? dto)
         {
             if (dto == null)
             {
@@ -221,13 +221,17 @@ namespace WebCycle.Controllers
         }
 
         [HttpPost("createpool")]
-        public async Task<IActionResult> CreatePool([FromBody] DeelnemerDto dto)
+        public async Task<IActionResult> CreatePool([FromBody] DeelnemerDto? dto)
         {
-            var eventInfo = await _eventService.GetEventById(dto.EventId);
-
             if (dto == null)
             {
                 return BadRequest("Deelnemer dto is null.");
+            }
+
+            var eventInfo = await _eventService.GetEventById(dto.EventId);
+            if(eventInfo == null)
+            {
+                return NotFound($"Event {dto.EventId} niet gevonden.");
             }
 
             if (!eventInfo.CanSubscribe)
@@ -253,7 +257,15 @@ namespace WebCycle.Controllers
                 await _eventService.DeletePoolAsync(id);
                 return NoContent();
             }
-            catch (Exception ex)
+            catch (KeyNotFoundException)
+            {
+                return NotFound();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (Exception)
             {
                 return StatusCode(500, "Fout bij verwijderen deelnemer.");
             }

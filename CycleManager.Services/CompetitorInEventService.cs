@@ -52,9 +52,9 @@ namespace CycleManager.Services
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
-        public async Task<CompetitorsInEvent> GetCompetitorById(int id)
+        public async Task<CompetitorsInEvent?> GetCompetitorById(int id)
         {
-            return await _competitorsInEventRepository.GetById(id);
+            return await _competitorsInEventRepository.GetByCompetitorId(id);
         }
 
         /// <summary>
@@ -73,7 +73,7 @@ namespace CycleManager.Services
         /// <param name="eventId"></param>
         /// <param name="competitorId"></param>
         /// <returns></returns>
-        public async Task<CompetitorsInEvent> GetCompetitorsInEventByIds(int eventId, int competitorId)
+        public async Task<CompetitorsInEvent?> GetCompetitorsInEventByIds(int eventId, int competitorId)
         {
             return await _competitorsInEventRepository.GetCompetitorsInEventByIds(eventId, competitorId);
         }

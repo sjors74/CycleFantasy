@@ -26,12 +26,12 @@ namespace CycleManager.Services
 
             // --- 2. NORMAL RESULTS  ---
             var resultsLookup = await _context.Results
-                .Where(r => r.StageId == stageId)
+                .Where(r => r.StageId == stageId && r.ConfigurationItem != null)
                 .Include(r => r.ConfigurationItem)
                 .GroupBy(r => r.CompetitorInEventId)
                 .ToDictionaryAsync(
                     g => g.Key,
-                    g => g.First().ConfigurationItem.Score
+                    g => g.First().ConfigurationItem!.Score
                 );
 
             // --- 3. SPECIAL RESULTS ---
@@ -328,7 +328,7 @@ namespace CycleManager.Services
 
                 var resultByCompetitor = results
                     .Where(r => r.ConfigurationItem != null)
-                    .ToDictionary(r => r.CompetitorInEventId, r => r.ConfigurationItem.Score);
+                    .ToDictionary(r => r.CompetitorInEventId, r => r.ConfigurationItem!.Score);
 
                 var specialResults = await _context.SpecialResults
                     .Where(r => r.StageId == stage.Id)
@@ -409,6 +409,14 @@ namespace CycleManager.Services
             }
             await _context.SaveChangesAsync();
 
+            var lastStage = stagesOrdered.LastOrDefault();
+
+            if (lastStage == null)
+            {
+                throw new InvalidOperationException(
+                    $"Er zijn geen stages gevonden voor event {eventId}.");
+            }
+
             // persist participant totals
             foreach (var gceId in participantTotals.Keys)
             {
@@ -418,7 +426,7 @@ namespace CycleManager.Services
                     GameCompetitorEventId = gceId,
                     TotalScore = participantTotals[gceId],
                     LaatsteStageScore = lastStageScoreByParticipant.ContainsKey(gceId) ? lastStageScoreByParticipant[gceId] : 0,
-                    LaatsteStageId = (int)(stagesOrdered.LastOrDefault()?.Id),
+                    LaatsteStageId = lastStage.Id,
                     LastUpdated = DateTime.UtcNow
                 });
             }

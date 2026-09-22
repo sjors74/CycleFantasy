@@ -169,7 +169,7 @@ namespace CycleManager.Tests.Unit.Manager
             _resultsServiceMock.Verify(s => s.AddResultsAsync(It.IsAny<IEnumerable<Result>>()), Times.Once);
             var redirect = Assert.IsType<RedirectToActionResult>(result);
             Assert.Equal("Index", redirect.ActionName);
-            Assert.Equal(model.StageId, redirect.RouteValues["stageId"]);
+            Assert.Equal(model.StageId, redirect.RouteValues?["stageId"]);
         }
 
         [Fact]
@@ -201,7 +201,7 @@ namespace CycleManager.Tests.Unit.Manager
             _resultsServiceMock.Verify(s => s.DeleteResultAsync(resultEntity), Times.Once);
             var redirect = Assert.IsType<RedirectToActionResult>(result);
             Assert.Equal("Index", redirect.ActionName);
-            Assert.Equal(resultEntity.StageId, redirect.RouteValues["stageId"]);
+            Assert.Equal(resultEntity.StageId, redirect.RouteValues?["stageId"]);
         }
 
         [Fact]

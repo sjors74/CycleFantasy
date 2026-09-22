@@ -91,9 +91,9 @@ namespace CycleManager.Services
         /// <param name="id"></param>
         /// <returns></returns>
         /// <exception cref="NotImplementedException"></exception>
-        public Task<Competitor> GetCompetitorById(int id)
+        public Task<Competitor?> GetCompetitorById(int id)
         {
-            return _competitorRepository.GetById(id);
+            return _competitorRepository.GetByCompetitorId(id);
         }
 
         /// <summary>
@@ -134,7 +134,7 @@ namespace CycleManager.Services
 
         public async Task UpdateCompetitorWithTeam(CompetitorEditDto dto)
         {
-            var competitor = await _competitorRepository.GetById(dto.CompetitorId);
+            var competitor = await _competitorRepository.GetByCompetitorId(dto.CompetitorId);
             if (competitor == null) throw new Exception("Competitor not found");
 
             competitor.FirstName = dto.FirstName;
@@ -159,9 +159,9 @@ namespace CycleManager.Services
             await _competitorRepository.UpdateCompetitorAsync(competitor);
 
         }
-        public async Task<CompetitorEditDto> GetCompetitorForEdit(int competitorId)
+        public async Task<CompetitorEditDto?> GetCompetitorForEdit(int competitorId)
         {
-            var competitor = await _competitorRepository.GetById(competitorId);
+            var competitor = await _competitorRepository.GetByCompetitorId(competitorId);
 
             if (competitor == null)
                 return null;

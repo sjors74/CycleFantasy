@@ -12,7 +12,7 @@ namespace CycleManager.Services.Interfaces
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
-        Task<Team> GetTeamById(int id);
+        Task<Team?> GetTeamById(int id);
 
         /// <summary>
         /// Get all teams
@@ -30,7 +30,7 @@ namespace CycleManager.Services.Interfaces
 
         Task<IEnumerable<Team>> GetTeamsForEvent(int eventId);
 
-        Task<Team> GetTeamForCurrentYear(int id, int year);
+        Task<Team?> GetTeamForCurrentYear(int id, int year);
 
         Task<bool> HasUnprocessedScrapedTeams();
 

@@ -52,6 +52,7 @@ namespace CycleManager.Tests.Unit.Manager
             var redirect = Assert.IsType<RedirectToActionResult>(result);
             Assert.Equal("Details", redirect.ActionName);
             Assert.Equal("Events", redirect.ControllerName);
+            Assert.NotNull(redirect.RouteValues);
             Assert.Equal(2, redirect.RouteValues["eventId"]);
             Assert.Equal("Stage niet gevonden.", _controller.TempData["Error"]);
         }
@@ -81,6 +82,7 @@ namespace CycleManager.Tests.Unit.Manager
             var redirect = Assert.IsType<RedirectToActionResult>(result);
             Assert.Equal("Details", redirect.ActionName);
             Assert.Equal("Events", redirect.ControllerName);
+            Assert.NotNull(redirect.RouteValues);
             Assert.Equal(2, redirect.RouteValues["id"]);
             Assert.Equal("Scrape voltooid.", _controller.TempData["Success"]);
         }
@@ -100,6 +102,7 @@ namespace CycleManager.Tests.Unit.Manager
             var redirect = Assert.IsType<RedirectToActionResult>(result);
             Assert.Equal("Details", redirect.ActionName);
             Assert.Equal("Events", redirect.ControllerName);
+            Assert.NotNull(redirect.RouteValues);
             Assert.Equal(2, redirect.RouteValues["id"]);
         }
 

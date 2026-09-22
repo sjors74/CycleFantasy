@@ -12,8 +12,8 @@ namespace Domain.Dto
         public string? CountryCode { get; set; }
         public string? ColorName { get; set; }
         public bool ShowPodium { get; set; }
-        public List<StageResultDto>? Stages { get; set; }
-        public List<DeelnemerDto>? Deelnemers { get; set; } = new();
+        public List<StageResultDto> Stages { get; set; } = [];
+        public List<DeelnemerDto> Deelnemers { get; set; } = [];
         public bool IsActive { get; set; }
 
     }

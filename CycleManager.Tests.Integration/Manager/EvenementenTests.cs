@@ -169,8 +169,8 @@ namespace CycleManager.Tests.Integration.Manager
                 ["Name"] = @event.EventName + "_Edited",
                 ["Code"] = @event.EventCode ?? "TE",
                 ["Year"] = @event.EventYear.ToString(),
-                ["StartDate"] = @event.StartDate?.ToString("yyyy-MM-dd"),
-                ["EndDate"] = @event.EndDate?.ToString("yyyy-MM-dd"),
+                ["StartDate"] = @event.StartDate!.Value.ToString("yyyy-MM-dd"),
+                ["EndDate"] = @event.EndDate!.Value.ToString("yyyy-MM-dd"),
                 ["Slogan"] = "Updated Slogan",
                 ["CountryCode"] = "BE",
                 ["ColorName"] = "Blue",
@@ -332,8 +332,8 @@ namespace CycleManager.Tests.Integration.Manager
                 ["Name"] = "", // Ongeldig
                 ["Code"] = @event.EventCode,
                 ["Year"] = @event.EventYear.ToString(),
-                ["StartDate"] = @event.StartDate?.ToString("yyyy-MM-dd"),
-                ["EndDate"] = @event.EndDate?.ToString("yyyy-MM-dd"),
+                ["StartDate"] = @event.StartDate!.Value.ToString("yyyy-MM-dd"),
+                ["EndDate"] = @event.EndDate!.Value.ToString("yyyy-MM-dd"),
                 ["IsActive"] = "true",
                 ["ShowPodium"] = "false",
                 ["ConfigurationId"] = config.Id.ToString()

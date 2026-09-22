@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace DataAccessEF.Migrations
 {
     /// <inheritdoc />
+#pragma warning disable CS8981
     public partial class scrapercompetitoruitbreiden : Migration
     {
         /// <inheritdoc />
@@ -36,4 +37,5 @@ namespace DataAccessEF.Migrations
                 table: "ScrapedCompetitors");
         }
     }
+#pragma warning restore CS8981
 }

@@ -30,8 +30,8 @@ namespace DataAccessEF.TypeRepository
                 .Include(r => r.Stage)
                 .Include(r => r.ConfigurationItem)
 
-                .Where(r => r.Stage.EventId == eventId)
-                .OrderBy(r => r.ConfigurationItem.Position)
+                .Where(r => r.Stage.EventId == eventId && r.ConfigurationItem != null)
+                .OrderBy(r => r.ConfigurationItem!.Position)
                 .ToListAsync();
 
             return results;
@@ -157,7 +157,7 @@ namespace DataAccessEF.TypeRepository
                 .CountAsync(r => r.StageId == stageId);
         }
 
-        public async Task<EtappeResultaatDto>? GetEtappeUitslag(int stageId)
+        public async Task<EtappeResultaatDto?> GetEtappeUitslag(int stageId)
         {
             var stage = await context.Stages
                 .Include(s => s.Event)
@@ -168,7 +168,6 @@ namespace DataAccessEF.TypeRepository
             {
                 return null;
             }
-            ;
 
             if (stage.NoScore)
             {
@@ -238,9 +237,8 @@ namespace DataAccessEF.TypeRepository
                 .ToListAsync();
 
             var specialLookup = specialResults
-                .Where(r => r.SpecialId.HasValue)
                 .ToDictionary(
-                    r => r.SpecialId!.Value,
+                    r => r.SpecialId,
                     r => r
                 );
             var uitslag = configItems.Select(ci =>
@@ -334,7 +332,7 @@ namespace DataAccessEF.TypeRepository
                 {
                     r.CompetitorInEventId,
                     r.StageId,
-                    Score = r.ConfigurationItem.Score
+                    Score = r.ConfigurationItem!.Score
                 })
                 .ToListAsync();
 
@@ -402,7 +400,7 @@ namespace DataAccessEF.TypeRepository
                 .AsNoTracking()
                 .Include(s => s.Event)
                 .ThenInclude(e => e.Configuration)
-                .ThenInclude(c => c.ConfigurationItems)
+                .ThenInclude(c => c!.ConfigurationItems)
                 .FirstOrDefaultAsync(s => s.Id == stageId);
         }
 
@@ -484,9 +482,9 @@ namespace DataAccessEF.TypeRepository
             // --- 1. EVENT LOAD ---
             var ev = await context.Events
                 .Include(e => e.Configuration)
-                    .ThenInclude(c => c.ConfigurationItems)
+                    .ThenInclude(c => c!.ConfigurationItems)
                 .Include(e => e.Configuration)
-                    .ThenInclude(c => c.Specials)
+                    .ThenInclude(c => c!.Specials)
                 .Include(e => e.Stages)
                 .Include(e => e.GameCompetitorEvents)
                     .ThenInclude(gce => gce.Renners)
@@ -495,15 +493,18 @@ namespace DataAccessEF.TypeRepository
             if (ev == null)
                 throw new InvalidOperationException($"Event {eventId} not found");
 
+            var configuration = ev.Configuration 
+                ?? throw new InvalidOperationException($"Event {eventId} has no configuration");
+
             // --- CONFIG LOOKUPS (FIX 3) ---
-            var configScoreById = ev.Configuration.ConfigurationItems
+            var configScoreById = configuration.ConfigurationItems
                 .ToDictionary(x => x.Id, x => x.Score);
 
-            var specialScoreById = ev.Configuration.Specials
+            var specialScoreById = configuration.Specials
                 .ToDictionary(x => x.Id, x => x.Score);
 
-            var configItems = ev.Configuration.ConfigurationItems.ToList();
-            var specialConfigItems = ev.Configuration.Specials.ToList();
+            var configItems = configuration.ConfigurationItems.ToList();
+            var specialConfigItems = configuration.Specials.ToList();
 
             var stages = ev.Stages
                 .OrderBy(s => s.Id)
@@ -527,7 +528,7 @@ namespace DataAccessEF.TypeRepository
                     continue;
 
                 var oldCi = result.ConfigurationItem;
-                var newCi = configItems.FirstOrDefault(ci => ci.Position == oldCi.Position);
+                var newCi = configItems.FirstOrDefault(ci => ci.Position == oldCi!.Position);
 
                 result.ConfigurationItemId = newCi?.Id;
             }
@@ -579,7 +580,7 @@ namespace DataAccessEF.TypeRepository
                     g => g.Key,
                     g => g.ToDictionary(
                         x => x.CompetitorInEventId,
-                        x => specialScoreById[x.SpecialId!.Value]
+                        x => specialScoreById[x.SpecialId!]
                     )
                 );
 

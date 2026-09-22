@@ -25,7 +25,7 @@ namespace DataAccessEF.TypeRepository
                     LastName = c.LastName,
                     PcsName = c.PcsName,
                     ScraperName = c.PcsScraperName,
-                    CountryShort = c.Country.CountryNameShort,
+                    CountryShort = c.Country!.CountryNameShort,
 
                     Teams = c.CompetitorInTeams
                         .Where(cit => cit.TeamYear.SeasonYearId == seasonYearId)
@@ -47,7 +47,7 @@ namespace DataAccessEF.TypeRepository
             return competitors;
         }
 
-        public async Task<Competitor> GetById(int competitorId)
+        public async Task<Competitor?> GetByCompetitorId(int competitorId)
         {
             var competitor = await context.Competitors
                 .Include(c => c.Country)
@@ -147,7 +147,7 @@ namespace DataAccessEF.TypeRepository
                 // Algemene gegevens bijwerken
                 competitor.FirstName = dto.FirstName;
                 competitor.LastName = dto.LastName;
-                competitor.PcsName = dto.PcsName;
+                competitor.PcsName = dto.PcsName ?? string.Empty;
                 competitor.PcsScraperName = dto.PcsScraperName;
                 competitor.CyclingFlashScraperName = dto.CyclingFlashScraperName;
                 competitor.CyclingFlashLastScraped = dto.CyclingFlahsLastScraped;

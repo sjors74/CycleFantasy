@@ -10,7 +10,7 @@ namespace CycleManager.Services.Interfaces
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
-        Task<CompetitorsInEvent> GetCompetitorById(int id);
+        Task<CompetitorsInEvent?> GetCompetitorById(int id);
         
         /// <summary>
         /// Get all competitors for an event
@@ -46,7 +46,7 @@ namespace CycleManager.Services.Interfaces
         /// <param name="eventId"></param>
         /// <param name="competitorId"></param>
         /// <returns></returns>
-        Task<CompetitorsInEvent> GetCompetitorsInEventByIds(int eventId, int competitorId);
+        Task<CompetitorsInEvent?> GetCompetitorsInEventByIds(int eventId, int competitorId);
 
         Task<CompetitorsInEvent> FindOrCreate(int eventId, int competitorId);
 

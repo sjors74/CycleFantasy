@@ -9,9 +9,9 @@ namespace Domain.Models
         public int Id { get; set; }
         public string ConfigurationType { get; set; } = string.Empty;
         [JsonIgnore]
-        public virtual ICollection<ConfigurationItem>? ConfigurationItems { get; set; }
+        public virtual ICollection<ConfigurationItem> ConfigurationItems { get; set; } = [];
         [JsonIgnore]
-        public virtual ICollection<ConfigurationItemSpecial>? Specials { get; set; }
+        public virtual ICollection<ConfigurationItemSpecial> Specials { get; set; } = [];
 
     }
 }

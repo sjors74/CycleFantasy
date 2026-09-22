@@ -34,7 +34,7 @@ namespace WebCycle.Controllers
         {
             string cacheKey = $"deelnemers_{eventId}";
 
-            if (!_cache.TryGetValue(cacheKey, out List<DeelnemerDto> deelnemerResponse))
+            if (!_cache.TryGetValue(cacheKey, out List<DeelnemerDto>? deelnemerResponse))
             {
                 var deelnemers = await deelnemerService.GetAllCompetitorsInEvent(eventId) ?? new List<GameCompetitorEvent>();
                 deelnemerResponse = _mapper.Map<List<DeelnemerDto>>(deelnemers) ?? new List<DeelnemerDto>();
@@ -100,7 +100,6 @@ namespace WebCycle.Controllers
                 {
                     pick.NormalPoints = score.NormalScore;
                     pick.SpecialPoints = score.SpecialScore;
-                    pick.Points = score.TotalScore;
                     pick.LatestPoints = score.LastScore;
                     pick.Specials = score.Specials;
                 }
@@ -108,7 +107,6 @@ namespace WebCycle.Controllers
                 {
                     pick.NormalPoints = 0;
                     pick.SpecialPoints = 0;
-                    pick.Points = 0;
                     pick.LatestPoints = 0;
                     pick.Specials = [];
                 }
@@ -143,22 +141,23 @@ namespace WebCycle.Controllers
                     {
                         pick.NormalPoints = results.NormalScore;
                         pick.SpecialPoints = results.SpecialScore;
-
-                        // oude property behouden indien ergens nog gebruikt
-                        pick.Points = results.TotalScore;
                     }
                     else
                     {
                         pick.NormalPoints = 0;
                         pick.SpecialPoints = 0;
-                        pick.Points = 0;
                     }
+                }
+
+                if (deelnemer == null)
+                {
+                    continue;
                 }
 
                 result.Add(new DeelnemerMetPicksDto
                 {
                     Id = deelnemer.Id,
-                    DeelnemerNaam = $"{deelnemer?.User?.FirstName} {deelnemer?.User?.LastName}",
+                    DeelnemerNaam = $"{deelnemer.User?.FirstName} {deelnemer.User?.LastName}",
                     PoolNaam = deelnemer.TeamName,
                     UserId = deelnemer.UserId,
                     Picks = picksDto

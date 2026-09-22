@@ -1,8 +1,6 @@
-﻿using CycleManager.Services;
-using CycleManager.Services.Interfaces;
+﻿using CycleManager.Services.Interfaces;
 using Domain.Context;
 using Domain.Models;
-using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Playwright;
@@ -268,7 +266,7 @@ namespace CycleManager.Tests.E2E
 
             // --- 1. Haal bestaand event en deelnemer op ---
             var ev = await db.Events
-                .Include(e => e.Configuration)
+                .Include(e => e.Configuration!)
                     .ThenInclude(c => c.ConfigurationItems)
                 .Include(e => e.Stages)
                 .Include(e => e.GameCompetitorEvents)

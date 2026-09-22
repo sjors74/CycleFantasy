@@ -8,14 +8,14 @@ namespace Domain.Models
         public int Id { get; set; }
 
         public int StageId { get; set; }
-        public Stage? Stage { get; set; }
+        public Stage Stage { get; set; } = null!;
 
 
         public int CompetitorInEventId { get; set; }
-        public CompetitorsInEvent? CompetitorInEvent { get; set; }
+        public CompetitorsInEvent CompetitorInEvent { get; set; } = null!;
         
-        public int? SpecialId { get; set; }
-        public ConfigurationItemSpecial? Special { get; set; }
+        public int SpecialId { get; set; }
+        public ConfigurationItemSpecial Special { get; set; } = null!;
         
     }
 }

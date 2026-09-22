@@ -14,7 +14,7 @@ namespace DataAccessEF.TypeRepository
             _randomizer = randomizer ?? (list => list.OrderBy(x => Guid.NewGuid()));
         }
 
-        public async Task<CompetitorsInEvent> GetById(int id)
+        public async Task<CompetitorsInEvent?> GetByCompetitorId(int competitorId)
         {
             var competitorInEvent = await context.CompetitorsInEvent
                 .Include(cie => cie.CompetitorInTeam)
@@ -23,7 +23,7 @@ namespace DataAccessEF.TypeRepository
                 .Include(cie => cie.CompetitorInTeam)
                     .ThenInclude(cit => cit.TeamYear)
                         .ThenInclude(ty => ty.Team)
-                .FirstOrDefaultAsync(cie => cie.Id == id);
+                .FirstOrDefaultAsync(cie => cie.Id == competitorId);
 
             return competitorInEvent;
         }
@@ -65,12 +65,12 @@ namespace DataAccessEF.TypeRepository
         }
 
 
-        public static List<t> GetRandomElements<t>(IEnumerable<t> list, int elementsCount)
+        public static List<T> GetRandomElements<T>(IEnumerable<T> list, int elementsCount)
         {
             return list.OrderBy(x => Guid.NewGuid()).Take(elementsCount).ToList();
         }
 
-        public async Task<CompetitorsInEvent> GetCompetitorsInEventByIds(int eventId, int competitorId)
+        public async Task<CompetitorsInEvent?> GetCompetitorsInEventByIds(int eventId, int competitorId)
         {
             var competitorsInEvent = await context.CompetitorsInEvent
                 .Include(cie => cie.CompetitorInTeam)

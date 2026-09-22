@@ -5,6 +5,7 @@
 namespace DataAccessEF.Migrations
 {
     /// <inheritdoc />
+#pragma warning disable CS8981
     public partial class removepicks : Migration
     {
         /// <inheritdoc />
@@ -45,4 +46,5 @@ namespace DataAccessEF.Migrations
                 table: "CompetitorsInEvent");
         }
     }
+#pragma warning restore CS8981
 }

@@ -1,9 +1,7 @@
 ﻿@page
 @using System.Text.Json
 @model WebApp.Pages.SelectieModel
-@{
-    int pageSize = 3;
-}
+
 <h2>Renners-selectie (<span id="riderCountHeader">@Model.SelectedRiders.Count</span> van 15)</h2>
 <form method="post" id="selectForm">
     @Html.AntiForgeryToken()
@@ -237,8 +235,8 @@
 @section Scripts {
 
     <script>
-        window.eventId = @Model.EvenementId;
-        window.deelnemerId = @Model.DeelnemerId;
+        window.eventId = @Model.EvenementId
+        window.deelnemerId = @Model.DeelnemerId
     </script>
     <script type="module">
         import { 
@@ -256,7 +254,7 @@
                             JsonSerializer.Serialize(
                                     Model.AllTeams.SelectMany(t => t.Renners)
                             )
-                    );
+                    )
     </script>
     <script>
         document

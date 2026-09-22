@@ -104,7 +104,7 @@ namespace CycleManager.Services
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
-        public Task<Configuration> GetConfigurationById(int id)
+        public Task<Configuration?> GetConfigurationById(int id)
         {
             return _configurationRepository.GetConfigurationById(id);
         }
@@ -114,12 +114,12 @@ namespace CycleManager.Services
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
-        public Task<ConfigurationItem> GetConfigurationItemById(int id)
+        public Task<ConfigurationItem?> GetConfigurationItemById(int id)
         {
             return _configurationItemRepository.GetById(id);
         }
 
-        public Task<ConfigurationItemSpecial> GetConfigurationItemSpecialById(int id)
+        public Task<ConfigurationItemSpecial?> GetConfigurationItemSpecialById(int id)
         {
             return _configurationItemSpecialRepository.GetById(id);
         }

@@ -45,7 +45,7 @@ namespace CycleManager.Tests.Unit.Manager
         public async Task Details_ReturnsNotFound_WhenTeamNotExists()
         {
             _mockTeamService.Setup(s => s.GetTeamForCurrentYear(It.IsAny<int>(), It.IsAny<int>()))
-                .ReturnsAsync((Team)null);
+                .ReturnsAsync((Team?)null);
 
             var result = await _controller.Details(1, 2024);
 
@@ -109,7 +109,9 @@ namespace CycleManager.Tests.Unit.Manager
         [Fact]
         public async Task Edit_Get_ReturnsNotFound_WhenTeamNotFound()
         {
-            _mockTeamService.Setup(s => s.GetTeamById(It.IsAny<int>())).ReturnsAsync((Team)null);
+            _mockTeamService
+                .Setup(s => s.GetTeamById(It.IsAny<int>()))
+                .ReturnsAsync((Team?)null);
 
             var result = await _controller.Edit(1);
 
@@ -128,7 +130,7 @@ namespace CycleManager.Tests.Unit.Manager
             var viewResult = Assert.IsType<ViewResult>(result);
             var model = Assert.IsType<TeamEditViewModel>(viewResult.Model);
             Assert.Equal("Team Edit", model.CurrentTeamName);
-            Assert.Equal(1, model.TeamYears.Count);
+            Assert.Single(model.TeamYears);
         }
 
         // -------------------------------------------
@@ -178,7 +180,9 @@ namespace CycleManager.Tests.Unit.Manager
         [Fact]
         public async Task Delete_Get_ReturnsNotFound_WhenIdNullOrTeamMissing()
         {
-            _mockTeamService.Setup(s => s.GetTeamById(It.IsAny<int>())).ReturnsAsync((Team)null);
+            _mockTeamService
+                .Setup(s => s.GetTeamById(It.IsAny<int>()))
+                .ReturnsAsync((Team?)null);
 
             var resultNullId = await _controller.Delete(null);
             Assert.IsType<NotFoundResult>(resultNullId);

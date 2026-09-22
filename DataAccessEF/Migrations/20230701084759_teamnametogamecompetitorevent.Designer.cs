@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
-
+#pragma warning disable CS8981
 namespace DataAccessEF.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
@@ -491,4 +491,5 @@ namespace DataAccessEF.Migrations
 #pragma warning restore 612, 618
         }
     }
+#pragma warning restore CS8981
 }

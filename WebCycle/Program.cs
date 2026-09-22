@@ -133,15 +133,25 @@ builder.Services.AddAuthentication(options =>
 .AddJwtBearer(options =>
 {
     var config = builder.Configuration;
+
+    var jwtKey = config["Jwt:Key"]
+        ?? throw new InvalidOperationException("Jwt:Key is niet geconfigureerd.");
+
+    var jwtIssuer = config["Jwt:Issuer"]
+        ?? throw new InvalidOperationException("Jwt:Issuer is niet geconfigureerd.");
+
+    var jwtAudience = config["Jwt:Audience"]
+        ?? throw new InvalidOperationException("Jwt:Audience is niet geconfigureerd.");
+
     options.TokenValidationParameters = new TokenValidationParameters
     {
         ValidateIssuer = true,
         ValidateAudience = true,
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
-        ValidIssuer = config["Jwt:Issuer"],
-        ValidAudience = config["Jwt:Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["Jwt:Key"]))
+        ValidIssuer = jwtIssuer,
+        ValidAudience = jwtAudience,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
     };
 });
 

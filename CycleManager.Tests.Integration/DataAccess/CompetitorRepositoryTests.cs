@@ -260,7 +260,7 @@ namespace CycleManager.Tests.Integration.DataAccess
             var repo = new CompetitorRepository(context);
 
             // Act
-            var result = await repo.GetById(1);
+            var result = await repo.GetByCompetitorId(1);
 
             // Assert
             Assert.NotNull(result);
@@ -660,6 +660,7 @@ namespace CycleManager.Tests.Integration.DataAccess
                         cit.CompetitorId == 10 &&
                         cit.TeamYear.SeasonYearId == 2025);
 
+            Assert.NotNull(newLink);
             Assert.Equal(2, newLink.TeamYearId);
             Assert.Equal(2, newLink.TeamYear.TeamId);
         }

@@ -1,7 +1,6 @@
 ﻿using Domain.Context;
 using Domain.Interfaces;
 using Domain.Models;
-using Microsoft.EntityFrameworkCore;
 
 namespace DataAccessEF.TypeRepository
 {
@@ -10,7 +9,7 @@ namespace DataAccessEF.TypeRepository
         public CountryRepository(ApplicationDbContext context) : base(context)
         {
         }
-        public new Country GetById(int id)
+        public new Country? GetById(int id)
         {
             var country = context.Countries.Where(c => c.CountryId.Equals(id)).FirstOrDefault();
             return country;

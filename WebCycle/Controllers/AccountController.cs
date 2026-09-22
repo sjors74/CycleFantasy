@@ -83,6 +83,11 @@ namespace WebCycleApi.Controllers
                     Sjors</p>
                 ";
 
+                if (string.IsNullOrWhiteSpace(model.Email))
+                {
+                    throw new InvalidOperationException("Er is geen e-mailadres opgegeven.");
+                }
+
                 await _emailSender.SendEmailAsync(model.Email, subject, body);
             }
             catch (Exception ex)
@@ -94,7 +99,7 @@ namespace WebCycleApi.Controllers
         }
 
         [HttpGet("confirmemail")]
-        public async Task<IActionResult> ConfirmEmail(string userId, string token)
+        public async Task<IActionResult> ConfirmEmail(string? userId, string? token)
         {
             if (userId == null || token == null)
                 return BadRequest("Ongeldige bevestigingsgegevens.");

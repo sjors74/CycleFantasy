@@ -73,7 +73,7 @@ namespace CycleManager.Tests.Unit.Manager
         public async Task Details_NotFound_ReturnsNotFound()
         {
             _configurationServiceMock.Setup(s => s.GetConfigurationById(It.IsAny<int>()))
-                .ReturnsAsync((Configuration)null);
+                .ReturnsAsync((Configuration?)null);
 
             var result = await _controller.Details(999);
             Assert.IsType<NotFoundResult>(result);
@@ -143,7 +143,7 @@ namespace CycleManager.Tests.Unit.Manager
         public async Task Edit_Get_NotFound_ReturnsNotFound()
         {
             _configurationServiceMock.Setup(s => s.GetConfigurationById(It.IsAny<int>()))
-                .ReturnsAsync((Configuration)null);
+                .ReturnsAsync((Configuration?)null);
 
             var result = await _controller.Edit(999);
             Assert.IsType<NotFoundResult>(result);
@@ -193,7 +193,7 @@ namespace CycleManager.Tests.Unit.Manager
             _configurationServiceMock.Setup(s => s.GetConfigurationById(1))
                 .ThrowsAsync(new DbUpdateConcurrencyException());
             _configurationServiceMock.Setup(s => s.GetConfigurationById(1))
-                .ReturnsAsync((Configuration)null);
+                .ReturnsAsync((Configuration?)null);
 
             var controller = new ConfigurationsController(_configurationServiceMock.Object);
 
@@ -226,7 +226,7 @@ namespace CycleManager.Tests.Unit.Manager
         public async Task Delete_Get_NotFound_ReturnsNotFound()
         {
             _configurationServiceMock.Setup(s => s.GetConfigurationById(It.IsAny<int>()))
-                .ReturnsAsync((Configuration)null);
+                .ReturnsAsync((Configuration?)null);
 
             var result = await _controller.Delete(999);
             Assert.IsType<NotFoundResult>(result);
@@ -250,7 +250,7 @@ namespace CycleManager.Tests.Unit.Manager
         public async Task DeleteConfirmed_ItemNotFound_RedirectsToIndex()
         {
             _configurationServiceMock.Setup(s => s.GetConfigurationById(It.IsAny<int>()))
-                .ReturnsAsync((Configuration)null);
+                .ReturnsAsync((Configuration?)null);
 
             var result = await _controller.DeleteConfirmed(123);
 

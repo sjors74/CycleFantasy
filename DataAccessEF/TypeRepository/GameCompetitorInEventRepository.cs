@@ -81,7 +81,7 @@ namespace DataAccessEF.TypeRepository
             return events;
         }
 
-        public async Task<GameCompetitorEvent> GetCompetitorWithPicksById(int id)
+        public async Task<GameCompetitorEvent?> GetCompetitorWithPicksById(int id)
         {
             return await context.GameCompetitorsEvent
                 .Include(p => p.Renners) // of Picks

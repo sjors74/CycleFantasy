@@ -76,34 +76,16 @@ namespace CycleManager.Tests.Unit.Manager
             Assert.IsType<NotFoundResult>(result);
         }
 
-        //[Fact]
-        //public async Task Create_Get_ReturnsView_WithViewBags()
-        //{
-        //    // arrange
-        //    _competitorServiceMock.Setup(s => s.GetAllCompetitors(It.IsAny<int>()))
-        //                          .ReturnsAsync(new List<CompetitorDto>());
-        //    _teamServiceMock.Setup(s => s.GetAllTeams())
-        //                    .ReturnsAsync(TestDataFactory.FakeTeams());
-        //    _countryServiceMock.Setup(s => s.GetAll())
-        //                       .ReturnsAsync(TestDataFactory.FakeCountries());
-
-        //    // act
-        //    var result = await _controller.Create();
-
-        //    // assert
-        //    var view = Assert.IsType<ViewResult>(result);
-        //    Assert.NotNull(view.ViewData);
-        //}
-
         [Fact]
         public async Task Create_Post_ValidModel_RedirectsToIndex()
         {
             var vm = TestDataFactory.CreateValidCreateCompetitorViewModel();
             var competitor = TestDataFactory.CreateCompetitor();
+
             _competitorServiceMock.Setup(s => s.GetCompetitorById(vm.CompetitorId))
-                                  .ReturnsAsync((Competitor)null);
-            _competitorServiceMock.Setup(s => s.GetCompetitorByName(vm.FirstName, vm.LastName, vm.CountryId))
-                                  .ReturnsAsync((Competitor)null);
+                                  .ReturnsAsync((Competitor?)null);
+            _competitorServiceMock.Setup(s => s.GetCompetitorByName(vm.FirstName!, vm.LastName!, vm.CountryId))
+                                  .ReturnsAsync((Competitor?)null);
             _competitorServiceMock.Setup(s => s.Create(It.IsAny<Competitor>())).Returns(Task.CompletedTask);
             _competitorServiceMock.Setup(s => s.CheckCompetitorInTeam(It.IsAny<int>(), It.IsAny<int>()))
                                   .ReturnsAsync(false);
@@ -236,8 +218,8 @@ namespace CycleManager.Tests.Unit.Manager
             var jsonResult = Assert.IsType<JsonResult>(result);
             var data = Assert.IsAssignableFrom<IEnumerable<object>>(jsonResult.Value);
 
-            Assert.Contains(data, d => d.ToString().Contains("Jan Jansen"));
-            Assert.DoesNotContain(data, d => d.ToString().Contains("Piet Pietersen"));
+            Assert.Contains(data, d => d.ToString()?.Contains("Jan Jansen") == true);
+            Assert.DoesNotContain(data, d => d.ToString()?.Contains("Piet Pietersen") == true);
         }
 
         [Fact]
@@ -318,7 +300,7 @@ namespace CycleManager.Tests.Unit.Manager
             Assert.IsType<NotFoundResult>(result1);
 
             _competitorServiceMock.Setup(s => s.GetCompetitorById(1))
-                                  .ReturnsAsync((Competitor)null);
+                                  .ReturnsAsync((Competitor?)null);
 
             var result2 = await _controller.Delete(1);
             Assert.IsType<NotFoundResult>(result2);

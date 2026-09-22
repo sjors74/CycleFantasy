@@ -52,7 +52,7 @@ namespace DataAccessEF.TypeRepository
                     .ThenInclude(ty => ty.SeasonYear)
                 .FirstOrDefaultAsync(t => t.TeamId == id);
 
-            return team;
+            return team!;
         }
 
         public async Task<Team> GetTeamForCurrentYear(int id, int year)
@@ -69,7 +69,7 @@ namespace DataAccessEF.TypeRepository
                     t.TeamId == id &&
                     t.TeamYears.Any(ty => ty.SeasonYear.Year == year));
 
-            return team;
+            return team!;
 
         }
 
