@@ -50,7 +50,7 @@ namespace CycleManager.Tests.Unit.Manager
             int eventId = 1;
             _mockResultService.Setup(s => s.GetResultsByEventId(eventId, false))
                 .ReturnsAsync(new List<CompetitorRankingDto> {
-                    new CompetitorRankingDto { CompetitorInEventId = 10, Points = 5 }
+                    new CompetitorRankingDto { CompetitorInEventId = 10, NormalPoints = 3, SpecialPoints = 2 }
                 });
 
             _mockGameCompetitorEventService.Setup(s => s.GetPicks(eventId))
@@ -209,7 +209,7 @@ namespace CycleManager.Tests.Unit.Manager
             _mockGameCompetitorEventService.Verify(s => s.AddPicks(It.IsAny<List<GameCompetitorEventPick>>()), Times.Once);
             Assert.NotNull(result);
             Assert.Equal("Details", result.ActionName);
-            Assert.Equal(model.EventId, result.RouteValues["eventId"]);
+            Assert.Equal(model.EventId, result.RouteValues?["eventId"]);
         }
 
         [Fact]
@@ -383,8 +383,9 @@ namespace CycleManager.Tests.Unit.Manager
         [Fact]
         public async Task Edit_Get_InvalidId_ReturnsNotFound()
         {
-            _mockGameCompetitorEventService.Setup(s => s.GetGameCompetitorEventById(It.IsAny<int>()))
-                .ReturnsAsync((GameCompetitorEvent)null);
+            _mockGameCompetitorEventService
+                .Setup(s => s.GetGameCompetitorEventById(It.IsAny<int>()))
+                .ReturnsAsync((GameCompetitorEvent?)null);
 
             var result = await _controller.Edit(1);
 
@@ -447,7 +448,7 @@ namespace CycleManager.Tests.Unit.Manager
 
             var redirect = Assert.IsType<RedirectToActionResult>(result);
             Assert.Equal("Index", redirect.ActionName);
-            Assert.Equal(77, redirect.RouteValues["eventId"]);
+            Assert.Equal(77, redirect.RouteValues?["eventId"]);
         }
 
         [Fact]
@@ -461,7 +462,7 @@ namespace CycleManager.Tests.Unit.Manager
         public async Task Delete_Get_EntityNotFound_ReturnsNotFound()
         {
             _mockGameCompetitorEventService.Setup(s => s.GetGameCompetitorEventById(It.IsAny<int>()))
-                .ReturnsAsync((GameCompetitorEvent)null);
+                .ReturnsAsync((GameCompetitorEvent?)null);
 
             var result = await _controller.Delete((int?)99);
 
@@ -473,7 +474,7 @@ namespace CycleManager.Tests.Unit.Manager
         {
             // Arrange
             _mockGameCompetitorEventService.Setup(s => s.GetGameCompetitorEventById(99))
-                .ReturnsAsync((GameCompetitorEvent)null);
+                .ReturnsAsync((GameCompetitorEvent?)null);
 
             // Act
             var result = await _controller.Delete(99) as RedirectToActionResult;
@@ -543,8 +544,12 @@ namespace CycleManager.Tests.Unit.Manager
         public async Task FillList_NoCompetitors_ReturnsRedirect()
         {
             // Arrange
-            _controller.TempData = new TempDataDictionary(new DefaultHttpContext(), Mock.Of<ITempDataProvider>());
-            _mockGameCompetitorEventService.Setup(s => s.GetCompetitors(1, It.IsAny<int>()))
+            _controller.TempData = new TempDataDictionary(
+                new DefaultHttpContext(), 
+                Mock.Of<ITempDataProvider>());
+
+            _mockGameCompetitorEventService
+                .Setup(s => s.GetCompetitors(1, It.IsAny<int>()))
                 .ReturnsAsync(new List<CompetitorsInEvent>()); // geen suggesties
 
             // Act
@@ -553,8 +558,11 @@ namespace CycleManager.Tests.Unit.Manager
             // Assert
             Assert.NotNull(result);
             Assert.Equal("Details", result.ActionName);
-            Assert.Empty((List<int>)_controller.TempData["suggestedCompetitors"]);
-        }
 
+            var suggestedCompetitors = Assert.IsType<List<int>>(
+                _controller.TempData["suggestedCompetitors"]);
+
+            Assert.Empty(suggestedCompetitors);
+        }
     }
 }

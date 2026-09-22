@@ -59,7 +59,7 @@ namespace CycleManager.Tests.Unit.Api
             // Arrange
             var mockService = new Mock<ITeamService>();
             mockService.Setup(s => s.GetTeamById(It.IsAny<int>()))
-                       .ReturnsAsync((Team)null);
+                       .ReturnsAsync((Team?)null);
 
             var controller = new TeamController(mockService.Object);
 

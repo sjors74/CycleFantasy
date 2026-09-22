@@ -198,7 +198,7 @@ namespace WebCycle.Controllers
         }
 
         [HttpPost("selectie")]
-        public async Task<IActionResult> SlaSelectieOp([FromBody] SelectieDto dto)
+        public async Task<IActionResult> SlaSelectieOp([FromBody] SelectieDto? dto)
         {
             if (dto == null)
             {
@@ -221,7 +221,7 @@ namespace WebCycle.Controllers
         }
 
         [HttpPost("createpool")]
-        public async Task<IActionResult> CreatePool([FromBody] DeelnemerDto dto)
+        public async Task<IActionResult> CreatePool([FromBody] DeelnemerDto? dto)
         {
             if (dto == null)
             {

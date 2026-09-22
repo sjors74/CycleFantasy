@@ -12,7 +12,7 @@ namespace CycleManager.Services.Interfaces
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
-        Task<Team> GetTeamById(int id);
+        Task<Team?> GetTeamById(int id);
 
         /// <summary>
         /// Get all teams

@@ -64,7 +64,7 @@ namespace CycleManager.Services
         /// <param name="id"></param>
         /// <returns></returns>
         /// <exception cref="NotImplementedException"></exception>
-        public async Task<Team> GetTeamById(int id)
+        public async Task<Team?> GetTeamById(int id)
         {
             return await _teamRepository.GetTeamById(id);
         }

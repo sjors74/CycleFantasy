@@ -84,7 +84,7 @@ namespace CycleManager.Tests.Unit.Manager
         public async Task Details_NotFound_ReturnsNotFound()
         {
             _eventServiceMock.Setup(s => s.GetEventDetailsViewModelById(It.IsAny<int>()))
-                .ReturnsAsync((EventDetailsViewModel)null);
+                .ReturnsAsync((EventDetailsViewModel?)null);
 
             var result = await _controller.Details(99);
 
@@ -158,7 +158,7 @@ namespace CycleManager.Tests.Unit.Manager
         public async Task Edit_Get_NotFound_ReturnsNotFound()
         {
             _eventServiceMock.Setup(s => s.GetEventById(It.IsAny<int>()))
-                .ReturnsAsync((Event)null);
+                .ReturnsAsync((Event?)null);
 
             var result = await _controller.Edit(99);
             Assert.IsType<NotFoundResult>(result);
@@ -216,7 +216,7 @@ namespace CycleManager.Tests.Unit.Manager
         {
             var vm = new EventItemViewModel { Id = 1 };
             _eventServiceMock.Setup(s => s.Update(It.IsAny<Event>())).ThrowsAsync(new DbUpdateConcurrencyException());
-            _eventServiceMock.Setup(s => s.GetEventById(1)).ReturnsAsync((Event)null);
+            _eventServiceMock.Setup(s => s.GetEventById(1)).ReturnsAsync((Event?)null);
 
             var result = await _controller.Edit(1, vm);
 
@@ -246,7 +246,7 @@ namespace CycleManager.Tests.Unit.Manager
         [Fact]
         public async Task Delete_Get_NotFound_ReturnsNotFound()
         {
-            _eventServiceMock.Setup(s => s.GetEventById(It.IsAny<int>())).ReturnsAsync((Event)null);
+            _eventServiceMock.Setup(s => s.GetEventById(It.IsAny<int>())).ReturnsAsync((Event?)null);
 
             var result = await _controller.Delete(99);
             Assert.IsType<NotFoundResult>(result);
@@ -298,7 +298,7 @@ namespace CycleManager.Tests.Unit.Manager
         [Fact]
         public async Task ManageTeams_Get_EventNotFound_ReturnsNotFound()
         {
-            _eventServiceMock.Setup(s => s.GetEventById(1)).ReturnsAsync((Event)null);
+            _eventServiceMock.Setup(s => s.GetEventById(1)).ReturnsAsync((Event?)null);
             var result = await _controller.ManageTeams(1);
             Assert.IsType<NotFoundResult>(result);
         }
@@ -328,6 +328,7 @@ namespace CycleManager.Tests.Unit.Manager
             var jsonString = JsonSerializer.Serialize(json.Value);
             var dict = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(jsonString);
 
+            Assert.NotNull(dict);
             Assert.False(dict["success"].GetBoolean());
             Assert.Equal("Er is een fout opgetreden.", dict["message"].GetString());
         }
@@ -336,7 +337,7 @@ namespace CycleManager.Tests.Unit.Manager
         public async Task ManageTeams_Post_EventNotFound_ReturnsJsonError()
         {
             var vm = new EventTeamsViewModel { EventId = 1 };
-            _eventServiceMock.Setup(s => s.GetEventById(1)).ReturnsAsync((Event)null);
+            _eventServiceMock.Setup(s => s.GetEventById(1)).ReturnsAsync((Event?)null);
 
             var result = await _controller.ManageTeams(vm);
 
@@ -345,8 +346,11 @@ namespace CycleManager.Tests.Unit.Manager
             var jsonString = JsonSerializer.Serialize(json.Value);
             var dict = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(jsonString);
 
-            Assert.False((bool)dict["success"].GetBoolean());
-            Assert.Equal("Evenement niet gevonden", dict["message"].GetString());
+            Assert.NotNull(dict);
+            Assert.False(dict["success"].GetBoolean());
+            var message = dict["message"].GetString();
+            Assert.NotNull(message);
+            Assert.Equal("Evenement niet gevonden", message);
         }
 
         [Fact]
@@ -376,6 +380,7 @@ namespace CycleManager.Tests.Unit.Manager
                 JsonSerializer.Serialize(json.Value)
             );
 
+            Assert.NotNull(dict);
             Assert.True(dict["success"].GetBoolean());
 
             // Controleer dat de juiste service-methodes zijn aangeroepen
@@ -418,6 +423,7 @@ namespace CycleManager.Tests.Unit.Manager
             var json = Assert.IsType<JsonResult>(result);
             var dict = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(JsonSerializer.Serialize(json.Value));
 
+            Assert.NotNull(dict);
             Assert.True(dict["success"].GetBoolean());
 
             // Check dat de juiste services zijn aangeroepen
@@ -446,6 +452,7 @@ namespace CycleManager.Tests.Unit.Manager
             var json = Assert.IsType<JsonResult>(result);
             var dict = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(JsonSerializer.Serialize(json.Value));
 
+            Assert.NotNull(dict);
             Assert.False(dict["success"].GetBoolean());
             Assert.Equal("Er is een fout opgetreden tijdens het opslaan.", dict["message"].GetString());
         }
@@ -480,6 +487,7 @@ namespace CycleManager.Tests.Unit.Manager
             var json = Assert.IsType<JsonResult>(result);
             var dict = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(JsonSerializer.Serialize(json.Value));
 
+            Assert.NotNull(dict);
             Assert.True(dict["success"].GetBoolean());
         }
 
@@ -489,7 +497,7 @@ namespace CycleManager.Tests.Unit.Manager
         [Fact]
         public async Task ManageStages_EventNotFound_ReturnsNotFound()
         {
-            _eventServiceMock.Setup(s => s.GetEventById(1)).ReturnsAsync((Event)null);
+            _eventServiceMock.Setup(s => s.GetEventById(1)).ReturnsAsync((Event?)null);
             var result = await _controller.ManageStages(1);
             Assert.IsType<NotFoundResult>(result);
         }
@@ -512,11 +520,11 @@ namespace CycleManager.Tests.Unit.Manager
         public async Task ManageStages_Post_EventNotFound_ReturnsJsonError()
         {
             // arrange
-            _eventServiceMock.Setup(s => s.GetEventById(1)).ReturnsAsync((Event)null);
+            _eventServiceMock.Setup(s => s.GetEventById(1)).ReturnsAsync((Event?)null);
             var vm = new EventStagesViewModel { EventId = 1 };
 
             // act
-            var result = await _controller.ManageStages(vm.EventId); // pas aan naar jouw POST method
+            var result = await _controller.ManageStages(vm.EventId);
 
             // assert
             Assert.IsType<NotFoundResult>(result);

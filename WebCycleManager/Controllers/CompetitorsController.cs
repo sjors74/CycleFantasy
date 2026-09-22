@@ -31,7 +31,7 @@ namespace WebCycleManager.Controllers
         }
 
         // GET: Competitors
-        public async Task<IActionResult> Index(string currentFilter, string? searchString, int? pageNumber, int? seasonYearId)
+        public async Task<IActionResult> Index(string? currentFilter, string? searchString, int? pageNumber, int? seasonYearId)
         {
             if (searchString != null)
             {

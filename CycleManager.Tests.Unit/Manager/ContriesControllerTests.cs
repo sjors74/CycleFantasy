@@ -66,7 +66,7 @@ namespace CycleManager.Tests.Unit.Manager
         public async Task Details_InvalidId_ReturnsNotFound()
         {
             _countryServiceMock.Setup(s => s.GetById(It.IsAny<int>()))
-                .ReturnsAsync((Country)null);
+                .ReturnsAsync((Country?)null);
 
             var result = await _controller.Details(99);
 
@@ -136,7 +136,7 @@ namespace CycleManager.Tests.Unit.Manager
         [Fact]
         public async Task Edit_InvalidId_ReturnsNotFound()
         {
-            _countryServiceMock.Setup(s => s.GetById(It.IsAny<int>())).ReturnsAsync((Country)null);
+            _countryServiceMock.Setup(s => s.GetById(It.IsAny<int>())).ReturnsAsync((Country?)null);
             var result = await _controller.Edit(99);
             Assert.IsType<NotFoundResult>(result);
         }
@@ -195,7 +195,7 @@ namespace CycleManager.Tests.Unit.Manager
             _countryServiceMock.Setup(s => s.Update(It.IsAny<Country>()))
                 .ThrowsAsync(new DbUpdateConcurrencyException());
             _countryServiceMock.Setup(s => s.GetById(1))
-                .ReturnsAsync((Country)null);
+                .ReturnsAsync((Country?)null);
 
             var result = await _controller.Edit(1, country);
 
@@ -227,7 +227,7 @@ namespace CycleManager.Tests.Unit.Manager
         [Fact]
         public async Task Delete_InvalidId_ReturnsNotFound()
         {
-            _countryServiceMock.Setup(s => s.GetById(It.IsAny<int>())).ReturnsAsync((Country)null);
+            _countryServiceMock.Setup(s => s.GetById(It.IsAny<int>())).ReturnsAsync((Country?)null);
             var result = await _controller.Delete(99);
             Assert.IsType<NotFoundResult>(result);
         }
@@ -263,7 +263,7 @@ namespace CycleManager.Tests.Unit.Manager
         [Fact]
         public async Task DeleteConfirmed_CountryNotExists_RedirectsToIndexWithoutDelete()
         {
-            _countryServiceMock.Setup(s => s.GetById(1)).ReturnsAsync((Country)null);
+            _countryServiceMock.Setup(s => s.GetById(1)).ReturnsAsync((Country?)null);
 
             var result = await _controller.DeleteConfirmed(1);
 
