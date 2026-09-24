@@ -149,6 +149,18 @@ namespace CycleManager.Tests.Unit.Manager
                 IsActive = true,
             };
 
+            _seasonYearServiceMock
+                .Setup(s => s.GetAllAsync())
+                .ReturnsAsync(new List<SeasonYearDto>
+                {
+                    new SeasonYearDto
+                    {
+                        SeasonYearId = 1,
+                        Year = 2024,
+                        Active = true
+                    }
+                });
+
             _eventServiceMock.Setup(s => s.GetEventById(eventId))
                 .ReturnsAsync(eventObject);
 
@@ -430,7 +442,8 @@ namespace CycleManager.Tests.Unit.Manager
             // Arrange
             int teamYearId = 1;
             int seasonYearId = 1;
-            _competitorServiceMock.Setup(s => s.GetByTeamId(teamYearId))
+            _competitorServiceMock
+                .Setup(s => s.GetByTeamId(teamYearId))
                 .ReturnsAsync(new List<CompetitorInTeamDto>
             {
                 new CompetitorInTeamDto
@@ -440,6 +453,7 @@ namespace CycleManager.Tests.Unit.Manager
                     LastName = "Jansen",
                     TeamId = 1,
                     TeamName = "Team A",
+                    SeasonYearId = 1,
                     Year = 2025
                 },
                 new CompetitorInTeamDto
@@ -449,6 +463,7 @@ namespace CycleManager.Tests.Unit.Manager
                     LastName = "Pietersen",
                     TeamId = 2,
                     TeamName = "Team A",
+                    SeasonYearId = 1,
                     Year = 2025
                 }
             });

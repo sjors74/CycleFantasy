@@ -180,6 +180,14 @@ namespace CycleManager.Tests.Unit.Manager
                 CurrentTeamName = "Soudal Quick-Step"
             };
 
+            var teamYear = new TeamYear
+            {
+                TeamYearId = 1,
+                Name = "Soudal Quick-Step 2024",
+                TeamId = 1,
+                SeasonYearId = 2024,
+            };
+
             var competitor = new Competitor
             {
                 CompetitorId = 1,
@@ -198,12 +206,11 @@ namespace CycleManager.Tests.Unit.Manager
                         Id = 1,
                         CompetitorId = 1,
                         TeamYearId = 1,
+                        TeamYear = teamYear,
                         IsNationalChampion = true
                     }
                 }
             };
-
-            //team.CompetitorInTeams = new List<CompetitorInTeam> { competitor.CompetitorInTeams.First() };
 
             return competitor;
         }

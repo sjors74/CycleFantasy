@@ -1,4 +1,5 @@
-﻿using CycleManager.Domain.Models;
+﻿using CycleManager.Domain.Dto;
+using CycleManager.Domain.Models;
 using CycleManager.Domain.ViewModel;
 using CycleManager.Services;
 using CycleManager.Services.Interfaces;
@@ -53,19 +54,23 @@ namespace CycleManager.Tests.Unit.Manager
         [Fact]
         public async Task Index_ReturnsViewWithEvents()
         {
+            // Arrange
             var events = new List<Event> 
             { 
-                new Event { EventId = 1, EventName = "Race1" },
-                new Event { EventId = 2, EventName = "Race2" }
+                new Event { EventId = 1, EventName = "Race1", EventYear = 2026 },
+                new Event { EventId = 2, EventName = "Race2", EventYear = 2026 }
             };
 
             _eventServiceMock.Setup(s => s.GetAllEvents())
                 .ReturnsAsync(events);
 
-            var result = await _controller.Index(null, null);
+            // Act
+            var result = await _controller.Index(2026, null);
 
+            // Assert
             var view = Assert.IsType<ViewResult>(result);
             var model = Assert.IsType<EventViewModel>(view.Model);
+
             Assert.Equal(2, model.Events.Count);
             Assert.Contains(model.Events, e => e.Name == "Race1");
         }
@@ -109,11 +114,42 @@ namespace CycleManager.Tests.Unit.Manager
         [Fact]
         public async Task Create_Get_ReturnsViewWithConfigurationSelectList()
         {
-            var configs = new List<Configuration> { new Configuration { Id = 1, ConfigurationType = "Points" } };
-            _configurationServiceMock.Setup(s => s.GetAllConfigurations()).ReturnsAsync(configs);
+            //Arrange
+            var configs = new List<Configuration> 
+            { 
+                new Configuration 
+                { 
+                    Id = 1, 
+                    ConfigurationType = "Points" 
+                } 
+            };
 
+            _configurationServiceMock
+                .Setup(s => s.GetAllConfigurations())
+                .ReturnsAsync(configs);
+
+            _seasonYearServiceMock
+                .Setup(s => s.GetAllAsync())
+                .ReturnsAsync(new List<SeasonYearDto>
+                {
+                    new SeasonYearDto
+                    {
+                        SeasonYearId = 1,
+                        Year = 2025,
+                        Active = true
+                    },
+                    new SeasonYearDto
+                    {
+                        SeasonYearId = 2,
+                        Year = 2024,
+                        Active = false
+                    }
+                });
+
+            //Act
             var result = await _controller.Create();
-
+            
+            //Assert
             var view = Assert.IsType<ViewResult>(result);
             var selectList = Assert.IsType<SelectList>(view.ViewData["ConfigurationId"]);
             Assert.Single(selectList.Items);
@@ -135,11 +171,27 @@ namespace CycleManager.Tests.Unit.Manager
         [Fact]
         public async Task Create_Post_InvalidModel_ReturnsView()
         {
+            // Arrange
             var vm = new EventItemViewModel();
+
+            _seasonYearServiceMock
+                .Setup(s => s.GetAllAsync())        
+                .ReturnsAsync(new List<SeasonYearDto>
+                {
+                    new SeasonYearDto
+                    {
+                        SeasonYearId = 1,
+                        Year = 2025,
+                        Active = true
+                    }
+                });
+
             _controller.ModelState.AddModelError("error", "invalid");
 
+            // Act
             var result = await _controller.Create(vm);
 
+            // Assert
             var view = Assert.IsType<ViewResult>(result);
             Assert.Equal(vm, view.Model);
         }
@@ -167,23 +219,54 @@ namespace CycleManager.Tests.Unit.Manager
         [Fact]
         public async Task Edit_Get_Found_ReturnsView()
         {
-            var e = new Event { EventId = 1, EventName = "Race1" };
-            _eventServiceMock.Setup(s => s.GetEventById(1)).ReturnsAsync(e);
-            _configurationServiceMock.Setup(s => s.GetAllConfigurations()).ReturnsAsync(new List<Configuration>());
+            // Arrange
+            var e = new Event 
+            { 
+                EventId = 1, 
+                EventName = "Race1" 
+            };
 
+            _eventServiceMock
+                .Setup(s => s.GetEventById(1))
+                .ReturnsAsync(e);
+
+            _configurationServiceMock
+                .Setup(s => s.GetAllConfigurations())
+                .ReturnsAsync(new List<Configuration>());
+
+            _seasonYearServiceMock
+                .Setup(s => s.GetAllAsync())
+                .ReturnsAsync(new List<SeasonYearDto>
+                {
+                    new SeasonYearDto
+                    {
+                        SeasonYearId = 1,
+                        Year = 2025,
+                        Active = true
+                    }
+                });
+
+            // Act
             var result = await _controller.Edit(1);
 
+            // Assert
             var view = Assert.IsType<ViewResult>(result);
             var model = Assert.IsType<EventItemViewModel>(view.Model);
+
             Assert.Equal("Race1", model.Name);
         }
 
         [Fact]
         public async Task Edit_Post_IdMismatch_ReturnsNotFound()
         {
+            // Arrange
             var vm = new EventItemViewModel { Id = 2 };
+
+            // Act
             var result = await _controller.Edit(1, vm);
-            Assert.IsType<ViewResult>(result);
+
+            // Assert
+            Assert.IsType<NotFoundResult>(result);
         }
 
         [Fact]
@@ -202,7 +285,21 @@ namespace CycleManager.Tests.Unit.Manager
         [Fact]
         public async Task Edit_Post_InvalidModel_ReturnsView()
         {
+            // Arrange
             var vm = new EventItemViewModel { Id = 1 };
+
+            _seasonYearServiceMock
+            .Setup(s => s.GetAllAsync())
+            .ReturnsAsync(new List<SeasonYearDto>
+            {
+                    new SeasonYearDto
+                    {
+                        SeasonYearId = 1,
+                        Year = 2025,
+                        Active = true
+                    }
+            });
+
             _controller.ModelState.AddModelError("error", "invalid");
 
             var result = await _controller.Edit(1, vm);
@@ -460,11 +557,22 @@ namespace CycleManager.Tests.Unit.Manager
         [Fact]
         public async Task ManageTeams_Post_DuplicateTeamIds_OnlyAddsOnce()
         {
-            var e = new Event { EventId = 1, EventTeams = new List<EventTeam>() };
-            _eventServiceMock.Setup(s => s.GetEventById(1)).ReturnsAsync(e);
+            // Arrange
+            var e = new Event 
+            { 
+                EventId = 1, 
+                EventTeams = new List<EventTeam>() 
+            };
+
+            _eventServiceMock
+                .Setup(s => s.GetEventById(1))
+                .ReturnsAsync(e);
 
             var urlHelperMock = new Mock<IUrlHelper>();
-            urlHelperMock.Setup(u => u.Action(It.IsAny<UrlActionContext>())).Returns("/dummy/url");
+            urlHelperMock
+                .Setup(u => u.Action(It.IsAny<UrlActionContext>()))
+                .Returns("/dummy/url");
+
             _controller.Url = urlHelperMock.Object;
 
             var vm = new EventTeamsViewModel
@@ -477,13 +585,20 @@ namespace CycleManager.Tests.Unit.Manager
                 }
             };
 
+            // Act
             var result = await _controller.ManageTeams(vm);
 
-            // Controleer of de service correct is aangeroepen
-            _eventServiceMock.Verify(s => s.RemoveAllTeamsForEvent(1), Times.Once);
-            _eventServiceMock.Verify(s => s.AddTeamToEvent(1, 1), Times.AtLeastOnce);
+            // Assert
+            _eventServiceMock.Verify(
+                s => s.AddTeamToEvent(1, 1), 
+                Times.AtLeastOnce);
 
-            // Controleer het resultaat
+            _eventServiceMock.Verify(
+                s => s.RemoveTeamFromEvent(
+                    It.IsAny<int>(),
+                    It.IsAny<int>()),
+                Times.Never);
+
             var json = Assert.IsType<JsonResult>(result);
             var dict = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(JsonSerializer.Serialize(json.Value));
 

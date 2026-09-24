@@ -10,17 +10,21 @@ namespace WebCycleManager.Controllers
         private readonly IScraperService _scraperService;
         private readonly IScoreService _scoreService;
         private readonly IAdminScraperService _adminScraperService;
+        private readonly IBackgroundJobClient _backgroundJobClient;
+
         private readonly ITeamService _teamService;
 
         public AdminScraperController(
             IScraperService scraperService, 
             IScoreService scoreService, 
             IAdminScraperService adminScraperService,
+            IBackgroundJobClient backgroundJobClient,
             ITeamService teamService)
         {
             _scraperService = scraperService;
             _scoreService = scoreService;
             _adminScraperService = adminScraperService;
+            _backgroundJobClient = backgroundJobClient;
             _teamService = teamService;
         }
         
@@ -28,6 +32,7 @@ namespace WebCycleManager.Controllers
         public async Task<IActionResult> ScrapeAndPair(int stageId, int eventId, string eventName, int year)
         {
             var stage = await _adminScraperService.GetStageByIdAsync(stageId); 
+
             if (stage == null)
             { 
                 TempData["Error"] = "Stage niet gevonden.";
@@ -36,7 +41,7 @@ namespace WebCycleManager.Controllers
 
             int.TryParse(stage.StageName, out var stageNumber);
 
-            BackgroundJob.Enqueue<IScrapeOrchestratorService>(x =>
+            _backgroundJobClient.Enqueue<IScrapeOrchestratorService>(x =>
                 x.RunStageScrapeAsync(
                     eventId,
                     eventName,

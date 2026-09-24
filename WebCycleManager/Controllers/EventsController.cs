@@ -141,12 +141,14 @@ namespace WebCycleManager.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int? id, EventItemViewModel model)
         {
+            if (id != model.Id)
+                return NotFound();
+
             if (!ModelState.IsValid)
             {
                 await PopulateViewModelAsync(model);
                 return View(model);
             }
-
 
             try
             {
