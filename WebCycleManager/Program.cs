@@ -8,7 +8,6 @@ using Domain.Context;
 using Domain.Interfaces;
 using Domain.Mapping;
 using Hangfire;
-using Hangfire.Dashboard;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Authorization;
@@ -152,6 +151,13 @@ builder.Services.AddHangfire(config =>
         builder.Configuration.GetConnectionString("CycleDb")));
 
 builder.Services.AddHangfireServer();
+builder.Services.AddAuthorization(options =>
+{
+    options.FallbackPolicy = new AuthorizationPolicyBuilder()
+        .RequireAuthenticatedUser()
+        .RequireRole("Admin")
+        .Build();
+}); 
 
 var app = builder.Build();
 
