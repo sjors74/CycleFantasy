@@ -29,6 +29,9 @@ stages:
     - script: dotnet build CycleFantasy.sln --configuration $(buildConfiguration) --no-restore
       displayName: Build
 
+    - script: dotnet test CycleFantasy.Tests.Unit/CycleFantasy.Tests.Unit.csproj --configuration $(buildConfiguration) --no-build
+      displayName: Run unit tests
+
     - script: >
         dotnet publish WebCycle/WebCycleApi.csproj
         -c $(buildConfiguration)
