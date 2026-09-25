@@ -61,7 +61,12 @@ stages:
   displayName: Deploy WebApp
   dependsOn: Build
 
-  condition: succeeded()
+  condition: and(
+    succeeded(),
+    eq(variables['Build.Reason'], 'ResourceTrigger'),
+    eq(variables['Resources.TriggeringAlias'], 'api'),
+    eq(variables['resources.pipeline.api.sourceBranch'], 'refs/heads/master')
+  )
 
   jobs:
   - job: DeployWeb
