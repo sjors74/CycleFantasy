@@ -4,9 +4,7 @@ using CycleManager.Services.Interfaces;
 using Domain.Dto;
 using Domain.Models;
 using FluentAssertions;
-using MailKit.Search;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Moq;
 using WebCycleManager.Controllers;
 using WebCycleManager.Models;
@@ -45,16 +43,36 @@ namespace CycleManager.Tests.Unit.Manager
         {
             // Arrange
             var competitors = TestDataFactory.CreateCompetitorDtos(3);
-            _competitorServiceMock.Setup(s => s.GetAvailableYears()).ReturnsAsync(new List<SeasonYearDto> { new SeasonYearDto { Year = 2023 }, new SeasonYearDto { Year = 2024 } });
+            _competitorServiceMock
+                .Setup(s => s.GetAvailableYears())
+                .ReturnsAsync(new List<SeasonYearDto> 
+                { 
+                    new SeasonYearDto 
+                    { 
+                        SeasonYearId = 1,
+                        Year = 2023,
+                        Active = false
+                    }, 
+                    new SeasonYearDto 
+                    {
+                        SeasonYearId = 2,
+                        Year = 2024,
+                        Active = true
+                    } 
+                });
             _competitorServiceMock.Setup(s => s.GetAllCompetitors(It.IsAny<int>()))
                                   .ReturnsAsync(competitors);
 
             // Act
-            var result = await _controller.Index(null, null, 1, 2024);
+            var result = await _controller.Index(null, null, 1, 2);
 
             // Assert
             var view = Assert.IsType<ViewResult>(result);
-            view.Model.Should().NotBeNull();
+            var model = Assert.IsType<CompetitorIndexViewModel>(view.Model);
+
+            model.Competitors.Should().NotBeNull();
+            model.Competitors.Should().HaveCount(3);
+            model.SelectedSeasonYearId.Should().Be(2);
         }
 
         [Fact]
@@ -111,11 +129,11 @@ namespace CycleManager.Tests.Unit.Manager
                     });
 
             _teamServiceMock
-                .Setup(s => s.GetAllTeams())
-                .ReturnsAsync(new List<Team>
+                .Setup(s => s.GetTeamYears(It.IsAny<int>()))
+                .ReturnsAsync(new List<TeamYearDto>
                 {
-                    new Team { TeamId = 1, CurrentTeamName = "Team A" },
-                    new Team { TeamId = 2, CurrentTeamName = "Team B" }
+                    new TeamYearDto { TeamYearId = 1, Name = "Team A" },
+                    new TeamYearDto { TeamYearId = 2, Name = "Team B" }
                 });
 
             _countryServiceMock
@@ -139,40 +157,31 @@ namespace CycleManager.Tests.Unit.Manager
             };
 
             // Act
-            var result = await _controller.Create(model) as ViewResult;
+            var actionResult = await _controller.Create(model);
+
+            Assert.NotNull(actionResult);
+
+            var result = Assert.IsType<ViewResult>(actionResult);
+
 
             // Assert
             Assert.NotNull(result);
             Assert.False(_controller.ModelState.IsValid);
-            Assert.Equal(model, result.Model);
 
-            Assert.NotNull(_controller.ViewData["TeamId"]);
-            Assert.NotNull(_controller.ViewData["CountryId"]);
+            var resultModel = Assert.IsType<CreateCompetitorViewModel>(result.Model);
+
+            Assert.NotNull(resultModel.Teams);
+            Assert.NotEmpty(resultModel.Teams);
+            Assert.Contains(resultModel.Teams, t => t.Text == "Team A");
+            Assert.Contains(resultModel.Teams, t => t.Text == "Team B");
+
+            Assert.NotNull(resultModel.Countries);
+            Assert.NotEmpty(resultModel.Countries);
+            Assert.Contains(resultModel.Countries, c => c.Text == "Nederland");
+            Assert.Contains(resultModel.Countries, c => c.Text == "België");
+
             Assert.NotNull(_controller.ViewBag.Competitors);
         }
-
-        //[Fact]
-        //public async Task Edit_Get_ReturnsView_WhenCompetitorFound()
-        //{
-        //    var dto = TestDataFactory.CreateCompetitorEditDto();
-        //    _competitorServiceMock.Setup(s => s.GetCompetitorForEdit(1)).ReturnsAsync(dto);
-
-        //    var result = await _controller.Edit(1);
-
-        //    var view = Assert.IsType<ViewResult>(result);
-        //    view.Model.Should().BeAssignableTo<CompetitorEditViewModel>();
-        //}
-
-        //[Fact]
-        //public async Task Edit_Get_ReturnsNotFound_WhenMissing()
-        //{
-        //    _competitorServiceMock.Setup(s => s.GetCompetitorForEdit(1))
-        //                          .ReturnsAsync((CompetitorEditDto)null);
-
-        //    var result = await _controller.Edit(1);
-
-        //    Assert.IsType<NotFoundResult>(result);
-        //}
 
         [Fact]
         public async Task DeleteConfirmed_DeletesCompetitor_AndRedirects()

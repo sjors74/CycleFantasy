@@ -55,7 +55,7 @@ namespace CycleManager.Services
             return false;
         }
 
-        public Task<Stage> GetStageById(int id)
+        public Task<Stage?> GetStageById(int id)
         {
             return _stageRepository.GetStageById(id);
         }

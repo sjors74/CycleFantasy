@@ -2,11 +2,6 @@
 using CycleManager.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using WebCycle.Controllers;
 
 namespace CycleManager.Tests.Unit.Api
@@ -46,18 +41,26 @@ namespace CycleManager.Tests.Unit.Api
                 new EtappeUitslagDto { Positie = 2, CompetitorName = "Mathieu", Score = 30 }
             };
 
-            // Fix: Setup the mock to return a Task.FromResult(uitslag) for the correct return type
-            _mockResultService.Setup(s => s.GetEtappeUitslag(stageId)).ReturnsAsync(
-                new EtappeResultaatDto { Uitslag = uitslag }
-            );
+            var resultaat = new EtappeResultaatDto
+            {
+                Uitslag = uitslag
+            };
+
+            _mockResultService
+                .Setup(s => s.GetEtappeUitslag(stageId))
+                .ReturnsAsync(resultaat);
 
             // Act
             var result = await _controller.GetEtappeUitslag(stageId);
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
-            var data = Assert.IsAssignableFrom<IEnumerable<EtappeUitslagDto>>(okResult.Value);
-            Assert.Equal(2, ((List<EtappeUitslagDto>)data).Count);
+            var data = Assert.IsType<EtappeResultaatDto>(okResult.Value);
+            Assert.Equal(2, data.Uitslag.Count);
+            Assert.Equal("Annemiek", data.Uitslag[0].CompetitorName);
+            Assert.Equal(50, data.Uitslag[0].Score);
+            Assert.Equal("Mathieu", data.Uitslag[1].CompetitorName);
+            Assert.Equal(30, data.Uitslag[1].Score);
         }
 
         [Fact]

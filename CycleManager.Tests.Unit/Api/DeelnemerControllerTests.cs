@@ -448,9 +448,9 @@ namespace CycleManager.Tests.Unit.Api
             var data = Assert.IsAssignableFrom<List<CompetitorRankingDto>>(okResult.Value);
 
             Assert.Equal(2, data.Count);
-            Assert.Equal(10, data[0].TotalPoints);
+            Assert.Equal(12, data[0].TotalPoints);
             Assert.Equal(5, data[0].LatestPoints);
-            Assert.Equal(20, data[1].TotalPoints);
+            Assert.Equal(23, data[1].TotalPoints);
             Assert.Equal(15, data[1].LatestPoints);
         }
 

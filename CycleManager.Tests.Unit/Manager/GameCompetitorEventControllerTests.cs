@@ -117,21 +117,46 @@ namespace CycleManager.Tests.Unit.Manager
             int id = 1;
             int eventId = 2;
 
-            _mockResultService.Setup(s => s.GetResultsByEventId(eventId, false))
+            var gameEvent = new Event
+            {
+                EventId = eventId,
+                Configuration = new Configuration
+                {
+                    ConfigurationItems = new List<ConfigurationItem>
+            {
+                new ConfigurationItem()
+            }
+                }
+            };
+
+            _mockEventService
+                .Setup(s => s.GetEventById(eventId))
+                .ReturnsAsync(gameEvent);
+
+            _mockResultService
+                .Setup(s => s.GetResultsByEventId(eventId))
                 .ReturnsAsync(new List<CompetitorRankingDto>());
 
-            _mockGameCompetitorEventService.Setup(s => s.GetPicks(eventId))
+            _mockGameCompetitorEventService
+                .Setup(s => s.GetPicks(eventId))
                 .Returns(new List<GameCompetitorEventPick>().AsQueryable());
 
-            _mockCompetitorInEventService.Setup(s => s.GetCompetitors(eventId))
+            _mockCompetitorInEventService
+                .Setup(s => s.GetCompetitors(eventId))
                 .ReturnsAsync(new List<CompetitorsInEvent>());
+
+            _mockRatingService
+                .Setup(s => s.GetRatingsByCompetitorIds(It.IsAny<List<int>>()))
+                .ReturnsAsync(new List<CompetitorRating>());
 
             // Act
             var result = await _controller.Details(id, eventId) as ViewResult;
 
             // Assert
             Assert.NotNull(result);
+
             var model = Assert.IsAssignableFrom<GameCompetitorInEventViewModel>(result.Model);
+
             Assert.Equal(eventId, model.EventId);
         }
 
@@ -148,18 +173,46 @@ namespace CycleManager.Tests.Unit.Manager
         [Fact]
         public async Task Details_LessThan15Picks_FillsWithEmptyRows()
         {
-            int eventId = 1, id = 2;
-            _mockResultService.Setup(s => s.GetResultsByEventId(eventId, false))
+            int eventId = 1;
+            int id = 2;
+
+            var gameEvent = new Event
+            {
+                EventId = eventId,
+                Configuration = new Configuration
+                {
+                    ConfigurationItems = Enumerable
+                        .Range(1, 15)
+                        .Select(i => new ConfigurationItem())
+                        .ToList()
+                }
+            };
+
+            _mockEventService
+                .Setup(s => s.GetEventById(eventId))
+                .ReturnsAsync(gameEvent);
+
+            _mockResultService
+                .Setup(s => s.GetResultsByEventId(eventId))
                 .ReturnsAsync(new List<CompetitorRankingDto>());
-            _mockGameCompetitorEventService.Setup(s => s.GetPicks(eventId))
+
+            _mockGameCompetitorEventService
+                .Setup(s => s.GetPicks(eventId))
                 .Returns(new List<GameCompetitorEventPick>().AsQueryable());
-            _mockCompetitorInEventService.Setup(s => s.GetCompetitors(eventId))
+
+            _mockCompetitorInEventService
+                .Setup(s => s.GetCompetitors(eventId))
                 .ReturnsAsync(new List<CompetitorsInEvent>());
+
+            _mockRatingService
+                .Setup(s => s.GetRatingsByCompetitorIds(It.IsAny<List<int>>()))
+                .ReturnsAsync(new List<CompetitorRating>());
 
             var result = await _controller.Details(id, eventId);
 
             var view = Assert.IsType<ViewResult>(result);
             var model = Assert.IsType<GameCompetitorInEventViewModel>(view.Model);
+
             Assert.Equal(15, model.CompetitorsInEvent.Count);
         }
 

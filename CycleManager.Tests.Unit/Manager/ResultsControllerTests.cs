@@ -98,11 +98,17 @@ namespace CycleManager.Tests.Unit.Manager
                 }
             };
 
-            _resultsServiceMock.Setup(s => s.GetStageByIdAsync(It.IsAny<int>())).ReturnsAsync(stage);
-            _resultsServiceMock.Setup(s => s.GetResultsByStageAsync(It.IsAny<int>())).ReturnsAsync(results);
-            _resultsServiceMock.Setup(s => s.GetCompetitorsInEventAsync(It.IsAny<int>())).ReturnsAsync(competitors);
-            _resultsServiceMock.Setup(s => s.GetConfigurationItemsByConfigAsync(It.IsAny<int>())).ReturnsAsync(configItems);
-            _resultsServiceMock.Setup(s => s.GetCompetitorFullName(It.IsAny<int>())).Returns("Remco Evenepoel");
+            _resultsServiceMock.Setup(s => s.GetStageByIdAsync(1)).ReturnsAsync(stage);
+            _resultsServiceMock.Setup(s => s.GetResultsByStageAsync(1)).ReturnsAsync(results);
+            _resultsServiceMock
+                .Setup(s => s.GetSpecialResultsByStageAsync(1))
+                .ReturnsAsync(new List<SpecialResult>());
+            _resultsServiceMock.Setup(s => s.GetCompetitorsInEventAsync(10)).ReturnsAsync(competitors);
+            _resultsServiceMock.Setup(s => s.GetConfigurationItemsByConfigAsync(20)).ReturnsAsync(configItems);
+            _resultsServiceMock
+                .Setup(s => s.GetConfigurationItemSpecialsAsync(20))
+                .ReturnsAsync(new List<ConfigurationItemSpecial>());
+            _resultsServiceMock.Setup(s => s.GetCompetitorFullName(99)).Returns("Remco Evenepoel");
 
             // Act
             var result = await _controller.Index(1);
@@ -150,23 +156,56 @@ namespace CycleManager.Tests.Unit.Manager
                 new ConfigurationItem { Id = 2, ConfigurationId = 20, Position = 2 }
             };
 
-            _resultsServiceMock.Setup(s => s.GetCompetitorsInEventAsync(It.IsAny<int>())).ReturnsAsync(competitors);
-            _resultsServiceMock.Setup(s => s.GetConfigurationItemsByConfigAsync(It.IsAny<int>())).ReturnsAsync(configItems);
-            _resultsServiceMock.Setup(s => s.AddResultsAsync(It.IsAny<IEnumerable<Result>>()))
-                .Returns(Task.CompletedTask)
-                .Verifiable();
+            var specialConfigItems = new List<ConfigurationItemSpecial>
+            {
+                new ConfigurationItemSpecial { Id = 1, ConfigurationId = 20, Question =  Domain.Enums.QuestionType.KOM, Score = 10 },
+                new ConfigurationItemSpecial { Id = 2, ConfigurationId = 20, Question = Domain.Enums.QuestionType.Points, Score = 5 }
+            };
 
-            _apiClientMock.Setup(c => c.PostToApiAsync(It.IsAny<string>()))
-                .ReturnsAsync(new System.Net.Http.HttpResponseMessage(System.Net.HttpStatusCode.OK));
+            _resultsServiceMock
+                .Setup(s => s.GetCompetitorsInEventAsync(10))
+                .ReturnsAsync(competitors);
 
-            _scoreServiceMock.Setup(s => s.UpdateScoresForStageAsync(It.IsAny<int>(), It.IsAny<int>()))
+            _resultsServiceMock
+                .Setup(s => s.GetConfigurationItemsByConfigAsync(20))
+                .ReturnsAsync(configItems);
+
+            _resultsServiceMock
+                .Setup(s => s.GetConfigurationItemSpecialsAsync(2))
+                .ReturnsAsync(specialConfigItems);
+
+            _resultsServiceMock
+                .Setup(s => s.SyncResultsAsync(
+                    It.IsAny<int>(),
+                    It.IsAny<IEnumerable<Result>>(), 
+                    It.IsAny<IEnumerable<SpecialResult>>()))
                 .Returns(Task.CompletedTask);
+
+            _scoreServiceMock
+                .Setup(s => s.UpdateScoresForStageAsync(10, 1))
+                .Returns(Task.CompletedTask);
+
+            _apiClientMock
+                .Setup(c => c.PostToApiAsync(It.IsAny<string>()))
+                .ReturnsAsync(
+                    new System.Net.Http.HttpResponseMessage(
+                        System.Net.HttpStatusCode.OK));
 
             // Act
             var result = await _controller.Index(model);
 
             // Assert
-            _resultsServiceMock.Verify(s => s.AddResultsAsync(It.IsAny<IEnumerable<Result>>()), Times.Once);
+            _resultsServiceMock.Verify(
+                s => s.SyncResultsAsync(
+                    1,
+                    It.IsAny<IEnumerable<Result>>(), 
+                    It.IsAny<IEnumerable<SpecialResult>>()),
+                Times.Once);
+
+            _scoreServiceMock.Verify(
+                 s => s.UpdateScoresForStageAsync(10, 1),
+                Times.Once);
+
             var redirect = Assert.IsType<RedirectToActionResult>(result);
             Assert.Equal("Index", redirect.ActionName);
             Assert.Equal(model.StageId, redirect.RouteValues?["stageId"]);

@@ -8,7 +8,6 @@ using Domain.Interfaces;
 using Domain.Models;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore.SqlServer.Storage.Internal;
 using Moq;
 using WebCycle.Controllers;
 
@@ -68,6 +67,10 @@ namespace CycleManager.Tests.Unit.Api
             mockResultService
                 .Setup(s => s.GetScoresByEventIdAsync(1))
                 .ReturnsAsync(scores);
+
+            mockResultService
+                .Setup(s => s.GetScoreBreakdownByEventIdAsync(It.IsAny<int>()))
+                .ReturnsAsync([]);
 
             // 4️⃣ Maak controller aan
             var controller = new EventController(
@@ -376,13 +379,14 @@ namespace CycleManager.Tests.Unit.Api
             mockEventService.Setup(s => s.GetEventsByUserId(userid)).ReturnsAsync(eventsForUser);
 
             var mockMapper = new Mock<IMapper>();
-            // Mapping van Event → EventForUserDto
             mockMapper.Setup(m => m.Map<List<EventForUserDto>>(It.IsAny<List<Event>>()))
                       .Returns<List<Event>>(events => events.Select(e => new EventForUserDto
                       {
                           EventId = e.EventId,
                           StartDate = e.StartDate ?? DateTime.MinValue,
-                          EndDate = e.EndDate ?? DateTime.MinValue
+                          EndDate = e.EndDate ?? DateTime.MinValue,
+                          IsIngeschreven = eventsForUser.Any(ef => ef.EventId == e.EventId),
+                          UserId = userid
                       }).ToList());
 
             var controller = new EventController(
@@ -400,26 +404,23 @@ namespace CycleManager.Tests.Unit.Api
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
-            var dto = Assert.IsType<EventViewDto>(okResult.Value);
+            var events = Assert.IsType<List<EventForUserDto>>(okResult.Value);
+
+            Assert.Equal(3, events.Count); // 1 actief, 1 toekomstig, 1 historisch)
 
             // Controleer categorieën
-            Assert.Single(dto.ActieveEvenementen);
-            Assert.Equal(1, dto.ActieveEvenementen[0].EventId);
-
-            Assert.Single(dto.HistorischeEvenementen);
-            Assert.Equal(3, dto.HistorischeEvenementen[0].EventId);
-
-            Assert.Single(dto.ToekomstigeEvenementen);
-            Assert.Equal(2, dto.ToekomstigeEvenementen[0].EventId);
+            var actief = events.Single(Single => Single.EventId == 1);
+            var toekomstig = events.Single(Single => Single.EventId == 2);
+            var historisch = events.Single(Single => Single.EventId == 3);
 
             // Controleer flags
-            Assert.True(dto.ActieveEvenementen[0].IsIngeschreven);
-            Assert.False(dto.ToekomstigeEvenementen[0].IsIngeschreven);
-            Assert.True(dto.HistorischeEvenementen[0].IsIngeschreven);
 
-            // Controleer UserId
-            Assert.All(dto.ActieveEvenementen.Concat(dto.ToekomstigeEvenementen).Concat(dto.HistorischeEvenementen),
-                e => Assert.Equal(userid, e.UserId));
+            Assert.True(actief.IsIngeschreven);
+            Assert.False(toekomstig.IsIngeschreven);
+            Assert.True(historisch.IsIngeschreven);
+
+           // Controleer UserId
+            Assert.All(events, e => Assert.Equal(userid, e.UserId));
         }
 
         [Fact]
@@ -538,43 +539,44 @@ namespace CycleManager.Tests.Unit.Api
         public async Task GetTeamsWithRennersFromTeam_TeamExists_ReturnsCompetitors()
         {
             // Arrange
-            var teamId = 1;
+            var teamYearId = 1;
             var year = DateTime.Now.Year;
 
-            var team = new Team
+            var teamYear = new TeamYear
             {
-                TeamId = teamId,
-                CurrentTeamName = "Team A",
-                //CompetitorInTeams = new List<CompetitorInTeam>
-                //{
-                //    new CompetitorInTeam
-                //    {
-                //        Id = 10,
-                //        Competitor = new Competitor
-                //        {
-                //            CompetitorId = 101,
-                //            FirstName = "John",
-                //            LastName = "Doe",
-                //            PcsName = "JD123"
-                //        }
-                //    },
-                //    new CompetitorInTeam
-                //    {
-                //        Id = 11,
-                //        Competitor = new Competitor
-                //        {
-                //            CompetitorId = 102,
-                //            FirstName = "Jane",
-                //            LastName = "Smith",
-                //            PcsName = "JS456"
-                //        }
-                //    }
-                //}
+                TeamYearId = teamYearId,
+                CompetitorInTeams = new List<CompetitorInTeam>
+                {
+                    new CompetitorInTeam
+                    {
+                        Id = 10,
+                        Competitor = new Competitor
+                        {
+                            CompetitorId = 101,
+                            FirstName = "John",
+                            LastName = "Doe",
+                            PcsName = "JD123",
+                            Ratings = new List<CompetitorRating>()
+                        }
+                    },
+                    new CompetitorInTeam
+                    {
+                        Id = 11,
+                        Competitor = new Competitor
+                        {
+                            CompetitorId = 102,
+                            FirstName = "Jane",
+                            LastName = "Smith",
+                            PcsName = "JS456",
+                            Ratings = new List<CompetitorRating>()
+                        }
+                    }
+                }
             };
 
             var mockTeamService = new Mock<ITeamService>();
-            mockTeamService.Setup(s => s.GetTeamForCurrentYear(teamId, year))
-                           .ReturnsAsync(team);
+            mockTeamService.Setup(s => s.GetTeamYearById(teamYearId))
+                           .ReturnsAsync(teamYear);
 
             var controller = new EventController(
                 Mock.Of<IEventService>(),
@@ -587,10 +589,11 @@ namespace CycleManager.Tests.Unit.Api
             );
 
             // Act
-            var result = await controller.GetTeamsWithRennersFromTeam(teamId);
+            var result = await controller.GetTeamsWithRennersFromTeam(teamYearId);
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result.Result);
+
             var competitors = Assert.IsAssignableFrom<List<CompetitorInSelectieDto>>(okResult.Value);
 
             Assert.Equal(2, competitors.Count);
@@ -734,8 +737,27 @@ namespace CycleManager.Tests.Unit.Api
         {
             // Arrange
             var mockEventService = new Mock<IEventService>();
-            var dto = new DeelnemerDto(); // eventueel properties invullen
-            var createdPool = new DeelnemerDto { Id = 1 }; // simulate created pool
+            var dto = new DeelnemerDto
+            {
+                EventId = 1
+
+            };
+            
+            var eventInfo = new Event
+            {
+                EventId = dto.EventId,
+                CanSubscribe = true
+            };
+
+            // eventueel properties invullen
+            var createdPool = new DeelnemerDto 
+            { 
+                Id = 1 
+            }; // simulate created pool
+
+            mockEventService
+                .Setup(x => x.GetEventById(dto.EventId))
+                .ReturnsAsync(eventInfo);
 
             mockEventService
                 .Setup(s => s.CreatePoolAsync(dto))
@@ -765,6 +787,16 @@ namespace CycleManager.Tests.Unit.Api
             // Arrange
             var mockEventService = new Mock<IEventService>();
             var dto = new DeelnemerDto(); // eventueel properties invullen
+
+            var eventInfo = new Event
+            {
+                EventId = dto.EventId,
+                CanSubscribe = true
+            };
+
+            mockEventService
+                .Setup(x => x.GetEventById(dto.EventId))
+                .ReturnsAsync(eventInfo);
 
             // Simuleer dat CreatePoolAsync null of Id <= 0 teruggeeft
             mockEventService
