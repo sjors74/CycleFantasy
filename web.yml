@@ -33,10 +33,10 @@ stages:
         packageType: 'sdk'
         version: '10.x'
 
-    - script: dotnet restore CycleFantasy.sln
+    - script: dotnet restore WebApp/WebApp.csproj
       displayName: 'Restore'
 
-    - script: dotnet build CycleFantasy.sln --configuration $(buildConfiguration) --no-restore
+    - script: dotnet build WebApp/WebApp.csproj --configuration $(buildConfiguration) --no-restore
       displayName: 'Build'
 
     - script: >
