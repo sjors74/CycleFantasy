@@ -1,6 +1,14 @@
 trigger:
-- master
 - develop
+
+resources:
+  pipelines:
+  - pipeline: api
+    source: CycleFantasy.API
+    trigger:
+      branches:
+        include:
+          - master
 
 pool:
   vmImage: 'windows-latest'
@@ -8,40 +16,72 @@ pool:
 variables:
   buildConfiguration: 'Release'
 
-steps:
+stages:
+- stage: Build
+  displayName: Build WebApp
+  
+  jobs:
+  - job: BuildWeb
+    displayName: Build WebApp
 
-# 1. Checkout repo
-- checkout: self
+    steps:
 
-# 2. .NET SDK
-- task: UseDotNet@2
-  inputs:
-    packageType: 'sdk'
-    version: '10.x'
+    - checkout: self
 
-# 2.5 DEBUG LOGGING
-- script: dir
-  displayName: "Show repo root"
+    - task: UseDotNet@2
+      inputs:
+        packageType: 'sdk'
+        version: '10.x'
 
-# 3. Restore
-- script: dotnet restore CycleFantasy.sln
-  displayName: 'Restore'
+    #- script: dir
+    #displayName: "Show repo root"
 
-# 4. Build solution
-- script: dotnet build CycleFantasy.sln --configuration $(buildConfiguration) --no-restore
-  displayName: 'Build'
+    - script: dotnet restore CycleFantasy.sln
+      displayName: 'Restore'
 
-# 5. Publish WebApp project
-- script: >
-    dotnet publish WebApp/WebApp.csproj
-    -c $(buildConfiguration)
-    -o $(Build.ArtifactStagingDirectory)/web
-  displayName: 'Publish WebApp'
+    - script: dotnet build CycleFantasy.sln --configuration $(buildConfiguration) --no-restore
+      displayName: 'Build'
 
-# 6. Deploy to Azure App Service
-- task: AzureWebApp@1
-  condition: eq(variables['Build.SourceBranch'], 'refs/heads/master')
-  inputs:
-    azureSubscription: 'azure-cyclefantasy-prod'
-    appName: 'WebApp20250508172648'
-    package: '$(Build.ArtifactStagingDirectory)/web'
+    - script: >
+        dotnet publish WebApp/WebApp.csproj
+        -c $(buildConfiguration)
+        -o $(Build.ArtifactStagingDirectory)/web
+       displayName: 'Publish WebApp'
+
+    - task: AzureWebApp@1
+      displayName: 'Archive WebApp'
+      inputs:
+        rootFolderOrFile: '$(Build.ArtifactStagingDirectory)/web'
+        includeRootFolder: false
+        archiveType: zip
+        archiveFile: '$(Build.ArtifactStagingDirectory)/web.zip'
+        replaceExistingArchive: true
+
+    - publish: '$(Build.ArtifactStagingDirectory)/web.zip'
+      artifact: web
+
+- stage: Deploy
+  displayName: Deploy WebApp
+  dependsOn: Build
+
+  condition: and(
+    succeeded(),
+    eq(variables['Build.Reason'], 'ResourceTrigger'),
+    eq(variables['resources.pipeline.api.sourceBranch'], 'refs/heads/master')
+  )
+
+  jobs:
+  - job: DeployWeb
+    displayName: Deploy WebApp
+
+    steps:
+
+    - download: current
+      artifact: web
+
+    - task: AzureWebApp@1
+      displayName: 'Deploy WebApp'
+      inputs:
+        azureSubscription: 'azure-cyclefantasy-prod'
+        appName: 'WebApp20250508172648'
+        package: '$(Pipeline.Workspace)/web/web.zip'
