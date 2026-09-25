@@ -10,6 +10,6 @@ namespace Domain.Interfaces
         Task<int> GetStagesResults(int stageNumber, int eventId);
         Task<int> GetStageId(int stageNumber, int eventId);
         Task<Stage> GetStage(int stageNumber, int eventId);
-        Task<Stage> GetStageById(int stageId);
+        Task<Stage?> GetStageById(int stageId);
     }
 }

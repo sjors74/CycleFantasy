@@ -451,21 +451,37 @@ namespace CycleManager.Tests.Unit.Manager
         }
 
         [Fact]
-        public async Task ManageTeams_Post_ValidModel_UpdatesEventTeams()
+        public async Task ManageTeams_Post_ValidModel_AddsSelectedTeam()
         {
             // Arrange
-            var e = new Event { EventId = 1, EventTeams = new List<EventTeam>() };
-            _eventServiceMock.Setup(s => s.GetEventById(1)).ReturnsAsync(e);
+            var e = new Event
+            {
+                EventId = 1,
+                EventTeams = new List<EventTeam>()
+            };
+
+            _eventServiceMock
+                .Setup(s => s.GetEventById(1))
+                .ReturnsAsync(e);
 
             var urlHelperMock = new Mock<IUrlHelper>();
-            urlHelperMock.Setup(u => u.Action(It.IsAny<UrlActionContext>()))
+            urlHelperMock
+                .Setup(u => u.Action(It.IsAny<UrlActionContext>()))
                 .Returns("/dummy/url");
+
             _controller.Url = urlHelperMock.Object;
 
             var vm = new EventTeamsViewModel
             {
                 EventId = 1,
-                Teams = new List<TeamSelection> { new TeamSelection { TeamId = 1, IsSelected = true } }
+                Teams = new List<TeamSelection>
+                {
+                    new TeamSelection
+                    {
+                        TeamId = 1,
+                        IsSelected = true
+                    }
+                }
             };
 
             // Act
@@ -474,18 +490,23 @@ namespace CycleManager.Tests.Unit.Manager
             // Assert
             var json = Assert.IsType<JsonResult>(result);
             var dict = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(
-                JsonSerializer.Serialize(json.Value)
-            );
+                JsonSerializer.Serialize(json.Value));
 
             Assert.NotNull(dict);
             Assert.True(dict["success"].GetBoolean());
 
-            // Controleer dat de juiste service-methodes zijn aangeroepen
-            _eventServiceMock.Verify(s => s.GetEventById(1), Times.Once);
-            _eventServiceMock.Verify(s => s.RemoveAllTeamsForEvent(1), Times.Once);
-            _eventServiceMock.Verify(s => s.AddTeamToEvent(1, 1), Times.Once);
+            _eventServiceMock.Verify(
+                s => s.GetEventById(1),
+                Times.Once);
 
-            // Check dat er geen andere service-aanroepen zijn gedaan
+            _eventServiceMock.Verify(
+                s => s.AddTeamToEvent(1, 1),
+                Times.Once);
+
+            _eventServiceMock.Verify(
+                s => s.RemoveTeamFromEvent(It.IsAny<int>(), It.IsAny<int>()),
+                Times.Never);
+
             _eventServiceMock.VerifyNoOtherCalls();
         }
 
@@ -496,12 +517,21 @@ namespace CycleManager.Tests.Unit.Manager
             var e = new Event
             {
                 EventId = 1,
-                EventTeams = new List<EventTeam> { new EventTeam { TeamId = 1, EventId = 1 } }
+                EventTeams = new List<EventTeam> 
+                { 
+                    new EventTeam { TeamId = 1, EventId = 1 } 
+                }
             };
-            _eventServiceMock.Setup(s => s.GetEventById(1)).ReturnsAsync(e);
+
+            _eventServiceMock
+                .Setup(s => s.GetEventById(1))
+                .ReturnsAsync(e);
 
             var urlHelperMock = new Mock<IUrlHelper>();
-            urlHelperMock.Setup(u => u.Action(It.IsAny<UrlActionContext>())).Returns("/dummy/url");
+            urlHelperMock
+                .Setup(u => u.Action(It.IsAny<UrlActionContext>()))
+                .Returns("/dummy/url");
+
             _controller.Url = urlHelperMock.Object;
 
             var vm = new EventTeamsViewModel
@@ -524,34 +554,53 @@ namespace CycleManager.Tests.Unit.Manager
             Assert.True(dict["success"].GetBoolean());
 
             // Check dat de juiste services zijn aangeroepen
-            _eventServiceMock.Verify(s => s.RemoveAllTeamsForEvent(1), Times.Once);
-            _eventServiceMock.Verify(s => s.AddTeamToEvent(It.IsAny<int>(), It.IsAny<int>()), Times.Never);
+            _eventServiceMock.Verify(
+                s => s.RemoveTeamFromEvent(1, 1), 
+                Times.Once);
+
+            _eventServiceMock.Verify(
+                s => s.AddTeamToEvent(
+                    It.IsAny<int>(), 
+                    It.IsAny<int>()), 
+                Times.Never);
         }
 
         [Fact]
-        public async Task ManageTeams_Post_UpdateThrowsException_ReturnsJsonError()
+        public async Task ManageTeams_Post_AddTeamThrowsException_PropagatesException()
         {
             // Arrange
-            var e = new Event { EventId = 1, EventTeams = new List<EventTeam>() };
-            _eventServiceMock.Setup(s => s.GetEventById(1)).ReturnsAsync(e);
-            _eventServiceMock.Setup(s => s.Update(It.IsAny<Event>())).ThrowsAsync(new Exception("Update failed"));
+            var e = new Event
+            {
+                EventId = 1,
+                EventTeams = new List<EventTeam>()
+            };
+
+            _eventServiceMock
+                .Setup(s => s.GetEventById(1))
+                .ReturnsAsync(e);
+
+            _eventServiceMock
+                .Setup(s => s.AddTeamToEvent(1, 1))
+                .ThrowsAsync(new Exception("Add team failed"));
 
             var vm = new EventTeamsViewModel
             {
                 EventId = 1,
-                Teams = new List<TeamSelection> { new TeamSelection { TeamId = 1, IsSelected = true } }
+                Teams = new List<TeamSelection>
+                {
+                    new TeamSelection
+                    {
+                        TeamId = 1,
+                        IsSelected = true
+                    }
+                }
             };
 
-            // Act
-            var result = await _controller.ManageTeams(vm);
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<Exception>(
+                () => _controller.ManageTeams(vm));
 
-            // Assert
-            var json = Assert.IsType<JsonResult>(result);
-            var dict = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(JsonSerializer.Serialize(json.Value));
-
-            Assert.NotNull(dict);
-            Assert.False(dict["success"].GetBoolean());
-            Assert.Equal("Er is een fout opgetreden tijdens het opslaan.", dict["message"].GetString());
+            Assert.Equal("Add team failed", exception.Message);
         }
 
         [Fact]

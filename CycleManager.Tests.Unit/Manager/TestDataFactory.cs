@@ -21,19 +21,6 @@ namespace CycleManager.Tests.Unit.Manager
             TeamId = 1,
             CurrentTeamName = "TestTeam",
             Country = new Country { CountryNameShort = "NL" },
-            //CompetitorInTeams = new List<CompetitorInTeam>
-            //{
-            //    new CompetitorInTeam
-            //    {
-            //        TeamYearId = 1,
-            //        Competitor = new Competitor
-            //        {
-            //            FirstName = "Jan",
-            //            LastName = "Jansen",
-            //            Country = new Country { CountryNameShort = "NL" }
-            //        }
-            //    }
-            //}
         };
 
         public static Team FakeTeamWithYears() => new()
@@ -44,7 +31,15 @@ namespace CycleManager.Tests.Unit.Manager
             Country = new Country { CountryId = 2, CountryNameLong = "België" },
             TeamYears = new List<TeamYear>
             {
-                new TeamYear { TeamYearId = 1, Year = 2025, Name = "EditTeam2025" }
+                new TeamYear { 
+                    TeamYearId = 1,
+                    SeasonYearId = 1, 
+                    SeasonYear = new SeasonYear
+                    {
+                        SeasonYearId = 1, Year = 2024, Active = true
+                    },
+                    Name = "EditTeam2025" 
+                }
             }
         };
 

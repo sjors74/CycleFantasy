@@ -46,7 +46,7 @@ namespace CycleManager.Services.Interfaces
 
         Task<bool> DeleteStage(int id);
 
-        Task<Stage> GetStageById(int id);
+        Task<Stage?> GetStageById(int id);
 
         Task UpdateStage(Stage stage);
     }

@@ -1,4 +1,5 @@
-﻿using CycleManager.Domain.Models;
+﻿using CycleManager.Domain.Dto;
+using CycleManager.Domain.Models;
 using CycleManager.Services.Interfaces;
 using DataAccessEF.Migrations;
 using Domain.Interfaces;
@@ -32,192 +33,148 @@ namespace CycleManager.Tests.Unit.Manager
         public async Task Index_NoResults_ReturnsEmptyList()
         {
             // Arrange
-            _mockResultsRepo.Setup(r => r.GetResultsByEventId(It.IsAny<int>()))
-                .ReturnsAsync(new List<Result>());
+            _mockResultService
+                .Setup(s => s.GetResultsByEventId(It.IsAny<int>()))
+                .ReturnsAsync(new List<CompetitorRankingDto>());
 
             // Act
             var result = await _controller.Index(1);
 
             // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
-            var model = Assert.IsType<List<PointsCompetitorInEventViewModel>>(viewResult.Model);
+            var model = Assert.IsAssignableFrom<IEnumerable<CompetitorRankingDto>>(viewResult.Model);
+
             Assert.Empty(model);
         }
 
         [Fact]
-        public async Task Index_WithResults_CalculatesPointsAndRanking()
+        public async Task Index_WithResults_ReturnsResultsWithRanking()
         {
             // Arrange
-            var results = new List<Result>
+            const int eventId = 1;
+
+            var rankings = new List<CompetitorRankingDto>
             {
-                new Result
+                new CompetitorRankingDto
                 {
-                    Stage = new Stage { EventId = 1 },
-                    CompetitorInEventId = 10,
-                    CompetitorInEvent = new CompetitorsInEvent
-                    {
-                        CompetitorInTeam = new CompetitorInTeam
-                        {
-                            Competitor = new Competitor { FirstName = "John", LastName = "Doe" }
-                        }
-                    },
-                    ConfigurationItem = new ConfigurationItem { Score = 5 }
-                },
-                new Result
-                {
-                    Stage = new Stage { EventId = 1 },
+                    EventId = eventId,
                     CompetitorInEventId = 11,
-                    CompetitorInEvent = new CompetitorsInEvent
-                    {
-                        CompetitorInTeam = new CompetitorInTeam
-                        {
-                            Competitor = new Competitor { FirstName = "Alice", LastName = "Smith" }
-                        }
-                    },
-                    ConfigurationItem = new ConfigurationItem { Score = 10 }
+                    CompetitorName = "Alice Smith",
+                    NormalPoints = 10,
+                    SpecialPoints = 0,
+                    Position = 1
                 },
+                new CompetitorRankingDto
+                {
+                    EventId = eventId,
+                    CompetitorInEventId = 10,
+                    CompetitorName = "John Doe",
+                    NormalPoints = 5,
+                    SpecialPoints = 0,
+                    Position = 2
+                }
             };
-            _mockResultsRepo.Setup(r => r.GetResultsByEventId(1)).ReturnsAsync(results);
+
+            _mockResultService
+                .Setup(s => s.GetResultsByEventId(eventId))
+                .ReturnsAsync(rankings);
 
             // Act
-            var result = await _controller.Index(1);
+            var result = await _controller.Index(eventId);
 
             // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
-            var model = Assert.IsType<List<PointsCompetitorInEventViewModel>>(viewResult.Model);
+            var model = Assert.IsAssignableFrom<IEnumerable<CompetitorRankingDto>>(viewResult.Model)
+                .ToList();
 
             Assert.Equal(2, model.Count);
 
-            // Check sorting (Alice first because 10 > 5)
-            Assert.Equal("Alice", model[0].FirstName);
-            Assert.Equal(1, model[0].Ranking);
-            Assert.Equal("John", model[1].FirstName);
-            Assert.Equal(2, model[1].Ranking);
+            Assert.Equal("Alice Smith", model[0].CompetitorName);
+            Assert.Equal(1, model[0].Position);
+
+            Assert.Equal("John Doe", model[1].CompetitorName);
+            Assert.Equal(2, model[1].Position);
         }
 
         [Fact]
-        public async Task Index_WithTiedScores_AssignsSameRanking()
+        public async Task Index_WithTiedScores_ReturnsResultsWithSameRanking()
         {
             // Arrange
-            var results = new List<Result>
+            const int eventId = 1;
+
+            var rankings = new List<CompetitorRankingDto>
             {
-                new Result
+                new CompetitorRankingDto
                 {
-                    Stage = new Stage { EventId = 1 },
+                    EventId = eventId,
                     CompetitorInEventId = 1,
-                    CompetitorInEvent = new CompetitorsInEvent
-                    {
-                        CompetitorInTeam = new CompetitorInTeam
-                        {
-                            Competitor = new Competitor { FirstName = "A", LastName = "One" }
-                        }
-                    },
-                    ConfigurationItem = new ConfigurationItem { Score = 10 }
+                    CompetitorName = "A One",
+                    NormalPoints = 10,
+                    SpecialPoints = 0,
+                    Position = 1
                 },
-                new Result
+                new CompetitorRankingDto
                 {
-                    Stage = new Stage { EventId = 1 },
+                    EventId = eventId,
                     CompetitorInEventId = 2,
-                    CompetitorInEvent = new CompetitorsInEvent
-                    {
-                        CompetitorInTeam = new CompetitorInTeam
-                        {
-                            Competitor = new Competitor { FirstName = "B", LastName = "Two" }
-                        }
-                    },
-                    ConfigurationItem = new ConfigurationItem { Score = 10 }
+                    CompetitorName = "B Two",
+                    NormalPoints = 10,
+                    SpecialPoints = 0,
+                    Position = 1
                 }
             };
-            _mockResultsRepo.Setup(r => r.GetResultsByEventId(1)).ReturnsAsync(results);
+
+            _mockResultService
+                .Setup(s => s.GetResultsByEventId(eventId))
+                .ReturnsAsync(rankings);
 
             // Act
-            var result = await _controller.Index(1);
+            var result = await _controller.Index(eventId);
 
             // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
-            var model = Assert.IsType<List<PointsCompetitorInEventViewModel>>(viewResult.Model);
+            var model = Assert.IsAssignableFrom<IEnumerable<CompetitorRankingDto>>(viewResult.Model)
+                .ToList();
 
             Assert.Equal(2, model.Count);
-            Assert.All(model, m => Assert.Equal(1, m.Ranking)); // beide 1e plaats
+            Assert.All(model, m => Assert.Equal(1, m.Position));
         }
 
         [Fact]
-        public async Task Index_NullConfigurationItem_SetsScoreToZero()
+        public async Task Index_ReturnsResultsForEvent()
         {
             // Arrange
-            var results = new List<Result>
+            int eventId = 1;
+
+            var rankings = new List<CompetitorRankingDto>
             {
-                new Result
+                new CompetitorRankingDto
                 {
-                    Stage = new Stage { EventId = 1 },
+                    EventId = eventId,
                     CompetitorInEventId = 1,
-                    CompetitorInEvent = new CompetitorsInEvent
-                    {
-                        CompetitorInTeam = new CompetitorInTeam
-                        {
-                            Competitor = new Competitor { FirstName = "Null", LastName = "Score" }
-                        }
-                    },
-                    ConfigurationItem = null
+                    CompetitorName = "Keep Me",
+                    NormalPoints = 5
                 }
             };
-            _mockResultsRepo.Setup(r => r.GetResultsByEventId(1)).ReturnsAsync(results);
+
+            _mockResultService
+                .Setup(s => s.GetResultsByEventId(eventId))
+                .ReturnsAsync(rankings);
 
             // Act
-            var result = await _controller.Index(1);
+            var result = await _controller.Index(eventId);
 
             // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
-            var model = Assert.IsType<List<PointsCompetitorInEventViewModel>>(viewResult.Model);
-            Assert.Single(model);
-            Assert.Equal(0, model[0].Points);
-        }
-
-        [Fact]
-        public async Task Index_FiltersOnlyMatchingEventId()
-        {
-            // Arrange
-            var results = new List<Result>
-            {
-                new Result
-                {
-                    Stage = new Stage { EventId = 1 },
-                    CompetitorInEventId = 1,
-                    CompetitorInEvent = new CompetitorsInEvent
-                    {
-                        CompetitorInTeam = new CompetitorInTeam
-                        {
-                            Competitor = new Competitor { FirstName = "Keep", LastName = "Me" }
-                        }
-                    },
-                    ConfigurationItem = new ConfigurationItem { Score = 5 }
-                },
-                new Result
-                {
-                    Stage = new Stage { EventId = 2 },
-                    CompetitorInEventId = 2,
-                    CompetitorInEvent = new CompetitorsInEvent
-                    {
-                        CompetitorInTeam = new CompetitorInTeam
-                        {
-                            Competitor = new Competitor { FirstName = "Wrong", LastName = "Event" }
-                        }
-                    },
-                    ConfigurationItem = new ConfigurationItem { Score = 50 }
-                }
-            };
-            _mockResultsRepo.Setup(r => r.GetResultsByEventId(1)).ReturnsAsync(results);
-
-            // Act
-            var result = await _controller.Index(1);
-
-            // Assert
-            var viewResult = Assert.IsType<ViewResult>(result);
-            var model = Assert.IsType<List<PointsCompetitorInEventViewModel>>(viewResult.Model);
+            var model = Assert.IsType<List<CompetitorRankingDto>>(viewResult.Model);
 
             Assert.Single(model);
-            Assert.Equal("Keep", model[0].FirstName);
-            Assert.Equal(1, model[0].EventId);
+            Assert.Equal(eventId, model[0].EventId);
+            Assert.Equal("Keep Me", model[0].CompetitorName);
+
+            _mockResultService.Verify(
+                s => s.GetResultsByEventId(eventId),
+                Times.Once);
         }
     }
 }
