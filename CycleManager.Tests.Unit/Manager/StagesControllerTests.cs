@@ -190,13 +190,20 @@ namespace CycleManager.Tests.Unit.Manager
                 FinishLocation = stage.FinishLocation
             };
 
-            _mockStageService.Setup(s => s.GetStageById(stage.Id))
-                             .ReturnsAsync(stage);
-            _mockStageService.Setup(s => s.UpdateStage(It.IsAny<Stage>()))
-                             .Returns(Task.CompletedTask);
+            _mockStageService
+                .Setup(s => s.GetStageById(stage.Id))
+                .ReturnsAsync(stage);
 
-            _controller.Url = CreateMockUrlHelper();
-            SetupHttpContext();
+            _mockStageService
+                .Setup(s => s.UpdateStage(It.IsAny<Stage>()))
+                .Returns(Task.CompletedTask);
+
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext()
+            };
+            
+            _controller.Request.Headers["X-Requested-With"] = "XMLHttpRequest";
 
             // Act
             var result = await _controller.EditAjax(vm);
@@ -218,14 +225,32 @@ namespace CycleManager.Tests.Unit.Manager
                 StageId = 1,
                 StageName = ""
             };
-            _controller.ModelState.AddModelError("StageName", "Required");
+
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext()
+            };
+
+            _controller.Request.Headers["X-Requested-With"] = "XMLHttpRequest";
+
+            _controller.ModelState.AddModelError(
+                "StageName",
+                "Required");
+
+            Assert.False(_controller.ModelState.IsValid);
 
             // Act
             var result = await _controller.EditAjax(vm);
 
             // Assert
             var partial = Assert.IsType<PartialViewResult>(result);
+
             Assert.Equal("_EditStagePartial", partial.ViewName);
+            Assert.Same(vm, partial.Model);
+
+            _mockStageService.Verify(
+                s => s.GetStageById(It.IsAny<int>()),
+                Times.Never);
         }
 
         #endregion
@@ -267,37 +292,64 @@ namespace CycleManager.Tests.Unit.Manager
         }
 
         [Fact]
-        public async Task DeleteAjax_Success_ReturnsJsonSuccess()
+        public async Task DeleteAjax_ValidStage_DeletesStageAndReturnsPartialView()
         {
             // Arrange
-            _mockStageService.Setup(s => s.DeleteStage(1))
-                             .ReturnsAsync(true);
+            var stage = new Stage
+            {
+                Id = 1,
+                EventId = 10
+            };
+
+            var eventEntity = new Event
+            {
+                EventId = 10
+            };
+
+            _mockStageService
+                .Setup(s => s.GetStageById(1))
+                .ReturnsAsync(stage);
+
+            _mockStageService
+                .Setup(s => s.DeleteStage(1))
+                .ReturnsAsync(true);
+
+            _mockEventService
+                .Setup(s => s.GetEventById(10))
+                .ReturnsAsync(eventEntity);
 
             // Act
             var result = await _controller.DeleteAjax(1);
 
             // Assert
-            var json = Assert.IsType<JsonResult>(result);
-            var obj = JObject.FromObject(json.Value!);
+            var partialView = Assert.IsType<PartialViewResult>(result);
 
-            Assert.True(obj.Value<bool?>("success") ?? obj.Value<bool>("Success"));
+            Assert.Equal(
+                "~/Views/Events/_ManageStagesPartial.cshtml",
+                partialView.ViewName);
+
+            _mockStageService.Verify(
+                s => s.DeleteStage(1),
+                Times.Once);
         }
 
         [Fact]
-        public async Task DeleteAjax_Failure_ReturnsJsonFalse()
+        public async Task DeleteAjax_StageNotFound_ReturnsBadRequest()
         {
             // Arrange
-            _mockStageService.Setup(s => s.DeleteStage(1))
-                             .ReturnsAsync(false);
+            _mockStageService
+                .Setup(s => s.GetStageById(1))
+                .ReturnsAsync((Stage?)null);
 
             // Act
             var result = await _controller.DeleteAjax(1);
 
             // Assert
-            var json = Assert.IsType<JsonResult>(result);
-            var obj = JObject.FromObject(json.Value!);
+            Assert.IsType<BadRequestResult>(result);
 
-            Assert.False(obj.Value<bool?>("success") ?? obj.Value<bool>("Success"));
+            _mockStageService.Verify(
+                s => s.DeleteStage(It.IsAny<int>()),
+                Times.Never);
         }
 
         #endregion

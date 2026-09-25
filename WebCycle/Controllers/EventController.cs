@@ -157,7 +157,7 @@ namespace WebCycle.Controllers
 
             var teams = await _eventService.GetTeamsForEvent(id);
 
-            if (teams == null)
+            if (teams == null  || !teams.Any())
             {
                 return NotFound();
             }

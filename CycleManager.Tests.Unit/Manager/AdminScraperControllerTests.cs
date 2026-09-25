@@ -1,8 +1,10 @@
 ﻿using CycleManager.Domain.Dto;
 using CycleManager.Domain.Models;
-using CycleManager.Services;
 using CycleManager.Services.Interfaces;
 using Domain.Models;
+using Hangfire;
+using Hangfire.Common;
+using Hangfire.States;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
@@ -16,6 +18,7 @@ namespace CycleManager.Tests.Unit.Manager
         private readonly Mock<IScoreService> _scoreServiceMock;
         private readonly Mock<IScraperService> _scraperServiceMock;
         private readonly Mock<ITeamService> _teamServiceMock;
+        private readonly Mock<IBackgroundJobClient> _backgroundJobClientMock;
         private readonly AdminScraperController _controller;
 
         public AdminScraperControllerTests()
@@ -24,11 +27,13 @@ namespace CycleManager.Tests.Unit.Manager
             _scoreServiceMock = new Mock<IScoreService>();
             _scraperServiceMock = new Mock<IScraperService>();
             _teamServiceMock = new Mock<ITeamService>();    
+            _backgroundJobClientMock = new Mock<IBackgroundJobClient>();
 
             _controller = new AdminScraperController(
                 _scraperServiceMock.Object,
                 _scoreServiceMock.Object,
                 _adminScraperServiceMock.Object,
+                _backgroundJobClientMock.Object,
                 _teamServiceMock.Object
             );
 
@@ -69,22 +74,25 @@ namespace CycleManager.Tests.Unit.Manager
             };
 
             _adminScraperServiceMock.Setup(s => s.GetStageByIdAsync(1)).ReturnsAsync(stage);
-            _scraperServiceMock.Setup(s => s.RunAsync(2, "Tour", 1, 2025)).Returns(Task.CompletedTask);
-            _scoreServiceMock.Setup(s => s.UpdateScoresForStageAsync(2, 1)).Returns(Task.CompletedTask);
 
             // Act
             var result = await _controller.ScrapeAndPair(1, 2, "Tour", 2025);
 
             // Assert
-            _scraperServiceMock.Verify(s => s.RunAsync(2, "Tour", 1, 2025), Times.Once);
-            _scoreServiceMock.Verify(s => s.UpdateScoresForStageAsync(2, 1), Times.Once);
+            _backgroundJobClientMock.Verify(
+                x => x.Create(
+                    It.Is<Job>(job =>
+                        job.Method.Name == nameof(IScrapeOrchestratorService.RunStageScrapeAsync)
+                    ),
+                    It.IsAny<EnqueuedState>()),
+                Times.Once);
 
             var redirect = Assert.IsType<RedirectToActionResult>(result);
             Assert.Equal("Details", redirect.ActionName);
             Assert.Equal("Events", redirect.ControllerName);
             Assert.NotNull(redirect.RouteValues);
             Assert.Equal(2, redirect.RouteValues["id"]);
-            Assert.Equal("Scrape voltooid.", _controller.TempData["Success"]);
+            Assert.Equal("Scrape aangemaakt.", _controller.TempData["Success"]);
         }
 
         [Fact]
@@ -122,9 +130,16 @@ namespace CycleManager.Tests.Unit.Manager
         public async Task ScrapeCompetitors_ValidTeam_CallsService_AndReturnsOk()
         {
             // Arrange
-            var dto = new ScrapeRequestDto { TeamId = 5 };
-            _adminScraperServiceMock.Setup(s => s.GetTeamYearByIdAsync(5))
-                .ReturnsAsync(new TeamYear { TeamYearId = 5 });
+            var dto = new ScrapeRequestDto 
+            { 
+                TeamId = 5,
+                SeasonYearId = 2026
+            };
+
+            _teamServiceMock
+                .Setup(s => s.GetByTeamAndSeasonAsync(5, 2026))
+                .ReturnsAsync(new TeamYearDto { TeamYearId = 5 });
+
             _scraperServiceMock.Setup(s => s.RunCompetitorsAsync(5))
                 .Returns(Task.CompletedTask);
 
@@ -132,7 +147,10 @@ namespace CycleManager.Tests.Unit.Manager
             var result = await _controller.ScrapeCompetitors(dto);
 
             // Assert
-            _scraperServiceMock.Verify(s => s.RunCompetitorsAsync(5), Times.Once);
+            _scraperServiceMock.Verify(
+                s => s.RunCompetitorsAsync(5), 
+                Times.Once);
+
             Assert.IsType<OkResult>(result);
         }
 

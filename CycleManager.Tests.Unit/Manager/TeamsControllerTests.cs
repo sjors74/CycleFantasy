@@ -121,12 +121,15 @@ namespace CycleManager.Tests.Unit.Manager
         [Fact]
         public async Task Edit_Get_ReturnsViewResult_WithCorrectModel()
         {
+            // Arrange
             var team = TestDataFactory.FakeTeamWithYears();
             _mockTeamService.Setup(s => s.GetTeamById(1)).ReturnsAsync(team);
             _mockCountryService.Setup(s => s.GetAll()).ReturnsAsync(TestDataFactory.FakeCountries());
 
+            // Act
             var result = await _controller.Edit(1);
 
+            // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
             var model = Assert.IsType<TeamEditViewModel>(viewResult.Model);
             Assert.Equal("Team Edit", model.CurrentTeamName);

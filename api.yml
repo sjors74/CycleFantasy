@@ -1,5 +1,6 @@
 trigger:
 - master
+- develop
 
 pool:
   vmImage: 'windows-latest'
@@ -9,11 +10,11 @@ variables:
 
 stages:
 
-- stage: BuildAndDeployAPI
-  displayName: Build and Deploy API
+- stage: BuildAndTest
+  displayName: Build and Test API
 
   jobs:
-  - job: BuildDeploy
+  - job: BuildTest
     steps:
 
     - checkout: self
@@ -28,6 +29,18 @@ stages:
 
     - script: dotnet build CycleFantasy.sln --configuration $(buildConfiguration) --no-restore
       displayName: Build
+
+    - script: dotnet test CycleManager.Tests.Unit/CycleManager.Tests.Unit.csproj --configuration $(buildConfiguration) --no-build
+      displayName: Run unit tests
+
+- stage: DeployApi
+  displayName: Deploy API
+  dependsOn: BuildAndTest
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+
+  jobs:
+  - job: Deploy
+    steps:
 
     - script: >
         dotnet publish WebCycle/WebCycleApi.csproj
