@@ -2,6 +2,7 @@ trigger:
   branches:
     include:
       - master
+      - develop
 
   paths:
     include:
@@ -25,37 +26,82 @@ variables:
   containerAppName: 'cyclingapp'
   tag: '$(Build.BuildId)'
 
-steps:
+stages:
 
-# Checkout source
-- checkout: self
+# =====================================
+# Build docker image
+# =====================================
 
-# Build + Push Docker image
-- task: Docker@2
-  displayName: 'Build and Push Docker image'
+- stage: Build
+  displayName: Build Management Docker Image
 
-  inputs:
-    command: buildAndPush
-    repository: $(imageRepository)
-    dockerfile: Dockerfile
-    buildContext: .
-    containerRegistry: $(dockerRegistryServiceConnection)
+  jobs:
+  - job: BuildDocker
+    displayName: Build Docker image
 
-    tags: |
-      $(tag)
-      latest
+    steps:
 
-# Update Azure Container App
-- task: AzureCLI@2
-  displayName: 'Deploy Container App'
+    # Checkout source
+    - checkout: self
 
-  inputs:
-    azureSubscription: $(azureSubscription)
-    scriptType: bash
-    scriptLocation: inlineScript
+    # Build + Push Docker image
+    - task: Docker@2
+      displayName: 'Build Docker image'
+      inputs:
+        command: build
+        repository: $(imageRepository)
+        dockerfile: Dockerfile
+        buildContext: .
+        tags: |
+        $(tag)
 
-    inlineScript: |
-      az containerapp update \
-        --name $(containerAppName) \
-        --resource-group $(resourceGroup) \
-        --image $(containerRegistry)/$(imageRepository):$(tag)
+    # ==========================================
+    # Push + Deploy
+    # Alleen op master
+    # ==========================================
+
+- stage: Deploy
+  displayName: Push and Deploy Management
+  dependsOn: Build
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+
+  jobs:
+  - job: DeployContainerApp
+    displayName: Push and Deploy Container App
+
+    steps:
+
+    - checkout: self
+
+    # Build opnieuw omdat deze job op een nieuwe agent draait
+    - task: Docker@2
+      displayName: 'Build Docker image for deployment'
+      inputs:
+        command: build
+        repository: $(imageRepository)
+        dockerfile: Dockerfile
+        buildContext: .
+        tags: |
+          $(tag)
+  
+    - task: Docker@2
+      displayName: 'Push Docker image to ACR'
+      inputs:
+        command: push
+        repository: $(imageRepository)
+        containerRegistry: $(dockerRegistryServiceConnection)
+        tags: |
+          $(tag)
+
+    # Update Azure Container App
+    - task: AzureCLI@2
+      displayName: 'Deploy Container App'
+      inputs:
+        azureSubscription: $(azureSubscription)
+        scriptType: bash
+        scriptLocation: inlineScript
+        inlineScript: |
+          az containerapp update \
+            --name $(containerAppName) \
+            --resource-group $(resourceGroup) \
+            --image $(containerRegistry)/$(imageRepository):$(tag)
