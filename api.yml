@@ -24,14 +24,14 @@ stages:
         packageType: 'sdk'
         version: '10.x'
 
-    - script: dotnet restore CycleFantasy.sln
-      displayName: Restore
+    - script: dotnet restore WebCycle/WebCycleApi.csproj
+      displayName: 'Restore Api'
 
-    - script: dotnet build CycleFantasy.sln --configuration $(buildConfiguration) --no-restore
-      displayName: Build
+    - script: dotnet build WebCycle/WebCycleApi.csproj --configuration $(buildConfiguration) --no-restore
+      displayName: 'Build Api'
 
     - script: dotnet test CycleManager.Tests.Unit/CycleManager.Tests.Unit.csproj --configuration $(buildConfiguration) --no-build
-      displayName: Run unit tests
+      displayName: 'Run unit tests'
 
 - stage: DeployApi
   displayName: Deploy API
