@@ -13,13 +13,13 @@
         public int? SelectedTeamYearId { get; set; }
         public int SelectedSeasonYearId { get; set; }
 
-        public IEnumerable<SeasonYearDto> AvailableYears { get; set; } = new List<SeasonYearDto>();
-        public IEnumerable<TeamYearDto> Teams { get; set; } = new List<TeamYearDto>();
-        public IEnumerable<CountryDto> Countries { get; set; } = new List<CountryDto>();
+        public IEnumerable<SeasonYearDto> AvailableYears { get; set; } = [];
+        public IEnumerable<TeamYearDto> Teams { get; set; } = [];
+        public IEnumerable<CountryDto> Countries { get; set; } = [];
 
-        public List<CompetitorInTeamDto> CompetitorInTeams { get; set; } = new();
+        public List<CompetitorInTeamDto> CompetitorInTeams { get; set; } = [];
 
-        public IEnumerable<RatingCategoryDto> RatingCategories { get; set; } = new List<RatingCategoryDto>();
-        public IEnumerable<CompetitorRatingDto> Ratings { get; set; } = new List<CompetitorRatingDto>();
+        public IEnumerable<RatingCategoryDto> RatingCategories { get; set; } = [];
+        public IEnumerable<CompetitorRatingDto> Ratings { get; set; } = [];
     }
 }
