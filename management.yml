@@ -41,10 +41,8 @@ stages:
 
     steps:
 
-    # Checkout source
     - checkout: self
 
-    # Build + Push Docker image
     - task: Docker@2
       displayName: 'Build Docker image'
       inputs:
