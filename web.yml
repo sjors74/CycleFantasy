@@ -46,7 +46,7 @@ stages:
         dotnet publish WebApp/WebApp.csproj
         -c $(buildConfiguration)
         -o $(Build.ArtifactStagingDirectory)/web
-       displayName: 'Publish WebApp'
+      displayName: 'Publish WebApp'
 
     - task: AzureWebApp@1
       displayName: 'Archive WebApp'
