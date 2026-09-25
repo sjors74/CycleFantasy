@@ -9,22 +9,6 @@ variables:
 
 stages:
 
-- stage: BuildAndDeployAPI
-  displayName: Build and Deploy API
-
-  jobs:
-  - job: BuildDeploy
-    steps:
-
-    - checkout: self
-pool:
-  vmImage: 'windows-latest'
-
-variables:
-  buildConfiguration: 'Release'
-
-stages:
-
 - stage: BuildAndTest
   displayName: Build and Test API
 
