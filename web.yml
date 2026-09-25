@@ -4,11 +4,11 @@ trigger:
 resources:
   pipelines:
   - pipeline: api
-    source: CycleFantasy.API
+    source: CycleFantasy-API
     trigger:
       branches:
         include:
-          - master
+        - master
 
 pool:
   vmImage: 'windows-latest'
@@ -33,9 +33,6 @@ stages:
         packageType: 'sdk'
         version: '10.x'
 
-    #- script: dir
-    #displayName: "Show repo root"
-
     - script: dotnet restore CycleFantasy.sln
       displayName: 'Restore'
 
@@ -48,7 +45,7 @@ stages:
         -o $(Build.ArtifactStagingDirectory)/web
       displayName: 'Publish WebApp'
 
-    - task: AzureWebApp@1
+    - task: ArchiveFiles@2
       displayName: 'Archive WebApp'
       inputs:
         rootFolderOrFile: '$(Build.ArtifactStagingDirectory)/web'
@@ -64,11 +61,7 @@ stages:
   displayName: Deploy WebApp
   dependsOn: Build
 
-  condition: and(
-    succeeded(),
-    eq(variables['Build.Reason'], 'ResourceTrigger'),
-    eq(variables['resources.pipeline.api.sourceBranch'], 'refs/heads/master')
-  )
+  condition: succeeded()
 
   jobs:
   - job: DeployWeb
