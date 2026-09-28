@@ -107,9 +107,9 @@ namespace CycleManager.Tests.Integration.DataAccess
             };
             var teamYear2 = new TeamYear
             {
-                TeamYearId = 1,
+                TeamYearId = 2,
                 TeamId = 1,
-                Year = 2025
+                Year = 2026
             };
 
             var cit2 = new CompetitorInTeam
@@ -208,28 +208,81 @@ namespace CycleManager.Tests.Integration.DataAccess
         {
             // Arrange
             var options = new DbContextOptionsBuilder<ApplicationDbContext>()
-                .UseInMemoryDatabase(databaseName: "RandomTestDB")
+                .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
                 .Options;
 
             using var context = new ApplicationDbContext(options);
 
             var eventId = 100;
 
-            // Voeg testdata toe
-            var competitors = Enumerable.Range(1, 5).Select(i =>
-                new Competitor { CompetitorId = i, FirstName = $"C{i}", LastName = $"L{i}", CountryId = 1 }
-            ).ToList();
+            var country = new Country
+            {
+                CountryId = 1,
+                CountryNameShort = "NL"
+            };
 
-            var team = new Team { TeamId = 1, CurrentTeamName = "TeamA" };
+            context.Countries.Add(country);
+
+            var team = new Team
+            { 
+                TeamId = 1, 
+                CurrentTeamName = "TeamA" 
+            };
             context.Teams.Add(team);
 
-            foreach (var c in competitors)
+            var seasonYear = new SeasonYear
             {
-                context.Competitors.Add(c);
-                var cit = new CompetitorInTeam { Id = c.CompetitorId, CompetitorId = c.CompetitorId, Competitor = c};
-                context.CompetitorInTeams.Add(cit);
-                context.CompetitorsInEvent.Add(new CompetitorsInEvent { Id = c.CompetitorId, EventId = eventId, CompetitorInTeamId = cit.Id, CompetitorInTeam = cit });
-            }
+                SeasonYearId = 1,
+                Year = 2025,
+                Active = true
+            };
+
+            context.SeasonYears.Add(seasonYear);
+
+            var teamYear = new TeamYear
+            {
+                TeamYearId = 1,
+                TeamId = 1,
+                SeasonYearId = 1,
+                Year = seasonYear.Year
+            };
+
+            context.TeamYear.Add(teamYear);
+
+
+            var competitors = Enumerable.Range(1, 5)
+                .Select(i =>  new Competitor
+                {
+                    CompetitorId = i,
+                    FirstName = $"C{i}",
+                    LastName = $"L{i}",
+                    CountryId = 1
+                })
+                .ToList();
+
+            context.Competitors.AddRange(competitors);
+
+            var competitorInTeams = competitors
+                .Select(c => new CompetitorInTeam
+                {
+                    Id = c.CompetitorId,
+                    CompetitorId = c.CompetitorId,
+                    TeamYearId = teamYear.TeamYearId
+                })
+                .ToList();
+
+            context.CompetitorInTeams.AddRange(competitorInTeams);
+
+            var competitorsInEvent = competitorInTeams
+                .Select(cit => new CompetitorsInEvent
+                {
+                    Id = cit.Id,
+                    EventId = eventId,
+                    CompetitorInTeamId = cit.Id
+                })
+                .ToList();
+
+            context.CompetitorsInEvent.AddRange(competitorsInEvent);
 
             await context.SaveChangesAsync();
 

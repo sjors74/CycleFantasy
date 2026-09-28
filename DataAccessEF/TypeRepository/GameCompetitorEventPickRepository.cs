@@ -59,7 +59,7 @@ namespace DataAccessEF.TypeRepository
                 .Include(g => g.CompetitorsInEvent)
                     .ThenInclude(cie => cie.Event)
 
-                .Where(g => g.GameCompetitorEvent.Id == id)
+                .Where(g => g.GameCompetitorEventId == id)
                 .OrderBy(g => g.CompetitorsInEvent.EventNumber)
                 .ToListAsync();
 
