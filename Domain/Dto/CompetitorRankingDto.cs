@@ -12,9 +12,6 @@ namespace CycleManager.Domain.Dto
         public int SpecialPoints { get; set; } 
         public int TotalPoints => NormalPoints + SpecialPoints;
         public List<CompetitorRatingDto> Ratings { get; set; } = new();
-
-        [Obsolete("Use TotalPoints instead.")]
-        public int Points { get; set; }
         public int LatestPoints { get; set; }
         public string PcsName { get; set; } = string.Empty;
         public bool IsNationalChampion { get; set; }

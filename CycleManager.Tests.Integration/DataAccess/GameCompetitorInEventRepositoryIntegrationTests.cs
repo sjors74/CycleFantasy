@@ -129,6 +129,7 @@ namespace CycleManager.Tests.Integration.DataAccess
             var gce = new GameCompetitorEvent
             {
                 Id = 1,
+                UserId = "abc",
                 Renners = new List<GameCompetitorEventPick>
                 {
                     new GameCompetitorEventPick { Id = 10 },

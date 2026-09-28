@@ -260,56 +260,6 @@ namespace CycleManager.Tests.Integration.DataAccess
             ranking.All(r => r.Punten == 10).Should().BeTrue();
         }
 
-
-        [Fact]
-        public async Task GetPoolRankingForStage_UserIsNull_SetsEmptyNames()
-        {
-            using var context = CreateContext();
-            var repo = new ScoreRepository(context);
-
-            var evt = new Event { EventId = 1 };
-
-            var stage = new Stage
-            {
-                Id = 1,
-                EventId = 1,
-                StageOrder = 1
-            };
-
-            var g1 = new GameCompetitorEvent
-            {
-                Id = 1,
-                EventId = 1,
-                TeamName = "GhostTeam",
-                User = null!
-            };
-
-            context.Events.Add(evt);
-            context.Stages.Add(stage);
-            context.GameCompetitorsEvent.Add(g1);
-
-            context.DeelnemerStageScores.Add(
-                new DeelnemerStageScore
-                {
-                    Id = Guid.NewGuid(),
-                    StageId = stage.Id,
-                    GameCompetitorEventId = g1.Id,
-                    Score = 7
-                }
-            );
-
-            await context.SaveChangesAsync();
-
-            var ranking = await repo.GetPoolRankingForStage(1, 1);
-
-            ranking.Should().HaveCount(1);
-
-            // Omdat User null is, wordt DeelnemerNaam = "" + "" = " "
-            ranking.First().DeelnemerNaam.Should().Be(" ");
-            ranking.First().PoolNaam.Should().Be("GhostTeam");
-        }
-
-
         [Fact]
         public async Task GetPoolRankingForStage_ReturnsScoresForCorrectEventOnly()
         {

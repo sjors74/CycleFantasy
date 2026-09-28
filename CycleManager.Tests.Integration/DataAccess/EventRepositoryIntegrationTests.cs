@@ -28,9 +28,9 @@ namespace CycleManager.Tests.Integration.DataAccess
             // Arrange
             using var context = new ApplicationDbContext(_options);
             context.GameCompetitorsEvent.AddRange(
-                new GameCompetitorEvent { Id = 1, EventId = 10 },
-                new GameCompetitorEvent { Id = 2, EventId = 10 },
-                new GameCompetitorEvent { Id = 3, EventId = 20 } // ander event
+                new GameCompetitorEvent { Id = 1, EventId = 10, UserId = "1" },
+                new GameCompetitorEvent { Id = 2, EventId = 10, UserId = "2" },
+                new GameCompetitorEvent { Id = 3, EventId = 20, UserId = "3" } // ander event
             );
             await context.SaveChangesAsync();
 
@@ -84,15 +84,16 @@ namespace CycleManager.Tests.Integration.DataAccess
             var country = new Country { CountryId = 1, CountryNameShort = "BEL" };
             var competitor = new Competitor { CompetitorId = 1, FirstName = "Remco", LastName = "Evenepoel", Country = country };
             var team = new Team { TeamId = 1, CurrentTeamName = "Soudal Quick-Step" };
-            var competitorInTeam = new CompetitorInTeam { Id = 1, Competitor = competitor };
-            var eventEntity = new Event { EventId = 1, EventName = "Tour de France" };
+            var seasonYear = new SeasonYear { SeasonYearId = 1, Year = 2025, Active = true };
+            var teamYear = new TeamYear { TeamYearId = 1, Team = team, TeamId = 1, SeasonYear = seasonYear, SeasonYearId = seasonYear.SeasonYearId, Year = seasonYear.Year, Name = "Soudal Quick-Step" };
+            var competitorInTeam = new CompetitorInTeam { Id = 1, CompetitorId =1, TeamYearId = teamYear.TeamYearId };
+            var eventEntity = new Event { EventId = 1, EventName = "Tour de France", EventYear = seasonYear.Year };
             var eventTeam = new EventTeam { TeamId = 1, Event = eventEntity, EventId = 1, Team = team };
 
             var cie = new CompetitorsInEvent
             {
                 Id = 1,
                 EventId = 1,
-                CompetitorInTeam = competitorInTeam,
                 CompetitorInTeamId = 1,
                 EventNumber = 11,
                 InSelectie = true
@@ -101,6 +102,8 @@ namespace CycleManager.Tests.Integration.DataAccess
             context.Countries.Add(country);
             context.Competitors.Add(competitor);
             context.Teams.Add(team);
+            context.SeasonYears.Add(seasonYear);
+            context.TeamYear.Add(teamYear); 
             context.CompetitorInTeams.Add(competitorInTeam);
             context.Events.Add(eventEntity);
             context.EventTeam.Add(eventTeam);
@@ -115,10 +118,17 @@ namespace CycleManager.Tests.Integration.DataAccess
 
             // Assert
             var teamDto = Assert.Single(result);
+            Assert.Equal(1, teamDto.Id);
+            Assert.Equal(1, teamDto.TeamYearId);
             Assert.Equal("Soudal Quick-Step", teamDto.Naam);
+
             Assert.Single(teamDto.Renners);
-            Assert.Equal("Remco", teamDto.Renners.First().FirstName);
-            Assert.Equal("BEL", teamDto.Renners.First().CountryShort);
+
+            var renner = teamDto.Renners.First();
+
+            Assert.Equal("Remco", renner.FirstName);
+            Assert.Equal("Evenepoel", renner.LastName);
+            Assert.Equal("BEL", renner.CountryShort);
         }
 
         [Fact]
