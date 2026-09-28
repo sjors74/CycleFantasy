@@ -30,8 +30,20 @@ stages:
     - script: dotnet build WebCycle/WebCycleApi.csproj --configuration $(buildConfiguration) --no-restore
       displayName: 'Build Api'
 
-    - script: dotnet test CycleManager.Tests.Unit/CycleManager.Tests.Unit.csproj --configuration $(buildConfiguration) --no-build
+    - script: >
+        dotnet test CycleManager.Tests.Unit/CycleManager.Tests.Unit.csproj 
+        --configuration $(buildConfiguration) 
+        --no-build
+        --logger "trx;LogFileName=test-results.trx"
       displayName: 'Run unit tests'
+
+    - task: PublishTestResults@2
+      displayName: 'Publish Test Results'
+      inputs:
+        testResultsFormat: 'VSTest'
+        testResultsFiles: '**/test-results.trx'
+        failTaskOnFailedTests: true
+        testRunTitle: 'CycleManagerUnit Tests'
 
 - stage: DeployApi
   displayName: Deploy API
