@@ -638,6 +638,8 @@ namespace CycleManager.Services
                 .Include(cit => cit.Competitor)
                 .Include(cit => cit.TeamYear)
                     .ThenInclude(ty => ty.SeasonYear)
+                .Include(cit => cit.TeamYear)
+                    .ThenInclude(ty => ty.Team)
                 .Where(cit =>
                     cit.TeamYear.SeasonYear.Year == eventYear &&
                     eventTeamIds.Contains(cit.TeamYear.TeamId))
