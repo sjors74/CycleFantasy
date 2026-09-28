@@ -34,14 +34,14 @@ stages:
         dotnet test CycleManager.Tests.Unit/CycleManager.Tests.Unit.csproj 
         --configuration $(buildConfiguration) 
         --no-build
-        --logger "trx;LogFileName=test-results.trx"
+        --logger "trx;LogFileName=$(Build.ArtifactStagingDirectory)/test-results.trx"
       displayName: 'Run unit tests'
 
     - task: PublishTestResults@2
       displayName: 'Publish Test Results'
       inputs:
         testResultsFormat: 'VSTest'
-        testResultsFiles: '**/test-results.trx'
+        testResultsFiles: '$(Build.ArtifactStagingDirectory)/test-results.trx'
         failTaskOnFailedTests: true
         testRunTitle: 'CycleManagerUnit Tests'
 
