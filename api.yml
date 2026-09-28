@@ -31,16 +31,16 @@ stages:
       displayName: 'Build Api'
 
     - script: >
-        dotnet test CycleManager.Tests.Unit/CycleManager.Tests.Unit.csproj 
+        dotnet build CycleManager.Tests.Unit/CycleManager.Tests.Unit.csproj 
         --configuration $(buildConfiguration) 
+      displayName: 'Build unit tests'
+
+    - script: >
+        dotnet test CycleManager.Tests.Unit/CycleManager.Tests.Unit.csproj
+        --configuration $(buildConfiguration)
         --no-build
         --logger "trx;LogFileName=test-results.trx"
       displayName: 'Run unit tests'
-
-    - script: |
-        echo === Searching for TRX files ===
-        dir "$(Build.SourcesDirectory)" /s /b *.trx
-      displayName: 'Find TRX files'
 
     - task: PublishTestResults@2
       displayName: 'Publish Test Results'
