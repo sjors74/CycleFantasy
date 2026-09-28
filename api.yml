@@ -34,14 +34,20 @@ stages:
         dotnet test CycleManager.Tests.Unit/CycleManager.Tests.Unit.csproj 
         --configuration $(buildConfiguration) 
         --no-build
-        --logger "trx;LogFileName=$(Build.ArtifactStagingDirectory)/test-results.trx"
+        --logger "trx;LogFileName=test-results.trx"
       displayName: 'Run unit tests'
+
+    - script: |
+        echo === Searching for TRX files ===
+        dir "$(Build.SourcesDirectory)" /s /b *.trx
+      displayName: 'Find TRX files'
 
     - task: PublishTestResults@2
       displayName: 'Publish Test Results'
       inputs:
         testResultsFormat: 'VSTest'
-        testResultsFiles: '$(Build.ArtifactStagingDirectory)/test-results.trx'
+        testResultsFiles: '**/*.trx'
+        searchFolder: '$(Build.SourcesDirectory)'
         failTaskOnFailedTests: true
         testRunTitle: 'CycleManagerUnit Tests'
 
