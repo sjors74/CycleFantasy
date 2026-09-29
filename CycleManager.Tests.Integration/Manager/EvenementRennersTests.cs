@@ -61,6 +61,14 @@ namespace CycleManager.Tests.Integration.Manager
             var team2 = new Team { CurrentTeamName = $"Team B {unique}", CountryId = countryBe.CountryId };
             db.Teams.AddRange(team1, team2);
 
+            var seasonYear = new SeasonYear { SeasonYearId = 1, Year = 2025, Active = true };
+            db.SeasonYears.Add(seasonYear);
+            await db.SaveChangesAsync();
+
+            var teamYear1 = new TeamYear { TeamId = team1.TeamId, SeasonYearId = seasonYear.SeasonYearId };
+            db.TeamYear.Add(teamYear1);
+            await db.SaveChangesAsync();
+
             // Event
             var ev = new Event
             {
@@ -73,6 +81,7 @@ namespace CycleManager.Tests.Integration.Manager
                 ConfigurationId = config.Id
             };
             db.Events.Add(ev);
+            await db.SaveChangesAsync();
 
             // Renners + koppeling
             if (withRiders)
@@ -83,8 +92,8 @@ namespace CycleManager.Tests.Integration.Manager
                 db.Competitors.AddRange(comp1, comp2);
 
                 // CompetitorInTeam
-                var cit1 = new CompetitorInTeam { CompetitorId = comp1.CompetitorId, IsNationalChampion = false };
-                var cit2 = new CompetitorInTeam { CompetitorId = comp2.CompetitorId, IsNationalChampion = false };
+                var cit1 = new CompetitorInTeam { CompetitorId = comp1.CompetitorId, TeamYearId = teamYear1.TeamYearId, IsNationalChampion = false };
+                var cit2 = new CompetitorInTeam { CompetitorId = comp2.CompetitorId, TeamYearId = teamYear1.TeamYearId, IsNationalChampion = false };
                 db.CompetitorInTeams.AddRange(cit1, cit2);
 
                 // CompetitorInEvent
@@ -232,13 +241,22 @@ namespace CycleManager.Tests.Integration.Manager
             db.Teams.Add(team);
             await db.SaveChangesAsync();
 
+            var seasonYear = new SeasonYear { Year = 2025, Active = true };
+            db.SeasonYears.Add(seasonYear);
+            await db.SaveChangesAsync();
+
+            var teamYear = new TeamYear { TeamId = team.TeamId, SeasonYearId = seasonYear.SeasonYearId };
+            db.TeamYear.Add(teamYear);
+            await db.SaveChangesAsync();
+
             var competitor = new Competitor { FirstName = "Jan", LastName = "Tester", CountryId = 1 };
             db.Competitors.Add(competitor);
             await db.SaveChangesAsync();
 
             var competitorInTeam = new CompetitorInTeam
             {
-                CompetitorId = competitor.CompetitorId                    
+                CompetitorId = competitor.CompetitorId,
+                TeamYearId = teamYear.TeamYearId
             };
             db.CompetitorInTeams.Add(competitorInTeam);
             await db.SaveChangesAsync();
@@ -430,6 +448,14 @@ namespace CycleManager.Tests.Integration.Manager
                 db.Teams.Add(team);
                 await db.SaveChangesAsync();
 
+                var seasonYear = new SeasonYear { Year = 2025, Active = true };
+                db.SeasonYears.Add(seasonYear);
+                await db.SaveChangesAsync();
+
+                var teamYear = new TeamYear { TeamId = team.TeamId, SeasonYearId = seasonYear.SeasonYearId };
+                db.TeamYear.Add(teamYear);
+                await db.SaveChangesAsync();
+
                 var ev = new Event { EventName = "Test Event", EventYear = 2025, StartDate = DateTime.Today, EndDate = DateTime.Today.AddDays(2), IsActive = true };
                 db.Events.Add(ev);
                 await db.SaveChangesAsync();
@@ -439,8 +465,8 @@ namespace CycleManager.Tests.Integration.Manager
                 db.Competitors.AddRange(competitor1, competitor2);
                 await db.SaveChangesAsync();
 
-                var cit1 = new CompetitorInTeam { CompetitorId = competitor1.CompetitorId };
-                var cit2 = new CompetitorInTeam { CompetitorId = competitor2.CompetitorId };
+                var cit1 = new CompetitorInTeam { CompetitorId = competitor1.CompetitorId, TeamYearId = teamYear.TeamYearId };
+                var cit2 = new CompetitorInTeam { CompetitorId = competitor2.CompetitorId, TeamYearId = teamYear.TeamYearId };
                 db.CompetitorInTeams.AddRange(cit1, cit2);
                 await db.SaveChangesAsync();
 

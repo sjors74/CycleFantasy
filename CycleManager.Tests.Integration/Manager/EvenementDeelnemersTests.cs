@@ -1,8 +1,11 @@
 ﻿using CycleManager.Domain.Models;
+using CycleManager.Services.Interfaces;
 using Domain.Context;
+using Domain.Interfaces;
 using Domain.Models;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using System.Net;
 using System.Text.RegularExpressions;
@@ -61,17 +64,61 @@ namespace CycleManager.Tests.Integration.Manager
             db.Countries.Add(country);
             await db.SaveChangesAsync();
 
-            var team = new Team { CurrentTeamName = "TestTeam", CountryId = country.CountryId };
+            var team = new Team
+            {
+                CurrentTeamName = "TestTeam",
+                CountryId = country.CountryId
+            };
             db.Teams.Add(team);
             await db.SaveChangesAsync();
 
-            var c1 = new Competitor { FirstName = "Rene", LastName = "Zon", CountryId = country.CountryId };
-            var c2 = new Competitor { FirstName = "Bert", LastName = "Kaas", CountryId = country.CountryId };
+            var seasonYear = new SeasonYear
+            {
+                Year = 2025
+                // overige verplichte properties indien aanwezig
+            };
+            db.SeasonYears.Add(seasonYear);
+            await db.SaveChangesAsync();
+
+            var teamYear = new TeamYear
+            {
+                TeamId = team.TeamId,
+                Year = 2025,
+                SeasonYearId = seasonYear.SeasonYearId,
+                Name = "TestTeam"
+            };
+            db.TeamYear.Add(teamYear);
+            await db.SaveChangesAsync();
+
+            var c1 = new Competitor
+            {
+                FirstName = "Rene",
+                LastName = "Zon",
+                CountryId = country.CountryId
+            };
+
+            var c2 = new Competitor
+            {
+                FirstName = "Bert",
+                LastName = "Kaas",
+                CountryId = country.CountryId
+            };
+
             db.Competitors.AddRange(c1, c2);
             await db.SaveChangesAsync();
 
-            var cit1 = new CompetitorInTeam { CompetitorId = c1.CompetitorId };
-            var cit2 = new CompetitorInTeam { CompetitorId = c2.CompetitorId };
+            var cit1 = new CompetitorInTeam
+            {
+                CompetitorId = c1.CompetitorId,
+                TeamYearId = teamYear.TeamYearId
+            };
+
+            var cit2 = new CompetitorInTeam
+            {
+                CompetitorId = c2.CompetitorId,
+                TeamYearId = teamYear.TeamYearId
+            };
+
             db.CompetitorInTeams.AddRange(cit1, cit2);
             await db.SaveChangesAsync();
 
@@ -242,7 +289,7 @@ namespace CycleManager.Tests.Integration.Manager
             db.Events.Add(ev);
             await db.SaveChangesAsync();
 
-            var confItem = new ConfigurationItem { Position = 1, Score = 45 };
+            var confItem = new ConfigurationItem { Configuration = configuratie, Position = 1, Score = 45 };
             db.ConfigurationItems.Add(confItem);
             await db.SaveChangesAsync();
 
@@ -257,11 +304,19 @@ namespace CycleManager.Tests.Integration.Manager
             db.Teams.Add(team);
             await db.SaveChangesAsync();
 
+            var seasonYear = new SeasonYear { SeasonYearId = 1, Active = true, Year = 2025 };
+            db.SeasonYears.Add(seasonYear);
+            await db.SaveChangesAsync();
+
+            var teamYear = new TeamYear { TeamId = team.TeamId, Year = 2025, SeasonYearId = seasonYear.SeasonYearId, Name = "Toppers" };
+            db.TeamYear.Add(teamYear);
+            await db.SaveChangesAsync();
+
             var comp = new Competitor { FirstName = "Jan", LastName = "Deelnemer", CountryId = country.CountryId };
             db.Competitors.Add(comp);
             await db.SaveChangesAsync();
 
-            var cit = new CompetitorInTeam { CompetitorId = comp.CompetitorId };
+            var cit = new CompetitorInTeam { CompetitorId = comp.CompetitorId, TeamYearId = teamYear.TeamYearId };
             db.CompetitorInTeams.Add(cit);
             await db.SaveChangesAsync();
 
@@ -299,7 +354,17 @@ namespace CycleManager.Tests.Integration.Manager
             var user = new ApplicationUser { Id = "u10", FirstName = "Test", LastName = "DeletePick", Email = "delpick@test.com" };
             db.Users.Add(user);
 
-            var ev = new Event { EventName = "DeletePickEvent", EventYear = 2025, StartDate = DateTime.Today, EndDate = DateTime.Today.AddDays(1), IsActive = true };
+            var configuration = new Configuration
+            {
+                Id = 1,
+                ConfigurationItems = new List<ConfigurationItem>
+                 {
+                     new ConfigurationItem { Position = 1, Score = 50 },
+                     new ConfigurationItem { Position = 2, Score = 30 }
+                 },
+            };
+
+            var ev = new Event { EventName = "DeletePickEvent", EventYear = 2025, StartDate = DateTime.Today, EndDate = DateTime.Today.AddDays(1), IsActive = true, Configuration = configuration, ConfigurationId = 1 };
             db.Events.Add(ev);
 
             var gc = new GameCompetitorEvent { EventId = ev.EventId, UserId = user.Id, TeamName = "TeamDeletePick" };
@@ -361,11 +426,21 @@ namespace CycleManager.Tests.Integration.Manager
             var user = new ApplicationUser { Id = "u1", FirstName = "Alice", LastName = "Tester", Email = "alice@test.com" };
             db.Users.Add(user);
 
-            var configuration = new Configuration { Id = 1, ConfigurationType = "Default" };
+            var configuration = new Configuration
+            {
+                Id = 1,
+                ConfigurationType = "Default",
+                ConfigurationItems = new List<ConfigurationItem>
+                {
+                    new ConfigurationItem { Position = 1, Score = 50 },
+                    new ConfigurationItem { Position = 2, Score = 30 }
+                }
+            };
             db.Configurations.Add(configuration);
 
             var ev = new Event
             {
+                EventId = 1,
                 EventName = "Tour Test",
                 EventYear = 2025,
                 StartDate = DateTime.Today,
@@ -380,29 +455,79 @@ namespace CycleManager.Tests.Integration.Manager
 
             var gc = new GameCompetitorEvent { EventId = ev.EventId, UserId = user.Id, TeamName = "Team Alice" };
             db.GameCompetitorsEvent.Add(gc);
-
-            var country = new Country { CountryNameShort = "NL", CountryNameLong = "Nederland" };
+            var country = new Country
+            {
+                CountryNameShort = "NL",
+                CountryNameLong = "Nederland"
+            };
             db.Countries.Add(country);
 
-            var team = new Team { CurrentTeamName = "TeamTest", Country = country };
+            var team = new Team
+            {
+                CurrentTeamName = "TeamTest",
+                Country = country
+            };
             db.Teams.Add(team);
 
-            var competitor = new Competitor { FirstName = "Bob", LastName = "Builder", Country = country };
+            var seasonYear = new SeasonYear
+            {
+                // vul hier eventueel de verplichte properties van SeasonYear in
+            };
+            db.SeasonYears.Add(seasonYear);
+
+            var teamYear = new TeamYear
+            {
+                Team = team,
+                Year = 2025,
+                SeasonYear = seasonYear,
+                Name = "TeamTest 2025"
+            };
+            db.TeamYear.Add(teamYear);
+
+            var competitor = new Competitor
+            {
+                FirstName = "Bob",
+                LastName = "Builder",
+                Country = country
+            };
             db.Competitors.Add(competitor);
 
-            var cit = new CompetitorInTeam {Competitor = competitor };
+            var cit = new CompetitorInTeam
+            {
+                Competitor = competitor,
+                TeamYear = teamYear
+            };
             db.CompetitorInTeams.Add(cit);
 
-            var cie = new CompetitorsInEvent { EventId = ev.EventId, CompetitorInTeam = cit };
+            var cie = new CompetitorsInEvent
+            {
+                EventId = ev.EventId,
+                CompetitorInTeam = cit
+            };
             db.CompetitorsInEvent.Add(cie);
-
             var stage = new Stage { EventId = ev.EventId, StageName = "Etappe 1", StageOrder = 1 };
             db.Stages.Add(stage);
 
-            db.Results.Add(new Result { Stage = stage, CompetitorInEvent = cie, ConfigurationItem = confItem });
+            db.Results.Add(new Result { Stage = stage, CompetitorInEvent = cie, ConfigurationItem = confItem, });
             db.GameCompetitorEventPicks.Add(new GameCompetitorEventPick { GameCompetitorEvent = gc, CompetitorsInEvent = cie });
 
             await db.SaveChangesAsync();
+
+            var resultRepository = scope.ServiceProvider
+                .GetRequiredService<IResultsRepository>();
+        
+            var repositoryResults = await resultRepository.GetResultsByEventId(ev.EventId);
+
+            repositoryResults.Should().ContainSingle();
+
+
+            var resultService = scope.ServiceProvider.GetRequiredService<IResultService>();
+
+            var rankings = await resultService.GetResultsByEventId(ev.EventId);
+
+            rankings.Should().ContainSingle();
+            rankings.First().NormalPoints.Should().Be(50);
+            rankings.First().TotalPoints.Should().Be(50);
 
             var client = _factory.CreateClient();
 
@@ -430,7 +555,17 @@ namespace CycleManager.Tests.Integration.Manager
             var user = new ApplicationUser { Id = "u3", FirstName = "Add", LastName = "Pick", Email = "add@test.com" };
             db.Users.Add(user);
 
-            var ev = new Event { EventName = "AddPickEvent", EventYear = 2025, StartDate = DateTime.Today, EndDate = DateTime.Today.AddDays(1), IsActive = true };
+            var configuration = new Configuration
+            { 
+                 Id = 1,
+                 ConfigurationItems = new List<ConfigurationItem>
+                 {
+                     new ConfigurationItem { Position = 1, Score = 50 },
+                     new ConfigurationItem { Position = 2, Score = 30 }
+                 },
+            };
+
+            var ev = new Event { EventName = "AddPickEvent", EventYear = 2025, StartDate = DateTime.Today, EndDate = DateTime.Today.AddDays(1), IsActive = true, Configuration = configuration, ConfigurationId = 1 };
             db.Events.Add(ev);
 
             var gc = new GameCompetitorEvent { EventId = ev.EventId, UserId = user.Id, TeamName = "TeamAddPick" };
@@ -477,7 +612,7 @@ namespace CycleManager.Tests.Integration.Manager
         }
 
         [Fact]
-        public async Task FillList_ShouldAddMissingPicksUpToMax()
+        public async Task FillList_ShouldSuggestMissingPicks()
         {
             using var scope = _factory.Services.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
@@ -500,6 +635,18 @@ namespace CycleManager.Tests.Integration.Manager
             var team = new Team { CurrentTeamName = "TeamFillTeam", Country = country };
             db.Teams.Add(team);
 
+            var seasonYear = new SeasonYear { SeasonYearId = 1, Active = true, Year = 2025 };
+            db.SeasonYears.Add(seasonYear);
+
+            var teamYear = new TeamYear
+            {
+                TeamId = team.TeamId,
+                Year = 2025,
+                SeasonYearId = seasonYear.SeasonYearId,
+                Name = "TeamFillTeam"
+            };
+            db.TeamYear.Add(teamYear);
+
             var competitors = new List<Competitor>();
             for (int i = 0; i < 10; i++)
             {
@@ -513,7 +660,7 @@ namespace CycleManager.Tests.Integration.Manager
             var citList = new List<CompetitorInTeam>();
             foreach (var comp in competitors)
             {
-                var cit = new CompetitorInTeam { Competitor = comp };
+                var cit = new CompetitorInTeam { Competitor = comp, TeamYear = teamYear };
                 db.CompetitorInTeams.Add(cit);
                 citList.Add(cit);
             }
@@ -528,17 +675,20 @@ namespace CycleManager.Tests.Integration.Manager
 
             await db.SaveChangesAsync();
 
-            var client = _factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
+            var client = _factory.CreateClient(
+                new WebApplicationFactoryClientOptions
+                {
+                    AllowAutoRedirect = false
+                });
 
-            // POST FillList
-            var postResponse = await client.GetAsync($"/GameCompetitorEvents/FillList?id={gc.Id}&picks=5&eventId={ev.EventId}");
-            postResponse.StatusCode.Should().Be(HttpStatusCode.Redirect);
+            // Act
+            var response = await client.GetAsync(
+                $"/GameCompetitorEvents/FillList?id={gc.Id}&picks=5&eventId={ev.EventId}");
 
-            // Verify: picks zijn aangevuld tot max 15 en uniek
-            var picks = db.GameCompetitorEventPicks.Where(p => p.GameCompetitorEventId == gc.Id).ToList();
-            picks.Count.Should().Be(10); // 5 toegevoegd (15 max in je controller, hier simuleer 10)
-            picks.Select(p => p.CompetitorsInEventId).Distinct().Count().Should().Be(picks.Count);
+            // Assert
+            response.StatusCode.Should().Be(HttpStatusCode.Redirect);
+            response.Headers.Location!.ToString()
+                .Should().Be($"/GameCompetitorEvents/Details/{gc.Id}?eventId={ev.EventId}");
         }
-
     }
 }

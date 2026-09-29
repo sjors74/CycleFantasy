@@ -78,15 +78,20 @@ namespace CycleManager.Tests.Integration.Manager
         {
             using var scope = _factory.Services.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-            var competitor = db.Competitors.Include(c => c.CompetitorInTeams).Include(c => c.Country).First();
+            var competitor = await CreateTestCompetitorAsync(db);
 
-            var response = await _client.GetAsync($"/Competitors/Details/{competitor.CompetitorId}");
+            var savedCompetitor = await db.Competitors
+                .Include(c => c.Country)
+                .FirstAsync(c => c.CompetitorId == competitor.CompetitorId);
+
+            var response = await _client.GetAsync($"/Competitors/Details/{savedCompetitor.CompetitorId}");
             response.EnsureSuccessStatusCode();
+
             var html = await response.Content.ReadAsStringAsync();
 
-            html.Should().Contain(competitor.FirstName);
-            html.Should().Contain(competitor.LastName);
-            html.Should().Contain(competitor.Country.CountryNameShort);
+            html.Should().Contain(savedCompetitor.FirstName);
+            html.Should().Contain(savedCompetitor.LastName);
+            html.Should().Contain(savedCompetitor.Country.CountryNameShort);
         }
 
         [Fact]
@@ -94,7 +99,7 @@ namespace CycleManager.Tests.Integration.Manager
         {
             using var scope = _factory.Services.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-            var competitor = db.Competitors.Include(c => c.CompetitorInTeams).First();
+            var competitor = await CreateTestCompetitorWithTeamAsync(db);
 
             var getHtml = await (await _client.GetAsync($"/Competitors/Edit/{competitor.CompetitorId}")).Content.ReadAsStringAsync();
             var token = TokenHelper.ExtractAntiForgeryToken(getHtml);
@@ -107,7 +112,7 @@ namespace CycleManager.Tests.Integration.Manager
                 ["LastName"] = competitor.LastName + "_Edited",
                 ["CountryId"] = competitor.CountryId.ToString(),
                 ["PcsName"] = competitor.PcsName + "_Edited",
-                ["ScraperName"] = competitor.PcsScraperName + "_Edited",
+                ["PcsScraperName"] = competitor.PcsScraperName + "_Edited",
                 // markeer eerste jaar als nationaal kampioen
                 ["CompetitorInTeams[0].CompetitorInTeamId"] = competitor.CompetitorInTeams.ElementAt(0).Id.ToString(),
                 ["CompetitorInTeams[0].TeamYearId"] = competitor.CompetitorInTeams.ElementAt(0).TeamYearId.ToString(),
@@ -134,7 +139,7 @@ namespace CycleManager.Tests.Integration.Manager
         {
             using var scope = _factory.Services.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-            var competitor = db.Competitors.First();
+            var competitor = await CreateTestCompetitorAsync(db);
 
             var getHtml = await (await _client.GetAsync($"/Competitors/Delete/{competitor.CompetitorId}")).Content.ReadAsStringAsync();
             var token = TokenHelper.ExtractAntiForgeryToken(getHtml);
@@ -157,7 +162,7 @@ namespace CycleManager.Tests.Integration.Manager
         {
             using var scope = _factory.Services.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-            var competitor = db.Competitors.First();
+            var competitor = await CreateTestCompetitorAsync(db);
 
             var getHtml = await (await _client.GetAsync($"/Competitors/Edit/{competitor.CompetitorId}")).Content.ReadAsStringAsync();
             var token = TokenHelper.ExtractAntiForgeryToken(getHtml);
@@ -195,10 +200,13 @@ namespace CycleManager.Tests.Integration.Manager
         public async Task DeleteConfirmed_Should_Redirect_WhenCompetitorDoesNotExist()
         {
             // Arrange
+            using var scope = _factory.Services.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
             var nonExistingId = 9999;
 
             // Eerst een geldige token ophalen van een bestaand formulier
-            var getHtml = await (await _client.GetAsync("/Competitors/Delete/1")).Content.ReadAsStringAsync();
+            var competitor = await CreateTestCompetitorAsync(db);
+            var getHtml = await (await _client.GetAsync($"/Competitors/Delete/{competitor.CompetitorId}")).Content.ReadAsStringAsync();
             var token = TokenHelper.ExtractAntiForgeryToken(getHtml);
 
             var formData = new Dictionary<string, string>
@@ -219,7 +227,7 @@ namespace CycleManager.Tests.Integration.Manager
         {
             using var scope = _factory.Services.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-            var competitor = db.Competitors.First();
+            var competitor = await CreateTestCompetitorAsync(db);
 
             var response = await _client.GetAsync($"/Competitors/Details/{competitor.CompetitorId}");
             var html = await response.Content.ReadAsStringAsync();
@@ -233,7 +241,7 @@ namespace CycleManager.Tests.Integration.Manager
         {
             using var scope = _factory.Services.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-            var competitor = db.Competitors.First();
+            var competitor = await CreateTestCompetitorAsync(db);
 
             // Act
             var response = await _client.GetAsync($"/Competitors/SearchCompetitors?term={competitor.LastName}");
@@ -274,5 +282,105 @@ namespace CycleManager.Tests.Integration.Manager
             data.GetProperty("teamName").GetString().Should().Be(competitor.CompetitorInTeams.First().TeamYear.Team.CurrentTeamName);
         }
 
+        protected async Task<Competitor> CreateTestCompetitorAsync(ApplicationDbContext db,  string firstName = "Test",  string lastName = "Competitor")
+        {
+            var country = await db.Countries.FirstOrDefaultAsync();
+
+            if (country == null)
+            {
+                country = new Country
+                {
+                    CountryNameLong = "Nederland",
+                    CountryNameShort = "NL"
+                };
+
+                db.Countries.Add(country);
+                await db.SaveChangesAsync();
+            }
+
+            var competitor = new Competitor
+            {
+                FirstName = firstName,
+                LastName = lastName,
+                Country = country,
+                CountryId = country.CountryId
+            };
+
+            db.Competitors.Add(competitor);
+            await db.SaveChangesAsync();
+
+            return competitor;
+        }
+
+        protected async Task<Competitor> CreateTestCompetitorWithTeamAsync(ApplicationDbContext db, string firstName = "Test",  string lastName = "Competitor")
+        {
+            var country = await db.Countries.FirstOrDefaultAsync();
+
+            if (country == null)
+            {
+                country = new Country
+                {
+                    CountryNameLong = "Nederland",
+                    CountryNameShort = "NL"
+                };
+
+                db.Countries.Add(country);
+                await db.SaveChangesAsync();
+            }
+
+            var team = new Team
+            {
+                CurrentTeamName = "Test Team",
+                CountryId = country.CountryId
+            };
+
+            db.Teams.Add(team);
+            await db.SaveChangesAsync();
+
+            var seasonYear = new SeasonYear
+            {
+                Year = DateTime.Today.Year,
+                Active = true
+            };
+
+            db.SeasonYears.Add(seasonYear);
+            await db.SaveChangesAsync();
+
+            var teamYear = new TeamYear
+            {
+                TeamId = team.TeamId,
+                Team = team,
+                Year = seasonYear.Year,
+                SeasonYearId = seasonYear.SeasonYearId,
+                SeasonYear = seasonYear,
+                Name = team.CurrentTeamName
+            };
+
+            db.TeamYear.Add(teamYear);
+            await db.SaveChangesAsync();
+
+            var competitor = new Competitor
+            {
+                FirstName = firstName,
+                LastName = lastName,
+                CountryId = country.CountryId
+            };
+
+            db.Competitors.Add(competitor);
+            await db.SaveChangesAsync();
+
+            var competitorInTeam = new CompetitorInTeam
+            {
+                CompetitorId = competitor.CompetitorId,
+                Competitor = competitor,
+                TeamYearId = teamYear.TeamYearId,
+                TeamYear = teamYear
+            };
+
+            db.CompetitorInTeams.Add(competitorInTeam);
+            await db.SaveChangesAsync();
+
+            return competitor;
+        }
     }
 }

@@ -104,6 +104,14 @@ namespace CycleManager.Tests.Integration.Manager
             db.Teams.Add(team);
             await db.SaveChangesAsync();
 
+            var seasonYear = new SeasonYear { Year = 2025, Active = true };
+            db.SeasonYears.Add(seasonYear);
+            await db.SaveChangesAsync();
+
+            var teamYear = new TeamYear { TeamId = team.TeamId, Year = 2025, SeasonYearId = seasonYear.SeasonYearId, Name = "Team Alpha" };
+            db.TeamYear.Add(teamYear);
+            await db.SaveChangesAsync();
+
             var competitors = new List<Competitor>
             {
                 new Competitor { FirstName = "Bert", LastName = "Zon", CountryId = country.CountryId },
@@ -112,7 +120,7 @@ namespace CycleManager.Tests.Integration.Manager
             db.Competitors.AddRange(competitors);
             await db.SaveChangesAsync();
 
-            var citList = competitors.Select(c => new CompetitorInTeam {CompetitorId = c.CompetitorId }).ToList();
+            var citList = competitors.Select(c => new CompetitorInTeam {CompetitorId = c.CompetitorId, TeamYearId = teamYear.TeamYearId }).ToList();
             db.CompetitorInTeams.AddRange(citList);
             await db.SaveChangesAsync();
 
@@ -196,6 +204,14 @@ namespace CycleManager.Tests.Integration.Manager
             db.Teams.Add(team);
             await db.SaveChangesAsync();
 
+            var seasonYear = new SeasonYear { Year = 2025, Active = true };
+            db.SeasonYears.Add(seasonYear);
+            await db.SaveChangesAsync();
+
+            var teamYear = new TeamYear { TeamId = team.TeamId, Year = 2025, SeasonYearId = seasonYear.SeasonYearId, Name = "Team TieAlpha" };
+            db.TeamYear.Add(teamYear);
+            await db.SaveChangesAsync();
+
             // Drie renners met dezelfde score
             var competitors = new List<Competitor>
             {
@@ -206,7 +222,7 @@ namespace CycleManager.Tests.Integration.Manager
             db.Competitors.AddRange(competitors);
             await db.SaveChangesAsync();
 
-            var citList = competitors.Select(c => new CompetitorInTeam { CompetitorId = c.CompetitorId }).ToList();
+            var citList = competitors.Select(c => new CompetitorInTeam { CompetitorId = c.CompetitorId, TeamYearId = teamYear.TeamYearId }).ToList();
             db.CompetitorInTeams.AddRange(citList);
             await db.SaveChangesAsync();
 
@@ -387,6 +403,28 @@ namespace CycleManager.Tests.Integration.Manager
             db.Teams.Add(team);
             await db.SaveChangesAsync();
 
+            var seasonYear = new SeasonYear
+            {
+                SeasonYearId = 1,
+                Year = 2025,
+                Active = true
+            };
+
+            db.SeasonYears.Add(seasonYear);
+            await db.SaveChangesAsync();
+
+            var teamYear = new TeamYear
+            {
+                TeamId = team.TeamId,
+                Year = 2025,
+                SeasonYearId = seasonYear.SeasonYearId,
+                Name = "Team Random"
+            };
+
+            db.TeamYear.Add(teamYear);
+            await db.SaveChangesAsync();
+
+
             var cieList = new List<CompetitorsInEvent>();
             for (int i = 0; i < numCompetitors; i++)
             {
@@ -394,7 +432,7 @@ namespace CycleManager.Tests.Integration.Manager
                 db.Competitors.Add(comp);
                 await db.SaveChangesAsync();
 
-                var cit = new CompetitorInTeam { CompetitorId = comp.CompetitorId };
+                var cit = new CompetitorInTeam { CompetitorId = comp.CompetitorId, TeamYear = teamYear, TeamYearId = teamYear.TeamYearId };
                 db.CompetitorInTeams.Add(cit);
                 await db.SaveChangesAsync();
 

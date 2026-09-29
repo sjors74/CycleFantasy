@@ -113,13 +113,23 @@ namespace CycleManager.Tests.Integration.Manager
                 ["ShowPodium"] = "false"
             };
 
-            var postResponse = await _client.PostAsync("/Events/Create", new FormUrlEncodedContent(formData));
-            postResponse.StatusCode.Should().Be(HttpStatusCode.Found);
+            var postResponse = await _client.PostAsync(
+                "/Events/Create", 
+                new FormUrlEncodedContent(formData));
+
+            var responseBody = await postResponse.Content.ReadAsStringAsync();
 
             using var scope = _factory.Services.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-            var created = await db.Events.FirstOrDefaultAsync(e => e.EventName == "Test Event");
+
+            var created = await db.Events
+                .FirstOrDefaultAsync(e => e.EventName == "Test Event");
+
             created.Should().NotBeNull();
+
+            postResponse.StatusCode.Should().Be(
+                HttpStatusCode.Found,
+                $"Response: {responseBody}");
         }
 
         [Fact]

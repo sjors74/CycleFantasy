@@ -37,6 +37,9 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
             // voeg fake service toe
             services.AddTransient<IScraperService, FakeScraperService>();
 
+            services.RemoveAll<IScrapeScheduleService>();
+            services.AddTransient<IScrapeScheduleService, FakeEventScrapeJobRegistrationService>();
+
             services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = "Test";
