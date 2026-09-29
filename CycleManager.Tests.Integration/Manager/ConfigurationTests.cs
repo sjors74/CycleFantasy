@@ -15,11 +15,7 @@ namespace CycleManager.Tests.Integration.Manager
         public ConfigurationTests(CustomWebApplicationFactory factory)
         {
             _factory = factory;
-
-            using var scope = _factory.Services.CreateScope();
-            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-            db.Database.EnsureDeleted();
-            db.Database.EnsureCreated();
+            _factory.SeedDatabase();
         }
 
         // =====================================
