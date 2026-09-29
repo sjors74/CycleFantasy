@@ -243,22 +243,6 @@ if (!app.Environment.IsEnvironment("Testing"))
         Cron.Hourly);
 }
 
-app.MapGet("/competitors", async (IPcsScraper scraper, string team, int teamId, int year) =>
-{
-    // Bouw de URL dynamisch
-    var url = $"https://www.procyclingstats.com/team/{team}-{year}";
-
-    try
-    {
-        var competitors = await scraper.ScrapeCompetitorsAsync(url, teamId, year);
-        return Results.Ok(competitors);
-    }
-    catch (Exception ex)
-    {
-        return Results.Problem($"Scrapen mislukt: {ex.Message}");
-    }
-});
-
 app.Run();
 
 // Alleen nodig voor integratietests

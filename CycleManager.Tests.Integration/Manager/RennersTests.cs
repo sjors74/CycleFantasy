@@ -7,9 +7,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using System.Net;
-using System.Net.Http.Json;
 using System.Text.Json;
-using System.Text.RegularExpressions;
 
 namespace CycleManager.Tests.Integration.Manager
 {
@@ -33,33 +31,24 @@ namespace CycleManager.Tests.Integration.Manager
         {
             using var scope = _factory.Services.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
             var year = 2025;
 
-            var response = await _client.GetAsync($"/Competitors?year={year}");
+            var competitor = await CreateTestCompetitorWithTeamAsync(db, year, "Rider", "2025");
+
+            var seasonYear = await db.SeasonYears.
+                FirstAsync(sy => sy.Year == year);
+
+            var response = await _client.GetAsync(
+                $"/Competitors?seasonYearId={seasonYear.SeasonYearId}");
+
             response.EnsureSuccessStatusCode();
+
             var html = await response.Content.ReadAsStringAsync();
 
-            var competitorsForYear = db.Competitors
-                .Include(c => c.CompetitorInTeams)
-                    .ThenInclude(cit => cit.TeamYear)
-                .Include(c => c.Country)
-                .Where(c => c.CompetitorInTeams
-                    .Any(cit => cit.TeamYear.Year == year))
-                .ToList();
-
-            foreach (var c in competitorsForYear)
-            {
-                html.Should().Contain(c.FirstName);
-                html.Should().Contain(c.LastName);
-                html.Should().Contain(c.Country.CountryNameShort);
-
-                if (c.CompetitorInTeams.Any(cit =>
-                    cit.TeamYear.Year == year &&
-                    cit.IsNationalChampion))
-                {
-                    html.Should().Contain("🏆");
-                }
-            }
+            html.Should().Contain(competitor.FirstName);
+            html.Should().Contain(competitor.LastName);
+            html.Should().Contain(competitor.Country.CountryNameShort);
         }
 
         [Theory]
@@ -67,9 +56,28 @@ namespace CycleManager.Tests.Integration.Manager
         [InlineData("Two")]
         public async Task Index_SearchByName_Should_Filter(string searchTerm)
         {
-            var response = await _client.GetAsync($"/Competitors?SearchString={searchTerm}");
+            using var scope = _factory.Services.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+            await CreateActiveSeasonYearAsync(db);
+
+            await CreateTestCompetitorAsync(
+                db,
+                firstName: "Rider",
+                lastName: "One");
+
+            await CreateTestCompetitorAsync(
+                db,
+                firstName: "Rider",
+                lastName: "Two");
+
+            var response = await _client.GetAsync(
+                $"/Competitors?searchString={Uri.EscapeDataString(searchTerm)}");
+
             response.EnsureSuccessStatusCode();
+
             var html = await response.Content.ReadAsStringAsync();
+
             html.Should().Contain(searchTerm);
         }
 
@@ -99,7 +107,8 @@ namespace CycleManager.Tests.Integration.Manager
         {
             using var scope = _factory.Services.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-            var competitor = await CreateTestCompetitorWithTeamAsync(db);
+            var year = 2026;
+            var competitor = await CreateTestCompetitorWithTeamAsync(db, year);
 
             var getHtml = await (await _client.GetAsync($"/Competitors/Edit/{competitor.CompetitorId}")).Content.ReadAsStringAsync();
             var token = TokenHelper.ExtractAntiForgeryToken(getHtml);
@@ -258,20 +267,19 @@ namespace CycleManager.Tests.Integration.Manager
         {
             using var scope = _factory.Services.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-            var competitor = db.Competitors
-                .Include(c => c.Country)
-                .Include(c => c.CompetitorInTeams)
-                    .ThenInclude(cit => cit.TeamYear)
-                        .ThenInclude(ty => ty.Team)
-                .First();
 
-            var year = competitor.CompetitorInTeams
+            var year = 2026;
+            var competitor = await CreateTestCompetitorWithTeamAsync(db, year);
+
+            var seasonYearId = competitor.CompetitorInTeams
                 .First()
                 .TeamYear
-                .Year;
+                .SeasonYearId;
 
             // Act
-            var response = await _client.GetAsync($"/Competitors/GetCompetitorInfo?id={competitor.CompetitorId}&year={year}");
+            var response = await _client.GetAsync(
+                $"/Competitors/GetCompetitorInfo?id={competitor.CompetitorId}&seasonYearId={seasonYearId}");
+
             response.EnsureSuccessStatusCode();
 
             // Assert
@@ -279,7 +287,7 @@ namespace CycleManager.Tests.Integration.Manager
             var data = JsonSerializer.Deserialize<JsonElement>(json);
 
             data.GetProperty("country").GetString().Should().Be(competitor.Country.CountryNameLong);
-            data.GetProperty("teamName").GetString().Should().Be(competitor.CompetitorInTeams.First().TeamYear.Team.CurrentTeamName);
+            data.GetProperty("teamName").GetString().Should().Be(competitor.CompetitorInTeams.First().TeamYear.Name);
         }
 
         protected async Task<Competitor> CreateTestCompetitorAsync(ApplicationDbContext db,  string firstName = "Test",  string lastName = "Competitor")
@@ -312,7 +320,7 @@ namespace CycleManager.Tests.Integration.Manager
             return competitor;
         }
 
-        protected async Task<Competitor> CreateTestCompetitorWithTeamAsync(ApplicationDbContext db, string firstName = "Test",  string lastName = "Competitor")
+        protected async Task<Competitor> CreateTestCompetitorWithTeamAsync(ApplicationDbContext db, int year, string firstName = "Test",  string lastName = "Competitor")
         {
             var country = await db.Countries.FirstOrDefaultAsync();
 
@@ -339,7 +347,7 @@ namespace CycleManager.Tests.Integration.Manager
 
             var seasonYear = new SeasonYear
             {
-                Year = DateTime.Today.Year,
+                Year = year,
                 Active = true
             };
 
@@ -350,7 +358,7 @@ namespace CycleManager.Tests.Integration.Manager
             {
                 TeamId = team.TeamId,
                 Team = team,
-                Year = seasonYear.Year,
+                Year = year,
                 SeasonYearId = seasonYear.SeasonYearId,
                 SeasonYear = seasonYear,
                 Name = team.CurrentTeamName
@@ -381,6 +389,26 @@ namespace CycleManager.Tests.Integration.Manager
             await db.SaveChangesAsync();
 
             return competitor;
+        }
+
+        protected async Task<SeasonYear> CreateActiveSeasonYearAsync(ApplicationDbContext db, int year = 2026)
+        {
+            var seasonYear = await db.SeasonYears
+                .FirstOrDefaultAsync(x => x.Active);
+
+            if (seasonYear != null)
+                return seasonYear;
+
+            seasonYear = new SeasonYear
+            {
+                Year = year,
+                Active = true
+            };
+
+            db.SeasonYears.Add(seasonYear);
+            await db.SaveChangesAsync();
+
+            return seasonYear;
         }
     }
 }

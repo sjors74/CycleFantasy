@@ -1,10 +1,11 @@
-﻿using CycleManager.Domain.Models;
+﻿using CycleManager.Domain.Dto;
+using CycleManager.Domain.Models;
 using CycleManager.Services.Interfaces;
 using CycleManager.Tests.Integration.Helpers;
 using Domain.Context;
+using Domain.Models;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using System.Net.Http.Json;
 
@@ -43,17 +44,59 @@ namespace CycleManager.Tests.Integration.Manager
             using var scope = _factory.Services.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-            var team = db.Teams.Include(t => t.TeamYears).First();
-            var year = team.TeamYears.First().Year;
+            var year = 2026;
 
-            var dto = new
+            var country = new Country
+            {
+                CountryNameLong = "Nederland",
+                CountryNameShort = "NL"
+            };
+
+            db.Countries.Add(country);
+            await db.SaveChangesAsync();
+
+            var team = new Team
+            {
+                CurrentTeamName = "Test Team",
+                CountryId = country.CountryId
+            };
+
+            db.Teams.Add(team);
+            await db.SaveChangesAsync();
+
+            var seasonYear = new SeasonYear
+            {
+                Year = year,
+                Active = true
+            };
+
+            db.SeasonYears.Add(seasonYear);
+            await db.SaveChangesAsync();
+
+            var teamYear = new TeamYear
             {
                 TeamId = team.TeamId,
-                Year = year
+                Team = team,
+                Year = year,
+                SeasonYearId = seasonYear.SeasonYearId,
+                SeasonYear = seasonYear,
+                Name = team.CurrentTeamName
+            };
+
+            db.TeamYear.Add(teamYear);
+            await db.SaveChangesAsync();
+
+            var dto = new ScrapeRequestDto
+            {
+                TeamId = team.TeamId,
+                SeasonYearId = seasonYear.SeasonYearId
             };
 
             // Act: POST scrape
-            var response = await _client.PostAsJsonAsync("/AdminScraper/ScrapeCompetitors", dto);
+            var response = await _client.PostAsJsonAsync(
+                "/AdminScraper/ScrapeCompetitors", 
+                dto);
+
             response.EnsureSuccessStatusCode();
 
             // Assert: check database
@@ -66,7 +109,12 @@ namespace CycleManager.Tests.Integration.Manager
 
             // Check expected rider names from fake scraper
             scraped.Select(sc => sc.RiderName)
-                   .Should().Contain(new[] { $"Rider One_{year}", $"Rider Two_{year}" });
+                   .Should()
+                   .Contain(new[] 
+                   { 
+                       $"Rider One_{year}", 
+                       $"Rider Two_{year}" 
+                   });
         }
     }
 }

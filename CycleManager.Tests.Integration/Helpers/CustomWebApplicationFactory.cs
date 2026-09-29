@@ -3,12 +3,14 @@ using CycleManager.Services.Interfaces;
 using CycleManager.Tests.Integration.Helpers;
 using Domain.Context;
 using Domain.Models;
+using Hangfire;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Moq;
 
 public class CustomWebApplicationFactory : WebApplicationFactory<Program>
 {
@@ -39,6 +41,9 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
 
             services.RemoveAll<IScrapeScheduleService>();
             services.AddTransient<IScrapeScheduleService, FakeEventScrapeJobRegistrationService>();
+
+            services.AddSingleton<IBackgroundJobClient>(
+                Mock.Of<IBackgroundJobClient>());
 
             services.AddAuthentication(options =>
             {

@@ -2,6 +2,7 @@
 using CycleManager.Services.Interfaces;
 using CycleManager.Tests.Integration.Helpers;
 using Domain.Context;
+using Domain.Models;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
@@ -11,22 +12,12 @@ using System.Text.RegularExpressions;
 
 namespace CycleManager.Tests.Integration.Manager
 {
-    public class TeamTests
+    public class TeamTests : ManagerIntegrationTestBase
     {
-        private CustomWebApplicationFactory CreateFactory() => new CustomWebApplicationFactory();
-        private HttpClient CreateClient(CustomWebApplicationFactory factory)
-        {
-            return factory.CreateClient(new WebApplicationFactoryClientOptions
-            {
-                AllowAutoRedirect = false
-            });
-        }
-
         [Fact]
         public void Factory_Should_Seed_Database()
         {
-            using var factory = CreateFactory();
-            using var scope = factory.Services.CreateScope();
+            using var scope = _factory.Services.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
             var teams = db.Teams.Include(t => t.TeamYears).ToList();
@@ -38,8 +29,7 @@ namespace CycleManager.Tests.Integration.Manager
         [Fact]
         public async Task TestIndexPage_Should_Return_OK()
         {
-            using var factory = CreateFactory();
-            using var client = CreateClient(factory);
+            var client = _client;
 
             var response = await client.GetAsync("/Teams");
             response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -51,8 +41,7 @@ namespace CycleManager.Tests.Integration.Manager
         [Fact]
         public async Task Index_Should_Display_SeededTeam()
         {
-            using var factory = CreateFactory();
-            using var client = CreateClient(factory);
+            var client = _client;
 
             var response = await client.GetAsync("/Teams");
             response.EnsureSuccessStatusCode();
@@ -65,8 +54,7 @@ namespace CycleManager.Tests.Integration.Manager
         [Fact]
         public async Task CreateTeam_Should_Return_Redirect()
         {
-            using var factory = CreateFactory();
-            using var client = CreateClient(factory);
+            var client = _client;
 
             var getResponse = await client.GetAsync("/teams/create");
             var html = await getResponse.Content.ReadAsStringAsync();
@@ -91,10 +79,9 @@ namespace CycleManager.Tests.Integration.Manager
         [Fact]
         public async Task EditTeam_Should_Return_Redirect_And_UpdateTeam()
         {
-            using var factory = CreateFactory();
-            using var client = CreateClient(factory);
+            var client = _client;
 
-            using var scope = factory.Services.CreateScope();
+            using var scope = _factory.Services.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
             var team = db.Teams.Include(t => t.TeamYears).First();
@@ -126,7 +113,7 @@ namespace CycleManager.Tests.Integration.Manager
             postResponse.Headers.Location!.OriginalString.Should().Contain("/Teams");
 
             // Verifieer DB
-            using var verifyScope = factory.Services.CreateScope();
+            using var verifyScope = _factory.Services.CreateScope();
             var dbVerify = verifyScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
             var updatedTeam = dbVerify.Teams.Include(t => t.TeamYears).First(t => t.TeamId == team.TeamId);
 
@@ -139,15 +126,42 @@ namespace CycleManager.Tests.Integration.Manager
         [Fact]
         public async Task Delete_Should_Remove_Team_And_Redirect()
         {
-            using var factory = CreateFactory();
-            using var client = CreateClient(factory);
+            var client = _client;
 
-            using var scope = factory.Services.CreateScope();
+            using var scope = _factory.Services.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-            var teamId = db.Teams.First().TeamId;
 
-            var getHtml = await (await client.GetAsync($"/teams/delete/{teamId}")).Content.ReadAsStringAsync();
-            var token = Regex.Match(getHtml, "name=\"__RequestVerificationToken\" type=\"hidden\" value=\"(.+?)\"").Groups[1].Value;
+            var country = new Country
+            {
+                CountryNameLong = "Nederland",
+                CountryNameShort = "NL"
+            };
+
+            db.Countries.Add(country);
+            await db.SaveChangesAsync();
+
+            var team = new Team
+            {
+                CurrentTeamName = "Delete Test Team",
+                CountryId = country.CountryId
+            };
+
+            db.Teams.Add(team);
+            await db.SaveChangesAsync();
+
+            var teamId = team.TeamId;
+
+            var getResponse = await client.GetAsync($"/Teams/Delete/{teamId}");
+            getResponse.EnsureSuccessStatusCode();
+
+            var getHtml = await getResponse.Content.ReadAsStringAsync();
+
+            var token = Regex.Match(
+                getHtml, 
+                "name=\"__RequestVerificationToken\" type=\"hidden\" value=\"(.+?)\""
+            ).Groups[1].Value;
+
+            token.Should().NotBeNullOrEmpty();
 
             var content = new FormUrlEncodedContent(new Dictionary<string, string>
             {
@@ -155,58 +169,75 @@ namespace CycleManager.Tests.Integration.Manager
                 ["TeamId"] = teamId.ToString()
             });
 
-            var response = await client.PostAsync($"/teams/delete/{teamId}", content);
+            var response = await client.PostAsync(
+                $"/teams/delete/{teamId}", 
+                content);
+
             response.StatusCode.Should().Be(HttpStatusCode.Found);
 
             // Controleer dat team weg is
-            using var verifyScope = factory.Services.CreateScope();
-            var dbVerify = verifyScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-            dbVerify.Teams.Any(t => t.TeamId == teamId).Should().BeFalse();
+            using var verifyScope = _factory.Services.CreateScope();
+            var dbVerify = verifyScope.ServiceProvider
+                .GetRequiredService<ApplicationDbContext>();
+
+            dbVerify.Teams.Any(t => t.TeamId == teamId)
+                .Should().BeFalse();
         }
 
         [Fact]
         public async Task Details_Should_DisplayRidersPerYear()
         {
-            using var factory = CreateFactory();
-            using var client = CreateClient(factory);
+            var client = _client;
 
-            using var scope = factory.Services.CreateScope();
+            using var scope = _factory.Services.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-            var team = db.Teams.Include(t => t.TeamYears)
-                               .First();
 
             var year = 2025;
 
-            var response = await client.GetAsync($"/Teams/Details/{team.TeamId}?year={year}");
+            var teamYear = await CreateTestTeamWithYearAsync(db, year);
+
+            var response = await client.GetAsync(
+                $"/Teams/Details/{teamYear.TeamId}?year={year}");
+
             response.EnsureSuccessStatusCode();
+
             var html = await response.Content.ReadAsStringAsync();
 
-            html.Should().Contain(team.CurrentTeamName);
+            html.Should().Contain(teamYear.Name);
 
-            //var competitorsForYear = team.CompetitorInTeams
-            //    .Where(cit => cit.TeamYear.Year == year)
-            //    .Select(cit => cit.Competitor.CompetitorName);
-
-            //foreach (var riderName in competitorsForYear)
-            //    html.Should().Contain(riderName);
         }
 
         [Fact]
         public async Task ScrapeCompetitors_Should_Add_NewCompetitor_ForGivenYear()
         {
-            using var factory = CreateFactory();
-            using var client = CreateClient(factory);
 
-            using var scope = factory.Services.CreateScope();
+            var client = _client;
+
+            using var scope = _factory.Services.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
             var scraperService = scope.ServiceProvider.GetRequiredService<IScraperService>();
 
             db.Competitors.RemoveRange(db.Competitors);
             await db.SaveChangesAsync();
 
-            var dto = new ScrapeRequestDto { TeamId = 1 };
+            var team = await CreateTestTeamWithYearAsync(db, 2025);
 
-            await scraperService.RunCompetitorsAsync(dto.TeamId);
+            var teamYear = await db.TeamYear
+                .Include(ty => ty.SeasonYear)
+                .FirstAsync(ty =>
+                    ty.TeamId == team.TeamId &&
+                    ty.SeasonYear.Year == 2025);
+
+            var belgium = new Country
+            {
+                CountryNameLong = "België",
+                CountryNameShort = "be"
+            };
+
+            db.Countries.Add(belgium);
+            await db.SaveChangesAsync();
+
+            await scraperService.RunCompetitorsAsync(teamYear.TeamYearId);
             await scraperService.ImportScrapedCompetitorsAsync();
 
             var competitor = db.Competitors
@@ -214,7 +245,11 @@ namespace CycleManager.Tests.Integration.Manager
                                      c.PcsScraperName.Contains("_2025"));
             competitor.Should().NotBeNull();
 
-            var cit = db.CompetitorInTeams.FirstOrDefault(c => c.TeamYear.TeamId == 1 && c.CompetitorId == competitor.CompetitorId && c.TeamYear.Year == 2025);
+            var cit = db.CompetitorInTeams.FirstOrDefault(c =>
+                c.TeamYear.TeamId == team.TeamId &&
+                c.CompetitorId == competitor.CompetitorId &&
+                c.TeamYear.Year == 2025);
+
             cit.Should().NotBeNull();
 
             var htmlResponse = await client.GetAsync($"/Teams/Details/1?year=2025");
@@ -224,16 +259,23 @@ namespace CycleManager.Tests.Integration.Manager
         }
 
         [Fact]
-        public async Task Edit_Should_Add_NewTeamYear()
+        public async Task Edit_Should_Update_ExistingTeamYear()
         {
-            using var factory = CreateFactory();
-            using var client = CreateClient(factory);
+            var client = _client;
 
-            using var scope = factory.Services.CreateScope();
+            using var scope = _factory.Services.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-            var team = db.Teams.Include(t => t.TeamYears).First();
 
-            var getHtml = await (await client.GetAsync($"/Teams/Edit/{team.TeamId}")).Content.ReadAsStringAsync();
+            // Arrange
+            var teamYear = await CreateTestTeamWithYearAsync(db, 2025);
+            var team = teamYear.Team;
+
+            var getResponse = await client.GetAsync(
+                $"/Teams/Edit/{team.TeamId}");
+
+            getResponse.EnsureSuccessStatusCode();
+
+            var getHtml = await getResponse.Content.ReadAsStringAsync();
             var token = TokenHelper.ExtractAntiForgeryToken(getHtml);
 
             var formData = new Dictionary<string, string>
@@ -242,30 +284,46 @@ namespace CycleManager.Tests.Integration.Manager
                 ["TeamId"] = team.TeamId.ToString(),
                 ["CurrentTeamName"] = team.CurrentTeamName,
                 ["CountryId"] = team.CountryId!.Value.ToString(),
-                ["PcsName"] = team.PcsName,
+                ["PcsName"] = team.PcsName ?? "",
+
+                ["TeamYears[0].SeasonYearId"] =
+                    teamYear.SeasonYearId.ToString(),
+
                 ["TeamYears[0].Year"] = "2025",
-                ["TeamYears[0].Name"] = "Team2025Renamed",
-                ["TeamYears[3].Year"] = "2028",
-                ["TeamYears[3].Name"] = "Team2028New"
+                ["TeamYears[0].Name"] = "Team2025Renamed"
             };
 
             var postContent = new FormUrlEncodedContent(formData);
-            var postResponse = await client.PostAsync($"/Teams/Edit/{team.TeamId}", postContent);
 
+            // Act
+            var postResponse = await client.PostAsync(
+                $"/Teams/Edit/{team.TeamId}",
+                postContent);
+
+            // Assert
             postResponse.StatusCode.Should().Be(HttpStatusCode.Found);
 
-            using var verifyScope = factory.Services.CreateScope();
-            var dbVerify = verifyScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-            var updatedTeam = dbVerify.Teams.Include(t => t.TeamYears).First(t => t.TeamId == team.TeamId);
-            updatedTeam.TeamYears.FirstOrDefault(y => y.Year == 2028)?.Name.Should().Be("Team2028New");
+            using var verifyScope = _factory.Services.CreateScope();
+            var dbVerify = verifyScope.ServiceProvider
+                .GetRequiredService<ApplicationDbContext>();
+
+            var updatedTeam = await dbVerify.Teams
+                .Include(t => t.TeamYears)
+                .FirstAsync(t => t.TeamId == team.TeamId);
+
+            var updatedTeamYear = updatedTeam.TeamYears
+                .FirstOrDefault(ty =>
+                    ty.SeasonYearId == teamYear.SeasonYearId);
+
+            updatedTeamYear.Should().NotBeNull();
+            updatedTeamYear!.Name.Should().Be("Team2025Renamed");
         }
 
         [Fact]
         public async Task Edit_Should_Remove_TeamYear()
         {
-            using var factory = new CustomWebApplicationFactory();
-            using var client = factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false});
-            using var scope = factory.Services.CreateScope();
+            var client = _client;
+            using var scope = _factory.Services.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
             var team = db.Teams.Include(t => t.TeamYears).First();
@@ -290,7 +348,7 @@ namespace CycleManager.Tests.Integration.Manager
             var postResponse = await client.PostAsync($"/Teams/Edit/{team.TeamId}", new FormUrlEncodedContent(formData));
             postResponse.StatusCode.Should().Be(HttpStatusCode.Found);
 
-            using var verifyScope = factory.Services.CreateScope();
+            using var verifyScope = _factory.Services.CreateScope();
             var dbVerify = verifyScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
             var updatedTeam = dbVerify.Teams.Include(t => t.TeamYears).First(t => t.TeamId == team.TeamId);
 
