@@ -41,6 +41,7 @@ stages:
         --no-build
         --logger "trx;LogFileName=test-results.trx"
         --collect:"XPlat Code Coverage"
+        --settings CodeCoverage.runsettings
       displayName: 'Run unit tests'
 
     - script: >
