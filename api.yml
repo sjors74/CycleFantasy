@@ -40,6 +40,7 @@ stages:
         --configuration $(buildConfiguration)
         --no-build
         --logger "trx;LogFileName=test-results.trx"
+        --collect:"XPlat Code Coverage"
       displayName: 'Run unit tests'
 
     - script: >
@@ -52,6 +53,7 @@ stages:
         --configuration $(buildConfiguration)
         --no-build
         --logger "trx;LogFileName=integration-test-results.trx"
+        --collect:"XPlat Code Coverage"
       displayName: 'Run integration tests'
 
     - task: PublishTestResults@2
@@ -62,6 +64,12 @@ stages:
         searchFolder: '$(Build.SourcesDirectory)'
         failTaskOnFailedTests: true
         testRunTitle: 'CycleFantasy Tests'
+
+    - task: PublishCodeCoverageResults@2
+      displayName: 'Publish code coverage'
+      inputs:
+        summaryFileLocation: '$(Agent.TempDirectory)/**/coverage.cobertura.xml'
+        failIfCoverageEmpty: true
 
 - stage: DeployApi
   displayName: Deploy API
