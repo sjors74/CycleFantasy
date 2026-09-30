@@ -45,18 +45,23 @@ stages:
       displayName: 'Run unit tests'
 
     - powershell: |
-        Write-Host "=== Coverage files ==="
-        Get-ChildItem -Path "$(Build.SourcesDirectory)" -Recurse -Filter "coverage.cobertura.xml" |
-          Select-Object FullName
+        $files = Get-ChildItem `
+          "$(Build.SourcesDirectory)\CycleManager.Tests.Unit\TestResults" `
+          -Recurse `
+          -Filter "coverage.cobertura.xml"
 
-        Write-Host "=== Migrations in coverage ==="
-        Get-ChildItem -Path "$(Build.SourcesDirectory)" -Recurse -Filter "coverage.cobertura.xml" |
-          ForEach-Object {
-            Write-Host "Checking $($_.FullName)"
-            Select-String -Path $_.FullName -Pattern "DataAccessEF.Migrations" |
-              Select-Object -First 5
-          }
-      displayName: 'Inspect coverage files'
+        foreach ($file in $files) {
+            Write-Host "FILE: $($file.FullName)"
+            $content = Get-Content $file.FullName -Raw
+
+            if ($content -match "DataAccessEF.Migrations") {
+                Write-Host "  --> CONTAINS MIGRATIONS"
+            }
+            else {
+                Write-Host "  --> NO MIGRATIONS"
+            }
+        }
+      displayName: 'Check coverage contents'
 
     - script: >
         dotnet build CycleManager.Tests.Integration/CycleManager.Tests.Integration.csproj
@@ -83,7 +88,7 @@ stages:
     - task: PublishCodeCoverageResults@2
       displayName: 'Publish code coverage'
       inputs:
-        summaryFileLocation: '$(Build.SourcesDirectory)/**/TestResults/**/coverage.cobertura.xml'
+        summaryFileLocation: '$(Build.SourcesDirectory)/CycleManager.Tests.Unit/TestResults/*/coverage.cobertura.xml'
         failIfCoverageEmpty: true
 
 - stage: DeployApi
