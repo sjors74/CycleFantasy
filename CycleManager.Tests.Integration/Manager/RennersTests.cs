@@ -1,7 +1,5 @@
-﻿using CycleManager.Domain.Models;
-using CycleManager.Tests.Integration.Helpers;
+﻿using CycleManager.Tests.Integration.Helpers;
 using Domain.Context;
-using Domain.Models;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
@@ -12,20 +10,8 @@ using System.Text.Json;
 namespace CycleManager.Tests.Integration.Manager
 {
     [Collection("NonParallelTests")]
-    public class RennersTests : IClassFixture<CustomWebApplicationFactory>
+    public class RennersTests : ManagerIntegrationTestBase
     {
-        private readonly HttpClient _client;
-        private readonly CustomWebApplicationFactory _factory;
-
-        public RennersTests(CustomWebApplicationFactory factory)
-        {
-            _factory = factory;
-            _client = _factory.CreateClient(new WebApplicationFactoryClientOptions
-            {
-                AllowAutoRedirect = false
-            });
-        }
-
         [Fact]
         public async Task Index_Should_DisplayCompetitorsPerYear()
         {
@@ -105,6 +91,10 @@ namespace CycleManager.Tests.Integration.Manager
         [Fact]
         public async Task Edit_Should_UpdateCompetitor()
         {
+            var _client = _factory.CreateClient(new WebApplicationFactoryClientOptions
+            {
+                AllowAutoRedirect = false // Zorg ervoor dat redirects niet automatisch worden gevolgd
+            });
             using var scope = _factory.Services.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
             var year = 2026;
@@ -146,6 +136,11 @@ namespace CycleManager.Tests.Integration.Manager
         [Fact]
         public async Task Delete_Should_RemoveCompetitor()
         {
+            var _client = _factory.CreateClient(new WebApplicationFactoryClientOptions
+            {
+                AllowAutoRedirect = false // Zorg ervoor dat redirects niet automatisch worden gevolgd
+            });
+
             using var scope = _factory.Services.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
             var competitor = await CreateTestCompetitorAsync(db);
@@ -209,6 +204,11 @@ namespace CycleManager.Tests.Integration.Manager
         public async Task DeleteConfirmed_Should_Redirect_WhenCompetitorDoesNotExist()
         {
             // Arrange
+            var _client = _factory.CreateClient(new WebApplicationFactoryClientOptions
+            {
+                AllowAutoRedirect = false // Zorg ervoor dat redirects niet automatisch worden gevolgd
+            });
+
             using var scope = _factory.Services.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
             var nonExistingId = 9999;
@@ -288,127 +288,6 @@ namespace CycleManager.Tests.Integration.Manager
 
             data.GetProperty("country").GetString().Should().Be(competitor.Country.CountryNameLong);
             data.GetProperty("teamName").GetString().Should().Be(competitor.CompetitorInTeams.First().TeamYear.Name);
-        }
-
-        protected async Task<Competitor> CreateTestCompetitorAsync(ApplicationDbContext db,  string firstName = "Test",  string lastName = "Competitor")
-        {
-            var country = await db.Countries.FirstOrDefaultAsync();
-
-            if (country == null)
-            {
-                country = new Country
-                {
-                    CountryNameLong = "Nederland",
-                    CountryNameShort = "NL"
-                };
-
-                db.Countries.Add(country);
-                await db.SaveChangesAsync();
-            }
-
-            var competitor = new Competitor
-            {
-                FirstName = firstName,
-                LastName = lastName,
-                Country = country,
-                CountryId = country.CountryId
-            };
-
-            db.Competitors.Add(competitor);
-            await db.SaveChangesAsync();
-
-            return competitor;
-        }
-
-        protected async Task<Competitor> CreateTestCompetitorWithTeamAsync(ApplicationDbContext db, int year, string firstName = "Test",  string lastName = "Competitor")
-        {
-            var country = await db.Countries.FirstOrDefaultAsync();
-
-            if (country == null)
-            {
-                country = new Country
-                {
-                    CountryNameLong = "Nederland",
-                    CountryNameShort = "NL"
-                };
-
-                db.Countries.Add(country);
-                await db.SaveChangesAsync();
-            }
-
-            var team = new Team
-            {
-                CurrentTeamName = "Test Team",
-                CountryId = country.CountryId
-            };
-
-            db.Teams.Add(team);
-            await db.SaveChangesAsync();
-
-            var seasonYear = new SeasonYear
-            {
-                Year = year,
-                Active = true
-            };
-
-            db.SeasonYears.Add(seasonYear);
-            await db.SaveChangesAsync();
-
-            var teamYear = new TeamYear
-            {
-                TeamId = team.TeamId,
-                Team = team,
-                Year = year,
-                SeasonYearId = seasonYear.SeasonYearId,
-                SeasonYear = seasonYear,
-                Name = team.CurrentTeamName
-            };
-
-            db.TeamYear.Add(teamYear);
-            await db.SaveChangesAsync();
-
-            var competitor = new Competitor
-            {
-                FirstName = firstName,
-                LastName = lastName,
-                CountryId = country.CountryId
-            };
-
-            db.Competitors.Add(competitor);
-            await db.SaveChangesAsync();
-
-            var competitorInTeam = new CompetitorInTeam
-            {
-                CompetitorId = competitor.CompetitorId,
-                Competitor = competitor,
-                TeamYearId = teamYear.TeamYearId,
-                TeamYear = teamYear
-            };
-
-            db.CompetitorInTeams.Add(competitorInTeam);
-            await db.SaveChangesAsync();
-
-            return competitor;
-        }
-
-        protected async Task<SeasonYear> CreateActiveSeasonYearAsync(ApplicationDbContext db, int year = 2026)
-        {
-            var seasonYear = await db.SeasonYears
-                .FirstOrDefaultAsync(x => x.Active);
-
-            if (seasonYear != null)
-                return seasonYear;
-
-            seasonYear = new SeasonYear
-            {
-                Year = year,
-                Active = true
-            };
-
-            db.SeasonYears.Add(seasonYear);
-            await db.SaveChangesAsync();
-
-            return seasonYear;
         }
     }
 }

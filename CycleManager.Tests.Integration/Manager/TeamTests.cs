@@ -1,4 +1,5 @@
 ﻿using CycleManager.Domain.Dto;
+using CycleManager.Domain.Models;
 using CycleManager.Services.Interfaces;
 using CycleManager.Tests.Integration.Helpers;
 using Domain.Context;
@@ -15,18 +16,6 @@ namespace CycleManager.Tests.Integration.Manager
     public class TeamTests : ManagerIntegrationTestBase
     {
         [Fact]
-        public void Factory_Should_Seed_Database()
-        {
-            using var scope = _factory.Services.CreateScope();
-            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-
-            var teams = db.Teams.Include(t => t.TeamYears).ToList();
-
-            teams.Should().NotBeEmpty();
-            teams.First().CurrentTeamName.Should().Be("OriginalTeam");
-        }
-
-        [Fact]
         public async Task TestIndexPage_Should_Return_OK()
         {
             var client = _client;
@@ -39,22 +28,12 @@ namespace CycleManager.Tests.Integration.Manager
         }
 
         [Fact]
-        public async Task Index_Should_Display_SeededTeam()
-        {
-            var client = _client;
-
-            var response = await client.GetAsync("/Teams");
-            response.EnsureSuccessStatusCode();
-
-            var html = await response.Content.ReadAsStringAsync();
-            html.Should().Contain("OriginalTeam");
-            html.Should().Contain("be");
-        }
-
-        [Fact]
         public async Task CreateTeam_Should_Return_Redirect()
         {
-            var client = _client;
+            var client = _factory.CreateClient(new WebApplicationFactoryClientOptions
+            {
+                AllowAutoRedirect = false
+            });
 
             var getResponse = await client.GetAsync("/teams/create");
             var html = await getResponse.Content.ReadAsStringAsync();
@@ -79,12 +58,15 @@ namespace CycleManager.Tests.Integration.Manager
         [Fact]
         public async Task EditTeam_Should_Return_Redirect_And_UpdateTeam()
         {
-            var client = _client;
+            var client = _factory.CreateClient(new WebApplicationFactoryClientOptions
+            {
+                AllowAutoRedirect = false
+            });
 
             using var scope = _factory.Services.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-            var team = db.Teams.Include(t => t.TeamYears).First();
+            var team = await CreateTestTeamWithThreeYearsAsync(db);
 
             var getHtml = await (await client.GetAsync($"/Teams/Edit/{team.TeamId}")).Content.ReadAsStringAsync();
             var token = TokenHelper.ExtractAntiForgeryToken(getHtml);
@@ -96,14 +78,15 @@ namespace CycleManager.Tests.Integration.Manager
                 ["CurrentTeamName"] = "UpdatedTeam",
                 ["CountryId"] = "2",
                 ["PcsName"] = "UpdatedPCS",
+                ["TeamYears[0].SeasonYearId"] = "1",
                 ["TeamYears[0].Year"] = "2025",
                 ["TeamYears[0].Name"] = "2025",
+                ["TeamYears[1].SeasonYearId"] = "2",
                 ["TeamYears[1].Year"] = "2026",
                 ["TeamYears[1].Name"] = "2026",
+                ["TeamYears[2].SeasonYearId"] = "3",
                 ["TeamYears[2].Year"] = "2027",
                 ["TeamYears[2].Name"] = "2027",
-                ["TeamYears[3].Year"] = "2028",
-                ["TeamYears[3].Name"] = "2028"
             };
 
             var postContent = new FormUrlEncodedContent(formData);
@@ -119,14 +102,19 @@ namespace CycleManager.Tests.Integration.Manager
 
             updatedTeam.CurrentTeamName.Should().Be("UpdatedTeam");
             updatedTeam.PcsName.Should().Be("UpdatedPCS");
-            updatedTeam.TeamYears.FirstOrDefault(y => y.Year == 2025)?.Name.Should().Be("2025");
-            updatedTeam.TeamYears.FirstOrDefault(y => y.Year == 2028)?.Name.Should().Be("2028");
+            updatedTeam.TeamYears.Should().HaveCount(3);
+            updatedTeam.TeamYears.Should().ContainSingle(y => y.Year == 2025 && y.Name == "2025");
+            updatedTeam.TeamYears.Should().ContainSingle(y => y.Year == 2026 && y.Name == "2026");
+            updatedTeam.TeamYears.Should().ContainSingle(y => y.Year == 2027 && y.Name == "2027");
         }
 
         [Fact]
         public async Task Delete_Should_Remove_Team_And_Redirect()
         {
-            var client = _client;
+            var client = _factory.CreateClient(new WebApplicationFactoryClientOptions
+            {
+                AllowAutoRedirect = false
+            });
 
             using var scope = _factory.Services.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
@@ -210,7 +198,6 @@ namespace CycleManager.Tests.Integration.Manager
         [Fact]
         public async Task ScrapeCompetitors_Should_Add_NewCompetitor_ForGivenYear()
         {
-
             var client = _client;
 
             using var scope = _factory.Services.CreateScope();
@@ -261,7 +248,10 @@ namespace CycleManager.Tests.Integration.Manager
         [Fact]
         public async Task Edit_Should_Update_ExistingTeamYear()
         {
-            var client = _client;
+            var client = _factory.CreateClient(new WebApplicationFactoryClientOptions
+            {
+                AllowAutoRedirect = false
+            });
 
             using var scope = _factory.Services.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
@@ -322,11 +312,15 @@ namespace CycleManager.Tests.Integration.Manager
         [Fact]
         public async Task Edit_Should_Remove_TeamYear()
         {
-            var client = _client;
+            var client = _factory.CreateClient(new WebApplicationFactoryClientOptions
+            {
+                AllowAutoRedirect = false
+            });
+
             using var scope = _factory.Services.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-            var team = db.Teams.Include(t => t.TeamYears).First();
+            var team = await CreateTestTeamWithThreeYearsAsync(db);
 
             var getHtml = await (await client.GetAsync($"/Teams/Edit/{team.TeamId}")).Content.ReadAsStringAsync();
             var token = TokenHelper.ExtractAntiForgeryToken(getHtml);
@@ -339,10 +333,14 @@ namespace CycleManager.Tests.Integration.Manager
                 ["CurrentTeamName"] = team.CurrentTeamName,
                 ["CountryId"] = team.CountryId!.Value.ToString(),
                 ["PcsName"] = team.PcsName,
+                ["TeamYears[0].TeamYearId"] = "1",
+                ["TeamYears[0].SeasonYearId"] = "1",
                 ["TeamYears[0].Year"] = "2025",
                 ["TeamYears[0].Name"] = "Team2025Renamed",
-                ["TeamYears[2].Year"] = "2027",
-                ["TeamYears[2].Name"] = "Team2027Renamed"
+                ["TeamYears[1].TeamYearId"] = "3",
+                ["TeamYears[1].SeasonYearId"] = "3",
+                ["TeamYears[1].Year"] = "2027",
+                ["TeamYears[1].Name"] = "Team2027Renamed"
             };
 
             var postResponse = await client.PostAsync($"/Teams/Edit/{team.TeamId}", new FormUrlEncodedContent(formData));
@@ -358,18 +356,55 @@ namespace CycleManager.Tests.Integration.Manager
         [Fact]
         public async Task ScrapeCompetitors_NoData_Should_NotFail()
         {
-            var teamYearId = 1;
+            // Arrange
             using var factory = new CustomWebApplicationFactory();
             factory.ResetDatabase();
 
             using var scope = factory.Services.CreateScope();
+
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
             var scraperService = scope.ServiceProvider.GetRequiredService<IScraperService>();
 
-            await scraperService.RunCompetitorsAsync(teamYearId);
-            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-            //TODO fix this test
-            //db.ScrapedCompetitors.Where(sc => sc.TeamYearId == teamYearId).Should().BeEmpty();
-        }
+            var seasonYear = new SeasonYear
+            {
+                Year = 2025
+            };
 
+            var team = new Team
+            {
+                CurrentTeamName = "Test Team",
+                CountryId = 1,
+                PcsName = "Test Team"
+            };
+
+            var teamYear = new TeamYear
+            {
+                TeamId = team.TeamId,
+                Team = team,
+                SeasonYearId = seasonYear.SeasonYearId,
+                SeasonYear = seasonYear,
+                Year = 2025,
+                Name = "Test Team 2025"
+            };
+
+            db.SeasonYears.Add(seasonYear);
+            db.Teams.Add(team);
+            db.TeamYear.Add(teamYear);
+
+            await db.SaveChangesAsync();
+
+            // Controleer expliciet dat de testdata geen competitors bevat
+            db.CompetitorInTeams
+                .Where(cit => cit.TeamYearId == teamYear.TeamYearId)
+                .Should()
+                .BeEmpty();
+
+            // Act
+            var act = async () =>
+                await scraperService.RunCompetitorsAsync(teamYear.TeamYearId);
+
+            // Assert
+            await act.Should().NotThrowAsync();
+        }
     }
 }

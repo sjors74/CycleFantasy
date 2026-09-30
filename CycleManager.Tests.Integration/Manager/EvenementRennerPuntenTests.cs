@@ -9,15 +9,8 @@ using System.Text.RegularExpressions;
 
 namespace CycleManager.Tests.Integration.Manager
 {
-    public class EvenementRennerPuntenTests : IClassFixture<CustomWebApplicationFactory>
+    public class EvenementRennerPuntenTests : ManagerIntegrationTestBase
     {
-        private readonly CustomWebApplicationFactory _factory;
-
-        public EvenementRennerPuntenTests(CustomWebApplicationFactory factory)
-        {
-            _factory = factory;
-        }
-
         [Fact]
         public async Task Points_Index_ShouldHaveCorrectRankingWithTies()
         {
@@ -376,112 +369,5 @@ namespace CycleManager.Tests.Integration.Manager
             return ranks.ToList();
         }
 
-        private static async Task<(Event ev, List<CompetitorsInEvent> cieList)> CreateTestEventWithRandomPointsAsync(
-            ApplicationDbContext db, int numCompetitors = 5, int numStages = 3, bool allowTies = true)
-        {
-            var config = await db.Configurations.FirstOrDefaultAsync()
-                         ?? new Configuration { ConfigurationType = "Default Config" };
-            if (config.Id == 0) { db.Configurations.Add(config); await db.SaveChangesAsync(); }
-
-            var ev = new Event
-            {
-                EventName = $"RandomPointsEvent_{Guid.NewGuid()}",
-                EventYear = 2025,
-                StartDate = DateTime.Today,
-                EndDate = DateTime.Today.AddDays(numStages),
-                IsActive = true,
-                ConfigurationId = config.Id
-            };
-            db.Events.Add(ev);
-            await db.SaveChangesAsync();
-
-            var country = new Country { CountryNameShort = "NL", CountryNameLong = "Nederland" };
-            db.Countries.Add(country);
-            await db.SaveChangesAsync();
-
-            var team = new Team { CurrentTeamName = "Team Random", CountryId = country.CountryId };
-            db.Teams.Add(team);
-            await db.SaveChangesAsync();
-
-            var seasonYear = new SeasonYear
-            {
-                SeasonYearId = 1,
-                Year = 2025,
-                Active = true
-            };
-
-            db.SeasonYears.Add(seasonYear);
-            await db.SaveChangesAsync();
-
-            var teamYear = new TeamYear
-            {
-                TeamId = team.TeamId,
-                Year = 2025,
-                SeasonYearId = seasonYear.SeasonYearId,
-                Name = "Team Random"
-            };
-
-            db.TeamYear.Add(teamYear);
-            await db.SaveChangesAsync();
-
-
-            var cieList = new List<CompetitorsInEvent>();
-            for (int i = 0; i < numCompetitors; i++)
-            {
-                var comp = new Competitor { FirstName = $"Renner{i + 1}", LastName = "Test", CountryId = country.CountryId };
-                db.Competitors.Add(comp);
-                await db.SaveChangesAsync();
-
-                var cit = new CompetitorInTeam { CompetitorId = comp.CompetitorId, TeamYear = teamYear, TeamYearId = teamYear.TeamYearId };
-                db.CompetitorInTeams.Add(cit);
-                await db.SaveChangesAsync();
-
-                var cie = new CompetitorsInEvent { EventId = ev.EventId, CompetitorInTeamId = cit.Id };
-                db.CompetitorsInEvent.Add(cie);
-                await db.SaveChangesAsync();
-
-                cieList.Add(cie);
-            }
-
-            var stages = new List<Stage>();
-            for (int s = 0; s < numStages; s++)
-            {
-                var stage = new Stage { EventId = ev.EventId, StageName = $"Etappe {s + 1}" };
-                db.Stages.Add(stage);
-                await db.SaveChangesAsync();
-                stages.Add(stage);
-            }
-
-            var scores = new[] { 10, 8, 6, 5, 3, 1 };
-            var ciList = new List<ConfigurationItem>();
-            for (int r = 1; r <= scores.Length; r++)
-            {
-                var ci = new ConfigurationItem { ConfigurationId = config.Id, Position = r, Score = scores[r - 1] };
-                db.ConfigurationItems.Add(ci);
-                await db.SaveChangesAsync();
-                ciList.Add(ci);
-            }
-
-            var rnd = new Random();
-            foreach (var stage in stages)
-            {
-                foreach (var cie in cieList)
-                {
-                    var ci = allowTies
-                        ? ciList[rnd.Next(0, ciList.Count)]
-                        : ciList[cieList.IndexOf(cie) % ciList.Count];
-
-                    db.Results.Add(new Result
-                    {
-                        StageId = stage.Id,
-                        CompetitorInEventId = cie.Id,
-                        ConfigurationItemId = ci.Id
-                    });
-                }
-            }
-
-            await db.SaveChangesAsync();
-            return (ev, cieList);
-        }
     }
 }

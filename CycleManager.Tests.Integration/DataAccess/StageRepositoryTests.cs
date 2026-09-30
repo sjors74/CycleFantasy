@@ -212,15 +212,14 @@ namespace CycleManager.Tests.Integration.DataAccess
         }
 
         [Fact]
-        public async Task GetStageById_ReturnsNewStage_WhenNotFound()
+        public async Task GetStageById_ReturnsNull_WhenNotFound()
         {
             using var context = CreateContext();
             var repo = new StageRepository(context);
 
             var result = await repo.GetStageById(999);
 
-            result.Should().NotBeNull();
-            result.Id.Should().Be(0);
+            result.Should().BeNull();
         }
     }
 }
