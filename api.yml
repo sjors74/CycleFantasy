@@ -44,6 +44,20 @@ stages:
         --settings CodeCoverage.runsettings
       displayName: 'Run unit tests'
 
+    - powershell: |
+        Write-Host "=== Coverage files ==="
+        Get-ChildItem -Path "$(Build.SourcesDirectory)" -Recurse -Filter "coverage.cobertura.xml" |
+          Select-Object FullName
+
+        Write-Host "=== Migrations in coverage ==="
+        Get-ChildItem -Path "$(Build.SourcesDirectory)" -Recurse -Filter "coverage.cobertura.xml" |
+          ForEach-Object {
+            Write-Host "Checking $($_.FullName)"
+            Select-String -Path $_.FullName -Pattern "DataAccessEF.Migrations" |
+              Select-Object -First 5
+          }
+      displayName: 'Inspect coverage files'
+
     - script: >
         dotnet build CycleManager.Tests.Integration/CycleManager.Tests.Integration.csproj
         --configuration $(buildConfiguration)
