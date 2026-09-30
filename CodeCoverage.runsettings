@@ -5,7 +5,8 @@
       <DataCollector friendlyName="XPlat Code Coverage">
         <Configuration>
           <Format>cobertura</Format>
-          <Exclude>[WebCycleManager]AspNetCoreGeneratedDocument.Views_*;[DataAccessEF]DataAccessEF.Migrations.*</Exclude>
+          <Exclude>[WebCycleManager]AspNetCoreGeneratedDocument.Views_*</Exclude>
+          <ExcludeByFile>**/Migrations/*.cs</ExcludeByFile>
         </Configuration>
       </DataCollector>
     </DataCollectors>
