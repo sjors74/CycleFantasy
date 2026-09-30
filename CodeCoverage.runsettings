@@ -5,7 +5,9 @@
       <DataCollector friendlyName="XPlat Code Coverage">
         <Configuration>
           <Format>cobertura</Format>
-          <Exclude>[*.Migrations]*</Exclude>
+          <Exclude>
+            [DataAccessEF]DataAccessEF.Migrations.*
+          </Exclude>
         </Configuration>
       </DataCollector>
     </DataCollectors>
