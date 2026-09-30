@@ -44,25 +44,6 @@ stages:
         --settings CodeCoverage.runsettings
       displayName: 'Run unit tests'
 
-    - powershell: |
-        $files = Get-ChildItem `
-          "$(Build.SourcesDirectory)\CycleManager.Tests.Unit\TestResults" `
-          -Recurse `
-          -Filter "coverage.cobertura.xml"
-
-        foreach ($file in $files) {
-            Write-Host "FILE: $($file.FullName)"
-            $content = Get-Content $file.FullName -Raw
-
-            if ($content -match "DataAccessEF.Migrations") {
-                Write-Host "  --> CONTAINS MIGRATIONS"
-            }
-            else {
-                Write-Host "  --> NO MIGRATIONS"
-            }
-        }
-      displayName: 'Check coverage contents'
-
     - script: >
         dotnet build CycleManager.Tests.Integration/CycleManager.Tests.Integration.csproj
         --configuration $(buildConfiguration)
