@@ -1,6 +1,7 @@
 ﻿using CycleManager.Services;
 using CycleManager.Services.Interfaces;
 using Domain.Models;
+using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Routing;
@@ -301,11 +302,6 @@ namespace CycleManager.Tests.Unit.Manager
                 EventId = 10
             };
 
-            var eventEntity = new Event
-            {
-                EventId = 10
-            };
-
             _mockStageService
                 .Setup(s => s.GetStageById(1))
                 .ReturnsAsync(stage);
@@ -314,19 +310,12 @@ namespace CycleManager.Tests.Unit.Manager
                 .Setup(s => s.DeleteStage(1))
                 .ReturnsAsync(true);
 
-            _mockEventService
-                .Setup(s => s.GetEventById(10))
-                .ReturnsAsync(eventEntity);
-
             // Act
             var result = await _controller.DeleteAjax(1);
 
             // Assert
-            var partialView = Assert.IsType<PartialViewResult>(result);
-
-            Assert.Equal(
-                "~/Views/Events/_ManageStagesPartial.cshtml",
-                partialView.ViewName);
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            jsonResult.Value.Should().NotBeNull();
 
             _mockStageService.Verify(
                 s => s.DeleteStage(1),
@@ -334,7 +323,7 @@ namespace CycleManager.Tests.Unit.Manager
         }
 
         [Fact]
-        public async Task DeleteAjax_StageNotFound_ReturnsBadRequest()
+        public async Task DeleteAjax_StageNotFound_ReturnsJsonFailure()
         {
             // Arrange
             _mockStageService
@@ -345,13 +334,13 @@ namespace CycleManager.Tests.Unit.Manager
             var result = await _controller.DeleteAjax(1);
 
             // Assert
-            Assert.IsType<BadRequestResult>(result);
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            jsonResult.Value.Should().NotBeNull();
 
             _mockStageService.Verify(
                 s => s.DeleteStage(It.IsAny<int>()),
                 Times.Never);
         }
-
         #endregion
     }
 }

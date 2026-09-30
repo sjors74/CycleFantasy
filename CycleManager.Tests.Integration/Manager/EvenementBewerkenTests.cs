@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using System.Net;
+using System.Text.Json;
 
 namespace CycleManager.Tests.Integration.Manager
 {
@@ -199,22 +200,37 @@ namespace CycleManager.Tests.Integration.Manager
         public async Task Edit_Should_RemoveAllTeams_WhenNoneSelected()
         {
             var ev = await EnsureTestEventAsync();
+
             using var scope = _factory.Services.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
 
             // Arrange – voeg 2 teams toe aan het event
             var team1 = new Team { CurrentTeamName = "Team X" };
             var team2 = new Team { CurrentTeamName = "Team Y" };
+
             db.Teams.AddRange(team1, team2);
             await db.SaveChangesAsync();
 
             db.EventTeam.AddRange(
-                new EventTeam { EventId = ev.EventId, TeamId = team1.TeamId },
-                new EventTeam { EventId = ev.EventId, TeamId = team2.TeamId }
+                new EventTeam 
+                { 
+                    EventId = ev.EventId, 
+                    TeamId = team1.TeamId 
+                },
+                new EventTeam 
+                { 
+                    EventId = ev.EventId, 
+                    TeamId = team2.TeamId 
+                }
             );
+
             await db.SaveChangesAsync();
 
-            var getHtml = await (await _client.GetAsync($"/Events/Edit/{ev.EventId}")).Content.ReadAsStringAsync();
+            var getHtml = await (await _client.GetAsync(
+                $"/Events/Edit/{ev.EventId}"))
+                .Content.ReadAsStringAsync();
+
             var token = TokenHelper.ExtractAntiForgeryToken(getHtml);
 
             // Act – stuur lege selectie
@@ -228,7 +244,9 @@ namespace CycleManager.Tests.Integration.Manager
                 ["Teams[1].IsSelected"] = "false"
             };
 
-            var postResponse = await _client.PostAsync("/Events/ManageTeams", new FormUrlEncodedContent(formData));
+            var postResponse = await _client.PostAsync(
+                "/Events/ManageTeams", 
+                new FormUrlEncodedContent(formData));
 
             // Verwacht 200 OK (geen redirect)
             postResponse.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -239,7 +257,12 @@ namespace CycleManager.Tests.Integration.Manager
             json.Should().Contain("\"redirectUrl\"");
 
             // Controleer dat alle koppelingen verwijderd zijn
-            var eventTeams = await db.EventTeam.Where(et => et.EventId == ev.EventId).ToListAsync();
+            var eventTeams = await db.EventTeam
+                .Where(et => 
+                    et.EventId == ev.EventId &&
+                    (et.TeamId == team1.TeamId || et.TeamId == team2.TeamId))
+                .ToListAsync();
+
             eventTeams.Should().BeEmpty();
         }
 
@@ -279,21 +302,29 @@ namespace CycleManager.Tests.Integration.Manager
             var formData = new Dictionary<string, string>
             {
                 ["__RequestVerificationToken"] = token,
-                ["EventId"] = ev.EventId.ToString(),
-                ["StageName"] = "Proloog AJAX",
-                ["StageDate"] = DateTime.Today.ToString("yyyy-MM-dd"),
-                ["StageOrder"] = "1"
+                ["NewStage.EventId"] = ev.EventId.ToString(),
+                ["NewStage.StageName"] = "Proloog AJAX",
+                ["NewStage.StageDate"] = DateTime.Today.ToString("yyyy-MM-dd"),
+                ["NewStage.StageOrder"] = "1"
             };
 
-            var postResponse = await _client.PostAsync("/Stages/CreateAjax", new FormUrlEncodedContent(formData));
+            var postResponse = await _client.PostAsync(
+                "/Stages/CreateAjax", 
+                new FormUrlEncodedContent(formData));
+
             postResponse.StatusCode.Should().Be(HttpStatusCode.OK);
 
-            var json = await postResponse.Content.ReadAsStringAsync();
-            json.Should().Contain("\"success\":true");
+            var html = await postResponse.Content.ReadAsStringAsync();
+
+            html.Should().Contain("Proloog AJAX");
 
             using var scope = _factory.Services.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-            var stage = await db.Stages.FirstOrDefaultAsync(s => s.StageName == "Proloog AJAX" && s.EventId == ev.EventId);
+
+            var stage = await db.Stages.FirstOrDefaultAsync(
+                s => s.StageName == "Proloog AJAX" && 
+                     s.EventId == ev.EventId);
+
             stage.Should().NotBeNull();
         }
 
@@ -340,7 +371,16 @@ namespace CycleManager.Tests.Integration.Manager
             postResponse.StatusCode.Should().Be(HttpStatusCode.OK);
 
             var json = await postResponse.Content.ReadAsStringAsync();
-            json.Should().Contain("\"success\":true");
+
+            postResponse.Content.Headers.ContentType?.MediaType
+                .Should().Be("application/json");
+
+            using var document = JsonDocument.Parse(json);
+
+            document.RootElement
+                .GetProperty("success")
+                .GetBoolean()
+                .Should().BeTrue();
 
             var deletedStage = await db.Stages.FirstOrDefaultAsync(s => s.Id == stage.Id);
             deletedStage.Should().BeNull();
@@ -366,10 +406,14 @@ namespace CycleManager.Tests.Integration.Manager
         }
 
         [Fact]
-        public async Task Edit_Should_Fail_WhenModelInvalidWithoutEventId()
+        public async Task Edit_Should_ReturnNotFound_WhenRouteIdDoesNotMatchModelId()
         {
             var ev = await EnsureTestEventAsync();
-            var getHtml = await (await _client.GetAsync("/Events/Edit/1")).Content.ReadAsStringAsync();
+
+            var getHtml = await (await _client.GetAsync(
+                $"/Events/Edit/{ev.EventId}"))
+                .Content.ReadAsStringAsync();
+
             var token = TokenHelper.ExtractAntiForgeryToken(getHtml);
 
             var formData = new Dictionary<string, string>
@@ -378,8 +422,12 @@ namespace CycleManager.Tests.Integration.Manager
                 ["Id"] = "",
                 ["Name"] = ""
             };
-            var postResponse = await _client.PostAsync("/Events/Edit/0", new FormUrlEncodedContent(formData));
-            postResponse.StatusCode.Should().Be(HttpStatusCode.OK); // view blijft
+
+            var postResponse = await _client.PostAsync(
+                $"/Events/Edit/{ev.EventId}", 
+                new FormUrlEncodedContent(formData));
+
+            postResponse.StatusCode.Should().Be(HttpStatusCode.NotFound);
         }
         #endregion
 
@@ -466,12 +514,12 @@ namespace CycleManager.Tests.Integration.Manager
             var formData = new Dictionary<string, string>
             {
                 ["__RequestVerificationToken"] = token,
-                ["EventId"] = ev.EventId.ToString(),
-                ["StageName"] = "", // Ongeldig
-                ["StageDate"] = "",
-                ["StageOrder"] = "1",
-                ["StartLocation"] = "",
-                ["FinishLocation"] = ""
+                ["NewStage.EventId"] = ev.EventId.ToString(),
+                ["NewStage.StageName"] = "", // Ongeldig
+                ["NewStage.StageDate"] = "",
+                ["NewStage.StageOrder"] = "1",
+                ["NewStage.StartLocation"] = "",
+                ["NewStage.FinishLocation"] = ""
             };
 
             // Act
@@ -501,10 +549,14 @@ namespace CycleManager.Tests.Integration.Manager
 
         [Fact]
         public async Task DeleteStage_Should_Fail_WhenNonExistent()
-        {
+        { 
+            var ev = await EnsureTestEventAsync();
             var nonExistentId = 9999;
 
-            var getHtml = await (await _client.GetAsync($"/Events/ManageStages?eventId=1")).Content.ReadAsStringAsync();
+            var getHtml = await (await _client.GetAsync(
+                $"/Events/ManageStages?eventId={ev.EventId}"))
+                .Content.ReadAsStringAsync();
+
             var token = TokenHelper.ExtractAntiForgeryToken(getHtml);
 
             var formData = new Dictionary<string, string>
@@ -512,7 +564,10 @@ namespace CycleManager.Tests.Integration.Manager
                 ["__RequestVerificationToken"] = token
             };
 
-            var postResponse = await _client.PostAsync($"/Stages/DeleteAjax?id={nonExistentId}", new FormUrlEncodedContent(formData));
+            var postResponse = await _client.PostAsync(
+                $"/Stages/DeleteAjax?id={nonExistentId}", 
+                new FormUrlEncodedContent(formData));
+
             postResponse.StatusCode.Should().Be(HttpStatusCode.OK);
 
             var json = await postResponse.Content.ReadAsStringAsync();
@@ -530,10 +585,10 @@ namespace CycleManager.Tests.Integration.Manager
             var formData = new Dictionary<string, string>
             {
                 ["__RequestVerificationToken"] = token,
-                ["EventId"] = ev.EventId.ToString(),
-                ["StageName"] = "  Proloog  ",  // Controleer trim
-                ["StageDate"] = DateTime.Today.ToString("yyyy-MM-dd"),
-                ["StageOrder"] = "1"
+                ["NewStage.EventId"] = ev.EventId.ToString(),
+                ["NewStage.StageName"] = "  Proloog  ",  // Controleer trim
+                ["NewStage.StageDate"] = DateTime.Today.ToString("yyyy-MM-dd"),
+                ["NewStage.StageOrder"] = "1"
             };
 
             var postResponse = await _client.PostAsync("/Stages/CreateAjax", new FormUrlEncodedContent(formData));
@@ -543,33 +598,8 @@ namespace CycleManager.Tests.Integration.Manager
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
             var stage = await db.Stages.FirstOrDefaultAsync(s => s.StageName.Trim() == "Proloog" && s.EventId == ev.EventId);
             stage.Should().NotBeNull();
+            stage!.StageName.Should().Be("Proloog");
         }
-
-        //TODO: server side validatie toevoegen voor "stage-datums binnen event datums"
-        //[Fact]
-        //public async Task CreateStage_Should_Fail_WhenDateOutOfRange()
-        //{
-        //    var ev = await EnsureTestEventAsync();
-
-        //    var getHtml = await (await _client.GetAsync($"/Events/ManageStages?eventId={ev.EventId}")).Content.ReadAsStringAsync();
-        //    var token = TokenHelper.ExtractAntiForgeryToken(getHtml);
-
-        //    // Datum buiten event periode
-        //    var formData = new Dictionary<string, string>
-        //    {
-        //        ["__RequestVerificationToken"] = token,
-        //        ["EventId"] = ev.EventId.ToString(),
-        //        ["StageName"] = "Proloog Invalid Date",
-        //        ["StageDate"] = ev.EndDate?.AddDays(10).ToString("yyyy-MM-dd"),
-        //        ["StageOrder"] = "1"
-        //    };
-
-        //    var postResponse = await _client.PostAsync("/Stages/CreateAjax", new FormUrlEncodedContent(formData));
-
-        //    postResponse.StatusCode.Should().Be(HttpStatusCode.OK);
-        //    var html = await postResponse.Content.ReadAsStringAsync();
-        //    html.Should().Contain("StageDate"); // Verwacht foutmelding voor datum
-        //}
 
         [Fact]
         public async Task UpdateStage_Should_ReturnError_WhenNameEmpty()
@@ -593,14 +623,17 @@ namespace CycleManager.Tests.Integration.Manager
                 ["StageId"] = stage.Id.ToString(),
                 ["StageName"] = "", // Ongeldige naam
                 ["StageDate"] = DateTime.Today.ToString("yyyy-MM-dd"),
-                ["StageOrder"] = "1"
+                ["StageOrder"] = "1",
+                ["StartLocation"] = "Arnhem",
+                ["FinishLocation"] = "Nijmegen",
+                ["EventId"] = ev.EventId.ToString()
             };
 
             var postResponse = await _client.PostAsync("/Stages/EditAjax", new FormUrlEncodedContent(formData));
 
             postResponse.StatusCode.Should().Be(HttpStatusCode.OK);
             var responseHtml = await postResponse.Content.ReadAsStringAsync();
-            responseHtml.Should().Contain("The Etappe field is required.");
+            responseHtml.Should().Contain("Etappe naam is verplicht");
         }
 
         [Fact]

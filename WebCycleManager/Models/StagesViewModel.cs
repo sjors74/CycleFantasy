@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 
 namespace WebCycleManager.Models
 {
@@ -21,6 +22,7 @@ namespace WebCycleManager.Models
     {
         public int StageId { get; set; }
         [DisplayName("Etappe")]
+        [Required(ErrorMessage = "Etappe naam is verplicht")]
         public string StageName { get; set; } = string.Empty;
         public int StageOrder { get; set; }
         [DisplayName("Datum")]

@@ -146,16 +146,45 @@ namespace CycleManager.Tests.Integration.DataAccess
 
             // Arrange
             var eventId = 100;
+            var configuration = new Configuration
+            {
+                Id = 1
+            };
 
-            var stage = new Stage { Id = 1, EventId = eventId, StageName = "Etappe 1" };
-            var configurationItem = new ConfigurationItem { Id = 1, Position = 1, ConfigurationId = 1 };
+            var evt = new Event
+            {
+                EventId = eventId,
+                ConfigurationId = 1,
+                Configuration = configuration
+            };
+
+            var stage = new Stage
+            {
+                Id = 1,
+                EventId = eventId,
+                Event = evt,
+                StageName = "Etappe 1"
+            };
+
+            var configurationItem = new ConfigurationItem
+            {
+                Id = 1,
+                Position = 1,
+                ConfigurationId = 1,
+                Configuration = configuration
+            };
+
             var competitor = new Competitor { CompetitorId = 1, FirstName = "John", LastName = "Doe" };
             var team = new Team { TeamId = 1, CurrentTeamName = "TeamX" };
-            var competitorInTeam = new CompetitorInTeam { CompetitorId = 1 };
+            var seasonYear = new SeasonYear { SeasonYearId = 1, Year = 2024 };
+            var teamYear = new TeamYear { TeamYearId = 1, TeamId = 1, SeasonYearId = 1, Team = team, SeasonYear = seasonYear, Name = "TeamX" };
+            var competitorInTeam = new CompetitorInTeam { Id = 1, CompetitorId = 1, Competitor = competitor, TeamYearId = 1, TeamYear = teamYear };
             var competitorsInEvent = new CompetitorsInEvent
             {
                 Id = 1,
                 EventId = eventId,
+                Event = evt,
+                CompetitorInTeamId = 1,
                 CompetitorInTeam = competitorInTeam
             };
 
@@ -170,13 +199,18 @@ namespace CycleManager.Tests.Integration.DataAccess
                 ConfigurationItemId = configurationItem.Id
             };
 
+            context.Configurations.Add(configuration);
+            context.Events.Add(evt);
+            context.Stages.Add(stage);
             context.Competitors.Add(competitor);
             context.Teams.Add(team);
+            context.SeasonYears.Add(seasonYear);
+            context.TeamYear.Add(teamYear);
             context.CompetitorInTeams.Add(competitorInTeam);
             context.CompetitorsInEvent.Add(competitorsInEvent);
-            context.Stages.Add(stage);
             context.ConfigurationItems.Add(configurationItem);
             context.Results.Add(result);
+
             await context.SaveChangesAsync();
 
             // Act
@@ -210,25 +244,27 @@ namespace CycleManager.Tests.Integration.DataAccess
             var repo = new ResultsRepository(context);
 
             // Setup related tables for join
-            var stage = new Stage { Id = 1, EventId = 1 };
-            var gcep = new GameCompetitorEventPick { Id = 1, CompetitorsInEventId = 1 };
-            var dps = new DeelnemerPickScore
+            var gameEvent = new GameCompetitorEvent { Id = 1, EventId = 1, UserId = "abc" };
+            var gcep = new GameCompetitorEventPick { Id = 1, GameCompetitorEventId = gameEvent.Id, CompetitorsInEventId = 1 };
+            var normalScore = new DeelnemerStagePickScore
             {
                 Id = Guid.NewGuid(),
                 GameCompetitorEventPickId = gcep.Id,
-                TotalScore = 5,
-                LastUpdate = DateTime.UtcNow
+                Score = 5,
             };
 
-            context.Stages.Add(stage);
+            context.GameCompetitorsEvent.Add(gameEvent);
             context.GameCompetitorEventPicks.Add(gcep);
-            context.DeelnemerPickScores.Add(dps);
+            context.DeelnemerStagePickScores.Add(normalScore);
+
             await context.SaveChangesAsync();
 
             var score = await repo.GetCompetitorResultsByEventId(1, 1);
 
             score.Should().NotBeNull();
-            score.TotalScore.Should().Be(5);
+            score!.CompetitorInEventId.Should().Be(1);
+            score.NormalScore.Should().Be(5);
+            score.SpecialScore.Should().Be(0);
         }
 
 
@@ -379,12 +415,25 @@ namespace CycleManager.Tests.Integration.DataAccess
             var repo = new ResultsRepository(context);
 
             // Arrange
-            var evt = new Event { EventId = 1, ConfigurationId = 1, Configuration = new Configuration { Id = 1 } };
+            var configuration = new Configuration
+            {
+                Id = 1
+            };
+            var evt = new Event { EventId = 1, ConfigurationId = 1, Configuration = configuration };
+
             var stage = new Stage { Id = 1, Event = evt, EventId = 1, NoScore = false };
+
             var competitor = new Competitor { CompetitorId = 1, FirstName = "Jan", LastName = "Jansen" };
+
             var team = new Team { TeamId = 1, CurrentTeamName = "TeamTest" };
-            var competitorInTeam = new CompetitorInTeam { CompetitorId = 1 };
-            var cie = new CompetitorsInEvent { Id = 1, EventId = 1, CompetitorInTeam = competitorInTeam };
+
+            var seasonYear = new SeasonYear { SeasonYearId = 1, Year = 2024 };
+
+            var teamYear = new TeamYear { TeamYearId = 1, TeamId = 1, SeasonYearId = 1, Team = team, SeasonYear = seasonYear, Name = "TeamTest" };
+
+            var competitorInTeam = new CompetitorInTeam { Id = 1, CompetitorId = 1, Competitor = competitor, TeamYearId = 1, TeamYear = teamYear };
+
+            var cie = new CompetitorsInEvent { Id = 1, EventId = 1, Event = evt, CompetitorInTeamId = 1,  CompetitorInTeam = competitorInTeam };
 
             // Voeg 3 configuratie-items toe (de top 3)
             var configItems = new List<ConfigurationItem>
@@ -406,10 +455,13 @@ namespace CycleManager.Tests.Integration.DataAccess
                 ConfigurationItemId = ci.Id
             }).ToList();
 
+            context.Configurations.Add(configuration);
             context.Events.Add(evt);
             context.Stages.Add(stage);
             context.Competitors.Add(competitor);
             context.Teams.Add(team);
+            context.SeasonYears.Add(seasonYear);
+            context.TeamYear.Add(teamYear);
             context.CompetitorInTeams.Add(competitorInTeam);
             context.CompetitorsInEvent.Add(cie);
             context.ConfigurationItems.AddRange(configItems);

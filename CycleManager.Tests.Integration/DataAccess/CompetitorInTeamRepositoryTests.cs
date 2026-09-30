@@ -25,7 +25,14 @@ namespace CycleManager.Tests.Integration.DataAccess
             var competitor = new Competitor { CompetitorId = 1, FirstName = "Remco", LastName = "Evenepoel" };
             var team = new Team { TeamId = 1, CurrentTeamName = "Soudal Quick-Step" };
 
-            var teamYear = new TeamYear
+            var teamYear2023 = new TeamYear
+            {
+                TeamId = team.TeamId,
+                Team = team,
+                Year = 2023
+            };
+
+            var teamYear2024 = new TeamYear
             {
                 TeamId = team.TeamId,
                 Team = team,
@@ -36,7 +43,7 @@ namespace CycleManager.Tests.Integration.DataAccess
             {
                 CompetitorId = competitor.CompetitorId,
                 Competitor = competitor,
-                TeamYear = teamYear
+                TeamYear = teamYear2024
             };
 
             context.Competitors.Add(competitor);
@@ -47,7 +54,7 @@ namespace CycleManager.Tests.Integration.DataAccess
             var repo = new CompetitorInTeamRepository(context);
 
             // Act
-            var result = await repo.CheckCompetitorInTeam(1, 1);
+            var result = await repo.CheckCompetitorInTeam(1, teamYear2024.TeamYearId);
 
             // Assert
             Assert.True(result);
@@ -63,25 +70,34 @@ namespace CycleManager.Tests.Integration.DataAccess
             var competitor = new Competitor { CompetitorId = 1, FirstName = "Remco", LastName = "Evenepoel" };
             var team = new Team { TeamId = 1, CurrentTeamName = "Soudal Quick-Step" };
 
+            var teamYear2023 = new TeamYear
+            {
+                TeamId = team.TeamId,
+                Team = team,
+                Year = 2023
+            };
+
+            var teamYear2024 = new TeamYear
+            {
+                TeamId = team.TeamId,
+                Team = team,
+                Year = 2024
+            };
+
             context.Competitors.Add(competitor);
             context.Teams.Add(team);
             context.CompetitorInTeams.Add(new CompetitorInTeam
             {
                 CompetitorId = 1,
                 Competitor = competitor,
-                TeamYear = new TeamYear
-                {
-                    TeamId = 1,
-                    Team = team,
-                    Year = 2023 // niet 2024
-                }
+                TeamYear = teamYear2023
             });
             await context.SaveChangesAsync();
 
             var repo = new CompetitorInTeamRepository(context);
 
             // Act
-            var result = await repo.CheckCompetitorInTeam(1, 1);
+            var result = await repo.CheckCompetitorInTeam(1, teamYear2024.TeamYearId);
 
             // Assert
             Assert.False(result);

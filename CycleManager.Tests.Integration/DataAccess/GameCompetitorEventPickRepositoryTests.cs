@@ -68,41 +68,44 @@ namespace CycleManager.Tests.Integration.DataAccess
         [Fact]
         public async Task GetCompetitorEventPicksById_ReturnsCorrectPickWithIncludes()
         {
+            // Arrange
             using var context = CreateContext();
 
             var user = new ApplicationUser { Id = "abc", FirstName = "Test", LastName = "User" };
-            var gameEvent = new GameCompetitorEvent { Id = 1, UserId = user.Id, User = user, Renners = new List<GameCompetitorEventPick>() };
-
             var country = new Country { CountryId = 1, CountryNameShort = "NL" };
-            var competitor = new Competitor { CompetitorId = 1, FirstName = "Rider", Country = country };
+            var competitor = new Competitor { CompetitorId = 1, FirstName = "Rider", LastName = "Test", Country = country };
             var team = new Team { TeamId = 1, CurrentTeamName = "TeamA" };
-            var competitorInTeam = new CompetitorInTeam {CompetitorId = competitor.CompetitorId };
-
+            var seasonYear = new SeasonYear { SeasonYearId = 1, Year = 2024, Active = true };
+            var teamYear = new TeamYear { TeamYearId = 1, TeamId = team.TeamId, SeasonYearId = seasonYear.SeasonYearId, Year = seasonYear.Year, Name = "TeamA" };
+            var competitorInTeam = new CompetitorInTeam { Id = 1, CompetitorId = competitor.CompetitorId, TeamYearId = teamYear.TeamYearId };
             var eventEntity = new Event { EventId = 100, EventName = "Test Event" };
-
             var competitorsInEvent = new CompetitorsInEvent
             {
                 Id = 1,
                 EventId = eventEntity.EventId,
-                Event = eventEntity,
-                CompetitorInTeam = competitorInTeam
+                CompetitorInTeamId = competitorInTeam.Id,
+                EventNumber = 1
+            };
+
+            var gameEvent = new GameCompetitorEvent
+            {
+                Id = 1,
+                UserId = user.Id,
             };
 
             var pick = new GameCompetitorEventPick
             {
                 Id = 1,
                 GameCompetitorEventId = gameEvent.Id,
-                GameCompetitorEvent = gameEvent,
-                CompetitorsInEventId = competitorsInEvent.Id,
-                CompetitorsInEvent = competitorsInEvent
+                CompetitorsInEventId = competitorsInEvent.Id
             };
-
-            gameEvent.Renners.Add(pick);
 
             context.Users.Add(user);
             context.Countries.Add(country);
-            context.Competitors.Add(competitor);
             context.Teams.Add(team);
+            context.SeasonYears.Add(seasonYear);
+            context.TeamYear.Add(teamYear);
+            context.Competitors.Add(competitor);
             context.CompetitorInTeams.Add(competitorInTeam);
             context.Events.Add(eventEntity);
             context.CompetitorsInEvent.Add(competitorsInEvent);
@@ -110,15 +113,28 @@ namespace CycleManager.Tests.Integration.DataAccess
             context.GameCompetitorEventPicks.Add(pick);
 
             await context.SaveChangesAsync();
+
+            // Act
             var repo = new GameCompetitorEventPickRepository(context);
 
+            // Assert
             var result = await repo.GetCompetitorEventPicksById(gameEvent.Id);
 
             result.Should().HaveCount(1);
+
             var returnedPick = result.First();
+
             returnedPick.Id.Should().Be(pick.Id);
+            returnedPick.GameCompetitorEvent.Should().NotBeNull();
             returnedPick.GameCompetitorEvent.User.Should().NotBeNull();
+
+            returnedPick.CompetitorsInEvent.Should().NotBeNull();
+            returnedPick.CompetitorsInEvent.Event.Should().NotBeNull();
+            returnedPick.CompetitorsInEvent.CompetitorInTeam.Should().NotBeNull();
             returnedPick.CompetitorsInEvent.CompetitorInTeam.Competitor.Should().NotBeNull();
+            returnedPick.CompetitorsInEvent.CompetitorInTeam.Competitor.Country.Should().NotBeNull();
+            returnedPick.CompetitorsInEvent.CompetitorInTeam.TeamYear.Should().NotBeNull();
+            returnedPick.CompetitorsInEvent.CompetitorInTeam.TeamYear.Team.Should().NotBeNull();
         }
 
         [Fact]

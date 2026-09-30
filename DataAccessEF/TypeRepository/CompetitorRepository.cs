@@ -189,6 +189,7 @@ namespace DataAccessEF.TypeRepository
         {
             return await context.Competitors
                     .Include(c => c.CompetitorInTeams)
+                        .ThenInclude(cit => cit.TeamYear)
                     .FirstOrDefaultAsync(c => c.CompetitorId == id);
         }
 

@@ -31,19 +31,37 @@ stages:
       displayName: 'Build Api'
 
     - script: >
-        dotnet test CycleManager.Tests.Unit/CycleManager.Tests.Unit.csproj 
+        dotnet build CycleManager.Tests.Unit/CycleManager.Tests.Unit.csproj 
         --configuration $(buildConfiguration) 
+      displayName: 'Build unit tests'
+
+    - script: >
+        dotnet test CycleManager.Tests.Unit/CycleManager.Tests.Unit.csproj
+        --configuration $(buildConfiguration)
         --no-build
         --logger "trx;LogFileName=test-results.trx"
       displayName: 'Run unit tests'
+
+    - script: >
+        dotnet build CycleManager.Tests.Integration/CycleManager.Tests.Integration.csproj
+        --configuration $(buildConfiguration)
+      displayName: 'Build integration tests'
+
+    - script: >
+        dotnet test CycleManager.Tests.Integration/CycleManager.Tests.Integration.csproj
+        --configuration $(buildConfiguration)
+        --no-build
+        --logger "trx;LogFileName=integration-test-results.trx"
+      displayName: 'Run integration tests'
 
     - task: PublishTestResults@2
       displayName: 'Publish Test Results'
       inputs:
         testResultsFormat: 'VSTest'
-        testResultsFiles: '**/test-results.trx'
+        testResultsFiles: '**/*.trx'
+        searchFolder: '$(Build.SourcesDirectory)'
         failTaskOnFailedTests: true
-        testRunTitle: 'CycleManagerUnit Tests'
+        testRunTitle: 'CycleFantasy Tests'
 
 - stage: DeployApi
   displayName: Deploy API

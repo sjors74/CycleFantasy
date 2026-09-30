@@ -31,7 +31,9 @@ namespace Domain.Mapping
                 .ForMember(c => c.InSelectie, o => o.Ignore())
                 .ForMember(c => c.CurrentTeamName, o => o.Ignore())
                 .ForMember(c => c.IsNationalChampion, o => o.Ignore())
-                .ForMember(c => c.Teams, o => o.Ignore());
+                .ForMember(c => c.Teams, o => o.Ignore())
+                .ForMember(c => c.ScraperName, o => o.Ignore())
+                .ForMember(c => c.RemovedFromStartlist, o => o.Ignore());
 
             CreateMap<CompetitorsInEvent, CompetitorDto>()
                 .ForMember(d => d.CompetitorId,
@@ -69,9 +71,13 @@ namespace Domain.Mapping
                 .ForMember(c => c.Ratings, d => d.MapFrom(s => s.CompetitorsInEvent.CompetitorInTeam.Competitor.Ratings.Where(r => r.RatingCategory.IsActive)))
                 .ForMember(d => d.StageNumber, o => o.Ignore())
                 .ForMember(d => d.Position, o => o.Ignore())
+                .ForMember(d => d.NormalPoints, o => o.Ignore())
+                .ForMember(d => d.SpecialPoints, o => o.Ignore())
                 .ForMember(d => d.LatestPoints, o => o.Ignore())
+                .ForMember(d => d.Specials, o => o.Ignore())
                 .ForMember(d => d.ConfigurationItems, o => o.Ignore())
                 .ForMember(d => d.EventId, o => o.Ignore());
+                
 
             CreateMap<GameCompetitorEventPick, CompetitorDto>()
                 .ForMember(c => c.FirstName, d => d.MapFrom(s => s.CompetitorsInEvent.CompetitorInTeam.Competitor.FirstName))
@@ -86,6 +92,8 @@ namespace Domain.Mapping
                 .ForMember(d => d.InSelectie, o => o.Ignore())
                 .ForMember(d => d.CurrentTeamName, o => o.Ignore())
                 .ForMember(d => d.IsNationalChampion, o => o.Ignore())
+                .ForMember(d => d.RemovedFromStartlist, o => o.Ignore())
+                .ForMember(d => d.Ratings, o => o.Ignore())
                 .ForMember(d => d.Teams, o => o.Ignore());
 
             CreateMap<Stage, StageResultDto>()
@@ -100,12 +108,17 @@ namespace Domain.Mapping
                 .ForMember(c => c.PoolNaam, d => d.MapFrom(s => s.TeamName))
                 .ForMember(c => c.Renners, d => d.MapFrom(s => s.Renners))
                 .ForMember(d => d.Punten, o => o.Ignore())
+                .ForMember(d => d.NormalePunten, o => o.Ignore())
+                .ForMember(d => d.SpecialePunten, o => o.Ignore())
+                .ForMember(d => d.RennersActief, o => o.Ignore())
+                .ForMember(d => d.RennersUitgevallen, o => o.Ignore())
                 .ForMember(d => d.LaatsteScore, o => o.Ignore());
 
             CreateMap<NewsItem, NewsItemDto>();
 
             CreateMap<CompetitorRating, CompetitorRatingDto>()
                 .ForMember(d => d.Code, opt => opt.MapFrom(s => s.RatingCategory.Code))
+                .ForMember(d => d.CategoryName, opt => opt.MapFrom(s => s.RatingCategory.Name))
                 .ForMember(d => d.Color, opt => opt.MapFrom(s => s.RatingCategory.Color));
         }
     }

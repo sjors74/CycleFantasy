@@ -3,23 +3,22 @@ using CycleManager.Services.Interfaces;
 using CycleManager.Tests.Integration.Helpers;
 using Domain.Context;
 using Domain.Models;
+using Hangfire;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Moq;
 
 public class CustomWebApplicationFactory : WebApplicationFactory<Program>
 {
-    private readonly string _dbName;
+    private readonly string _dbName = $"TestDb_{Guid.NewGuid()}";
 
-    public CustomWebApplicationFactory()
-    {
-        _dbName = Guid.NewGuid().ToString();
-    }
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
-        builder.UseEnvironment("Development");
+        builder.UseEnvironment("Testing");
 
         builder.ConfigureServices(services =>
         {
@@ -40,18 +39,34 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
             // voeg fake service toe
             services.AddTransient<IScraperService, FakeScraperService>();
 
-            // Build service provider en seed database
-            var sp = services.BuildServiceProvider();
-            using var scope = sp.CreateScope();
-            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            services.RemoveAll<IScrapeScheduleService>();
+            services.AddTransient<IScrapeScheduleService, FakeEventScrapeJobRegistrationService>();
 
-            db.Database.EnsureDeleted();
-            db.Database.EnsureCreated();
-            db.ChangeTracker.Clear();
+            services.AddSingleton<IBackgroundJobClient>(
+                Mock.Of<IBackgroundJobClient>());
 
-            SeedData(db);
-            Console.WriteLine(db.Teams.Count());
+            services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = "Test";
+                options.DefaultChallengeScheme = "Test";
+            })
+            .AddScheme<AuthenticationSchemeOptions, TestAuthenticationHandler>(
+                "Test",
+                options => { });
         });
+    }
+
+    public void SeedDatabase()
+    {
+        using var scope = Services.CreateScope();
+
+        var db = scope.ServiceProvider
+            .GetRequiredService<ApplicationDbContext>();
+
+        db.Database.EnsureDeleted();
+        db.Database.EnsureCreated();
+
+        SeedData(db);
     }
 
     private void SeedData(ApplicationDbContext db)

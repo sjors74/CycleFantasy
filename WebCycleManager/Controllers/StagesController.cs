@@ -81,7 +81,7 @@ namespace WebCycleManager.Controllers
             // Persist
             await _stageService.AddStage(new Stage
             {
-                StageName = stage.StageName,
+                StageName = stage.StageName.Trim(),
                 StageDate = stage.StageDate,
                 StageOrder = stage.StageOrder,
                 StartLocation = stage.StartLocation,
@@ -173,10 +173,7 @@ namespace WebCycleManager.Controllers
                     .Contains("application/json", StringComparison.OrdinalIgnoreCase);
             if (!ModelState.IsValid)
             {
-                if (isAjax)
-                    return PartialView("_EditStagePartial", model);
-
-                return PartialView("EditStagePartial", model);
+                return PartialView("_EditStagePartial", model);
             }
 
             var stage = await _stageService.GetStageById(model.StageId);
@@ -222,13 +219,22 @@ namespace WebCycleManager.Controllers
         public async Task<IActionResult> DeleteAjax(int id)
         {
             var stage = await _stageService.GetStageById(id);
+
             if (stage == null)
-                return BadRequest();
+            {
+                return Json(new
+                {
+                    success = false,
+                    message = $"Stage niet gevonden."
+                });
+            }
 
             await _stageService.DeleteStage(id);
 
-            var model = await BuildManageStagesViewModel(stage.EventId);
-            return PartialView("~/Views/Events/_ManageStagesPartial.cshtml", model);
+            return Json(new
+            {
+                success = true
+            });
         }
 
         public StageViewModel CreateViewModel(Stage stage)

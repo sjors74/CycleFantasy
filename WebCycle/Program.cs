@@ -40,7 +40,7 @@ builder.Services.Configure<SmtpSettings>(
 // Database
 // -------------------
 
-if (builder.Environment.IsEnvironment("Test"))
+if (builder.Environment.IsEnvironment("Testing"))
 {
     // In-memory DB voor tests
     builder.Services.AddDbContext<ApplicationDbContext>(options =>
@@ -163,7 +163,7 @@ var app = builder.Build();
 // -------------------
 // Seed & Ensure DB
 // -------------------
-if (app.Environment.IsEnvironment("Test"))
+if (app.Environment.IsEnvironment("Testing"))
 {
     Console.WriteLine("Test environment detected — running SeedData...");
     using (var scope = app.Services.CreateScope())
@@ -179,7 +179,7 @@ else
     using (var scope = app.Services.CreateScope())
     {
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        if (builder.Environment.IsEnvironment("Test"))
+        if (builder.Environment.IsEnvironment("Testing"))
         {
             //var env = scope.ServiceProvider.GetRequiredService<IWebHostEnvironment>();
             //await TestDataSeeder.SeedAsync(db, env);
@@ -211,7 +211,7 @@ app.MapGet("/", () => "API draait!");
 // Start the app
 // -------------------
 
-if (!builder.Environment.IsEnvironment("Test"))
+if (!builder.Environment.IsEnvironment("Testing"))
 {
     app.Run(); // normale run voor dev/prod
 }

@@ -1,7 +1,6 @@
 ﻿using AutoMapper;
 using Domain.Mapping;
 using Microsoft.Extensions.Logging;
-using System;
 
 namespace CycleManager.Tests.Helpers
 {
@@ -16,7 +15,15 @@ namespace CycleManager.Tests.Helpers
                 cfg.AddProfile<DomainToResponseMappingProfile>();
             }, loggerFactory);
 
-            config.AssertConfigurationIsValid();
+            try
+            {
+                config.AssertConfigurationIsValid();
+            }
+            catch(AutoMapperConfigurationException ex)
+            {
+                Console.WriteLine(ex.ToString());
+                throw;
+            }
             return config.CreateMapper();
         }
     }

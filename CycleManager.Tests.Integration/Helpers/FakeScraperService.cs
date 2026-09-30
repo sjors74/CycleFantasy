@@ -29,6 +29,13 @@ namespace CycleManager.Tests.Integration.Helpers
                     ?? throw new InvalidOperationException(
                         $"Country '{sc.CountryShortName}' niet gevonden.");
 
+                var teamYear = await _db.TeamYear
+                    .FirstOrDefaultAsync(ty =>
+                        ty.TeamId == sc.TeamId &&
+                        ty.Year == sc.Year)
+                    ?? throw new InvalidOperationException(
+                        $"TeamYear voor team {sc.TeamId}, jaar {sc.Year} niet gevonden.");
+
                 var competitor = new Competitor
                 {
                     FirstName = sc.RiderName.Split(' ')[0],
@@ -41,7 +48,7 @@ namespace CycleManager.Tests.Integration.Helpers
 
                 _db.CompetitorInTeams.Add(new CompetitorInTeam
                 {
-                    Competitor = competitor,
+                    Competitor = competitor, TeamYearId = teamYear.TeamYearId
                 });
 
                 sc.ProcessedAt = DateTime.UtcNow;
@@ -60,42 +67,39 @@ namespace CycleManager.Tests.Integration.Helpers
             throw new NotImplementedException();
         }
 
-
-        public Task RunCompetitorsAsync(int teamId, int year)
+        public async Task RunCompetitorsAsync(int teamYearId)
         {
-            if (year <= DateTime.Now.Year + 3)
+            var teamYear = await _db.TeamYear
+                .FirstOrDefaultAsync(ty => ty.TeamYearId == teamYearId);
+
+            if (teamYear == null)
+                throw new InvalidOperationException(
+                    $"TeamYear '{teamYearId}' niet gevonden.");
+
+            var competitors = new[]
             {
-                var competitors = new[]
+                new ScrapedCompetitor
                 {
-                    new ScrapedCompetitor
-                    {
-                        TeamId = teamId,
-                        Year = year,
-                        RiderName = $"Rider One_{year}",
-                        ImportedAt = DateTime.UtcNow,
-                        CountryShortName = "be",
-                        ProcessedAt = null
-                    },
-                    new ScrapedCompetitor
-                    {
-                        TeamId = teamId,
-                        Year = year,
-                        RiderName = $"Rider Two_{year}",
-                        ImportedAt = DateTime.UtcNow,
-                        CountryShortName = "be",
-                        ProcessedAt = null
-                    }
-                };
+                    TeamId = teamYear.TeamId,
+                    Year = teamYear.Year,
+                    RiderName = $"Rider One_{teamYear.Year}",
+                    ImportedAt = DateTime.UtcNow,
+                    CountryShortName = "be",
+                    ProcessedAt = null
+                },
+                new ScrapedCompetitor
+                {
+                    TeamId = teamYear.TeamId,
+                    Year = teamYear.Year,
+                    RiderName = $"Rider Two_{teamYear.Year}",
+                    ImportedAt = DateTime.UtcNow,
+                    CountryShortName = "be",
+                    ProcessedAt = null
+                }
+            };
 
-                _db.ScrapedCompetitors.AddRange(competitors);
-                _db.SaveChanges();
-            }
-            return Task.CompletedTask;
-        }
-
-        public Task RunCompetitorsAsync(int teamYearId)
-        {
-            throw new NotImplementedException();
+            _db.ScrapedCompetitors.AddRange(competitors);
+            await _db.SaveChangesAsync();
         }
 
         public Task RunDropoutsAsync(int eventId, string eventName, int year)

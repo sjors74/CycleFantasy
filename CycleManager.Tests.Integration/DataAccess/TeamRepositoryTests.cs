@@ -28,7 +28,8 @@ namespace CycleManager.Tests.Integration.DataAccess
             var country = new Country { CountryId = 1, CountryNameLong = "Nederland" };
             var competitor = new Competitor { CompetitorId = 1, FirstName = "John", LastName = "Doe", Country = country };
             var competitorInTeam = new CompetitorInTeam {Id = 1 };
-            var teamYear = new TeamYear { TeamYearId = 1, Year = 2025, TeamId = 1 };
+            var seasonYear = new SeasonYear { SeasonYearId = 1, Year = 2025 };
+            var teamYear = new TeamYear { TeamYearId = 1, Year = 2025, TeamId = 1, SeasonYearId = seasonYear.SeasonYearId, SeasonYear = seasonYear };
             var team = new Team
             {
                 TeamId = 1,
@@ -110,7 +111,7 @@ namespace CycleManager.Tests.Integration.DataAccess
             var fetched = await repo.GetTeamForCurrentYear(1, 2025);
 
             fetched.Should().NotBeNull();
-            fetched.TeamYears.Any(ty => ty.Year == 2025).Should().BeTrue();
+            fetched.TeamYears.Any(ty => ty.SeasonYear.Year == 2025).Should().BeTrue();
         }
 
         [Fact]
