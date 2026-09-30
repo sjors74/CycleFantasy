@@ -30,7 +30,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "pipelines", "pipelines", "{
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{8EC462FD-D22E-90A8-E5CE-7E832BA40C5D}"
 	ProjectSection(SolutionItems) = preProject
-		CodeCoverage.runsettings.xml = CodeCoverage.runsettings.xml
+		CodeCoverage.runsettings = CodeCoverage.runsettings
 		Dockerfile = Dockerfile
 	EndProjectSection
 EndProject
