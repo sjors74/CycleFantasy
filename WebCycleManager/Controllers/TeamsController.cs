@@ -209,6 +209,19 @@ namespace WebCycleManager.Controllers
                 existing.Name = posted.Name;
             }
 
+            var postedSeasonYearIds = model.TeamYears
+               .Select(ty => ty.SeasonYearId)
+               .ToHashSet();
+
+            var toRemove = team.TeamYears
+                .Where(ty => !postedSeasonYearIds.Contains(ty.SeasonYearId))
+                .ToList();
+
+            foreach (var teamYear in toRemove)
+            {
+                team.TeamYears.Remove(teamYear);
+            }
+
             await _teamService.Update(team);
 
             return RedirectToAction(nameof(Index));

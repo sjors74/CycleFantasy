@@ -56,11 +56,20 @@ builder.Services.AddSingleton<IBrowser>(sp =>
 });
 
 var connectionString = builder.Configuration.GetConnectionString("CycleDb");
-builder.Services.AddDbContext<ApplicationDbContext>(x => 
+
+if (builder.Environment.IsEnvironment("Testing"))
+{
+    builder.Services.AddDbContext<ApplicationDbContext>(options =>
+        options.UseInMemoryDatabase("TestDb"));
+}
+else
+{
+    builder.Services.AddDbContext<ApplicationDbContext>(x =>
     x.UseLazyLoadingProxies(false)
      .UseSqlServer(connectionString, sqlOptions =>
         sqlOptions.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery)
-));
+    ));
+}
 
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
@@ -146,11 +155,15 @@ builder.Services.AddHttpClient<IApiClient, ApiClient>((serviceProvider, client) 
     client.BaseAddress = new Uri(apiSettings.BaseUrl);
 });
 
-builder.Services.AddHangfire(config =>
+if (!builder.Environment.IsEnvironment("Testing"))
+{
+    builder.Services.AddHangfire(config =>
     config.UseSqlServerStorage(
         builder.Configuration.GetConnectionString("CycleDb")));
 
-builder.Services.AddHangfireServer();
+    builder.Services.AddHangfireServer();
+}
+
 builder.Services.AddAuthorization(options =>
 {
     options.FallbackPolicy = new AuthorizationPolicyBuilder()
@@ -197,51 +210,40 @@ app.Use(async (context, next) =>
     await next();
 });
 
-app.UseHangfireDashboard("/hangfire", new DashboardOptions
+if (!app.Environment.IsEnvironment("Testing"))
 {
-    Authorization = new[] 
-    { 
-        new HangfireAuthorizationFilter() 
-    }
-});
+    app.UseHangfireDashboard("/hangfire", new DashboardOptions
+    {
+        Authorization = new[]
+        {
+            new HangfireAuthorizationFilter()
+        }
+    });
+}
 
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
-using (var scope = app.Services.CreateScope())
+if (!app.Environment.IsEnvironment("Testing"))
 {
-    await IdentitySeeder.SeedAsync(scope.ServiceProvider);
+    using (var scope = app.Services.CreateScope())
+    {
+        await IdentitySeeder.SeedAsync(scope.ServiceProvider);
 
-    var scheduler = scope.ServiceProvider
-        .GetRequiredService<IScrapeScheduleService>();
+        var scheduler = scope.ServiceProvider
+            .GetRequiredService<IScrapeScheduleService>();
 
-    await scheduler.RegisterSchedulesAsync();
+        await scheduler.RegisterSchedulesAsync();
+    }
+
+    RecurringJob.AddOrUpdate<IScrapeScheduleService>(
+        "job-registration",
+        x => x.RegisterSchedulesAsync(),
+        Cron.Hourly);
 }
 
-RecurringJob.AddOrUpdate<IScrapeScheduleService>(
-    "job-registration",
-    x => x.RegisterSchedulesAsync(),
-    Cron.Hourly);
-
-
 app.Run();
-
-app.MapGet("/competitors", async (IPcsScraper scraper, string team, int teamId, int year) =>
-{
-    // Bouw de URL dynamisch
-    var url = $"https://www.procyclingstats.com/team/{team}-{year}";
-
-    try
-    {
-        var competitors = await scraper.ScrapeCompetitorsAsync(url, teamId, year);
-        return Results.Ok(competitors);
-    }
-    catch (Exception ex)
-    {
-        return Results.Problem($"Scrapen mislukt: {ex.Message}");
-    }
-});
 
 // Alleen nodig voor integratietests
 public partial class Program { }

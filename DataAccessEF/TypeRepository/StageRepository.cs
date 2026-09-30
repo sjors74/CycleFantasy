@@ -78,17 +78,9 @@ namespace DataAccessEF.TypeRepository
 
         public async Task<Stage?> GetStageById(int stageId)
         {
-            var stage = await context.Stages
+            return await context.Stages
                 .Include(s => s.Event)
                 .FirstOrDefaultAsync(s => s.Id == stageId);
-            if (stage != null)
-            {
-                return stage;
-            }
-            else
-            {
-                return new Stage();
-            }
         }
     }
 }

@@ -1,65 +1,40 @@
-﻿using CycleManager.Domain.Models;
-using CycleManager.Tests.Integration.Helpers;
+﻿using CycleManager.Tests.Integration.Helpers;
 using Domain.Context;
-using Domain.Models;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using System.Net;
-using System.Net.Http.Json;
 using System.Text.Json;
-using System.Text.RegularExpressions;
 
 namespace CycleManager.Tests.Integration.Manager
 {
     [Collection("NonParallelTests")]
-    public class RennersTests : IClassFixture<CustomWebApplicationFactory>
+    public class RennersTests : ManagerIntegrationTestBase
     {
-        private readonly HttpClient _client;
-        private readonly CustomWebApplicationFactory _factory;
-
-        public RennersTests(CustomWebApplicationFactory factory)
-        {
-            _factory = factory;
-            _client = _factory.CreateClient(new WebApplicationFactoryClientOptions
-            {
-                AllowAutoRedirect = false
-            });
-        }
-
         [Fact]
         public async Task Index_Should_DisplayCompetitorsPerYear()
         {
             using var scope = _factory.Services.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
             var year = 2025;
 
-            var response = await _client.GetAsync($"/Competitors?year={year}");
+            var competitor = await CreateTestCompetitorWithTeamAsync(db, year, "Rider", "2025");
+
+            var seasonYear = await db.SeasonYears.
+                FirstAsync(sy => sy.Year == year);
+
+            var response = await _client.GetAsync(
+                $"/Competitors?seasonYearId={seasonYear.SeasonYearId}");
+
             response.EnsureSuccessStatusCode();
+
             var html = await response.Content.ReadAsStringAsync();
 
-            var competitorsForYear = db.Competitors
-                .Include(c => c.CompetitorInTeams)
-                    .ThenInclude(cit => cit.TeamYear)
-                .Include(c => c.Country)
-                .Where(c => c.CompetitorInTeams
-                    .Any(cit => cit.TeamYear.Year == year))
-                .ToList();
-
-            foreach (var c in competitorsForYear)
-            {
-                html.Should().Contain(c.FirstName);
-                html.Should().Contain(c.LastName);
-                html.Should().Contain(c.Country.CountryNameShort);
-
-                if (c.CompetitorInTeams.Any(cit =>
-                    cit.TeamYear.Year == year &&
-                    cit.IsNationalChampion))
-                {
-                    html.Should().Contain("🏆");
-                }
-            }
+            html.Should().Contain(competitor.FirstName);
+            html.Should().Contain(competitor.LastName);
+            html.Should().Contain(competitor.Country.CountryNameShort);
         }
 
         [Theory]
@@ -67,9 +42,28 @@ namespace CycleManager.Tests.Integration.Manager
         [InlineData("Two")]
         public async Task Index_SearchByName_Should_Filter(string searchTerm)
         {
-            var response = await _client.GetAsync($"/Competitors?SearchString={searchTerm}");
+            using var scope = _factory.Services.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+            await CreateActiveSeasonYearAsync(db);
+
+            await CreateTestCompetitorAsync(
+                db,
+                firstName: "Rider",
+                lastName: "One");
+
+            await CreateTestCompetitorAsync(
+                db,
+                firstName: "Rider",
+                lastName: "Two");
+
+            var response = await _client.GetAsync(
+                $"/Competitors?searchString={Uri.EscapeDataString(searchTerm)}");
+
             response.EnsureSuccessStatusCode();
+
             var html = await response.Content.ReadAsStringAsync();
+
             html.Should().Contain(searchTerm);
         }
 
@@ -78,23 +72,33 @@ namespace CycleManager.Tests.Integration.Manager
         {
             using var scope = _factory.Services.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-            var competitor = db.Competitors.Include(c => c.CompetitorInTeams).Include(c => c.Country).First();
+            var competitor = await CreateTestCompetitorAsync(db);
 
-            var response = await _client.GetAsync($"/Competitors/Details/{competitor.CompetitorId}");
+            var savedCompetitor = await db.Competitors
+                .Include(c => c.Country)
+                .FirstAsync(c => c.CompetitorId == competitor.CompetitorId);
+
+            var response = await _client.GetAsync($"/Competitors/Details/{savedCompetitor.CompetitorId}");
             response.EnsureSuccessStatusCode();
+
             var html = await response.Content.ReadAsStringAsync();
 
-            html.Should().Contain(competitor.FirstName);
-            html.Should().Contain(competitor.LastName);
-            html.Should().Contain(competitor.Country.CountryNameShort);
+            html.Should().Contain(savedCompetitor.FirstName);
+            html.Should().Contain(savedCompetitor.LastName);
+            html.Should().Contain(savedCompetitor.Country.CountryNameShort);
         }
 
         [Fact]
         public async Task Edit_Should_UpdateCompetitor()
         {
+            var _client = _factory.CreateClient(new WebApplicationFactoryClientOptions
+            {
+                AllowAutoRedirect = false // Zorg ervoor dat redirects niet automatisch worden gevolgd
+            });
             using var scope = _factory.Services.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-            var competitor = db.Competitors.Include(c => c.CompetitorInTeams).First();
+            var year = 2026;
+            var competitor = await CreateTestCompetitorWithTeamAsync(db, year);
 
             var getHtml = await (await _client.GetAsync($"/Competitors/Edit/{competitor.CompetitorId}")).Content.ReadAsStringAsync();
             var token = TokenHelper.ExtractAntiForgeryToken(getHtml);
@@ -107,7 +111,7 @@ namespace CycleManager.Tests.Integration.Manager
                 ["LastName"] = competitor.LastName + "_Edited",
                 ["CountryId"] = competitor.CountryId.ToString(),
                 ["PcsName"] = competitor.PcsName + "_Edited",
-                ["ScraperName"] = competitor.PcsScraperName + "_Edited",
+                ["PcsScraperName"] = competitor.PcsScraperName + "_Edited",
                 // markeer eerste jaar als nationaal kampioen
                 ["CompetitorInTeams[0].CompetitorInTeamId"] = competitor.CompetitorInTeams.ElementAt(0).Id.ToString(),
                 ["CompetitorInTeams[0].TeamYearId"] = competitor.CompetitorInTeams.ElementAt(0).TeamYearId.ToString(),
@@ -132,9 +136,14 @@ namespace CycleManager.Tests.Integration.Manager
         [Fact]
         public async Task Delete_Should_RemoveCompetitor()
         {
+            var _client = _factory.CreateClient(new WebApplicationFactoryClientOptions
+            {
+                AllowAutoRedirect = false // Zorg ervoor dat redirects niet automatisch worden gevolgd
+            });
+
             using var scope = _factory.Services.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-            var competitor = db.Competitors.First();
+            var competitor = await CreateTestCompetitorAsync(db);
 
             var getHtml = await (await _client.GetAsync($"/Competitors/Delete/{competitor.CompetitorId}")).Content.ReadAsStringAsync();
             var token = TokenHelper.ExtractAntiForgeryToken(getHtml);
@@ -157,7 +166,7 @@ namespace CycleManager.Tests.Integration.Manager
         {
             using var scope = _factory.Services.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-            var competitor = db.Competitors.First();
+            var competitor = await CreateTestCompetitorAsync(db);
 
             var getHtml = await (await _client.GetAsync($"/Competitors/Edit/{competitor.CompetitorId}")).Content.ReadAsStringAsync();
             var token = TokenHelper.ExtractAntiForgeryToken(getHtml);
@@ -195,10 +204,18 @@ namespace CycleManager.Tests.Integration.Manager
         public async Task DeleteConfirmed_Should_Redirect_WhenCompetitorDoesNotExist()
         {
             // Arrange
+            var _client = _factory.CreateClient(new WebApplicationFactoryClientOptions
+            {
+                AllowAutoRedirect = false // Zorg ervoor dat redirects niet automatisch worden gevolgd
+            });
+
+            using var scope = _factory.Services.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
             var nonExistingId = 9999;
 
             // Eerst een geldige token ophalen van een bestaand formulier
-            var getHtml = await (await _client.GetAsync("/Competitors/Delete/1")).Content.ReadAsStringAsync();
+            var competitor = await CreateTestCompetitorAsync(db);
+            var getHtml = await (await _client.GetAsync($"/Competitors/Delete/{competitor.CompetitorId}")).Content.ReadAsStringAsync();
             var token = TokenHelper.ExtractAntiForgeryToken(getHtml);
 
             var formData = new Dictionary<string, string>
@@ -219,7 +236,7 @@ namespace CycleManager.Tests.Integration.Manager
         {
             using var scope = _factory.Services.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-            var competitor = db.Competitors.First();
+            var competitor = await CreateTestCompetitorAsync(db);
 
             var response = await _client.GetAsync($"/Competitors/Details/{competitor.CompetitorId}");
             var html = await response.Content.ReadAsStringAsync();
@@ -233,7 +250,7 @@ namespace CycleManager.Tests.Integration.Manager
         {
             using var scope = _factory.Services.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-            var competitor = db.Competitors.First();
+            var competitor = await CreateTestCompetitorAsync(db);
 
             // Act
             var response = await _client.GetAsync($"/Competitors/SearchCompetitors?term={competitor.LastName}");
@@ -250,20 +267,19 @@ namespace CycleManager.Tests.Integration.Manager
         {
             using var scope = _factory.Services.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-            var competitor = db.Competitors
-                .Include(c => c.Country)
-                .Include(c => c.CompetitorInTeams)
-                    .ThenInclude(cit => cit.TeamYear)
-                        .ThenInclude(ty => ty.Team)
-                .First();
 
-            var year = competitor.CompetitorInTeams
+            var year = 2026;
+            var competitor = await CreateTestCompetitorWithTeamAsync(db, year);
+
+            var seasonYearId = competitor.CompetitorInTeams
                 .First()
                 .TeamYear
-                .Year;
+                .SeasonYearId;
 
             // Act
-            var response = await _client.GetAsync($"/Competitors/GetCompetitorInfo?id={competitor.CompetitorId}&year={year}");
+            var response = await _client.GetAsync(
+                $"/Competitors/GetCompetitorInfo?id={competitor.CompetitorId}&seasonYearId={seasonYearId}");
+
             response.EnsureSuccessStatusCode();
 
             // Assert
@@ -271,8 +287,7 @@ namespace CycleManager.Tests.Integration.Manager
             var data = JsonSerializer.Deserialize<JsonElement>(json);
 
             data.GetProperty("country").GetString().Should().Be(competitor.Country.CountryNameLong);
-            data.GetProperty("teamName").GetString().Should().Be(competitor.CompetitorInTeams.First().TeamYear.Team.CurrentTeamName);
+            data.GetProperty("teamName").GetString().Should().Be(competitor.CompetitorInTeams.First().TeamYear.Name);
         }
-
     }
 }

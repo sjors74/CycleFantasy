@@ -56,7 +56,15 @@ namespace CycleManager.Tests.Integration.Manager
         {
             using var scope = _factory.Services.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-            var country = await db.Countries.FirstAsync();
+
+            var country = new Country
+            {
+                CountryNameLong = "Nederland",
+                CountryNameShort = "NL"
+            };
+
+            db.Countries.Add(country);
+            await db.SaveChangesAsync();
 
             var response = await _client.GetAsync($"/Countries/Details/{country.CountryId}");
             response.EnsureSuccessStatusCode();
@@ -97,7 +105,15 @@ namespace CycleManager.Tests.Integration.Manager
         {
             using var scope = _factory.Services.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-            var country = await db.Countries.FirstAsync();
+
+            var country = new Country
+            {
+                CountryNameLong = "Nederland",
+                CountryNameShort = "NL"
+            };
+
+            db.Countries.Add(country);
+            await db.SaveChangesAsync();
 
             var getHtml = await (await _client.GetAsync($"/Countries/Edit/{country.CountryId}")).Content.ReadAsStringAsync();
             var token = TokenHelper.ExtractAntiForgeryToken(getHtml);
@@ -161,11 +177,25 @@ namespace CycleManager.Tests.Integration.Manager
         public async Task DeleteConfirmed_Should_Redirect_WhenCountryDoesNotExist()
         {
             // Arrange
-            var nonExistingId = 9999;
+            using var scope = _factory.Services.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-            // Eerst een geldige token ophalen van een bestaand formulier
-            var getHtml = await (await _client.GetAsync("/Countries/Delete/1")).Content.ReadAsStringAsync();
+            var country = new Country
+            {
+                CountryNameLong = "DeleteLand",
+                CountryNameShort = "DL"
+            };
+
+            db.Countries.Add(country);
+            await db.SaveChangesAsync();
+
+            var getHtml = await (
+                await _client.GetAsync($"/Countries/Delete/{country.CountryId}")
+            ).Content.ReadAsStringAsync();
+
             var token = TokenHelper.ExtractAntiForgeryToken(getHtml);
+
+            var nonExistingId = 9999;
 
             var formData = new Dictionary<string, string>
             {
@@ -173,7 +203,9 @@ namespace CycleManager.Tests.Integration.Manager
             };
 
             // Act
-            var postResponse = await _client.PostAsync($"/Countries/Delete/{nonExistingId}", new FormUrlEncodedContent(formData));
+            var postResponse = await _client.PostAsync(
+                $"/Countries/Delete/{nonExistingId}", 
+                new FormUrlEncodedContent(formData));
 
             // Assert
             postResponse.StatusCode.Should().Be(HttpStatusCode.Found);
