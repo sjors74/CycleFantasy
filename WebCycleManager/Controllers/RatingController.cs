@@ -1,7 +1,6 @@
 ﻿using CycleManager.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore; // Add this at the top if not present
 using WebCycleManager.Models;
 
 namespace WebCycleManager.Controllers
