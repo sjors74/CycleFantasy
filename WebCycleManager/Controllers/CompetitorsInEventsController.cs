@@ -139,9 +139,9 @@ namespace WebCycleManager.Controllers
                     .Select(t => new
                     {
                         CompetitorId = t.CompetitorInTeamId,
-                        CompetitorName = c.CompetitorName ?? "(naam onbekend)",
-                        LastName = c.LastName ?? "(naam onbekend)",
-                        FirstName = c.FirstName ?? "(naam onbekend)"
+                        CompetitorName = c.CompetitorName,
+                        LastName = c.LastName,
+                        FirstName = c.FirstName
                     }))
                 .OrderBy(x => x.LastName)
                 .ThenBy(x => x.FirstName)

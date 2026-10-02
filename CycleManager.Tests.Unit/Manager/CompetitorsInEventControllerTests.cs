@@ -6,6 +6,7 @@ using Domain.Dto;
 using Domain.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.Extensions.Primitives;
 using Moq;
@@ -299,6 +300,176 @@ namespace CycleManager.Tests.Unit.Manager
 
             Assert.Single(model.Competitors);
             Assert.Equal("Jan", model.Competitors.First().FirstName);
+        }
+
+        [Fact]
+        public async Task Index_ReturnsZeroRatingCount_WhenCompetitorHasNoRatings()
+        {
+            // Arrange
+            var competitor = new Competitor
+            {
+                FirstName = "Jan",
+                LastName = "Jansen",
+                Ratings = null!
+            };
+
+            var competitorInTeam = new CompetitorInTeam
+            {
+                Competitor = competitor,
+                TeamYear = new TeamYear
+                {
+                    TeamId = 1,
+                    Team = new Team
+                    {
+                        TeamId = 1,
+                        CurrentTeamName = "Team A"
+                    }
+                }
+            };
+
+            var competitorInEvent = new CompetitorsInEvent
+            {
+                Id = 10,
+                EventId = 2,
+                CompetitorInTeam = competitorInTeam,
+                EventNumber = 25
+            };
+
+            _competitorInEventServiceMock
+                .Setup(s => s.GetCompetitors(2))
+                .ReturnsAsync(new List<CompetitorsInEvent> { competitorInEvent });
+
+            _eventServiceMock
+                .Setup(s => s.GetEventById(2))
+                .ReturnsAsync(new Event
+                {
+                    EventId = 2,
+                    EventName = "Tour Test",
+                    EventYear = 2026
+                });
+
+            _teamServiceMock
+                .Setup(s => s.GetTeamsForEvent(2))
+                .ReturnsAsync(new List<Team>());
+
+            // Act
+            var result = await _controller.Index(2);
+
+            // Assert
+            var view = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<CompetitorsInEventViewModel>(view.Model);
+
+            var competitorVm = Assert.Single(model.Competitors);
+            Assert.Equal(0, competitorVm.RatingCount);
+        }
+
+        [Fact]
+        public async Task Index_UsesEmptyCompetitorValues_WhenCompetitorIsNull()
+        {
+            // Arrange
+            var competitorInEvent = new CompetitorsInEvent
+            {
+                Id = 10,
+                EventId = 2,
+                EventNumber = 25,
+                CompetitorInTeam = new CompetitorInTeam
+                {
+                    Competitor = null!,
+                    TeamYear = new TeamYear
+                    {
+                        TeamId = 1,
+                        Team = new Team
+                        {
+                            TeamId = 1,
+                            CurrentTeamName = "Team A"
+                        }
+                    }
+                }
+            };
+
+            _competitorInEventServiceMock
+                .Setup(s => s.GetCompetitors(2))
+                .ReturnsAsync(new List<CompetitorsInEvent> { competitorInEvent });
+
+            _eventServiceMock
+                .Setup(s => s.GetEventById(2))
+                .ReturnsAsync(new Event
+                {
+                    EventId = 2,
+                    EventName = "Tour Test",
+                    EventYear = 2026
+                });
+
+            _teamServiceMock
+                .Setup(s => s.GetTeamsForEvent(2))
+                .ReturnsAsync(new List<Team>());
+
+            // Act
+            var result = await _controller.Index(2);
+
+            // Assert
+            var view = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<CompetitorsInEventViewModel>(view.Model);
+
+            var competitorVm = Assert.Single(model.Competitors);
+
+            Assert.Equal(string.Empty, competitorVm.FirstName);
+            Assert.Equal(string.Empty, competitorVm.LastName);
+            Assert.Equal(0, competitorVm.RatingCount);
+        }
+
+        [Fact]
+        public async Task Index_UsesDefaultTeamValues_WhenTeamIsNull()
+        {
+            // Arrange
+            var competitorInEvent = new CompetitorsInEvent
+            {
+                Id = 10,
+                EventId = 2,
+                EventNumber = 25,
+                CompetitorInTeam = new CompetitorInTeam
+                {
+                    Competitor = new Competitor
+                    {
+                        FirstName = "Jan",
+                        LastName = "Jansen"
+                    },
+                    TeamYear = new TeamYear
+                    {
+                        TeamId = 1,
+                        Team = null!
+                    }
+                }
+            };
+
+            _competitorInEventServiceMock
+                .Setup(s => s.GetCompetitors(2))
+                .ReturnsAsync(new List<CompetitorsInEvent> { competitorInEvent });
+
+            _eventServiceMock
+                .Setup(s => s.GetEventById(2))
+                .ReturnsAsync(new Event
+                {
+                    EventId = 2,
+                    EventName = "Tour Test",
+                    EventYear = 2026
+                });
+
+            _teamServiceMock
+                .Setup(s => s.GetTeamsForEvent(2))
+                .ReturnsAsync(new List<Team>());
+
+            // Act
+            var result = await _controller.Index(2);
+
+            // Assert
+            var view = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<CompetitorsInEventViewModel>(view.Model);
+
+            var competitorVm = Assert.Single(model.Competitors);
+
+            Assert.Equal("onbekend", competitorVm.TeamName);
+            Assert.Equal(0, competitorVm.TeamId);
         }
         #endregion
 
@@ -615,6 +786,22 @@ namespace CycleManager.Tests.Unit.Manager
             Assert.Equal("Index", redirect.ActionName);
             Assert.Equal(1, redirect.RouteValues!["eventId"]);
         }
+
+        [Fact]
+        public async Task Create_Get_ReturnsNotFound_WhenEventDoesNotExist()
+        {
+            // Arrange
+            _eventServiceMock
+                .Setup(s => s.GetEventById(1))
+                .ReturnsAsync((Event)null!);
+
+            // Act
+            var result = await _controller.Create(1, null);
+
+            // Assert
+            Assert.IsType<NotFoundResult>(result);
+        }
+
         #endregion
 
         #region Edit Tests
