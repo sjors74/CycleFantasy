@@ -1,5 +1,4 @@
-﻿using CycleManager.Domain.Models;
-using CycleManager.Services.Interfaces;
+﻿using CycleManager.Services.Interfaces;
 using Domain.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;

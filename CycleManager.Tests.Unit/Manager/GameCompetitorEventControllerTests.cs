@@ -41,7 +41,7 @@ namespace CycleManager.Tests.Unit.Manager
             );
         }
 
-        // ---------- INDEX ----------
+        #region Index Tests
 
         [Fact]
         public async Task Index_ValidEventId_ReturnsViewWithModel()
@@ -97,8 +97,149 @@ namespace CycleManager.Tests.Unit.Manager
             Assert.Empty(model);
         }
 
+        [Fact]
+        public async Task Index_WithRatingsAndMissingRanking_ReturnsScoresAndRatings()
+        {
+            // Arrange
+            int eventId = 1;
 
-        // ---------- DETAILS (GET) ----------
+            _mockResultService
+                .Setup(s => s.GetResultsByEventId(eventId))
+                .ReturnsAsync(new List<CompetitorRankingDto>
+                {
+                    new CompetitorRankingDto
+                    {
+                        CompetitorInEventId = 10,
+                        NormalPoints = 5,
+                        SpecialPoints = 3
+                    }
+                });
+
+            _mockGameCompetitorEventService
+                .Setup(s => s.GetPicks(eventId))
+                .Returns(new List<GameCompetitorEventPick>
+                {
+                    new GameCompetitorEventPick
+                    {
+                        GameCompetitorEventId = 1,
+                        GameCompetitorEvent = new GameCompetitorEvent
+                        {
+                            Id = 1
+                        },
+                        CompetitorsInEventId = 10
+                    },
+                    new GameCompetitorEventPick
+                    {
+                        GameCompetitorEventId = 1,
+                        GameCompetitorEvent = new GameCompetitorEvent
+                        {
+                            Id = 1
+                        },
+                        CompetitorsInEventId = 99 // bestaat niet in rankingLookup
+                    }
+                }.AsQueryable());
+
+            _mockGameCompetitorEventService
+                .Setup(s => s.GetAllCompetitorsInEvent(eventId))
+                .ReturnsAsync(new List<GameCompetitorEvent>
+                {
+                    new GameCompetitorEvent
+                    {
+                        Id = 1,
+                        EventId = eventId,
+                        TeamName = "TeamX",
+                        User = new ApplicationUser
+                        {
+                            FirstName = "John",
+                            LastName = "Doe"
+                        }
+                    }
+                });
+
+            _mockRatingService
+                .Setup(s => s.GetGameCompetitorRatings(eventId))
+                .ReturnsAsync(new List<DeelnemerRatingDto>
+                {
+                    new DeelnemerRatingDto
+                    {
+                        GameCompetitorEventId = 1,
+                        RatingCategoryId = 2,
+                        RatingCategoryName = "GC",
+                        Color = "red",
+                        Rating = 8
+                    }
+                });
+
+            // Act
+            var result = await _controller.Index(eventId);
+
+            // Assert
+            var view = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsAssignableFrom<List<GameCompetitorInEventViewModel>>(view.Model);
+
+            var team = Assert.Single(model);
+
+            Assert.Equal(5, team.NormalScore);
+            Assert.Equal(3, team.SpecialScore);
+
+            var rating = Assert.Single(team.Ratings);
+            Assert.Equal(2, rating.RatingCategoryId);
+            Assert.Equal("GC", rating.RatingCategoryName);
+            Assert.Equal("red", rating.Color);
+            Assert.Equal(8, rating.Rating);
+        }
+
+        [Fact]
+        public async Task Index_GameCompetitorWithoutRatings_ReturnsEmptyRatings()
+        {
+            // Arrange
+            int eventId = 1;
+
+            _mockResultService
+                .Setup(s => s.GetResultsByEventId(eventId))
+                .ReturnsAsync(new List<CompetitorRankingDto>());
+
+            _mockGameCompetitorEventService
+                .Setup(s => s.GetPicks(eventId))
+                .Returns(new List<GameCompetitorEventPick>().AsQueryable());
+
+            _mockGameCompetitorEventService
+                .Setup(s => s.GetAllCompetitorsInEvent(eventId))
+                .ReturnsAsync(new List<GameCompetitorEvent>
+                {
+            new GameCompetitorEvent
+            {
+                Id = 1,
+                EventId = eventId,
+                TeamName = "TeamX",
+                User = new ApplicationUser
+                {
+                    FirstName = "John",
+                    LastName = "Doe"
+                }
+            }
+                });
+
+            _mockRatingService
+                .Setup(s => s.GetGameCompetitorRatings(eventId))
+                .ReturnsAsync(new List<DeelnemerRatingDto>());
+
+            // Act
+            var result = await _controller.Index(eventId);
+
+            // Assert
+            var view = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsAssignableFrom<List<GameCompetitorInEventViewModel>>(view.Model);
+
+            var team = Assert.Single(model);
+
+            Assert.Empty(team.Ratings);
+            Assert.Equal(0, team.NormalScore);
+            Assert.Equal(0, team.SpecialScore);
+        }
+
+        #endregion
+        #region Details Tests
 
         [Fact]
         public async Task Details_InvalidId_ReturnsNotFound()
@@ -215,9 +356,6 @@ namespace CycleManager.Tests.Unit.Manager
 
             Assert.Equal(15, model.CompetitorsInEvent.Count);
         }
-
-
-        // ---------- DETAILS (POST) ----------
 
         [Fact]
         public async Task Details_Post_InvalidModel_ReturnsSameView()
@@ -345,7 +483,758 @@ namespace CycleManager.Tests.Unit.Manager
             Assert.Equal("Details", result.ActionName);
         }
 
-        // ---------- CREATE ----------
+        [Fact]
+        public async Task Details_EventNotFound_ReturnsNotFound()
+        {
+            _mockEventService
+                .Setup(s => s.GetEventById(1))
+                .ReturnsAsync((Event?)null);
+
+            var result = await _controller.Details(5, 1);
+
+            var notFound = Assert.IsType<NotFoundObjectResult>(result);
+            Assert.Equal("Event 1 niet gevonden.", notFound.Value);
+        }
+
+        [Fact]
+        public async Task Details_EventWithoutConfiguration_ReturnsBadRequest()
+        {
+            _mockEventService
+                .Setup(s => s.GetEventById(1))
+                .ReturnsAsync(new Event
+                {
+                    EventId = 1,
+                    Configuration = null
+                });
+
+            var result = await _controller.Details(5, 1);
+
+            var badRequest = Assert.IsType<BadRequestObjectResult>(result);
+            Assert.Equal("Event 1 heeft geen configuratie.", badRequest.Value);
+        }
+
+        [Fact]
+        public async Task Details_ValidPick_ReturnsViewWithScoresAndRatings()
+        {
+            int eventId = 1;
+            int gameCompetitorEventId = 5;
+
+            var gameEvent = new Event
+            {
+                EventId = eventId,
+                Configuration = new Configuration
+                {
+                    ConfigurationItems = new List<ConfigurationItem>
+                    {
+                        new ConfigurationItem(),
+                        new ConfigurationItem()
+                    }
+                }
+            };
+
+            var competitor = new Competitor
+            {
+                CompetitorId = 100,
+                FirstName = "Wout",
+                LastName = "van Aert"
+            };
+
+            var competitorInTeam = new CompetitorInTeam
+            {
+                CompetitorId = competitor.CompetitorId,
+                Competitor = competitor
+            };
+
+            var competitorsInEvent = new CompetitorsInEvent
+            {
+                Id = 10,
+                CompetitorInTeam = competitorInTeam,
+                OutOfCompetition = false
+            };
+
+            var pick = new GameCompetitorEventPick
+            {
+                Id = 20,
+                GameCompetitorEventId = gameCompetitorEventId,
+                CompetitorsInEventId = competitorsInEvent.Id,
+                CompetitorsInEvent = competitorsInEvent,
+                GameCompetitorEvent = new GameCompetitorEvent
+                {
+                    Id = gameCompetitorEventId,
+                    EventId = eventId,
+                    TeamName = "Team Sjors"
+                }
+            };
+
+            var ratingCategory = new RatingCategory
+            {
+                RatingCategoryId = 1,
+                Code = "GC",
+                Color = "green",
+                DisplayOrder = 1,
+                IsActive = true
+            };
+
+            var rating = new CompetitorRating
+            {
+                CompetitorRatingId = 50,
+                CompetitorId = competitor.CompetitorId,
+                Competitor = competitor,
+                RatingCategoryId = ratingCategory.RatingCategoryId,
+                RatingCategory = ratingCategory,
+                Rating = 8,
+                RatingDate = new DateTime(2026, 9, 1)
+            };
+
+            _mockEventService
+                .Setup(s => s.GetEventById(eventId))
+                .ReturnsAsync(gameEvent);
+
+            _mockResultService
+                .Setup(s => s.GetResultsByEventId(eventId))
+                .ReturnsAsync(new List<CompetitorRankingDto>
+                {
+                    new CompetitorRankingDto
+                    {
+                        CompetitorInEventId = competitorsInEvent.Id,
+                        NormalPoints = 10,
+                        SpecialPoints = 3
+                    }
+                });
+
+            _mockGameCompetitorEventService
+                .Setup(s => s.GetPicks(eventId))
+                .Returns(new List<GameCompetitorEventPick>
+                {
+                    pick
+                }.AsQueryable());
+
+            _mockCompetitorInEventService
+                .Setup(s => s.GetCompetitors(eventId))
+                .ReturnsAsync(new List<CompetitorsInEvent>
+                {
+                    competitorsInEvent
+                });
+
+            _mockRatingService
+                .Setup(s => s.GetRatingsByCompetitorIds(
+                    It.Is<List<int>>(ids => ids.Contains(competitor.CompetitorId))))
+                .ReturnsAsync(new List<CompetitorRating>
+                {
+                    rating
+                });
+
+            var result = await _controller.Details(gameCompetitorEventId, eventId);
+
+            var view = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<GameCompetitorInEventViewModel>(view.Model);
+
+            Assert.Equal(eventId, model.EventId);
+            Assert.Equal(gameCompetitorEventId, model.Id);
+            Assert.Equal("Team Sjors", model.TeamName);
+
+            Assert.Equal(2, model.NumberOfPicks);
+            Assert.Equal(10, model.NormalScore);
+
+            Assert.Equal(2, model.CompetitorsInEvent.Count);
+
+            var pickModel = model.CompetitorsInEvent.First(p => p.PickId == pick.Id);
+
+            Assert.Equal(competitorsInEvent.Id, pickModel.CompetitorInEventId);
+            Assert.Equal("Wout", pickModel.FirstName);
+            Assert.Equal("van Aert", pickModel.LastName);
+            Assert.Equal("Wout van Aert", pickModel.CompetitorName);
+
+            Assert.False(pickModel.IsOutOfCompetition);
+
+            Assert.Equal(10, pickModel.NormalScore);
+            Assert.Equal(3, pickModel.SpecialQuestionScore);
+            Assert.Equal(13, pickModel.TotalScore);
+
+            Assert.Equal(pick.Id, pickModel.PickId);
+            Assert.Equal(competitor.CompetitorId, pickModel.SelectedCompetitorId);
+
+            var ratingModel = Assert.Single(pickModel.Ratings);
+            Assert.Equal(1, ratingModel.RatingCategoryId);
+            Assert.Equal("GC", ratingModel.Code);
+            Assert.Equal("green", ratingModel.Color);
+            Assert.Equal(1, ratingModel.DisplayOrder);
+            Assert.Equal(8, ratingModel.Rating);
+        }
+
+        [Fact]
+        public async Task Details_MultipleRatings_UsesLatestActiveRatingAndIgnoresInactive()
+        {
+            int eventId = 1;
+            int gameCompetitorEventId = 5;
+            int competitorId = 100;
+
+            var competitor = new Competitor
+            {
+                CompetitorId = competitorId,
+                FirstName = "Wout",
+                LastName = "van Aert",
+            };
+
+            var competitorInTeam = new CompetitorInTeam
+            {
+                CompetitorId = competitorId,
+                Competitor = competitor
+            };
+
+            var competitorsInEvent = new CompetitorsInEvent
+            {
+                Id = 10,
+                CompetitorInTeam = competitorInTeam,
+                OutOfCompetition = false
+            };
+
+            var pick = new GameCompetitorEventPick
+            {
+                Id = 20,
+                GameCompetitorEventId = gameCompetitorEventId,
+                CompetitorsInEventId = competitorsInEvent.Id,
+                CompetitorsInEvent = competitorsInEvent,
+                GameCompetitorEvent = new GameCompetitorEvent
+                {
+                    Id = gameCompetitorEventId,
+                    EventId = eventId,
+                    TeamName = "Team Sjors"
+                }
+            };
+
+            var activeCategory = new RatingCategory
+            {
+                RatingCategoryId = 1,
+                Code = "GC",
+                Color = "green",
+                DisplayOrder = 1,
+                IsActive = true
+            };
+
+            var inactiveCategory = new RatingCategory
+            {
+                RatingCategoryId = 2,
+                Code = "SPR",
+                Color = "red",
+                DisplayOrder = 2,
+                IsActive = false
+            };
+
+            var oldRating = new CompetitorRating
+            {
+                CompetitorRatingId = 10,
+                CompetitorId = competitorId,
+                Competitor = competitor,
+                RatingCategoryId = activeCategory.RatingCategoryId,
+                RatingCategory = activeCategory,
+                Rating = 5,
+                RatingDate = new DateTime(2026, 8, 1)
+            };
+
+            var latestRating = new CompetitorRating
+            {
+                CompetitorRatingId = 20,
+                CompetitorId = competitorId,
+                Competitor = competitor,
+                RatingCategoryId = activeCategory.RatingCategoryId,
+                RatingCategory = activeCategory,
+                Rating = 9,
+                RatingDate = new DateTime(2026, 9, 1)
+            };
+
+            var inactiveRating = new CompetitorRating
+            {
+                CompetitorRatingId = 30,
+                CompetitorId = competitorId,
+                Competitor = competitor,
+                RatingCategoryId = inactiveCategory.RatingCategoryId,
+                RatingCategory = inactiveCategory,
+                Rating = 7,
+                RatingDate = new DateTime(2026, 9, 15)
+            };
+
+            _mockEventService
+                .Setup(s => s.GetEventById(eventId))
+                .ReturnsAsync(new Event
+                {
+                    EventId = eventId,
+                    Configuration = new Configuration
+                    {
+                        ConfigurationItems = new List<ConfigurationItem>
+                        {
+                            new ConfigurationItem()
+                        }
+                    }
+                });
+
+            _mockResultService
+                .Setup(s => s.GetResultsByEventId(eventId))
+                .ReturnsAsync(new List<CompetitorRankingDto>());
+
+            _mockGameCompetitorEventService
+                .Setup(s => s.GetPicks(eventId))
+                .Returns(new List<GameCompetitorEventPick>
+                {
+                    pick
+                }.AsQueryable());
+
+            _mockCompetitorInEventService
+                .Setup(s => s.GetCompetitors(eventId))
+                .ReturnsAsync(new List<CompetitorsInEvent>
+                {
+                    competitorsInEvent
+                });
+
+            _mockRatingService
+                .Setup(s => s.GetRatingsByCompetitorIds(
+                    It.Is<List<int>>(ids => ids.Contains(competitorId))))
+                .ReturnsAsync(new List<CompetitorRating>
+                {
+                    oldRating,
+                    latestRating,
+                    inactiveRating
+                });
+
+            var result = await _controller.Details(gameCompetitorEventId, eventId);
+
+            var view = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<GameCompetitorInEventViewModel>(view.Model);
+
+            var pickModel = Assert.Single(model.CompetitorsInEvent);
+
+            var rating = Assert.Single(pickModel.Ratings);
+
+            Assert.Equal(activeCategory.RatingCategoryId, rating.RatingCategoryId);
+            Assert.Equal("GC", rating.Code);
+            Assert.Equal("green", rating.Color);
+            Assert.Equal(1, rating.DisplayOrder);
+            Assert.Equal(9, rating.Rating);
+        }
+
+        [Fact]
+        public async Task Details_PickWithoutResult_ReturnsZeroScores()
+        {
+            int eventId = 1;
+            int gameCompetitorEventId = 5;
+
+            var competitor = new Competitor
+            {
+                CompetitorId = 100,
+                FirstName = "Wout",
+                LastName = "van Aert",
+            };
+
+            var competitorInTeam = new CompetitorInTeam
+            {
+                CompetitorId = competitor.CompetitorId,
+                Competitor = competitor
+            };
+
+            var competitorsInEvent = new CompetitorsInEvent
+            {
+                Id = 10,
+                CompetitorInTeam = competitorInTeam,
+                OutOfCompetition = false
+            };
+
+            var pick = new GameCompetitorEventPick
+            {
+                Id = 20,
+                GameCompetitorEventId = gameCompetitorEventId,
+                CompetitorsInEventId = competitorsInEvent.Id,
+                CompetitorsInEvent = competitorsInEvent,
+                GameCompetitorEvent = new GameCompetitorEvent
+                {
+                    Id = gameCompetitorEventId,
+                    EventId = eventId,
+                    TeamName = "Team Sjors"
+                }
+            };
+
+            _mockEventService
+                .Setup(s => s.GetEventById(eventId))
+                .ReturnsAsync(new Event
+                {
+                    EventId = eventId,
+                    Configuration = new Configuration
+                    {
+                        ConfigurationItems = new List<ConfigurationItem>
+                        {
+                            new ConfigurationItem()
+                        }
+                    }
+                });
+
+            // Bewust geen resultaat voor CompetitorInEventId = 10.
+            _mockResultService
+                .Setup(s => s.GetResultsByEventId(eventId))
+                .ReturnsAsync(new List<CompetitorRankingDto>());
+
+            _mockGameCompetitorEventService
+                .Setup(s => s.GetPicks(eventId))
+                .Returns(new List<GameCompetitorEventPick>
+                {
+                    pick
+                }.AsQueryable());
+
+            _mockCompetitorInEventService
+                .Setup(s => s.GetCompetitors(eventId))
+                .ReturnsAsync(new List<CompetitorsInEvent>
+                {
+                    competitorsInEvent
+                });
+
+            _mockRatingService
+                .Setup(s => s.GetRatingsByCompetitorIds(It.IsAny<List<int>>()))
+                .ReturnsAsync(new List<CompetitorRating>());
+
+            var result = await _controller.Details(gameCompetitorEventId, eventId);
+
+            var view = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<GameCompetitorInEventViewModel>(view.Model);
+
+            var pickModel = Assert.Single(model.CompetitorsInEvent);
+
+            Assert.Equal(0, pickModel.NormalScore);
+            Assert.Equal(0, pickModel.SpecialQuestionScore);
+            Assert.Equal(0, pickModel.TotalScore);
+
+            Assert.Equal(0, model.NormalScore);
+        }
+
+        [Fact]
+        public async Task Details_MorePicksThanConfigured_TakesOnlyConfiguredNumber()
+        {
+            int eventId = 1;
+            int gameCompetitorEventId = 5;
+
+            var competitor1 = new Competitor
+            {
+                CompetitorId = 100,
+                FirstName = "Wout",
+                LastName = "van Aert",
+            };
+
+            var competitor2 = new Competitor
+            {
+                CompetitorId = 200,
+                FirstName = "Mathieu",
+                LastName = "van der Poel",
+            };
+
+            var competitorInTeam1 = new CompetitorInTeam
+            {
+                CompetitorId = competitor1.CompetitorId,
+                Competitor = competitor1
+            };
+
+            var competitorInTeam2 = new CompetitorInTeam
+            {
+                CompetitorId = competitor2.CompetitorId,
+                Competitor = competitor2
+            };
+
+            var competitorsInEvent1 = new CompetitorsInEvent
+            {
+                Id = 10,
+                CompetitorInTeam = competitorInTeam1
+            };
+
+            var competitorsInEvent2 = new CompetitorsInEvent
+            {
+                Id = 20,
+                CompetitorInTeam = competitorInTeam2
+            };
+
+            var pick1 = new GameCompetitorEventPick
+            {
+                Id = 1,
+                GameCompetitorEventId = gameCompetitorEventId,
+                CompetitorsInEventId = competitorsInEvent1.Id,
+                CompetitorsInEvent = competitorsInEvent1,
+                GameCompetitorEvent = new GameCompetitorEvent
+                {
+                    Id = gameCompetitorEventId,
+                    EventId = eventId,
+                    TeamName = "Team Sjors"
+                }
+            };
+
+            var pick2 = new GameCompetitorEventPick
+            {
+                Id = 2,
+                GameCompetitorEventId = gameCompetitorEventId,
+                CompetitorsInEventId = competitorsInEvent2.Id,
+                CompetitorsInEvent = competitorsInEvent2,
+                GameCompetitorEvent = pick1.GameCompetitorEvent
+            };
+
+            _mockEventService
+                .Setup(s => s.GetEventById(eventId))
+                .ReturnsAsync(new Event
+                {
+                    EventId = eventId,
+                    Configuration = new Configuration
+                    {
+                        // Slechts één toegestane pick.
+                        ConfigurationItems = new List<ConfigurationItem>
+                        {
+                            new ConfigurationItem()
+                        }
+                    }
+                });
+
+            _mockResultService
+                .Setup(s => s.GetResultsByEventId(eventId))
+                .ReturnsAsync(new List<CompetitorRankingDto>());
+
+            _mockGameCompetitorEventService
+                .Setup(s => s.GetPicks(eventId))
+                .Returns(new List<GameCompetitorEventPick>
+                {
+                    pick1,
+                    pick2
+                }.AsQueryable());
+
+            _mockCompetitorInEventService
+                .Setup(s => s.GetCompetitors(eventId))
+                .ReturnsAsync(new List<CompetitorsInEvent>
+                {
+                    competitorsInEvent1,
+                    competitorsInEvent2
+                });
+
+            _mockRatingService
+                .Setup(s => s.GetRatingsByCompetitorIds(It.IsAny<List<int>>()))
+                .ReturnsAsync(new List<CompetitorRating>());
+
+            var result = await _controller.Details(gameCompetitorEventId, eventId);
+
+            var view = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<GameCompetitorInEventViewModel>(view.Model);
+
+            Assert.Single(model.CompetitorsInEvent);
+
+            var selectedPick = model.CompetitorsInEvent[0];
+
+            Assert.Equal(1, selectedPick.PickId);
+            Assert.Equal("Wout", selectedPick.FirstName);
+            Assert.Equal("van Aert", selectedPick.LastName);
+        }
+
+        [Fact]
+        public async Task Details_PickWithNullNames_UsesOnbekendFallback()
+        {
+            int eventId = 1;
+            int gameCompetitorEventId = 5;
+
+            var competitor = new Competitor
+            {
+                CompetitorId = 100,
+                FirstName = null!,
+                LastName = null!,
+            };
+
+            var competitorInTeam = new CompetitorInTeam
+            {
+                CompetitorId = competitor.CompetitorId,
+                Competitor = competitor
+            };
+
+            var competitorsInEvent = new CompetitorsInEvent
+            {
+                Id = 10,
+                CompetitorInTeam = competitorInTeam,
+                OutOfCompetition = true
+            };
+
+            var pick = new GameCompetitorEventPick
+            {
+                Id = 20,
+                GameCompetitorEventId = gameCompetitorEventId,
+                CompetitorsInEventId = competitorsInEvent.Id,
+                CompetitorsInEvent = competitorsInEvent,
+
+                // Bewust geen GameCompetitorEvent:
+                // hierdoor moet TeamName "onbekend" worden.
+                GameCompetitorEvent = null!
+            };
+
+            _mockEventService
+                .Setup(s => s.GetEventById(eventId))
+                .ReturnsAsync(new Event
+                {
+                    EventId = eventId,
+                    Configuration = new Configuration
+                    {
+                        ConfigurationItems = new List<ConfigurationItem>
+                        {
+                            new ConfigurationItem()
+                        }
+                    }
+                });
+
+            _mockResultService
+                .Setup(s => s.GetResultsByEventId(eventId))
+                .ReturnsAsync(new List<CompetitorRankingDto>());
+
+            _mockGameCompetitorEventService
+                .Setup(s => s.GetPicks(eventId))
+                .Returns(new List<GameCompetitorEventPick>
+                {
+                    pick
+                }.AsQueryable());
+
+            _mockCompetitorInEventService
+                .Setup(s => s.GetCompetitors(eventId))
+                .ReturnsAsync(new List<CompetitorsInEvent>
+                {
+                    competitorsInEvent
+                });
+
+            _mockRatingService
+                .Setup(s => s.GetRatingsByCompetitorIds(It.IsAny<List<int>>()))
+                .ReturnsAsync(new List<CompetitorRating>());
+
+            var result = await _controller.Details(gameCompetitorEventId, eventId);
+
+            var view = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<GameCompetitorInEventViewModel>(view.Model);
+            var pickModel = Assert.Single(model.CompetitorsInEvent);
+
+            Assert.Equal("onbekend", pickModel.FirstName);
+            Assert.Equal("onbekend", pickModel.LastName);
+            Assert.True(pickModel.IsOutOfCompetition);
+        }
+
+        [Fact]
+        public async Task Details_RatingsWithSameDate_UsesHighestRatingId()
+        {
+            int eventId = 1;
+            int gameCompetitorEventId = 5;
+            int competitorId = 100;
+
+            var competitor = new Competitor
+            {
+                CompetitorId = competitorId,
+                FirstName = "Wout",
+                LastName = "van Aert"
+            };
+
+            var competitorInTeam = new CompetitorInTeam
+            {
+                CompetitorId = competitorId,
+                Competitor = competitor
+            };
+
+            var competitorsInEvent = new CompetitorsInEvent
+            {
+                Id = 10,
+                CompetitorInTeam = competitorInTeam
+            };
+
+            var pick = new GameCompetitorEventPick
+            {
+                Id = 20,
+                GameCompetitorEventId = gameCompetitorEventId,
+                CompetitorsInEventId = competitorsInEvent.Id,
+                CompetitorsInEvent = competitorsInEvent,
+                GameCompetitorEvent = new GameCompetitorEvent
+                {
+                    Id = gameCompetitorEventId,
+                    EventId = eventId,
+                    TeamName = "Team Sjors"
+                }
+            };
+
+            var ratingCategory = new RatingCategory
+            {
+                RatingCategoryId = 1,
+                Code = "GC",
+                Color = "green",
+                DisplayOrder = 1,
+                IsActive = true
+            };
+
+            var ratingDate = new DateTime(2026, 9, 1);
+
+            var lowerIdRating = new CompetitorRating
+            {
+                CompetitorRatingId = 10,
+                CompetitorId = competitorId,
+                Competitor = competitor,
+                RatingCategoryId = ratingCategory.RatingCategoryId,
+                RatingCategory = ratingCategory,
+                Rating = 5,
+                RatingDate = ratingDate
+            };
+
+            var higherIdRating = new CompetitorRating
+            {
+                CompetitorRatingId = 20,
+                CompetitorId = competitorId,
+                Competitor = competitor,
+                RatingCategoryId = ratingCategory.RatingCategoryId,
+                RatingCategory = ratingCategory,
+                Rating = 9,
+                RatingDate = ratingDate
+            };
+
+            _mockEventService
+                .Setup(s => s.GetEventById(eventId))
+                .ReturnsAsync(new Event
+                {
+                    EventId = eventId,
+                    Configuration = new Configuration
+                    {
+                        ConfigurationItems = new List<ConfigurationItem>
+                        {
+                            new ConfigurationItem()
+                        }
+                    }
+                });
+
+            _mockResultService
+                .Setup(s => s.GetResultsByEventId(eventId))
+                .ReturnsAsync(new List<CompetitorRankingDto>());
+
+            _mockGameCompetitorEventService
+                .Setup(s => s.GetPicks(eventId))
+                .Returns(new List<GameCompetitorEventPick>
+                {
+                    pick
+                }.AsQueryable());
+
+            _mockCompetitorInEventService
+                .Setup(s => s.GetCompetitors(eventId))
+                .ReturnsAsync(new List<CompetitorsInEvent>
+                {
+                    competitorsInEvent
+                });
+
+            _mockRatingService
+                .Setup(s => s.GetRatingsByCompetitorIds(
+                    It.Is<List<int>>(ids => ids.Contains(competitorId))))
+                .ReturnsAsync(new List<CompetitorRating>
+                {
+                    lowerIdRating,
+                    higherIdRating
+                });
+
+            var result = await _controller.Details(gameCompetitorEventId, eventId);
+
+            var view = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<GameCompetitorInEventViewModel>(view.Model);
+
+            var pickModel = Assert.Single(model.CompetitorsInEvent);
+            var rating = Assert.Single(pickModel.Ratings);
+
+            Assert.Equal(1, rating.RatingCategoryId);
+            Assert.Equal(9, rating.Rating);
+        }
+        #endregion
+        #region Create Tests
 
         [Fact]
         public async Task Create_Get_ReturnsViewWithUsersInViewData()
@@ -400,7 +1289,8 @@ namespace CycleManager.Tests.Unit.Manager
             Assert.Equal("Index", result.ActionName);
         }
 
-        // ---------- EDIT ----------
+        #endregion
+        #region Edit Tests
 
         [Fact]
         public async Task Edit_Get_ValidId_ReturnsViewWithDto()
@@ -476,7 +1366,8 @@ namespace CycleManager.Tests.Unit.Manager
             Assert.Equal(dto, result.Model);
         }
 
-        // ---------- DELETE ----------
+        #endregion
+        #region Delete Tests
 
         [Fact]
         public async Task DeletePick_ValidId_RemovesPickAndReturnsOk()
@@ -570,8 +1461,8 @@ namespace CycleManager.Tests.Unit.Manager
             // Act & Assert
             await Assert.ThrowsAsync<Exception>(() => _controller.DeletePick(5));
         }
-
-        // ---------- Helpers  ----------
+        #endregion
+        #region Helper tests
 
         [Fact]
         public async Task FillList_ReturnsRedirectToDetails()
@@ -617,5 +1508,6 @@ namespace CycleManager.Tests.Unit.Manager
 
             Assert.Empty(suggestedCompetitors);
         }
+        #endregion
     }
 }

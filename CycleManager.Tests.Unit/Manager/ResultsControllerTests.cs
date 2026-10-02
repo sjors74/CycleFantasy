@@ -25,6 +25,8 @@ namespace CycleManager.Tests.Unit.Manager
             _controller = new ResultsController(_resultsServiceMock.Object, _apiClientMock.Object, _scoreServiceMock.Object);
         }
 
+        #region Index Tests
+
         [Fact]
         public async Task Index_StageNotFound_ReturnsNotFound()
         {
@@ -212,6 +214,1159 @@ namespace CycleManager.Tests.Unit.Manager
         }
 
         [Fact]
+        public async Task Index_StageWithoutConfiguration_ReturnsNotFound()
+        {
+            // Arrange
+            var stage = new Stage
+            {
+                Id = 1,
+                StageName = "Etappe 1",
+                Event = new Event
+                {
+                    EventId = 10,
+                    Configuration = null
+                }
+            };
+
+            _resultsServiceMock
+                .Setup(s => s.GetStageByIdAsync(1))
+                .ReturnsAsync(stage);
+
+            // Act
+            var result = await _controller.Index(1);
+
+            // Assert
+            var notFound = Assert.IsType<NotFoundObjectResult>(result);
+            Assert.Equal(
+                "Geen configuratie gevonden voor dit event.",
+                notFound.Value);
+        }
+
+        [Fact]
+        public async Task Index_Post_AddsSpecialResultAndRedirects()
+        {
+            // Arrange
+            var model = new ResultViewModel
+            {
+                EventId = 10,
+                StageId = 1,
+                ConfigurationId = 20,
+                Rows = new List<StageResultRowViewModel>
+                {
+                    new StageResultRowViewModel
+                    {
+                        IsSpecial = true,
+                        SpecialId = 1,
+                        SelectedCompetitorId = 5
+                    }
+                }
+            };
+
+            var competitors = new List<CompetitorsInEvent>
+            {
+                new CompetitorsInEvent
+                {
+                    Id = 5,
+                    EventId = 10
+                }
+            };
+
+            var specialItems = new List<ConfigurationItemSpecial>
+            {
+                new ConfigurationItemSpecial
+                {
+                    Id = 1,
+                    ConfigurationId = 20,
+                    Question = Domain.Enums.QuestionType.KOM,
+                    Score = 10
+                }
+            };
+
+            _resultsServiceMock
+                .Setup(s => s.GetCompetitorsInEventAsync(10))
+                .ReturnsAsync(competitors);
+
+            _resultsServiceMock
+                .Setup(s => s.GetConfigurationItemsByConfigAsync(20))
+                .ReturnsAsync(new List<ConfigurationItem>());
+
+            _resultsServiceMock
+                .Setup(s => s.GetConfigurationItemSpecialsAsync(20))
+                .ReturnsAsync(specialItems);
+
+            _resultsServiceMock
+                .Setup(s => s.SyncResultsAsync(
+                    1,
+                    It.IsAny<IEnumerable<Result>>(),
+                    It.IsAny<IEnumerable<SpecialResult>>()))
+                .Returns(Task.CompletedTask);
+
+            _scoreServiceMock
+                .Setup(s => s.UpdateScoresForStageAsync(10, 1))
+                .Returns(Task.CompletedTask);
+
+            _apiClientMock
+                .Setup(c => c.PostToApiAsync(It.IsAny<string>()))
+                .ReturnsAsync(new HttpResponseMessage(System.Net.HttpStatusCode.OK));
+
+            // Act
+            var result = await _controller.Index(model);
+
+            // Assert
+            _resultsServiceMock.Verify(
+                s => s.SyncResultsAsync(
+                    1,
+                    It.Is<IEnumerable<Result>>(x => !x.Any()),
+                    It.Is<IEnumerable<SpecialResult>>(x =>
+                        x.Count() == 1 &&
+                        x.First().CompetitorInEventId == 5 &&
+                        x.First().StageId == 1 &&
+                        x.First().SpecialId == 1)),
+                Times.Once);
+
+            Assert.IsType<RedirectToActionResult>(result);
+        }
+
+        [Fact]
+        public async Task Index_Post_UnknownCompetitor_SkipsRow()
+        {
+            // Arrange
+            var model = new ResultViewModel
+            {
+                EventId = 10,
+                StageId = 1,
+                ConfigurationId = 20,
+                Rows = new List<StageResultRowViewModel>
+                {
+                    new StageResultRowViewModel
+                    {
+                        Position = 1,
+                        SelectedCompetitorId = 999
+                    }
+                }
+            };
+
+            _resultsServiceMock
+                .Setup(s => s.GetCompetitorsInEventAsync(10))
+                .ReturnsAsync(new List<CompetitorsInEvent>());
+
+            _resultsServiceMock
+                .Setup(s => s.GetConfigurationItemsByConfigAsync(20))
+                .ReturnsAsync(new List<ConfigurationItem>());
+
+            _resultsServiceMock
+                .Setup(s => s.GetConfigurationItemSpecialsAsync(20))
+                .ReturnsAsync(new List<ConfigurationItemSpecial>());
+
+            _resultsServiceMock
+                .Setup(s => s.SyncResultsAsync(
+                    It.IsAny<int>(),
+                    It.IsAny<IEnumerable<Result>>(),
+                    It.IsAny<IEnumerable<SpecialResult>>()))
+                .Returns(Task.CompletedTask);
+
+            _scoreServiceMock
+                .Setup(s => s.UpdateScoresForStageAsync(10, 1))
+                .Returns(Task.CompletedTask);
+
+            _apiClientMock
+                .Setup(c => c.PostToApiAsync(It.IsAny<string>()))
+                .ReturnsAsync(new HttpResponseMessage(
+                    System.Net.HttpStatusCode.OK));
+
+            // Act
+            await _controller.Index(model);
+
+            // Assert
+            _resultsServiceMock.Verify(
+                s => s.SyncResultsAsync(
+                    1,
+                    It.Is<IEnumerable<Result>>(x => !x.Any()),
+                    It.Is<IEnumerable<SpecialResult>>(x => !x.Any())),
+                Times.Once);
+        }
+
+        [Fact]
+        public async Task Index_Post_UnknownSpecialItem_SkipsRow()
+        {
+            // Arrange
+            var model = new ResultViewModel
+            {
+                EventId = 10,
+                StageId = 1,
+                ConfigurationId = 20,
+                Rows = new List<StageResultRowViewModel>
+                {
+                    new StageResultRowViewModel
+                    {
+                        IsSpecial = true,
+                        SpecialId = 999,
+                        SelectedCompetitorId = 5
+                    }
+                }
+            };
+
+            _resultsServiceMock
+                .Setup(s => s.GetCompetitorsInEventAsync(10))
+                .ReturnsAsync(new List<CompetitorsInEvent>
+                {
+                    new CompetitorsInEvent { Id = 5, EventId = 10 }
+                });
+
+            _resultsServiceMock
+                .Setup(s => s.GetConfigurationItemsByConfigAsync(20))
+                .ReturnsAsync(new List<ConfigurationItem>());
+
+            _resultsServiceMock
+                .Setup(s => s.GetConfigurationItemSpecialsAsync(20))
+                .ReturnsAsync(new List<ConfigurationItemSpecial>());
+
+            _resultsServiceMock
+                .Setup(s => s.SyncResultsAsync(
+                    1,
+                    It.IsAny<IEnumerable<Result>>(),
+                    It.IsAny<IEnumerable<SpecialResult>>()))
+                .Returns(Task.CompletedTask);
+
+            _scoreServiceMock
+                .Setup(s => s.UpdateScoresForStageAsync(10, 1))
+                .Returns(Task.CompletedTask);
+
+            _apiClientMock
+                .Setup(c => c.PostToApiAsync(It.IsAny<string>()))
+                .ReturnsAsync(new HttpResponseMessage(
+                    System.Net.HttpStatusCode.OK));
+
+            // Act
+            var result = await _controller.Index(model);
+
+            // Assert
+            Assert.IsType<RedirectToActionResult>(result);
+
+            _resultsServiceMock.Verify(
+                s => s.SyncResultsAsync(
+                    1,
+                    It.Is<IEnumerable<Result>>(x => !x.Any()),
+                    It.Is<IEnumerable<SpecialResult>>(x => !x.Any())),
+                Times.Once);
+        }
+
+        [Fact]
+        public async Task Index_Post_UnknownConfigurationItem_SkipsRow()
+        {
+            // Arrange
+            var model = new ResultViewModel
+            {
+                EventId = 10,
+                StageId = 1,
+                ConfigurationId = 20,
+                Rows = new List<StageResultRowViewModel>
+                {
+                    new StageResultRowViewModel
+                    {
+                        IsSpecial = false,
+                        Position = 999,
+                        SelectedCompetitorId = 5
+                    }
+                }
+            };
+
+            _resultsServiceMock
+                .Setup(s => s.GetCompetitorsInEventAsync(10))
+                .ReturnsAsync(new List<CompetitorsInEvent>
+                {
+                    new CompetitorsInEvent { Id = 5, EventId = 10 }
+                });
+
+            _resultsServiceMock
+                .Setup(s => s.GetConfigurationItemsByConfigAsync(20))
+                .ReturnsAsync(new List<ConfigurationItem>());
+
+            _resultsServiceMock
+                .Setup(s => s.GetConfigurationItemSpecialsAsync(20))
+                .ReturnsAsync(new List<ConfigurationItemSpecial>());
+
+            _resultsServiceMock
+                .Setup(s => s.SyncResultsAsync(
+                    1,
+                    It.IsAny<IEnumerable<Result>>(),
+                    It.IsAny<IEnumerable<SpecialResult>>()))
+                .Returns(Task.CompletedTask);
+
+            _scoreServiceMock
+                .Setup(s => s.UpdateScoresForStageAsync(10, 1))
+                .Returns(Task.CompletedTask);
+
+            _apiClientMock
+                .Setup(c => c.PostToApiAsync(It.IsAny<string>()))
+                .ReturnsAsync(new HttpResponseMessage(
+                    System.Net.HttpStatusCode.OK));
+
+            // Act
+            var result = await _controller.Index(model);
+
+            // Assert
+            Assert.IsType<RedirectToActionResult>(result);
+
+            _resultsServiceMock.Verify(
+                s => s.SyncResultsAsync(
+                    1,
+                    It.Is<IEnumerable<Result>>(x => !x.Any()),
+                    It.Is<IEnumerable<SpecialResult>>(x => !x.Any())),
+                Times.Once);
+        }
+
+        [Fact]
+        public async Task Index_Post_ApiReturnsError_StillRedirects()
+        {
+            // Arrange
+            var model = new ResultViewModel
+            {
+                EventId = 10,
+                StageId = 1,
+                ConfigurationId = 20,
+                Rows = new List<StageResultRowViewModel>()
+            };
+
+            _resultsServiceMock
+                .Setup(s => s.GetCompetitorsInEventAsync(10))
+                .ReturnsAsync(new List<CompetitorsInEvent>());
+
+            _resultsServiceMock
+                .Setup(s => s.GetConfigurationItemsByConfigAsync(20))
+                .ReturnsAsync(new List<ConfigurationItem>());
+
+            _resultsServiceMock
+                .Setup(s => s.GetConfigurationItemSpecialsAsync(20))
+                .ReturnsAsync(new List<ConfigurationItemSpecial>());
+
+            _resultsServiceMock
+                .Setup(s => s.SyncResultsAsync(
+                    1,
+                    It.IsAny<IEnumerable<Result>>(),
+                    It.IsAny<IEnumerable<SpecialResult>>()))
+                .Returns(Task.CompletedTask);
+
+            _scoreServiceMock
+                .Setup(s => s.UpdateScoresForStageAsync(10, 1))
+                .Returns(Task.CompletedTask);
+
+            _apiClientMock
+                .Setup(c => c.PostToApiAsync(It.IsAny<string>()))
+                .ReturnsAsync(new HttpResponseMessage(
+                    System.Net.HttpStatusCode.InternalServerError));
+
+            // Act
+            var result = await _controller.Index(model);
+
+            // Assert
+            var redirect = Assert.IsType<RedirectToActionResult>(result);
+            Assert.Equal("Index", redirect.ActionName);
+            Assert.Equal(1, redirect.RouteValues?["stageId"]);
+        }
+
+        [Fact]
+        public async Task Index_Post_ApiThrowsHttpRequestException_StillRedirects()
+        {
+            // Arrange
+            var model = new ResultViewModel
+            {
+                EventId = 10,
+                StageId = 1,
+                ConfigurationId = 20,
+                Rows = new List<StageResultRowViewModel>()
+            };
+
+            _resultsServiceMock
+                .Setup(s => s.GetCompetitorsInEventAsync(10))
+                .ReturnsAsync(new List<CompetitorsInEvent>());
+
+            _resultsServiceMock
+                .Setup(s => s.GetConfigurationItemsByConfigAsync(20))
+                .ReturnsAsync(new List<ConfigurationItem>());
+
+            _resultsServiceMock
+                .Setup(s => s.GetConfigurationItemSpecialsAsync(20))
+                .ReturnsAsync(new List<ConfigurationItemSpecial>());
+
+            _resultsServiceMock
+                .Setup(s => s.SyncResultsAsync(
+                    1,
+                    It.IsAny<IEnumerable<Result>>(),
+                    It.IsAny<IEnumerable<SpecialResult>>()))
+                .Returns(Task.CompletedTask);
+
+            _scoreServiceMock
+                .Setup(s => s.UpdateScoresForStageAsync(10, 1))
+                .Returns(Task.CompletedTask);
+
+            _apiClientMock
+                .Setup(c => c.PostToApiAsync(It.IsAny<string>()))
+                .ThrowsAsync(new HttpRequestException("API niet bereikbaar"));
+
+            // Act
+            var result = await _controller.Index(model);
+
+            // Assert
+            Assert.IsType<RedirectToActionResult>(result);
+        }
+
+        [Fact]
+        public async Task Index_Post_ApiThrowsUnexpectedException_StillRedirects()
+        {
+            // Arrange
+            var model = new ResultViewModel
+            {
+                EventId = 10,
+                StageId = 1,
+                ConfigurationId = 20,
+                Rows = new List<StageResultRowViewModel>()
+            };
+
+            _resultsServiceMock
+                .Setup(s => s.GetCompetitorsInEventAsync(10))
+                .ReturnsAsync(new List<CompetitorsInEvent>());
+
+            _resultsServiceMock
+                .Setup(s => s.GetConfigurationItemsByConfigAsync(20))
+                .ReturnsAsync(new List<ConfigurationItem>());
+
+            _resultsServiceMock
+                .Setup(s => s.GetConfigurationItemSpecialsAsync(20))
+                .ReturnsAsync(new List<ConfigurationItemSpecial>());
+
+            _resultsServiceMock
+                .Setup(s => s.SyncResultsAsync(
+                    1,
+                    It.IsAny<IEnumerable<Result>>(),
+                    It.IsAny<IEnumerable<SpecialResult>>()))
+                .Returns(Task.CompletedTask);
+
+            _scoreServiceMock
+                .Setup(s => s.UpdateScoresForStageAsync(10, 1))
+                .Returns(Task.CompletedTask);
+
+            _apiClientMock
+                .Setup(c => c.PostToApiAsync(It.IsAny<string>()))
+                .ThrowsAsync(new InvalidOperationException("Onverwachte fout"));
+
+            // Act
+            var result = await _controller.Index(model);
+
+            // Assert
+            Assert.IsType<RedirectToActionResult>(result);
+        }
+
+        [Fact]
+        public async Task Index_ValidStage_WithSpecialResults_ReturnsSpecialRows()
+        {
+            var stage = new Stage
+            {
+                Id = 1,
+                StageName = "Etappe 1",
+                StartLocation = "Brugge",
+                FinishLocation = "Gent",
+                Event = new Event
+                {
+                    EventId = 10,
+                    Configuration = new Configuration { Id = 20 }
+                }
+            };
+
+            var specialItems = new List<ConfigurationItemSpecial>
+            {
+                new()
+                {
+                    Id = 1,
+                    ConfigurationId = 20,
+                    Question = Domain.Enums.QuestionType.KOM,
+                    Score = 10
+                },
+                new()
+                {
+                    Id = 2,
+                    ConfigurationId = 20,
+                    Question = Domain.Enums.QuestionType.Points,
+                    Score = 5
+                }
+            };
+
+            var specialResults = new List<SpecialResult>
+            {
+                new()
+                {
+                    Id = 100,
+                    StageId = 1,
+                    SpecialId = 1,
+                    CompetitorInEventId = 5,
+                    CompetitorInEvent = new CompetitorsInEvent
+                    {
+                        Id = 5,
+                        CompetitorInTeam = new CompetitorInTeam
+                        {
+                            Competitor = new Competitor
+                            {
+                                CompetitorId = 99,
+                                FirstName = "Remco",
+                                LastName = "Evenepoel"
+                            }
+                        }
+                    }
+                }
+            };
+
+            _resultsServiceMock
+                .Setup(s => s.GetStageByIdAsync(1))
+                .ReturnsAsync(stage);
+
+            _resultsServiceMock
+                .Setup(s => s.GetResultsByStageAsync(1))
+                .ReturnsAsync(new List<Result>());
+
+            _resultsServiceMock
+                .Setup(s => s.GetSpecialResultsByStageAsync(1))
+                .ReturnsAsync(specialResults);
+
+            _resultsServiceMock
+                .Setup(s => s.GetCompetitorsInEventAsync(10))
+                .ReturnsAsync(new List<CompetitorsInEvent>());
+
+            _resultsServiceMock
+                .Setup(s => s.GetConfigurationItemsByConfigAsync(20))
+                .ReturnsAsync(new List<ConfigurationItem>());
+
+            _resultsServiceMock
+                .Setup(s => s.GetConfigurationItemSpecialsAsync(20))
+                .ReturnsAsync(specialItems);
+
+            var result = await _controller.Index(1);
+
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<ResultViewModel>(viewResult.Model);
+
+            Assert.Equal(2, model.Rows.Count);
+
+            var komRow = model.Rows.Single(r => r.SpecialId == 1);
+            Assert.True(komRow.IsSpecial);
+            Assert.Equal("KOM", komRow.SpecialName);
+            Assert.Equal(100, komRow.Id);
+            Assert.Equal(5, komRow.SelectedCompetitorId);
+            Assert.Equal("Remco Evenepoel", komRow.CompetitorName);
+
+            var pointsRow = model.Rows.Single(r => r.SpecialId == 2);
+            Assert.True(pointsRow.IsSpecial);
+            Assert.Equal("Points", pointsRow.SpecialName);
+            Assert.Equal(0, pointsRow.Id);
+            Assert.Equal(0, pointsRow.SelectedCompetitorId);
+            Assert.Equal(string.Empty, pointsRow.CompetitorName);
+        }
+
+        [Fact]
+        public async Task Index_ResultWithoutConfigurationItem_LeavesRowEmpty()
+        {
+            var stage = new Stage
+            {
+                Id = 1,
+                StageName = "Etappe 1",
+                StartLocation = "Brugge",
+                FinishLocation = "Gent",
+                Event = new Event
+                {
+                    EventId = 10,
+                    Configuration = new Configuration { Id = 20 }
+                }
+            };
+
+            var configItems = new List<ConfigurationItem>
+            {
+                new ConfigurationItem
+                {
+                    Id = 1,
+                    ConfigurationId = 20,
+                    Position = 1
+                }
+            };
+
+            var results = new List<Result>
+            {
+                new Result
+                {
+                    Id = 99,
+                    StageId = 1,
+                    ConfigurationItem = null,
+                    CompetitorInEventId = 5
+                }
+            };
+
+            _resultsServiceMock
+                .Setup(s => s.GetStageByIdAsync(1))
+                .ReturnsAsync(stage);
+
+            _resultsServiceMock
+                .Setup(s => s.GetResultsByStageAsync(1))
+                .ReturnsAsync(results);
+
+            _resultsServiceMock
+                .Setup(s => s.GetSpecialResultsByStageAsync(1))
+                .ReturnsAsync(new List<SpecialResult>());
+
+            _resultsServiceMock
+                .Setup(s => s.GetCompetitorsInEventAsync(10))
+                .ReturnsAsync(new List<CompetitorsInEvent>());
+
+            _resultsServiceMock
+                .Setup(s => s.GetConfigurationItemsByConfigAsync(20))
+                .ReturnsAsync(configItems);
+
+            _resultsServiceMock
+                .Setup(s => s.GetConfigurationItemSpecialsAsync(20))
+                .ReturnsAsync(new List<ConfigurationItemSpecial>());
+
+            var result = await _controller.Index(1);
+
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<ResultViewModel>(viewResult.Model);
+
+            var row = Assert.Single(model.Rows);
+
+            Assert.Equal(1, row.Position);
+            Assert.Equal(0, row.Id);
+            Assert.Equal(0, row.SelectedCompetitorId);
+            Assert.Equal(string.Empty, row.CompetitorName);
+        }
+
+        [Fact]
+        public async Task Index_ResultWithoutCompetitor_ReturnsEmptyCompetitorName()
+        {
+            var stage = new Stage
+            {
+                Id = 1,
+                StageName = "Etappe 1",
+                StartLocation = "Brugge",
+                FinishLocation = "Gent",
+                Event = new Event
+                {
+                    EventId = 10,
+                    Configuration = new Configuration { Id = 20 }
+                }
+            };
+
+            var configItems = new List<ConfigurationItem>
+            {
+                new ConfigurationItem
+                {
+                    Id = 1,
+                    ConfigurationId = 20,
+                    Position = 1
+                }
+            };
+
+            var results = new List<Result>
+            {
+                new Result
+                {
+                    Id = 99,
+                    StageId = 1,
+                    ConfigurationItem = configItems[0],
+                    CompetitorInEventId = 5,
+                    CompetitorInEvent = null!
+                }
+            };
+
+            _resultsServiceMock
+                .Setup(s => s.GetStageByIdAsync(1))
+                .ReturnsAsync(stage);
+
+            _resultsServiceMock
+                .Setup(s => s.GetResultsByStageAsync(1))
+                .ReturnsAsync(results);
+
+            _resultsServiceMock
+                .Setup(s => s.GetSpecialResultsByStageAsync(1))
+                .ReturnsAsync(new List<SpecialResult>());
+
+            _resultsServiceMock
+                .Setup(s => s.GetCompetitorsInEventAsync(10))
+                .ReturnsAsync(new List<CompetitorsInEvent>());
+
+            _resultsServiceMock
+                .Setup(s => s.GetConfigurationItemsByConfigAsync(20))
+                .ReturnsAsync(configItems);
+
+            _resultsServiceMock
+                .Setup(s => s.GetConfigurationItemSpecialsAsync(20))
+                .ReturnsAsync(new List<ConfigurationItemSpecial>());
+
+            var result = await _controller.Index(1);
+
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<ResultViewModel>(viewResult.Model);
+
+            var row = Assert.Single(model.Rows);
+
+            Assert.Equal(99, row.Id);
+            Assert.Equal(5, row.SelectedCompetitorId);
+            Assert.Equal(string.Empty, row.CompetitorName);
+        }
+
+        [Fact]
+        public async Task Index_Post_ValidNormalRow_AddsResultWithCorrectConfigurationItem()
+        {
+            var model = new ResultViewModel
+            {
+                EventId = 10,
+                StageId = 1,
+                ConfigurationId = 20,
+                Rows = new List<StageResultRowViewModel>
+                {
+                    new StageResultRowViewModel
+                    {
+                        IsSpecial = false,
+                        Position = 2,
+                        SelectedCompetitorId = 5
+                    }
+                }
+            };
+
+            var competitors = new List<CompetitorsInEvent>
+            {
+                new CompetitorsInEvent
+                {
+                    Id = 5,
+                    EventId = 10
+                }
+            };
+
+            var configItems = new List<ConfigurationItem>
+            {
+                new ConfigurationItem
+                {
+                    Id = 42,
+                    ConfigurationId = 20,
+                    Position = 2
+                }
+            };
+
+            _resultsServiceMock
+                .Setup(s => s.GetCompetitorsInEventAsync(10))
+                .ReturnsAsync(competitors);
+
+            _resultsServiceMock
+                .Setup(s => s.GetConfigurationItemsByConfigAsync(20))
+                .ReturnsAsync(configItems);
+
+            _resultsServiceMock
+                .Setup(s => s.GetConfigurationItemSpecialsAsync(20))
+                .ReturnsAsync(new List<ConfigurationItemSpecial>());
+
+            _resultsServiceMock
+                .Setup(s => s.SyncResultsAsync(
+                    1,
+                    It.IsAny<IEnumerable<Result>>(),
+                    It.IsAny<IEnumerable<SpecialResult>>()))
+                .Returns(Task.CompletedTask);
+
+            _scoreServiceMock
+                .Setup(s => s.UpdateScoresForStageAsync(10, 1))
+                .Returns(Task.CompletedTask);
+
+            _apiClientMock
+                .Setup(c => c.PostToApiAsync(It.IsAny<string>()))
+                .ReturnsAsync(new HttpResponseMessage(
+                    System.Net.HttpStatusCode.OK));
+
+            var result = await _controller.Index(model);
+
+            Assert.IsType<RedirectToActionResult>(result);
+
+            _resultsServiceMock.Verify(
+                s => s.SyncResultsAsync(
+                    1,
+                    It.Is<IEnumerable<Result>>(x =>
+                        x.Count() == 1 &&
+                        x.First().CompetitorInEventId == 5 &&
+                        x.First().StageId == 1 &&
+                        x.First().ConfigurationItemId == 42),
+                    It.Is<IEnumerable<SpecialResult>>(x => !x.Any())),
+                Times.Once);
+        }
+
+        [Fact]
+        public async Task Index_Post_ValidSpecialRow_AddsCorrectSpecialResult()
+        {
+            var model = new ResultViewModel
+            {
+                EventId = 10,
+                StageId = 7,
+                ConfigurationId = 20,
+                Rows = new List<StageResultRowViewModel>
+                {
+                    new StageResultRowViewModel
+                    {
+                        IsSpecial = true,
+                        SpecialId = 3,
+                        SelectedCompetitorId = 5
+                    }
+                }
+            };
+
+            var competitors = new List<CompetitorsInEvent>
+            {
+                new CompetitorsInEvent
+                {
+                    Id = 5,
+                    EventId = 10
+                }
+            };
+
+            var specialItems = new List<ConfigurationItemSpecial>
+            {
+                new ConfigurationItemSpecial
+                {
+                    Id = 3,
+                    ConfigurationId = 20,
+                    Question = Domain.Enums.QuestionType.KOM,
+                    Score = 10
+                }
+            };
+
+            _resultsServiceMock
+                .Setup(s => s.GetCompetitorsInEventAsync(10))
+                .ReturnsAsync(competitors);
+
+            _resultsServiceMock
+                .Setup(s => s.GetConfigurationItemsByConfigAsync(20))
+                .ReturnsAsync(new List<ConfigurationItem>());
+
+            _resultsServiceMock
+                .Setup(s => s.GetConfigurationItemSpecialsAsync(20))
+                .ReturnsAsync(specialItems);
+
+            _resultsServiceMock
+                .Setup(s => s.SyncResultsAsync(
+                    7,
+                    It.IsAny<IEnumerable<Result>>(),
+                    It.IsAny<IEnumerable<SpecialResult>>()))
+                .Returns(Task.CompletedTask);
+
+            _scoreServiceMock
+                .Setup(s => s.UpdateScoresForStageAsync(10, 7))
+                .Returns(Task.CompletedTask);
+
+            _apiClientMock
+                .Setup(c => c.PostToApiAsync(It.IsAny<string>()))
+                .ReturnsAsync(new HttpResponseMessage(
+                    System.Net.HttpStatusCode.OK));
+
+            var result = await _controller.Index(model);
+
+            Assert.IsType<RedirectToActionResult>(result);
+
+            _resultsServiceMock.Verify(
+                s => s.SyncResultsAsync(
+                    7,
+                    It.Is<IEnumerable<Result>>(x => !x.Any()),
+                    It.Is<IEnumerable<SpecialResult>>(x =>
+                        x.Count() == 1 &&
+                        x.First().CompetitorInEventId == 5 &&
+                        x.First().StageId == 7 &&
+                        x.First().SpecialId == 3)),
+                Times.Once);
+        }
+
+        [Fact]
+        public async Task Index_ResultWithoutCompetitorInTeam_ReturnsEmptyCompetitorName()
+        {
+            var stage = new Stage
+            {
+                Id = 1,
+                StageName = "Etappe 1",
+                StartLocation = "Brugge",
+                FinishLocation = "Gent",
+                Event = new Event
+                {
+                    EventId = 10,
+                    Configuration = new Configuration { Id = 20 }
+                }
+            };
+
+            var configItem = new ConfigurationItem
+            {
+                Id = 1,
+                ConfigurationId = 20,
+                Position = 1
+            };
+
+            var results = new List<Result>
+            {
+                new Result
+                {
+                    Id = 99,
+                    StageId = 1,
+                    ConfigurationItem = configItem,
+                    CompetitorInEventId = 5,
+                    CompetitorInEvent = new CompetitorsInEvent
+                    {
+                        Id = 5,
+                        CompetitorInTeam = null!
+                    }
+                }
+            };
+
+            _resultsServiceMock
+                .Setup(s => s.GetStageByIdAsync(1))
+                .ReturnsAsync(stage);
+
+            _resultsServiceMock
+                .Setup(s => s.GetResultsByStageAsync(1))
+                .ReturnsAsync(results);
+
+            _resultsServiceMock
+                .Setup(s => s.GetSpecialResultsByStageAsync(1))
+                .ReturnsAsync(new List<SpecialResult>());
+
+            _resultsServiceMock
+                .Setup(s => s.GetCompetitorsInEventAsync(10))
+                .ReturnsAsync(new List<CompetitorsInEvent>());
+
+            _resultsServiceMock
+                .Setup(s => s.GetConfigurationItemsByConfigAsync(20))
+                .ReturnsAsync(new List<ConfigurationItem> { configItem });
+
+            _resultsServiceMock
+                .Setup(s => s.GetConfigurationItemSpecialsAsync(20))
+                .ReturnsAsync(new List<ConfigurationItemSpecial>());
+
+            var result = await _controller.Index(1);
+
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<ResultViewModel>(viewResult.Model);
+
+            var row = Assert.Single(model.Rows);
+
+            Assert.Equal(99, row.Id);
+            Assert.Equal(5, row.SelectedCompetitorId);
+            Assert.Equal(string.Empty, row.CompetitorName);
+        }
+
+        [Fact]
+        public async Task Index_ResultWithoutCompetitor_ReturnsEmptyCompetitorName_Twee()
+        {
+            var stage = new Stage
+            {
+                Id = 1,
+                StageName = "Etappe 1",
+                StartLocation = "Brugge",
+                FinishLocation = "Gent",
+                Event = new Event
+                {
+                    EventId = 10,
+                    Configuration = new Configuration { Id = 20 }
+                }
+            };
+
+            var configItem = new ConfigurationItem
+            {
+                Id = 1,
+                ConfigurationId = 20,
+                Position = 1
+            };
+
+            var results = new List<Result>
+            {
+                new Result
+                {
+                    Id = 99,
+                    StageId = 1,
+                    ConfigurationItem = configItem,
+                    CompetitorInEventId = 5,
+                    CompetitorInEvent = new CompetitorsInEvent
+                    {
+                        Id = 5,
+                        CompetitorInTeam = new CompetitorInTeam
+                        {
+                            Competitor = null!
+                        }
+                    }
+                }
+            };
+
+            _resultsServiceMock
+                .Setup(s => s.GetStageByIdAsync(1))
+                .ReturnsAsync(stage);
+
+            _resultsServiceMock
+                .Setup(s => s.GetResultsByStageAsync(1))
+                .ReturnsAsync(results);
+
+            _resultsServiceMock
+                .Setup(s => s.GetSpecialResultsByStageAsync(1))
+                .ReturnsAsync(new List<SpecialResult>());
+
+            _resultsServiceMock
+                .Setup(s => s.GetCompetitorsInEventAsync(10))
+                .ReturnsAsync(new List<CompetitorsInEvent>());
+
+            _resultsServiceMock
+                .Setup(s => s.GetConfigurationItemsByConfigAsync(20))
+                .ReturnsAsync(new List<ConfigurationItem> { configItem });
+
+            _resultsServiceMock
+                .Setup(s => s.GetConfigurationItemSpecialsAsync(20))
+                .ReturnsAsync(new List<ConfigurationItemSpecial>());
+
+            var result = await _controller.Index(1);
+
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<ResultViewModel>(viewResult.Model);
+
+            var row = Assert.Single(model.Rows);
+
+            Assert.Equal(99, row.Id);
+            Assert.Equal(5, row.SelectedCompetitorId);
+            Assert.Equal(string.Empty, row.CompetitorName);
+        }
+
+        [Fact]
+        public async Task Index_Post_CompetitorIdZero_DoesNotAddResult()
+        {
+            var model = new ResultViewModel
+            {
+                EventId = 10,
+                StageId = 1,
+                ConfigurationId = 20,
+                Rows = new List<StageResultRowViewModel>
+                {
+                    new StageResultRowViewModel
+                    {
+                        IsSpecial = false,
+                        Position = 1,
+                        SelectedCompetitorId = 0
+                    }
+                }
+            };
+
+            var competitors = new List<CompetitorsInEvent>
+            {
+                new CompetitorsInEvent
+                {
+                    Id = 5,
+                    EventId = 10
+                }
+            };
+
+            var configItems = new List<ConfigurationItem>
+            {
+                new ConfigurationItem
+                {
+                    Id = 42,
+                    ConfigurationId = 20,
+                    Position = 1
+                }
+            };
+
+            _resultsServiceMock
+                .Setup(s => s.GetCompetitorsInEventAsync(10))
+                .ReturnsAsync(competitors);
+
+            _resultsServiceMock
+                .Setup(s => s.GetConfigurationItemsByConfigAsync(20))
+                .ReturnsAsync(configItems);
+
+            _resultsServiceMock
+                .Setup(s => s.GetConfigurationItemSpecialsAsync(20))
+                .ReturnsAsync(new List<ConfigurationItemSpecial>());
+
+            _resultsServiceMock
+                .Setup(s => s.SyncResultsAsync(
+                    1,
+                    It.IsAny<IEnumerable<Result>>(),
+                    It.IsAny<IEnumerable<SpecialResult>>()))
+                .Returns(Task.CompletedTask);
+
+            _scoreServiceMock
+                .Setup(s => s.UpdateScoresForStageAsync(10, 1))
+                .Returns(Task.CompletedTask);
+
+            _apiClientMock
+                .Setup(c => c.PostToApiAsync(It.IsAny<string>()))
+                .ReturnsAsync(new HttpResponseMessage(
+                    System.Net.HttpStatusCode.OK));
+
+            await _controller.Index(model);
+
+            _resultsServiceMock.Verify(
+                s => s.SyncResultsAsync(
+                    1,
+                    It.Is<IEnumerable<Result>>(x => !x.Any()),
+                    It.Is<IEnumerable<SpecialResult>>(x => !x.Any())),
+                Times.Once);
+        }
+
+        [Fact]
+        public async Task Index_ConfigurationItemWithoutResult_ReturnsEmptyRow()
+        {
+            var stage = new Stage
+            {
+                Id = 1,
+                StageName = "Etappe 1",
+                StartLocation = "Brugge",
+                FinishLocation = "Gent",
+                Event = new Event
+                {
+                    EventId = 10,
+                    Configuration = new Configuration { Id = 20 }
+                }
+            };
+
+            var configItem = new ConfigurationItem
+            {
+                Id = 2,
+                ConfigurationId = 20,
+                Position = 2
+            };
+
+            _resultsServiceMock
+                .Setup(s => s.GetStageByIdAsync(1))
+                .ReturnsAsync(stage);
+
+            _resultsServiceMock
+                .Setup(s => s.GetResultsByStageAsync(1))
+                .ReturnsAsync(new List<Result>());
+
+            _resultsServiceMock
+                .Setup(s => s.GetSpecialResultsByStageAsync(1))
+                .ReturnsAsync(new List<SpecialResult>());
+
+            _resultsServiceMock
+                .Setup(s => s.GetCompetitorsInEventAsync(10))
+                .ReturnsAsync(new List<CompetitorsInEvent>());
+
+            _resultsServiceMock
+                .Setup(s => s.GetConfigurationItemsByConfigAsync(20))
+                .ReturnsAsync(new List<ConfigurationItem> { configItem });
+
+            _resultsServiceMock
+                .Setup(s => s.GetConfigurationItemSpecialsAsync(20))
+                .ReturnsAsync(new List<ConfigurationItemSpecial>());
+
+            var result = await _controller.Index(1);
+
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<ResultViewModel>(viewResult.Model);
+
+            var row = Assert.Single(model.Rows);
+
+            Assert.False(row.IsSpecial);
+            Assert.Equal(2, row.Position);
+            Assert.Equal(0, row.Id);
+            Assert.Equal(0, row.SelectedCompetitorId);
+            Assert.Equal(string.Empty, row.CompetitorName);
+        }
+        #endregion
+
+        #region Delete Tests
+        [Fact]
         public async Task Delete_ResultNotFound_ReturnsNotFound()
         {
             // Arrange
@@ -285,5 +1440,328 @@ namespace CycleManager.Tests.Unit.Manager
             Assert.Equal("Remco Evenepoel", model.CompetitorName);
             Assert.Equal(3, model.Position);
         }
+
+        [Fact]
+        public async Task Delete_ResultWithoutConfigurationItem_ReturnsNotFound()
+        {
+            // Arrange
+            var resultEntity = new Result
+            {
+                Id = 1,
+                StageId = 7,
+                ConfigurationItem = null
+            };
+
+            _resultsServiceMock
+                .Setup(s => s.GetResultByIdAsync(1))
+                .ReturnsAsync(resultEntity);
+
+            // Act
+            var result = await _controller.Delete(1);
+
+            // Assert
+            Assert.IsType<NotFoundResult>(result);
+        }
+
+        [Fact]
+        public async Task DeleteConfirmed_ResultNotFound_ReturnsNotFound()
+        {
+            // Arrange
+            _resultsServiceMock
+                .Setup(s => s.GetResultByIdAsync(999))
+                .ReturnsAsync((Result?)null);
+
+            // Act
+            var result = await _controller.DeleteConfirmed(999);
+
+            // Assert
+            Assert.IsType<NotFoundResult>(result);
+
+            _resultsServiceMock.Verify(
+                s => s.DeleteResultAsync(It.IsAny<Result>()),
+                Times.Never);
+        }
+
+        [Fact]
+        public async Task DeleteSpecial_NullId_ReturnsNotFound()
+        {
+            // Act
+            var result = await _controller.DeleteSpecial(null);
+
+            // Assert
+            Assert.IsType<NotFoundResult>(result);
+        }
+
+        [Fact]
+        public async Task DeleteSpecial_SpecialNotFound_ReturnsNotFound()
+        {
+            // Arrange
+            _resultsServiceMock
+                .Setup(s => s.GetSpecialResultByIdAsync(999))
+                .ReturnsAsync((SpecialResult?)null);
+
+            // Act
+            var result = await _controller.DeleteSpecial(999);
+
+            // Assert
+            Assert.IsType<NotFoundResult>(result);
+        }
+
+        [Fact]
+        public async Task DeleteSpecial_ValidId_ReturnsViewWithViewModel()
+        {
+            // Arrange
+            var specialResult = new SpecialResult
+            {
+                Id = 1,
+                SpecialId = 5,
+                StageId = 7,
+                Special = new ConfigurationItemSpecial
+                {
+                    Id = 5,
+                    Question = Domain.Enums.QuestionType.KOM
+                },
+                CompetitorInEvent = new CompetitorsInEvent
+                {
+                    CompetitorInTeam = new CompetitorInTeam
+                    {
+                        Competitor = new Competitor
+                        {
+                            FirstName = "Remco",
+                            LastName = "Evenepoel"
+                        }
+                    }
+                }
+            };
+
+            _resultsServiceMock
+                .Setup(s => s.GetSpecialResultByIdAsync(1))
+                .ReturnsAsync(specialResult);
+
+            // Act
+            var result = await _controller.DeleteSpecial(1);
+
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<SpecialResultItemViewModel>(viewResult.Model);
+
+            Assert.Equal(1, model.Id);
+            Assert.Equal(5, model.SpecialId);
+            Assert.Equal(7, model.StageId);
+            Assert.Equal("KOM", model.SpecialName);
+            Assert.Equal("Remco Evenepoel", model.CompetitorName);
+        }
+
+        [Fact]
+        public async Task DeleteSpecialConfirmed_SpecialNotFound_ReturnsNotFound()
+        {
+            // Arrange
+            _resultsServiceMock
+                .Setup(s => s.GetSpecialResultByIdAsync(999))
+                .ReturnsAsync((SpecialResult?)null);
+
+            // Act
+            var result = await _controller.DeleteSpecialConfirmed(999);
+
+            // Assert
+            Assert.IsType<NotFoundResult>(result);
+
+            _resultsServiceMock.Verify(
+                s => s.DeleteSpecialResultAsync(It.IsAny<int>()),
+                Times.Never);
+        }
+
+        [Fact]
+        public async Task DeleteSpecialConfirmed_RemovesSpecialAndRedirects()
+        {
+            // Arrange
+            var specialResult = new SpecialResult
+            {
+                Id = 1,
+                StageId = 7
+            };
+
+            _resultsServiceMock
+                .Setup(s => s.GetSpecialResultByIdAsync(1))
+                .ReturnsAsync(specialResult);
+
+            _resultsServiceMock
+                .Setup(s => s.DeleteSpecialResultAsync(1))
+                .Returns(Task.CompletedTask);
+
+            // Act
+            var result = await _controller.DeleteSpecialConfirmed(1);
+
+            // Assert
+            _resultsServiceMock.Verify(
+                s => s.DeleteSpecialResultAsync(1),
+                Times.Once);
+
+            var redirect = Assert.IsType<RedirectToActionResult>(result);
+            Assert.Equal("Index", redirect.ActionName);
+            Assert.Equal(7, redirect.RouteValues?["stageId"]);
+        }
+
+        [Fact]
+        public async Task DeleteSpecial_WithoutCompetitor_ReturnsEmptyCompetitorName()
+        {
+            var specialResult = new SpecialResult
+            {
+                Id = 1,
+                SpecialId = 5,
+                StageId = 7,
+                Special = new ConfigurationItemSpecial
+                {
+                    Id = 5,
+                    Question = Domain.Enums.QuestionType.KOM
+                },
+                CompetitorInEvent = null!
+            };
+
+            _resultsServiceMock
+                .Setup(s => s.GetSpecialResultByIdAsync(1))
+                .ReturnsAsync(specialResult);
+
+            var result = await _controller.DeleteSpecial(1);
+
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<SpecialResultItemViewModel>(viewResult.Model);
+
+            Assert.Equal(5, model.SpecialId);
+            Assert.Equal(7, model.StageId);
+            Assert.Equal("KOM", model.SpecialName);
+            Assert.Equal(string.Empty, model.CompetitorName);
+        }
+
+        [Fact]
+        public async Task DeleteSpecial_WithoutCompetitorInTeam_ReturnsEmptyCompetitorName()
+        {
+            var specialResult = new SpecialResult
+            {
+                Id = 1,
+                SpecialId = 5,
+                StageId = 7,
+                Special = new ConfigurationItemSpecial
+                {
+                    Id = 5,
+                    Question = Domain.Enums.QuestionType.KOM
+                },
+                CompetitorInEvent = new CompetitorsInEvent
+                {
+                    Id = 10,
+                    CompetitorInTeam = null!
+                }
+            };
+
+            _resultsServiceMock
+                .Setup(s => s.GetSpecialResultByIdAsync(1))
+                .ReturnsAsync(specialResult);
+
+            var result = await _controller.DeleteSpecial(1);
+
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<SpecialResultItemViewModel>(viewResult.Model);
+
+            Assert.Equal("KOM", model.SpecialName);
+            Assert.Equal(string.Empty, model.CompetitorName);
+        }
+
+        [Fact]
+        public async Task Delete_WithoutCompetitorInEvent_ThrowsNullReferenceException()
+        {
+            var resultEntity = new Result
+            {
+                Id = 1,
+                StageId = 7,
+                ConfigurationItem = new ConfigurationItem
+                {
+                    Position = 3
+                },
+                CompetitorInEvent = null!
+            };
+
+            _resultsServiceMock
+                .Setup(s => s.GetResultByIdAsync(1))
+                .ReturnsAsync(resultEntity);
+
+            await Assert.ThrowsAsync<NullReferenceException>(
+                () => _controller.Delete(1));
+        }
+
+        [Fact]
+        public async Task Delete_WithoutCompetitorInTeam_ThrowsNullReferenceException()
+        {
+            var resultEntity = new Result
+            {
+                Id = 1,
+                StageId = 7,
+                ConfigurationItem = new ConfigurationItem
+                {
+                    Position = 3
+                },
+                CompetitorInEvent = new CompetitorsInEvent
+                {
+                    Id = 5,
+                    CompetitorInTeam = null!
+                }
+            };
+
+            _resultsServiceMock
+                .Setup(s => s.GetResultByIdAsync(1))
+                .ReturnsAsync(resultEntity);
+
+            await Assert.ThrowsAsync<NullReferenceException>(
+                () => _controller.Delete(1));
+        }
+
+        [Fact]
+        public async Task Delete_WithoutCompetitor_ThrowsNullReferenceException()
+        {
+            var resultEntity = new Result
+            {
+                Id = 1,
+                StageId = 7,
+                ConfigurationItem = new ConfigurationItem
+                {
+                    Position = 3
+                },
+                CompetitorInEvent = new CompetitorsInEvent
+                {
+                    Id = 5,
+                    CompetitorInTeam = new CompetitorInTeam
+                    {
+                        Competitor = null!
+                    }
+                }
+            };
+
+            _resultsServiceMock
+                .Setup(s => s.GetResultByIdAsync(1))
+                .ReturnsAsync(resultEntity);
+
+            await Assert.ThrowsAsync<NullReferenceException>(
+                () => _controller.Delete(1));
+        }
+
+        [Fact]
+        public async Task DeleteSpecial_WithoutSpecial_ThrowsNullReferenceException()
+        {
+            var specialResult = new SpecialResult
+            {
+                Id = 1,
+                SpecialId = 5,
+                StageId = 7,
+                Special = null!,
+                CompetitorInEvent = null!
+            };
+
+            _resultsServiceMock
+                .Setup(s => s.GetSpecialResultByIdAsync(1))
+                .ReturnsAsync(specialResult);
+
+            await Assert.ThrowsAsync<NullReferenceException>(
+                () => _controller.DeleteSpecial(1));
+        }
+        #endregion
     }
 }
