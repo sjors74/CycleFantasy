@@ -6,10 +6,8 @@
         <Configuration>
           <Format>cobertura</Format>
           <Exclude>[WebCycleManager]AspNetCoreGeneratedDocument.Views_*</Exclude>
-          <ExcludeByFile>
-            **/Migrations/*.cs;
-            **/Program.cs
-          </ExcludeByFile>
+          <ExcludeByFile>**/Migrations/*.cs</ExcludeByFile>
+          <ExcludeByFile>**/Program.cs</ExcludeByFile>
         </Configuration>
       </DataCollector>
     </DataCollectors>
