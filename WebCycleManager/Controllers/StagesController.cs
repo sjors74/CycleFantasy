@@ -269,28 +269,21 @@ namespace WebCycleManager.Controllers
         {
             var stage = await _stageService.GetStageById(vm.StageId);
 
-            try
+            if (stage == null)
             {
-                if (stage == null)
-                { 
-                    stage = new Stage();
-                }
-                stage.StageDate = vm.StageDate.ToDateTime(TimeOnly.MinValue);
-                stage.StageName = vm.StageName;
-                stage.StageOrder = vm.StageOrder;
-                stage.StartLocation = vm.StartLocation;
-                stage.FinishLocation = vm.FinishLocation;
-                stage.NoScore = vm.NoScore;
-                stage.NoScoreDescription = vm.NoScoreDescription;
-                stage.EventId = vm.EventId;
-                stage.ScrapeStatus = vm.ScrapeStatus;  
+                stage = new Stage();
+            }
+            stage.StageDate = vm.StageDate.ToDateTime(TimeOnly.MinValue);
+            stage.StageName = vm.StageName;
+            stage.StageOrder = vm.StageOrder;
+            stage.StartLocation = vm.StartLocation;
+            stage.FinishLocation = vm.FinishLocation;
+            stage.NoScore = vm.NoScore;
+            stage.NoScoreDescription = vm.NoScoreDescription;
+            stage.EventId = vm.EventId;
+            stage.ScrapeStatus = vm.ScrapeStatus;
 
-                return stage;
-            }
-            catch
-            {
-                throw;
-            }
+            return stage;
         }
         private async Task<IEnumerable<SelectListItem>> GetEventSelectListAsync()
         {

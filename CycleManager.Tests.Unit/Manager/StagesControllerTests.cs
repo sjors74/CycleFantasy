@@ -394,6 +394,84 @@ namespace CycleManager.Tests.Unit.Manager
                 Times.Once);
         }
 
+        [Fact]
+        public async Task EditAjax_InvalidModel_ReturnsEditStagePartial()
+        {
+            // Arrange
+            var vm = new StageViewModel
+            {
+                StageId = 1,
+                StageName = "Test"
+            };
+
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext()
+            };
+
+            _controller.ModelState.AddModelError(
+                "StageName",
+                "StageName is verplicht.");
+
+            // Act
+            var result = await _controller.EditAjax(vm);
+
+            // Assert
+            var partialView = Assert.IsType<PartialViewResult>(result);
+
+            Assert.Equal("_EditStagePartial", partialView.ViewName);
+            Assert.Same(vm, partialView.Model);
+
+            _mockStageService.Verify(
+                s => s.GetStageById(It.IsAny<int>()),
+                Times.Never);
+
+            _mockStageService.Verify(
+                s => s.UpdateStage(It.IsAny<Stage>()),
+                Times.Never);
+        }
+
+        [Fact]
+        public async Task EditAjax_ValidModel_NonAjax_Throws_WhenEventDoesNotExist()
+        {
+            // Arrange
+            var vm = new StageViewModel
+            {
+                StageId = 1,
+                StageName = "Nieuwe stage",
+                StageOrder = 1,
+                StageDate = new DateOnly(2026, 7, 1),
+                StartLocation = "Start",
+                FinishLocation = "Finish",
+                NoScore = false
+            };
+
+            var stage = new Stage
+            {
+                Id = 1,
+                EventId = 2,
+                StageName = "Oude stage"
+            };
+
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext()
+            };
+
+            _mockStageService
+                .Setup(s => s.GetStageById(1))
+                .ReturnsAsync(stage);
+
+            _mockEventService
+                .Setup(s => s.GetEventById(2))
+                .ReturnsAsync((Event?)null);
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<InvalidOperationException>(
+                () => _controller.EditAjax(vm));
+
+            Assert.Equal("Event 2 niet gevonden.", exception.Message);
+        }
         #endregion
 
         #region Delete
@@ -638,6 +716,38 @@ namespace CycleManager.Tests.Unit.Manager
 
             Assert.Equal(ScrapeStatus.Completed, result.ScrapeStatus);
             Assert.NotNull(result.AvailableStatuses);
+        }
+
+        [Fact]
+        public void CreateViewModel_PopulatesAvailableStatuses()
+        {
+            // Arrange
+            var stage = new Stage
+            {
+                Id = 10,
+                EventId = 2,
+                StageName = "Bergstage",
+                StageDate = new DateTime(2026, 7, 15),
+                ScrapeStatus = ScrapeStatus.Pending
+            };
+
+            // Act
+            var result = _controller.CreateViewModel(stage);
+
+            // Assert
+            Assert.NotNull(result.AvailableStatuses);
+
+            var statuses = Enum.GetValues<ScrapeStatus>();
+
+            Assert.Equal(statuses.Length, result.AvailableStatuses.Count());
+
+            foreach (var status in statuses)
+            {
+                var item = result.AvailableStatuses
+                    .Single(x => x.Value == ((int)status).ToString());
+
+                Assert.False(string.IsNullOrEmpty(item.Text));
+            }
         }
 
         [Fact]
