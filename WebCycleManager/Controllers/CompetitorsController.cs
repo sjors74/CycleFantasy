@@ -2,13 +2,11 @@
 using CycleManager.Domain.Models;
 using CycleManager.Services.Interfaces;
 using DataAccessEF.Extensions;
-using Domain.Context;
 using Domain.Dto;
 using Domain.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using System.Security.Claims;
 using WebCycleManager.Helpers;
 using WebCycleManager.Models;
 using WebCycleManager.Models.ViewModel;

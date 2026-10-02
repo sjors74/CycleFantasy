@@ -40,6 +40,8 @@ namespace CycleManager.Tests.Unit.Manager
             );
         }
 
+        #region Index Tests
+
         [Fact]
         public async Task Index_ReturnsView_WithCompetitorsList()
         {
@@ -179,6 +181,10 @@ namespace CycleManager.Tests.Unit.Manager
             model.Competitors.Should().HaveCount(1);
             model.Competitors.First().LastName.Should().Be("Jansen");
         }
+
+        #endregion
+
+        #region Create Tests
 
         [Fact]
         public async Task Create_Get_ReturnsView_WithSeasonTeamsAndCountries()
@@ -461,6 +467,206 @@ namespace CycleManager.Tests.Unit.Manager
         }
 
         [Fact]
+        public async Task Create_Post_NewCompetitorWithoutName_ReturnsViewWithError()
+        {
+            var model = TestDataFactory.CreateValidCreateCompetitorViewModel();
+            model.CompetitorId = 0;
+            model.FirstName = "";
+            model.LastName = "Jansen";
+
+            _seasonYearServiceMock
+                .Setup(s => s.GetByIdAsync(model.SeasonYearId))
+                .ReturnsAsync(new SeasonYear
+                {
+                    SeasonYearId = model.SeasonYearId,
+                    Year = 2025,
+                    Active = true
+                });
+
+            _teamServiceMock
+                .Setup(s => s.GetTeamYears(model.SeasonYearId))
+                .ReturnsAsync(new List<TeamYearDto>());
+
+            _countryServiceMock
+                .Setup(s => s.GetAll())
+                .ReturnsAsync(new List<Country>());
+
+            var result = await _controller.Create(model);
+
+            var view = Assert.IsType<ViewResult>(result);
+
+            Assert.False(_controller.ModelState.IsValid);
+            Assert.Contains(
+                _controller.ModelState[string.Empty]!.Errors,
+                error => error.ErrorMessage == "Vul naam in voor nieuwe renner.");
+
+            _competitorServiceMock.Verify(
+                s => s.Create(It.IsAny<Competitor>()),
+                Times.Never);
+        }
+
+        [Fact]
+        public async Task Create_Post_NewCompetitor_UsesFullNameWhenPcsNameIsEmpty()
+        {
+            var model = TestDataFactory.CreateValidCreateCompetitorViewModel();
+            model.CompetitorId = 0;
+            model.FirstName = "Jan";
+            model.LastName = "Jansen";
+            model.PcsName = "   ";
+
+            _seasonYearServiceMock
+                .Setup(s => s.GetByIdAsync(model.SeasonYearId))
+                .ReturnsAsync(new SeasonYear
+                {
+                    SeasonYearId = model.SeasonYearId,
+                    Year = 2025,
+                    Active = true
+                });
+
+            _teamServiceMock
+                .Setup(s => s.GetTeamYears(model.SeasonYearId))
+                .ReturnsAsync(new List<TeamYearDto>());
+
+            _countryServiceMock
+                .Setup(s => s.GetAll())
+                .ReturnsAsync(new List<Country>());
+
+            _competitorServiceMock
+                .Setup(s => s.GetCompetitorByName(
+                    model.FirstName,
+                    model.LastName,
+                    model.CountryId))
+                .ReturnsAsync((Competitor?)null);
+
+            _competitorServiceMock
+                .Setup(s => s.CheckCompetitorInTeam(
+                    It.IsAny<int>(),
+                    model.TeamYearId!.Value))
+                .ReturnsAsync(false);
+
+            var result = await _controller.Create(model);
+
+            Assert.IsType<RedirectToActionResult>(result);
+
+            _competitorServiceMock.Verify(
+                s => s.Create(It.Is<Competitor>(c =>
+                    c.FirstName == "Jan" &&
+                    c.LastName == "Jansen" &&
+                    c.PcsName == "Jan Jansen")),
+                Times.Once);
+
+            _competitorServiceMock.Verify(
+                s => s.CreateCompetitorInTeam(It.IsAny<CompetitorInTeam>()),
+                Times.Once);
+        }
+
+        [Fact]
+        public async Task Create_Post_ReturnsView_WhenCompetitorAlreadyExistsInTeam()
+        {
+            var model = TestDataFactory.CreateValidCreateCompetitorViewModel();
+            model.CompetitorId = 10;
+            model.TeamYearId = 2;
+
+            var competitor = new Competitor
+            {
+                CompetitorId = 10,
+                FirstName = "Jan",
+                LastName = "Jansen"
+            };
+
+            _competitorServiceMock
+                .Setup(s => s.GetCompetitorById(10))
+                .ReturnsAsync(competitor);
+
+            _competitorServiceMock
+                .Setup(s => s.CheckCompetitorInTeam(10, 2))
+                .ReturnsAsync(true);
+
+            _seasonYearServiceMock
+                .Setup(s => s.GetByIdAsync(model.SeasonYearId))
+                .ReturnsAsync(new SeasonYear
+                {
+                    SeasonYearId = model.SeasonYearId,
+                    Year = 2025,
+                    Active = true
+                });
+
+            _teamServiceMock
+                .Setup(s => s.GetTeamYears(model.SeasonYearId))
+                .ReturnsAsync(new List<TeamYearDto>());
+
+            _countryServiceMock
+                .Setup(s => s.GetAll())
+                .ReturnsAsync(new List<Country>());
+
+            var result = await _controller.Create(model);
+
+            var view = Assert.IsType<ViewResult>(result);
+
+            Assert.Same(model, view.Model);
+
+            Assert.False(_controller.ModelState.IsValid);
+
+            Assert.Contains(
+                _controller.ModelState[string.Empty]!.Errors,
+                error => error.ErrorMessage ==
+                         "Deze renner zit al in dit team voor dit seizoen.");
+
+            _competitorServiceMock.Verify(
+                s => s.CreateCompetitorInTeam(It.IsAny<CompetitorInTeam>()),
+                Times.Never);
+        }
+
+        [Fact]
+        public async Task Create_Get_UsesProvidedSeasonYearId()
+        {
+            var seasonYears = new List<SeasonYearDto>
+            {
+                new()
+                {
+                    SeasonYearId = 1,
+                    Year = 2024,
+                    Active = false
+                },
+                new()
+                {
+                    SeasonYearId = 2,
+                    Year = 2025,
+                    Active = true
+                }
+            };
+
+            _seasonYearServiceMock
+                .Setup(s => s.GetAllAsync())
+                .ReturnsAsync(seasonYears);
+
+            _teamServiceMock
+                .Setup(s => s.GetTeamYears(1))
+                .ReturnsAsync(new List<TeamYearDto>
+                {
+                    new() { TeamYearId = 10, Name = "Team 2024" }
+                });
+
+            _countryServiceMock
+                .Setup(s => s.GetAll())
+                .ReturnsAsync(new List<Country>());
+
+            var result = await _controller.Create(1);
+
+            var view = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<CreateCompetitorViewModel>(view.Model);
+
+            Assert.Equal(1, model.SeasonYearId);
+            Assert.Equal(2024, model.SeasonYear);
+
+            _teamServiceMock.Verify(
+                s => s.GetTeamYears(1),
+                Times.Once);
+        }
+        #endregion
+
+        #region Details Tests
+        [Fact]
         public async Task Details_ReturnsView_WhenCompetitorFound()
         {
             var competitor = TestDataFactory.CreateCompetitor();
@@ -480,6 +686,24 @@ namespace CycleManager.Tests.Unit.Manager
         }
 
         [Fact]
+        public async Task Details_ReturnsNotFound_WhenCompetitorDoesNotExist()
+        {
+            _competitorServiceMock
+                .Setup(s => s.GetCompetitorById(999))
+                .ReturnsAsync((Competitor?)null);
+
+            var result = await _controller.Details(999);
+
+            Assert.IsType<NotFoundResult>(result);
+
+            _competitorServiceMock.Verify(
+                s => s.GetCompetitorById(999),
+                Times.Once);
+        }
+        #endregion
+
+        #region Edit Tests
+        [Fact]
         public async Task Edit_Get_ReturnsNotFound_WhenCompetitorDoesNotExist()
         {
             _competitorServiceMock
@@ -489,6 +713,175 @@ namespace CycleManager.Tests.Unit.Manager
             var result = await _controller.Edit(1, null);
 
             Assert.IsType<NotFoundResult>(result);
+        }
+
+        [Fact]
+        public async Task Edit_Get_ReturnsView_WithMappedCompetitor()
+        {
+            var dto = new CompetitorEditDto
+            {
+                CompetitorId = 10,
+                FirstName = "Jan",
+                LastName = "Jansen",
+                PcsName = "Jan Jansen",
+                PcsScraperName = "jan-jansen",
+                CyclingFlahsLastScraped = DateTime.Now,
+                CountryId = 1,
+                SelectedTeamYearId = 20,
+                SelectedSeasonYearId = 2025,
+
+                Countries = new List<CountryDto>
+                {
+                    new()
+                    {
+                        Id = 1,
+                        CountryNameLong = "Nederland"
+                    },
+                    new()
+                    {
+                        Id = 2,
+                        CountryNameLong = "België"
+                    }
+                },
+
+                Teams = new List<TeamYearDto>
+                {
+                    new()
+                    {
+                        TeamYearId = 20,
+                        Name = "Team A"
+                    },
+                    new()
+                    {
+                        TeamYearId = 21,
+                        Name = "Team B"
+                    }
+                },
+
+                AvailableYears = new List<SeasonYearDto>
+                {
+                    new()
+                    {
+                        SeasonYearId = 1,
+                        Year = 2024
+                    },
+                    new()
+                    {
+                        SeasonYearId = 2,
+                        Year = 2025
+                    }
+                },
+
+                CompetitorInTeams = new List<CompetitorInTeamDto>
+                {
+                    new()
+                    {
+                        CompetitorInTeamId = 100,
+                        TeamYearId = 20,
+                        TeamName = "Team A",
+                        SeasonYearId = 2,
+                        Year = 2025,
+                        IsNationalChampion = true
+                    }
+                }
+            };
+
+            _competitorServiceMock
+                .Setup(s => s.GetCompetitorForEdit(10))
+                .ReturnsAsync(dto);
+
+            var result = await _controller.Edit(10, "/Competitors");
+
+            var view = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<CompetitorEditViewModel>(view.Model);
+
+            Assert.Equal(10, model.CompetitorId);
+            Assert.Equal("Jan", model.FirstName);
+            Assert.Equal("Jansen", model.LastName);
+            Assert.Equal("Jan Jansen", model.PcsName);
+            Assert.Equal(1, model.CountryId);
+            Assert.Equal(20, model.SelectedTeamYearId);
+            Assert.Equal(2025, model.SelectedSeasonYearId);
+            Assert.Equal("/Competitors", model.ReturnUrl);
+
+            Assert.Equal(2, model.Countries.Count());
+            Assert.Equal(2, model.Teams.Count());
+            Assert.Equal(2, model.AvailableYears.Count);
+
+            Assert.Single(model.CompetitorInTeams);
+            Assert.True(model.CompetitorInTeams[0].IsNationalChampion);
+        }
+
+        [Fact]
+        public async Task Edit_Get_SelectsCorrectCountryAndTeam()
+        {
+            var dto = new CompetitorEditDto
+            {
+                CompetitorId = 10,
+                FirstName = "Jan",
+                LastName = "Jansen",
+                CountryId = 2,
+                SelectedTeamYearId = 21,
+                SelectedSeasonYearId = 2025,
+
+                Countries = new List<CountryDto>
+                {
+                    new()
+                    {
+                        Id = 1,
+                        CountryNameLong = "Nederland"
+                    },
+                    new()
+                    {
+                        Id = 2,
+                        CountryNameLong = "België"
+                    }
+                },
+
+                Teams = new List<TeamYearDto>
+                {
+                    new()
+                    {
+                        TeamYearId = 20,
+                        Name = "Team A"
+                    },
+                    new()
+                    {
+                        TeamYearId = 21,
+                        Name = "Team B"
+                    }
+                },
+
+                AvailableYears = new List<SeasonYearDto>(),
+                CompetitorInTeams = new List<CompetitorInTeamDto>()
+            };
+
+            _competitorServiceMock
+                .Setup(s => s.GetCompetitorForEdit(10))
+                .ReturnsAsync(dto);
+
+            var result = await _controller.Edit(10, null);
+
+            var view = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<CompetitorEditViewModel>(view.Model);
+
+            var selectedCountry = model.Countries
+                .Single(c => c.Value == "2");
+
+            var unselectedCountry = model.Countries
+                .Single(c => c.Value == "1");
+
+            var selectedTeam = model.Teams
+                .Single(t => t.Value == "21");
+
+            var unselectedTeam = model.Teams
+                .Single(t => t.Value == "20");
+
+            Assert.True(selectedCountry.Selected);
+            Assert.False(unselectedCountry.Selected);
+
+            Assert.True(selectedTeam.Selected);
+            Assert.False(unselectedTeam.Selected);
         }
 
         [Fact]
@@ -560,6 +953,75 @@ namespace CycleManager.Tests.Unit.Manager
         }
 
         [Fact]
+        public async Task Edit_Post_InvalidModel_ReturnsMappedViewModel()
+        {
+            var input = new CompetitorEditInputModel
+            {
+                CompetitorId = 10,
+                FirstName = "Jan",
+                LastName = "Jansen",
+                PcsName = "Jan Jansen",
+                PcsScraperName = "jan-jansen",
+                CountryId = 2
+            };
+
+            _controller.ModelState.AddModelError("FirstName", "Verplicht");
+
+            var dto = new CompetitorEditDto
+            {
+                CompetitorId = 10,
+                FirstName = "Jan",
+                LastName = "Jansen",
+                PcsName = "Jan Jansen",
+                PcsScraperName = "jan-jansen",
+                CountryId = 2,
+
+                Countries = new List<CountryDto>
+                {
+                    new()
+                    {
+                        Id = 1,
+                        CountryNameLong = "Nederland"
+                    },
+                    new()
+                    {
+                        Id = 2,
+                        CountryNameLong = "België"
+                    }
+                }
+            };
+
+            _competitorServiceMock
+                .Setup(s => s.GetCompetitorForEdit(10))
+                .ReturnsAsync(dto);
+
+            var result = await _controller.Edit(input);
+
+            var view = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<CompetitorEditViewModel>(view.Model);
+
+            Assert.Equal(10, model.CompetitorId);
+            Assert.Equal("Jan", model.FirstName);
+            Assert.Equal("Jansen", model.LastName);
+            Assert.Equal("Jan Jansen", model.PcsName);
+            Assert.Equal("jan-jansen", model.PcsScraperName);
+            Assert.Equal(2, model.CountryId);
+
+            Assert.Equal(2, model.Countries.Count());
+
+            var selectedCountry = model.Countries
+                .Single(c => c.Value == "2");
+
+            Assert.True(selectedCountry.Selected);
+
+            _competitorServiceMock.Verify(
+                s => s.UpdateCompetitorWithTeam(It.IsAny<CompetitorEditDto>()),
+                Times.Never);
+        }
+        #endregion
+
+        #region Delete Tests
+        [Fact]
         public async Task Delete_Get_ReturnsView_WhenCompetitorFound()
         {
             var competitor = TestDataFactory.CreateCompetitor();
@@ -619,6 +1081,9 @@ namespace CycleManager.Tests.Unit.Manager
             Assert.Equal("Index", redirect.ActionName);
         }
 
+        #endregion
+
+        #region helper methods
         [Fact]
         public async Task SearchCompetitors_ReturnsJsonResult()
         {
@@ -680,6 +1145,40 @@ namespace CycleManager.Tests.Unit.Manager
         }
 
         [Fact]
+        public async Task GetCompetitorInfo_ReturnsFallbackValues_WhenTeamCountryAndPcsNameAreMissing()
+        {
+            var competitor = new Competitor
+            {
+                CompetitorId = 10,
+                FirstName = "Jan",
+                LastName = "Jansen",
+                Country = null!,
+                PcsName = null!,
+                CompetitorInTeams = new List<CompetitorInTeam>()
+            };
+
+            _competitorServiceMock
+                .Setup(s => s.GetCompetitorById(10))
+                .ReturnsAsync(competitor);
+
+            var result = await _controller.GetCompetitorInfo(10, 2025);
+
+            var json = Assert.IsType<JsonResult>(result);
+
+            Assert.NotNull(json.Value);
+
+            var value = json.Value!;
+
+            var teamName = value.GetType().GetProperty("TeamName")!.GetValue(value);
+            var country = value.GetType().GetProperty("Country")!.GetValue(value);
+            var pcsName = value.GetType().GetProperty("PcsName")!.GetValue(value);
+
+            Assert.Equal("Onbekend", teamName);
+            Assert.Equal("Onbekend", country);
+            Assert.Equal("", pcsName);
+        }
+
+        [Fact]
         public async Task RunRatingCompetitorScrape_Success_RedirectsToEdit()
         {
             // Arrange
@@ -730,5 +1229,6 @@ namespace CycleManager.Tests.Unit.Manager
                 "Het ophalen van de Cycling Flash ratings is mislukt.",
                 _controller.TempData["ErrorMessage"]);
         }
+        #endregion
     }
 }
