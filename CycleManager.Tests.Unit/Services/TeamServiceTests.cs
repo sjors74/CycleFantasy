@@ -365,5 +365,30 @@ namespace CycleManager.Tests.Unit.Services
                 x => x.GetTeamYearByIdAsync(teamYearId),
                 Times.Once);
         }
+
+        [Fact]
+        public async Task GetTeamById_ReturnsRepositoryResult()
+        {
+            // Arrange
+            var expected = new Team
+            {
+                TeamId = 1,
+                CurrentTeamName = "Test Team"
+            };
+
+            _teamRepositoryMock
+                .Setup(r => r.GetTeamById(1))
+                .ReturnsAsync(expected);
+
+            // Act
+            var result = await _service.GetTeamById(1);
+
+            // Assert
+            result.Should().BeSameAs(expected);
+
+            _teamRepositoryMock.Verify(
+                r => r.GetTeamById(1),
+                Times.Once);
+        }
     }
 }

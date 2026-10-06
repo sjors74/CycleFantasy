@@ -228,5 +228,31 @@ namespace CycleManager.Tests.Unit.Services
                 x => x.SaveChangesAsync(),
                 Times.Once);
         }
+
+        [Fact]
+        public async Task GetStage_ReturnsRepositoryResult()
+        {
+            // Arrange
+            var expected = new Stage
+            {
+                Id = 1,
+                StageName = "5",
+                EventId = 10
+            };
+
+            _stageRepositoryMock
+                .Setup(r => r.GetStage(5, 10))
+                .ReturnsAsync(expected);
+
+            // Act
+            var result = await _service.GetStage(5, 10);
+
+            // Assert
+            result.Should().BeSameAs(expected);
+
+            _stageRepositoryMock.Verify(
+                r => r.GetStage(5, 10),
+                Times.Once);
+        }
     }
 }

@@ -7,7 +7,6 @@ namespace CycleManager.Services.Interfaces
     {
         Task<Stage?> GetStageByIdAsync(int stageId);
         Task<Team?> GetTeamByIdAsync(int teamId);
-        Task ImportScrapedCompetitorsAsync();
         Task<TeamYear?> GetTeamYearByIdAsync(int teamYearId);
     }
 }
