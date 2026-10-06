@@ -1,15 +1,18 @@
 ﻿using CycleManager.Domain.Dto;
 using CycleManager.Domain.Interfaces;
 using CycleManager.Domain.Models;
+using CycleManager.Domain.ViewModel;
 using CycleManager.Services;
 using CycleManager.Services.Interfaces;
 using Domain.Context;
+using Domain.Dto;
 using Domain.Interfaces;
 using Domain.Models;
 using FluentAssertions;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Moq;
+using System.Reflection;
 
 namespace CycleManager.Tests.Unit.Services
 {
@@ -1154,75 +1157,388 @@ namespace CycleManager.Tests.Unit.Services
                 .WithMessage("Het aanmaken van de pool is mislukt.");
         }
 
-        //[Fact]
-        //public async Task CreatePoolAsync_WhenUniqueConstraintViolationOccurs_ThrowsInvalidOperationException()
-        //{
-        //    // Arrange
-        //    var deelnemerDto = new DeelnemerDto
-        //    {
-        //        PoolNaam = "Mijn Team",
-        //        UserId = "user-1",
-        //        EventId = 100
-        //    };
+        [Fact]
+        public async Task DeletePoolAsync_WhenPoolDoesNotExist_ThrowsKeyNotFoundException()
+        {
+            _deelnemersRepositoryMock
+                .Setup(x => x.GetCompetitorWithPicksById(123))
+                .ReturnsAsync((GameCompetitorEvent?)null);
 
-        //    var sqlErrorCollection = (SqlErrorCollection)Activator.CreateInstance(
-        //        typeof(SqlErrorCollection),
-        //        System.Reflection.BindingFlags.Instance |
-        //        System.Reflection.BindingFlags.NonPublic,
-        //        null,
-        //        null,
-        //        null)!;
+            var act = () => _service.DeletePoolAsync(123);
 
-        //    var sqlError = (SqlError)Activator.CreateInstance(
-        //        typeof(SqlError),
-        //        System.Reflection.BindingFlags.Instance |
-        //        System.Reflection.BindingFlags.NonPublic,
-        //        null,
-        //        new object[]
-        //        {
-        //            2601,
-        //            (byte)14,
-        //            (byte)1,
-        //            "server",
-        //            "Violation of UNIQUE KEY constraint.",
-        //            "procedure",
-        //            1
-        //        },
-        //        null)!;
+            await act.Should()
+                .ThrowAsync<KeyNotFoundException>()
+                .WithMessage("Pool 123 niet gevonden.");
+        }
 
-        //    typeof(SqlErrorCollection)
-        //        .GetMethod(
-        //            "Add",
-        //            System.Reflection.BindingFlags.Instance |
-        //            System.Reflection.BindingFlags.NonPublic)!
-        //        .Invoke(sqlErrorCollection, new object[] { sqlError });
+        [Fact]
+        public async Task DeletePoolAsync_WhenEventDoesNotExist_ThrowsInvalidOperationException()
+        {
+            var deelnemer = new GameCompetitorEvent
+            {
+                Id = 123,
+                EventId = 456,
+                Renners = new List<GameCompetitorEventPick>()
+            };
 
-        //    var sqlException = (SqlException)typeof(SqlException)
-        //        .GetMethod(
-        //            "CreateException",
-        //            System.Reflection.BindingFlags.Static |
-        //            System.Reflection.BindingFlags.NonPublic,
-        //            null,
-        //            new[] { typeof(SqlErrorCollection), typeof(string) },
-        //            null)!
-        //        .Invoke(null, new object[] { sqlErrorCollection, "16.0" })!;
+            _deelnemersRepositoryMock
+                .Setup(x => x.GetCompetitorWithPicksById(123))
+                .ReturnsAsync(deelnemer);
 
-        //    var dbUpdateException = new DbUpdateException(
-        //        "Unique constraint violation",
-        //        sqlException);
+            _eventRepositoryMock
+                .Setup(x => x.GetEventById(456))
+                .ReturnsAsync((Event?)null);
 
-        //    _deelnemersRepositoryMock
-        //        .Setup(x => x.CreateGameCompetitorEventAsync(
-        //            It.IsAny<DeelnemerCreateDto>()))
-        //        .ThrowsAsync(dbUpdateException);
+            var act = () => _service.DeletePoolAsync(123);
 
-        //    // Act
-        //    var act = () => _service.CreatePoolAsync(deelnemerDto);
+            await act.Should()
+                .ThrowAsync<InvalidOperationException>()
+                .WithMessage("Event 456 niet gevonden.");
+        }
 
-        //    // Assert
-        //    await act.Should()
-        //        .ThrowAsync<InvalidOperationException>()
-        //        .WithMessage("Je hebt al een pool met deze naam.");
-        //}
+        [Fact]
+        public async Task DeletePoolAsync_WhenSubscriptionIsClosed_ThrowsInvalidOperationException()
+        {
+            var deelnemer = new GameCompetitorEvent
+            {
+                Id = 123,
+                EventId = 456,
+                Renners = new List<GameCompetitorEventPick>()
+            };
+
+            var evenement = new Event
+            {
+                EventId = 456,
+                CanSubscribe = false
+            };
+
+            _deelnemersRepositoryMock
+                .Setup(x => x.GetCompetitorWithPicksById(123))
+                .ReturnsAsync(deelnemer);
+
+            _eventRepositoryMock
+                .Setup(x => x.GetEventById(456))
+                .ReturnsAsync(evenement);
+
+            var act = () => _service.DeletePoolAsync(123);
+
+            await act.Should()
+                .ThrowAsync<InvalidOperationException>()
+                .WithMessage("Inschrijven is gesloten.");
+        }
+
+        [Fact]
+        public async Task DeletePoolAsync_WhenPoolHasRenners_RemovesRennersAndPool()
+        {
+            var deelnemer = new GameCompetitorEvent
+            {
+                Id = 123,
+                EventId = 456,
+                Renners = new List<GameCompetitorEventPick>
+                {
+                    new() { Id = 1, GameCompetitorEventId = 123, CompetitorsInEventId = 10 },
+                    new() { Id = 2, GameCompetitorEventId = 123, CompetitorsInEventId = 20 }
+                }
+            };
+
+            var evenement = new Event
+            {
+                EventId = 456,
+                CanSubscribe = true
+            };
+
+            _deelnemersRepositoryMock
+                .Setup(x => x.GetCompetitorWithPicksById(123))
+                .ReturnsAsync(deelnemer);
+
+            _eventRepositoryMock
+                .Setup(x => x.GetEventById(456))
+                .ReturnsAsync(evenement);
+
+            var act = () => _service.DeletePoolAsync(123);
+
+            await act.Should().NotThrowAsync();
+
+            _picksRepositoryMock.Verify(
+                x => x.RemoveRange(deelnemer.Renners),
+                Times.Once);
+
+            _picksRepositoryMock.Verify(
+                x => x.SaveChangesAsync(),
+                Times.Once);
+
+            _deelnemersRepositoryMock.Verify(
+                x => x.Remove(deelnemer),
+                Times.Once);
+
+            _deelnemersRepositoryMock.Verify(
+                x => x.SaveChangesAsync(),
+                Times.Once);
+        }
+
+        [Fact]
+        public async Task DeletePoolAsync_WhenPoolHasNoRenners_DeletesPoolWithoutRemovingPicks()
+        {
+            var deelnemer = new GameCompetitorEvent
+            {
+                Id = 123,
+                EventId = 456,
+                Renners = new List<GameCompetitorEventPick>()
+            };
+
+            var evenement = new Event
+            {
+                EventId = 456,
+                CanSubscribe = true
+            };
+
+            _deelnemersRepositoryMock
+                .Setup(x => x.GetCompetitorWithPicksById(123))
+                .ReturnsAsync(deelnemer);
+
+            _eventRepositoryMock
+                .Setup(x => x.GetEventById(456))
+                .ReturnsAsync(evenement);
+
+            var act = () => _service.DeletePoolAsync(123);
+
+            await act.Should().NotThrowAsync();
+
+            _picksRepositoryMock.Verify(
+                x => x.RemoveRange(It.IsAny<IEnumerable<GameCompetitorEventPick>>()),
+                Times.Never);
+
+            _picksRepositoryMock.Verify(
+                x => x.SaveChangesAsync(),
+                Times.Never);
+
+            _deelnemersRepositoryMock.Verify(
+                x => x.Remove(deelnemer),
+                Times.Once);
+
+            _deelnemersRepositoryMock.Verify(
+                x => x.SaveChangesAsync(),
+                Times.Once);
+        }
+
+
+        [Fact]
+        public async Task EnsureCanSubscribeAsync_WhenEventDoesNotExist_ThrowsInvalidOperationException()
+        {
+            _eventRepositoryMock
+                .Setup(x => x.GetEventById(123))
+                .ReturnsAsync((Event?)null);
+
+            var act = () => _service.EnsureCanSubscribeAsync(123);
+
+            await act.Should()
+                .ThrowAsync<InvalidOperationException>()
+                .WithMessage("Evenement niet gevonden.");
+        }
+
+        [Fact]
+        public async Task EnsureCanSubscribeAsync_WhenSubscriptionIsClosed_ThrowsUnauthorizedAccessException()
+        {
+            var evenement = new Event
+            {
+                EventId = 123,
+                CanSubscribe = false
+            };
+
+            _eventRepositoryMock
+                .Setup(x => x.GetEventById(123))
+                .ReturnsAsync(evenement);
+
+            var act = () => _service.EnsureCanSubscribeAsync(123);
+
+            await act.Should()
+                .ThrowAsync<UnauthorizedAccessException>()
+                .WithMessage("Inschrijven is gesloten.");
+        }
+
+        [Fact]
+        public async Task EnsureCanSubscribeAsync_WhenSubscriptionIsOpen_CompletesSuccessfully()
+        {
+            var evenement = new Event
+            {
+                EventId = 123,
+                CanSubscribe = true
+            };
+
+            _eventRepositoryMock
+                .Setup(x => x.GetEventById(123))
+                .ReturnsAsync(evenement);
+
+            var act = () => _service.EnsureCanSubscribeAsync(123);
+
+            await act.Should().NotThrowAsync();
+        }
+
+        [Fact]
+        public async Task GetEventDetailsViewModelById_ReturnsRepositoryResult()
+        {
+            var expected = new EventDetailsViewModel
+            {
+                EventId = 123
+            };
+
+            _eventRepositoryMock
+                .Setup(x => x.GetEventDetailsViewModelById(123))
+                .ReturnsAsync(expected);
+
+            var result = await _service.GetEventDetailsViewModelById(123);
+
+            result.Should().BeSameAs(expected);
+        }
+
+        [Fact]
+        public async Task GetTeamsForEvent_ReturnsRepositoryResult()
+        {
+            var expected = new List<TeamDto>
+            {
+                new() { Id = 1, Naam = "Team 1", Renners = new List<CompetitorDto>(), TeamYearId = 1 },
+                new() { Id = 2, Naam = "Team 2", Renners = new List<CompetitorDto>(), TeamYearId = 2 }
+            };
+
+            _eventRepositoryMock
+                .Setup(x => x.GetTeamsForEvent(123))
+                .ReturnsAsync(expected);
+
+            var result = await _service.GetTeamsForEvent(123);
+
+            result.Should().BeSameAs(expected);
+        }
+
+        [Fact]
+        public async Task GetAantalDeelnemers_ReturnsRepositoryResult()
+        {
+            _eventRepositoryMock
+                .Setup(x => x.GetAantalDeelnemers(123))
+                .ReturnsAsync(42);
+
+            var result = await _service.GetAantalDeelnemers(123);
+
+            result.Should().Be(42);
+        }
+
+        [Fact]
+        public async Task GetActiveEvents_ReturnsRepositoryResult()
+        {
+            var expected = new List<Event>
+            {
+                new() { EventId = 1 },
+                new() { EventId = 2 }
+            };
+
+            _eventRepositoryMock
+                .Setup(x => x.GetActiveEvents())
+                .ReturnsAsync(expected);
+
+            var result = await _service.GetActiveEvents();
+
+            result.Should().BeSameAs(expected);
+        }
+
+        [Fact]
+        public async Task RemoveTeamFromEvent_CallsRepository()
+        {
+            await _service.RemoveTeamFromEvent(123, 456);
+
+            _eventRepositoryMock.Verify(
+                x => x.RemoveTeamFromEvent(123, 456),
+                Times.Once);
+        }
+
+        [Fact]
+        public async Task RemoveAllTeamsForEvent_CallsRepository()
+        {
+            await _service.RemoveAllTeamsForEvent(123);
+
+            _eventRepositoryMock.Verify(
+                x => x.RemoveAllTeamsFromEvent(123),
+                Times.Once);
+        }
+
+        [Fact]
+        public async Task AddTeamToEvent_CallsRepository()
+        {
+            await _service.AddTeamToEvent(123, 456);
+
+            _eventRepositoryMock.Verify(
+                x => x.AddTeamToEvent(123, 456),
+                Times.Once);
+        }
+
+        [Fact]
+        public async Task CreatePoolAsync_WhenUniqueConstraintViolationOccurs_ThrowsInvalidOperationException()
+        {
+            // Arrange
+            var deelnemerDto = new DeelnemerDto
+            {
+                PoolNaam = "Mijn Team",
+                UserId = "user-1",
+                EventId = 100
+            };
+
+            var sqlErrorCollection = (SqlErrorCollection)Activator.CreateInstance(
+                typeof(SqlErrorCollection),
+                BindingFlags.Instance |
+                BindingFlags.NonPublic,
+                null,
+                null,
+                null)!;
+
+            var sqlErrorConstructor = typeof(SqlError)
+                .GetConstructors(
+                    BindingFlags.Instance | BindingFlags.NonPublic)
+                .First(c => c.GetParameters().Length == 9);
+
+            var sqlError = (SqlError)sqlErrorConstructor.Invoke(new object[]
+            {
+                2601,
+                (byte)14,
+                (byte)1,
+                "server",
+                "Violation of UNIQUE KEY constraint.",
+                "procedure",
+                1,
+                0,
+                null!
+            });
+
+            typeof(SqlErrorCollection)
+                .GetMethod(
+                    "Add",
+                    BindingFlags.Instance |
+                    BindingFlags.NonPublic)!
+                .Invoke(sqlErrorCollection, new object[] { sqlError });
+
+            var sqlException = (SqlException)typeof(SqlException)
+                .GetMethod(
+                    "CreateException",
+                    BindingFlags.Static |
+                    BindingFlags.NonPublic,
+                    null,
+                    new[] { typeof(SqlErrorCollection), typeof(string) },
+                    null)!
+                .Invoke(null, new object[] { sqlErrorCollection, "16.0" })!;
+
+            var dbUpdateException = new DbUpdateException(
+                "Unique constraint violation",
+                sqlException);
+
+            _deelnemersRepositoryMock
+                .Setup(x => x.CreateGameCompetitorEventAsync(
+                    It.IsAny<DeelnemerCreateDto>()))
+                .ThrowsAsync(dbUpdateException);
+
+            // Act
+            var act = () => _service.CreatePoolAsync(deelnemerDto);
+
+            // Assert
+            await act.Should()
+                .ThrowAsync<InvalidOperationException>()
+                .WithMessage("Je hebt al een pool met deze naam.");
+        }
     }
 }
