@@ -1,15 +1,9 @@
-﻿using CycleManager.Domain.Dto;
-using CycleManager.Domain.Models;
+﻿using CycleManager.Domain.Models;
 using DataAccessEF.TypeRepository;
 using Domain.Context;
 using Domain.Models;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Xunit;
 
 namespace CycleManager.Tests.Integration.DataAccess
 {
