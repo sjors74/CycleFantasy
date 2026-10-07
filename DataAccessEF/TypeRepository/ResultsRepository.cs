@@ -4,7 +4,6 @@ using Domain.Context;
 using Domain.Interfaces;
 using Domain.Models;
 using Microsoft.EntityFrameworkCore;
-using System.Linq;
 
 namespace DataAccessEF.TypeRepository
 {

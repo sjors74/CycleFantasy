@@ -1,9 +1,7 @@
-﻿using CycleManager.Domain.Dto;
-using Domain.Context;
+﻿using Domain.Context;
 using Domain.Interfaces;
 using Domain.Models;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 
 namespace DataAccessEF.TypeRepository
 {
