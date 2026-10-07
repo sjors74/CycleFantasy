@@ -55,6 +55,7 @@ stages:
         --no-build
         --logger "trx;LogFileName=integration-test-results.trx"
         --collect:"XPlat Code Coverage"
+        --settings CodeCoverage.runsettings
       displayName: 'Run integration tests'
 
     - task: PublishTestResults@2
@@ -66,11 +67,21 @@ stages:
         failTaskOnFailedTests: true
         testRunTitle: 'CycleFantasy Tests'
 
-    - task: PublishCodeCoverageResults@2
-      displayName: 'Publish code coverage'
-      inputs:
-        summaryFileLocation: '$(Build.SourcesDirectory)/CycleManager.Tests.Unit/TestResults/*/coverage.cobertura.xml'
-        failIfCoverageEmpty: true
+    - script: dotnet tool install --global dotnet-reportgenerator-globaltool
+      displayName: 'Install ReportGenerator'
+
+    - script: >
+        reportgenerator
+        "-reports:$(Build.SourcesDirectory)/**/TestResults/**/coverage.cobertura.xml"
+        "-targetdir:$(Build.SourcesDirectory)/CodeCoverage"
+        "-reporttypes:Cobertura"
+      displayName: 'Merge code coverage'
+
+- task: PublishCodeCoverageResults@2
+  displayName: 'Publish code coverage'
+  inputs:
+    summaryFileLocation: '$(Build.SourcesDirectory)/CodeCoverage/Cobertura.xml'
+    failIfCoverageEmpty: true
 
 - stage: DeployApi
   displayName: Deploy API
