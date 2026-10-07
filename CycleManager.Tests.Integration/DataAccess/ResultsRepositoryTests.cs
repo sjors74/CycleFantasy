@@ -1,15 +1,13 @@
-﻿using CycleManager.Domain.Dto;
-using CycleManager.Domain.Models;
+﻿using CycleManager.Domain.Models;
 using DataAccessEF.TypeRepository;
 using Domain.Context;
 using Domain.Models;
 using FluentAssertions;
+using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.DotNet.Scaffolding.Shared.CodeModifier.CodeChange;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Xunit;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace CycleManager.Tests.Integration.DataAccess
 {
@@ -510,5 +508,1338 @@ namespace CycleManager.Tests.Integration.DataAccess
             repo.GetCompetitorFullName(999).Should().BeEmpty();
         }
 
+        [Fact]
+        public async Task RecalculateEventScoresAsync_Calculates_Normal_And_Special_Scores()
+        {
+            using var context = CreateContext();
+            var repo = new ResultsRepository(context);
+
+            // Arrange
+            var configuration = new Configuration
+            {
+                Id = 1
+            };
+
+            var normalConfigItem = new ConfigurationItem
+            {
+                Id = 1,
+                ConfigurationId = 1,
+                Position = 1,
+                Score = 10,
+                Configuration = configuration
+            };
+
+            var specialConfigItem = new ConfigurationItemSpecial
+            {
+                Id = 1,
+                ConfigurationId = 1,
+                Score = 7,
+                Configuration = configuration
+            };
+
+            configuration.ConfigurationItems = new List<ConfigurationItem>
+            {
+                normalConfigItem
+            };
+
+            configuration.Specials = new List<ConfigurationItemSpecial>
+            {
+                specialConfigItem
+            };
+
+            var evt = new Event
+            {
+                EventId = 100,
+                ConfigurationId = 1,
+                Configuration = configuration
+            };
+
+            var stage = new Stage
+            {
+                Id = 1,
+                EventId = 100,
+                Event = evt,
+                StageName = "Etappe 1"
+            };
+
+            var gameEvent = new GameCompetitorEvent
+            {
+                Id = 1,
+                EventId = 100,
+                Event = evt,
+                UserId = "user1",
+                TeamName = "Team 1"
+            };
+
+            var pick = new GameCompetitorEventPick
+            {
+                Id = 1,
+                GameCompetitorEventId = 1,
+                GameCompetitorEvent = gameEvent,
+                CompetitorsInEventId = 1
+            };
+
+            gameEvent.Renners.Add(pick);
+
+            var competitor = new Competitor
+            {
+                CompetitorId = 1,
+                FirstName = "John",
+                LastName = "Doe"
+            };
+
+            var competitorInTeam = new CompetitorInTeam
+            {
+                Id = 1,
+                CompetitorId = 1,
+                Competitor = competitor
+            };
+
+            var competitorInEvent = new CompetitorsInEvent
+            {
+                Id = 1,
+                EventId = 100,
+                Event = evt,
+                CompetitorInTeamId = 1,
+                CompetitorInTeam = competitorInTeam
+            };
+
+            var result = new Result
+            {
+                Id = 1,
+                StageId = 1,
+                Stage = stage,
+                CompetitorInEventId = 1,
+                CompetitorInEvent = competitorInEvent,
+                ConfigurationItemId = 1,
+                ConfigurationItem = normalConfigItem
+            };
+
+            var specialResult = new SpecialResult
+            {
+                Id = 1,
+                StageId = 1,
+                Stage = stage,
+                CompetitorInEventId = 1,
+                CompetitorInEvent = competitorInEvent,
+                SpecialId = 1,
+                Special = specialConfigItem
+            };
+
+            context.Configurations.Add(configuration);
+            context.ConfigurationItems.Add(normalConfigItem);
+            context.ConfigurationItemSpecials.Add(specialConfigItem);
+            context.Events.Add(evt);
+            context.Stages.Add(stage);
+            context.Competitors.Add(competitor);
+            context.CompetitorInTeams.Add(competitorInTeam);
+            context.CompetitorsInEvent.Add(competitorInEvent);
+            context.GameCompetitorsEvent.Add(gameEvent);
+            context.GameCompetitorEventPicks.Add(pick);
+            context.Results.Add(result);
+            context.SpecialResults.Add(specialResult);
+
+            await context.SaveChangesAsync();
+
+            // Act
+            await repo.RecalculateEventScoresAsync(100);
+
+            // Assert
+            var stagePickScore = await context.DeelnemerStagePickScores
+                .SingleAsync();
+
+            stagePickScore.GameCompetitorEventPickId.Should().Be(1);
+            stagePickScore.StageId.Should().Be(1);
+            stagePickScore.Score.Should().Be(10);
+
+            var stagePickSpecialScore = await context.DeelnemerStagePickSpecialScores
+                .SingleAsync();
+
+            stagePickSpecialScore.GameCompetitorEventPickId.Should().Be(1);
+            stagePickSpecialScore.StageId.Should().Be(1);
+            stagePickSpecialScore.Score.Should().Be(7);
+
+            var stageScore = await context.DeelnemerStageScores
+                .SingleAsync();
+
+            stageScore.GameCompetitorEventId.Should().Be(1);
+            stageScore.StageId.Should().Be(1);
+            stageScore.Score.Should().Be(17);
+
+            var pickScore = await context.DeelnemerPickScores
+                .SingleAsync();
+
+            pickScore.GameCompetitorEventPickId.Should().Be(1);
+            pickScore.TotalScore.Should().Be(17);
+
+            var deelnemerScore = await context.DeelnemerScores
+                .SingleAsync();
+
+            deelnemerScore.GameCompetitorEventId.Should().Be(1);
+            deelnemerScore.TotalScore.Should().Be(17);
+            deelnemerScore.LaatsteStageId.Should().Be(1);
+            deelnemerScore.LaatsteStageScore.Should().Be(17);
+        }
+
+        [Fact]
+        public async Task RecalculateEventScoresAsync_Calculates_Totals_Across_Multiple_Stages()
+        {
+            using var context = CreateContext();
+            var repo = new ResultsRepository(context);
+
+            // Arrange
+            var configuration = new Configuration
+            {
+                Id = 1
+            };
+
+            var normalConfigItem1 = new ConfigurationItem
+            {
+                Id = 1,
+                ConfigurationId = 1,
+                Position = 1,
+                Score = 10,
+                Configuration = configuration
+            };
+
+            var normalConfigItem2 = new ConfigurationItem
+            {
+                Id = 2,
+                ConfigurationId = 1,
+                Position = 2,
+                Score = 8,
+                Configuration = configuration
+            };
+
+            var specialConfigItem = new ConfigurationItemSpecial
+            {
+                Id = 1,
+                ConfigurationId = 1,
+                Score = 7,
+                Configuration = configuration
+            };
+
+            configuration.ConfigurationItems = new List<ConfigurationItem>
+            {
+                normalConfigItem1,
+                normalConfigItem2
+            };
+
+            configuration.Specials = new List<ConfigurationItemSpecial>
+            {
+                specialConfigItem
+            };
+
+            var evt = new Event
+            {
+                EventId = 100,
+                ConfigurationId = 1,
+                Configuration = configuration
+            };
+
+            var stage1 = new Stage
+            {
+                Id = 1,
+                EventId = 100,
+                Event = evt,
+                StageName = "Etappe 1"
+            };
+
+            var stage2 = new Stage
+            {
+                Id = 2,
+                EventId = 100,
+                Event = evt,
+                StageName = "Etappe 2"
+            };
+
+            var gameEvent = new GameCompetitorEvent
+            {
+                Id = 1,
+                EventId = 100,
+                Event = evt,
+                UserId = "user1",
+                TeamName = "Team 1"
+            };
+
+            var pick = new GameCompetitorEventPick
+            {
+                Id = 1,
+                GameCompetitorEventId = 1,
+                GameCompetitorEvent = gameEvent,
+                CompetitorsInEventId = 1
+            };
+
+            gameEvent.Renners.Add(pick);
+
+            var competitor = new Competitor
+            {
+                CompetitorId = 1,
+                FirstName = "John",
+                LastName = "Doe"
+            };
+
+            var competitorInTeam = new CompetitorInTeam
+            {
+                Id = 1,
+                CompetitorId = 1,
+                Competitor = competitor
+            };
+
+            var competitorInEvent = new CompetitorsInEvent
+            {
+                Id = 1,
+                EventId = 100,
+                Event = evt,
+                CompetitorInTeamId = 1,
+                CompetitorInTeam = competitorInTeam
+            };
+
+            // Stage 1: normal = 10, special = 7
+            var result1 = new Result
+            {
+                Id = 1,
+                StageId = 1,
+                Stage = stage1,
+                CompetitorInEventId = 1,
+                CompetitorInEvent = competitorInEvent,
+                ConfigurationItemId = 1,
+                ConfigurationItem = normalConfigItem1
+            };
+
+            var specialResult1 = new SpecialResult
+            {
+                Id = 1,
+                StageId = 1,
+                Stage = stage1,
+                CompetitorInEventId = 1,
+                CompetitorInEvent = competitorInEvent,
+                SpecialId = 1,
+                Special = specialConfigItem
+            };
+
+            // Stage 2: normal = 8, no special
+            var result2 = new Result
+            {
+                Id = 2,
+                StageId = 2,
+                Stage = stage2,
+                CompetitorInEventId = 1,
+                CompetitorInEvent = competitorInEvent,
+                ConfigurationItemId = 2,
+                ConfigurationItem = normalConfigItem2
+            };
+
+            context.Configurations.Add(configuration);
+            context.ConfigurationItems.AddRange(
+                normalConfigItem1,
+                normalConfigItem2);
+
+            context.ConfigurationItemSpecials.Add(specialConfigItem);
+
+            context.Events.Add(evt);
+            context.Stages.AddRange(stage1, stage2);
+
+            context.Competitors.Add(competitor);
+            context.CompetitorInTeams.Add(competitorInTeam);
+            context.CompetitorsInEvent.Add(competitorInEvent);
+
+            context.GameCompetitorsEvent.Add(gameEvent);
+            context.GameCompetitorEventPicks.Add(pick);
+
+            context.Results.AddRange(result1, result2);
+            context.SpecialResults.Add(specialResult1);
+
+            await context.SaveChangesAsync();
+
+            // Act
+            await repo.RecalculateEventScoresAsync(100);
+
+            // Assert - stage scores
+            var stageScores = await context.DeelnemerStageScores
+                .Where(x => x.GameCompetitorEventId == 1)
+                .OrderBy(x => x.StageId)
+                .ToListAsync();
+
+            stageScores.Should().HaveCount(2);
+
+            stageScores[0].StageId.Should().Be(1);
+            stageScores[0].Score.Should().Be(17);
+
+            stageScores[1].StageId.Should().Be(2);
+            stageScores[1].Score.Should().Be(8);
+
+            // Assert - pick total
+            var pickScore = await context.DeelnemerPickScores
+                .SingleAsync();
+
+            pickScore.GameCompetitorEventPickId.Should().Be(1);
+            pickScore.TotalScore.Should().Be(25);
+
+            // Assert - deelnemer total
+            var deelnemerScore = await context.DeelnemerScores
+                .SingleAsync();
+
+            deelnemerScore.GameCompetitorEventId.Should().Be(1);
+            deelnemerScore.TotalScore.Should().Be(25);
+
+            // Last stage must be stage 2
+            deelnemerScore.LaatsteStageId.Should().Be(2);
+            deelnemerScore.LaatsteStageScore.Should().Be(8);
+
+            // Assert - individual stage/pick scores
+            var stagePickScores = await context.DeelnemerStagePickScores
+                .Where(x => x.GameCompetitorEventPickId == 1)
+                .OrderBy(x => x.StageId)
+                .ToListAsync();
+
+            stagePickScores.Should().HaveCount(2);
+            stagePickScores[0].Score.Should().Be(10);
+            stagePickScores[1].Score.Should().Be(8);
+
+            var stagePickSpecialScores = await context.DeelnemerStagePickSpecialScores
+                .Where(x => x.GameCompetitorEventPickId == 1)
+                .OrderBy(x => x.StageId)
+                .ToListAsync();
+
+            stagePickSpecialScores.Should().HaveCount(2);
+            stagePickSpecialScores[0].Score.Should().Be(7);
+            stagePickSpecialScores[1].Score.Should().Be(0);
+        }
+
+        [Fact]
+        public async Task RecalculateEventScoresAsync_Removes_Existing_Scores_Before_Recalculating()
+        {
+            using var context = CreateContext();
+            var repo = new ResultsRepository(context);
+
+            // Arrange
+            var configuration = new Configuration
+            {
+                Id = 1
+            };
+
+            var normalConfigItem = new ConfigurationItem
+            {
+                Id = 1,
+                ConfigurationId = 1,
+                Position = 1,
+                Score = 10,
+                Configuration = configuration
+            };
+
+            configuration.ConfigurationItems = new List<ConfigurationItem>
+            {
+                normalConfigItem
+            };
+
+            var evt = new Event
+            {
+                EventId = 100,
+                ConfigurationId = 1,
+                Configuration = configuration
+            };
+
+            var stage = new Stage
+            {
+                Id = 1,
+                EventId = 100,
+                Event = evt,
+                StageName = "Etappe 1"
+            };
+
+            var gameEvent = new GameCompetitorEvent
+            {
+                Id = 1,
+                EventId = 100,
+                Event = evt,
+                UserId = "user1",
+                TeamName = "Team 1"
+            };
+
+            var pick = new GameCompetitorEventPick
+            {
+                Id = 1,
+                GameCompetitorEventId = 1,
+                GameCompetitorEvent = gameEvent,
+                CompetitorsInEventId = 1
+            };
+
+            gameEvent.Renners.Add(pick);
+
+            var competitor = new Competitor
+            {
+                CompetitorId = 1,
+                FirstName = "John",
+                LastName = "Doe"
+            };
+
+            var competitorInTeam = new CompetitorInTeam
+            {
+                Id = 1,
+                CompetitorId = 1,
+                Competitor = competitor
+            };
+
+            var competitorInEvent = new CompetitorsInEvent
+            {
+                Id = 1,
+                EventId = 100,
+                Event = evt,
+                CompetitorInTeamId = 1,
+                CompetitorInTeam = competitorInTeam
+            };
+
+            var result = new Result
+            {
+                Id = 1,
+                StageId = 1,
+                Stage = stage,
+                CompetitorInEventId = 1,
+                CompetitorInEvent = competitorInEvent,
+                ConfigurationItemId = 1,
+                ConfigurationItem = normalConfigItem
+            };
+
+            // Oude scoregegevens
+            var oldStagePickScore = new DeelnemerStagePickScore
+            {
+                Id = Guid.NewGuid(),
+                GameCompetitorEventPickId = 1,
+                StageId = 1,
+                Score = 999
+            };
+
+            var oldStagePickSpecialScore = new DeelnemerStagePickSpecialScore
+            {
+                Id = Guid.NewGuid(),
+                GameCompetitorEventPickId = 1,
+                StageId = 1,
+                Score = 888
+            };
+
+            var oldStageScore = new DeelnemerStageScore
+            {
+                Id = Guid.NewGuid(),
+                GameCompetitorEventId = 1,
+                StageId = 1,
+                Score = 777
+            };
+
+            var oldPickScore = new DeelnemerPickScore
+            {
+                Id = Guid.NewGuid(),
+                GameCompetitorEventPickId = 1,
+                TotalScore = 666,
+                LastUpdate = DateTime.UtcNow
+            };
+
+            var oldDeelnemerScore = new DeelnemerScore
+            {
+                Id = Guid.NewGuid(),
+                GameCompetitorEventId = 1,
+                TotalScore = 555,
+                LaatsteStageId = 99,
+                LaatsteStageScore = 444
+            };
+
+            context.Configurations.Add(configuration);
+            context.ConfigurationItems.Add(normalConfigItem);
+            context.Events.Add(evt);
+            context.Stages.Add(stage);
+            context.Competitors.Add(competitor);
+            context.CompetitorInTeams.Add(competitorInTeam);
+            context.CompetitorsInEvent.Add(competitorInEvent);
+            context.GameCompetitorsEvent.Add(gameEvent);
+            context.GameCompetitorEventPicks.Add(pick);
+            context.Results.Add(result);
+
+            context.DeelnemerStagePickScores.Add(oldStagePickScore);
+            context.DeelnemerStagePickSpecialScores.Add(oldStagePickSpecialScore);
+            context.DeelnemerStageScores.Add(oldStageScore);
+            context.DeelnemerPickScores.Add(oldPickScore);
+            context.DeelnemerScores.Add(oldDeelnemerScore);
+
+            await context.SaveChangesAsync();
+
+            // Act
+            await repo.RecalculateEventScoresAsync(100);
+
+            // Assert
+            var stagePickScores = await context.DeelnemerStagePickScores
+                .ToListAsync();
+
+            stagePickScores.Should().HaveCount(1);
+            stagePickScores.Single().Score.Should().Be(10);
+            stagePickScores.Single().Id.Should().NotBe(oldStagePickScore.Id);
+
+            var stagePickSpecialScores = await context.DeelnemerStagePickSpecialScores
+                .ToListAsync();
+
+            stagePickSpecialScores.Should().HaveCount(1);
+            stagePickSpecialScores.Single().Score.Should().Be(0);
+            stagePickSpecialScores.Single().Id.Should().NotBe(oldStagePickSpecialScore.Id);
+
+            var stageScores = await context.DeelnemerStageScores
+                .ToListAsync();
+
+            stageScores.Should().HaveCount(1);
+            stageScores.Single().Score.Should().Be(10);
+            stageScores.Single().Id.Should().NotBe(oldStageScore.Id);
+
+            var pickScores = await context.DeelnemerPickScores
+                .ToListAsync();
+
+            pickScores.Should().HaveCount(1);
+            pickScores.Single().TotalScore.Should().Be(10);
+            pickScores.Single().Id.Should().NotBe(oldPickScore.Id);
+
+            var deelnemerScores = await context.DeelnemerScores
+                .ToListAsync();
+
+            deelnemerScores.Should().HaveCount(1);
+            deelnemerScores.Single().TotalScore.Should().Be(10);
+            deelnemerScores.Single().LaatsteStageId.Should().Be(1);
+            deelnemerScores.Single().LaatsteStageScore.Should().Be(10);
+            deelnemerScores.Single().Id.Should().NotBe(oldDeelnemerScore.Id);
+        }
+
+        [Fact]
+        public async Task RecalculateEventScoresAsync_UsesZero_WhenPickHasNoResult()
+        {
+            using var context = CreateContext();
+            var repo = new ResultsRepository(context);
+
+            // Arrange
+            var configuration = new Configuration
+            {
+                Id = 1
+            };
+
+            var normalConfigItem = new ConfigurationItem
+            {
+                Id = 1,
+                ConfigurationId = 1,
+                Position = 1,
+                Score = 10,
+                Configuration = configuration
+            };
+
+            configuration.ConfigurationItems = new List<ConfigurationItem>
+            {
+                normalConfigItem
+            };
+
+            var evt = new Event
+            {
+                EventId = 100,
+                ConfigurationId = 1,
+                Configuration = configuration
+            };
+
+            var stage = new Stage
+            {
+                Id = 1,
+                EventId = 100,
+                Event = evt,
+                StageName = "Etappe 1"
+            };
+
+            var gameEvent = new GameCompetitorEvent
+            {
+                Id = 1,
+                EventId = 100,
+                Event = evt,
+                UserId = "user1",
+                TeamName = "Team 1"
+            };
+
+            var pick = new GameCompetitorEventPick
+            {
+                Id = 1,
+                GameCompetitorEventId = 1,
+                GameCompetitorEvent = gameEvent,
+                CompetitorsInEventId = 1
+            };
+
+            gameEvent.Renners.Add(pick);
+
+            var competitor = new Competitor
+            {
+                CompetitorId = 1,
+                FirstName = "John",
+                LastName = "Doe"
+            };
+
+            var competitorInTeam = new CompetitorInTeam
+            {
+                Id = 1,
+                CompetitorId = 1,
+                Competitor = competitor
+            };
+
+            var competitorInEvent = new CompetitorsInEvent
+            {
+                Id = 1,
+                EventId = 100,
+                Event = evt,
+                CompetitorInTeamId = 1,
+                CompetitorInTeam = competitorInTeam
+            };
+
+            // Bewust GEEN Result en GEEN SpecialResult
+
+            context.Configurations.Add(configuration);
+            context.ConfigurationItems.Add(normalConfigItem);
+            context.Events.Add(evt);
+            context.Stages.Add(stage);
+
+            context.Competitors.Add(competitor);
+            context.CompetitorInTeams.Add(competitorInTeam);
+            context.CompetitorsInEvent.Add(competitorInEvent);
+
+            context.GameCompetitorsEvent.Add(gameEvent);
+            context.GameCompetitorEventPicks.Add(pick);
+
+            await context.SaveChangesAsync();
+
+            // Act
+            await repo.RecalculateEventScoresAsync(100);
+
+            // Assert
+            var stagePickScore = await context.DeelnemerStagePickScores
+                .SingleAsync();
+
+            stagePickScore.GameCompetitorEventPickId.Should().Be(1);
+            stagePickScore.StageId.Should().Be(1);
+            stagePickScore.Score.Should().Be(0);
+
+            var stagePickSpecialScore = await context.DeelnemerStagePickSpecialScores
+                .SingleAsync();
+
+            stagePickSpecialScore.GameCompetitorEventPickId.Should().Be(1);
+            stagePickSpecialScore.StageId.Should().Be(1);
+            stagePickSpecialScore.Score.Should().Be(0);
+
+            var stageScore = await context.DeelnemerStageScores
+                .SingleAsync();
+
+            stageScore.GameCompetitorEventId.Should().Be(1);
+            stageScore.StageId.Should().Be(1);
+            stageScore.Score.Should().Be(0);
+
+            var pickScore = await context.DeelnemerPickScores
+                .SingleAsync();
+
+            pickScore.GameCompetitorEventPickId.Should().Be(1);
+            pickScore.TotalScore.Should().Be(0);
+
+            var deelnemerScore = await context.DeelnemerScores
+                .SingleAsync();
+
+            deelnemerScore.GameCompetitorEventId.Should().Be(1);
+            deelnemerScore.TotalScore.Should().Be(0);
+            deelnemerScore.LaatsteStageId.Should().Be(1);
+            deelnemerScore.LaatsteStageScore.Should().Be(0);
+        }
+
+        [Fact]
+        public async Task RecalculateEventScoresAsync_Throws_WhenEventDoesNotExist()
+        {
+            using var context = CreateContext();
+            var repo = new ResultsRepository(context);
+
+            Func<Task> act = () => repo.RecalculateEventScoresAsync(999);
+
+            await act.Should()
+                .ThrowAsync<InvalidOperationException>()
+                .WithMessage("Event 999 not found");
+        }
+
+        [Fact]
+        public async Task RecalculateEventScoresAsync_Throws_WhenEventHasNoConfiguration()
+        {
+            using var context = CreateContext();
+            var repo = new ResultsRepository(context);
+
+            // Arrange
+            var evt = new Event
+            {
+                EventId = 100,
+                ConfigurationId = 999
+            };
+
+            context.Events.Add(evt);
+            await context.SaveChangesAsync();
+
+            // Act
+            Func<Task> act = () => repo.RecalculateEventScoresAsync(100);
+
+            // Assert
+            await act.Should()
+                .ThrowAsync<InvalidOperationException>()
+                .WithMessage("Event 100 has no configuration");
+        }
+
+        [Fact]
+        public async Task RecalculateEventScoresAsync_Skips_Result_Without_ConfigurationItem()
+        {
+            using var context = CreateContext();
+            var repo = new ResultsRepository(context);
+
+            // Arrange
+            var configuration = new Configuration
+            {
+                Id = 1
+            };
+
+            var configurationItem = new ConfigurationItem
+            {
+                Id = 1,
+                ConfigurationId = 1,
+                Position = 1,
+                Score = 10,
+                Configuration = configuration
+            };
+
+            configuration.ConfigurationItems = new List<ConfigurationItem>
+            {
+                configurationItem
+            };
+
+            var evt = new Event
+            {
+                EventId = 100,
+                ConfigurationId = 1,
+                Configuration = configuration
+            };
+
+            var stage = new Stage
+            {
+                Id = 1,
+                EventId = 100,
+                Event = evt,
+                StageName = "Etappe 1"
+            };
+
+            var gameEvent = new GameCompetitorEvent
+            {
+                Id = 1,
+                EventId = 100,
+                Event = evt,
+                UserId = "user1",
+                TeamName = "Team 1"
+            };
+
+            var pick = new GameCompetitorEventPick
+            {
+                Id = 1,
+                GameCompetitorEventId = 1,
+                GameCompetitorEvent = gameEvent,
+                CompetitorsInEventId = 1
+            };
+
+            gameEvent.Renners.Add(pick);
+
+            var competitor = new Competitor
+            {
+                CompetitorId = 1,
+                FirstName = "John",
+                LastName = "Doe"
+            };
+
+            var competitorInTeam = new CompetitorInTeam
+            {
+                Id = 1,
+                CompetitorId = 1,
+                Competitor = competitor
+            };
+
+            var competitorInEvent = new CompetitorsInEvent
+            {
+                Id = 1,
+                EventId = 100,
+                Event = evt,
+                CompetitorInTeamId = 1,
+                CompetitorInTeam = competitorInTeam
+            };
+
+            // Result zonder ConfigurationItemId
+            var result = new Result
+            {
+                Id = 1,
+                StageId = 1,
+                Stage = stage,
+                CompetitorInEventId = 1,
+                CompetitorInEvent = competitorInEvent,
+                ConfigurationItemId = null
+            };
+
+            context.Configurations.Add(configuration);
+            context.ConfigurationItems.Add(configurationItem);
+            context.Events.Add(evt);
+            context.Stages.Add(stage);
+
+            context.Competitors.Add(competitor);
+            context.CompetitorInTeams.Add(competitorInTeam);
+            context.CompetitorsInEvent.Add(competitorInEvent);
+
+            context.GameCompetitorsEvent.Add(gameEvent);
+            context.GameCompetitorEventPicks.Add(pick);
+            context.Results.Add(result);
+
+            await context.SaveChangesAsync();
+
+            // Act
+            await repo.RecalculateEventScoresAsync(100);
+
+            // Assert
+            var stagePickScore = await context.DeelnemerStagePickScores
+                .SingleAsync();
+
+            stagePickScore.Score.Should().Be(0);
+
+            var stageScore = await context.DeelnemerStageScores
+                .SingleAsync();
+
+            stageScore.Score.Should().Be(0);
+
+            var pickScore = await context.DeelnemerPickScores
+                .SingleAsync();
+
+            pickScore.TotalScore.Should().Be(0);
+
+            var deelnemerScore = await context.DeelnemerScores
+                .SingleAsync();
+
+            deelnemerScore.TotalScore.Should().Be(0);
+        }
+
+        [Fact]
+        public async Task RecalculateEventScoresAsync_Clears_ConfigurationItem_When_Position_No_Longer_Exists()
+        {
+            using var context = CreateContext();
+            var repo = new ResultsRepository(context);
+
+            // Arrange
+            var configuration = new Configuration
+            {
+                Id = 1
+            };
+
+            // Huidige configuratie kent alleen positie 1.
+            var currentConfigItem = new ConfigurationItem
+            {
+                Id = 1,
+                ConfigurationId = 1,
+                Position = 1,
+                Score = 10,
+                Configuration = configuration
+            };
+
+            configuration.ConfigurationItems = new List<ConfigurationItem>
+            {
+                currentConfigItem
+            };
+
+            var evt = new Event
+            {
+                EventId = 100,
+                ConfigurationId = 1,
+                Configuration = configuration
+            };
+
+            var stage = new Stage
+            {
+                Id = 1,
+                EventId = 100,
+                Event = evt,
+                StageName = "Etappe 1"
+            };
+
+            var competitor = new Competitor
+            {
+                CompetitorId = 1,
+                FirstName = "John",
+                LastName = "Doe"
+            };
+
+            var competitorInTeam = new CompetitorInTeam
+            {
+                Id = 1,
+                CompetitorId = 1,
+                Competitor = competitor
+            };
+
+            var competitorInEvent = new CompetitorsInEvent
+            {
+                Id = 1,
+                EventId = 100,
+                Event = evt,
+                CompetitorInTeamId = 1,
+                CompetitorInTeam = competitorInTeam
+            };
+
+            // Oude ConfigurationItem met positie 99.
+            // Die positie bestaat niet meer in de huidige configuratie.
+            var oldConfigItem = new ConfigurationItem
+            {
+                Id = 99,
+                ConfigurationId = 999,
+                Position = 99,
+                Score = 5
+            };
+
+            var result = new Result
+            {
+                Id = 1,
+                StageId = 1,
+                Stage = stage,
+                CompetitorInEventId = 1,
+                CompetitorInEvent = competitorInEvent,
+                ConfigurationItemId = 99,
+                ConfigurationItem = oldConfigItem
+            };
+
+            context.Configurations.Add(configuration);
+            context.ConfigurationItems.Add(currentConfigItem);
+            context.ConfigurationItems.Add(oldConfigItem);
+
+            context.Events.Add(evt);
+            context.Stages.Add(stage);
+
+            context.Competitors.Add(competitor);
+            context.CompetitorInTeams.Add(competitorInTeam);
+            context.CompetitorsInEvent.Add(competitorInEvent);
+
+            context.Results.Add(result);
+
+            await context.SaveChangesAsync();
+
+            // Act
+            await repo.RecalculateEventScoresAsync(100);
+
+            // Assert
+            var updatedResult = await context.Results
+                .SingleAsync(x => x.Id == 1);
+
+            updatedResult.ConfigurationItemId.Should().BeNull();
+            updatedResult.ConfigurationItem.Should().BeNull();
+        }
+
+        [Fact]
+        public async Task RecalculateEventScoresAsync_Calculates_Scores_Independently_For_Multiple_Competitors()
+        {
+            using var context = CreateContext();
+            var repo = new ResultsRepository(context);
+
+            // Arrange
+            var configuration = new Configuration
+            {
+                Id = 1
+            };
+
+            var configItem1 = new ConfigurationItem
+            {
+                Id = 1,
+                ConfigurationId = 1,
+                Position = 1,
+                Score = 10,
+                Configuration = configuration
+            };
+
+            var configItem2 = new ConfigurationItem
+            {
+                Id = 2,
+                ConfigurationId = 1,
+                Position = 2,
+                Score = 8,
+                Configuration = configuration
+            };
+
+            configuration.ConfigurationItems = new List<ConfigurationItem>
+            {
+                configItem1,
+                configItem2
+            };
+
+            var evt = new Event
+            {
+                EventId = 100,
+                ConfigurationId = 1,
+                Configuration = configuration
+            };
+
+            var stage = new Stage
+            {
+                Id = 1,
+                EventId = 100,
+                Event = evt,
+                StageName = "Etappe 1"
+            };
+
+            var competitor1 = new Competitor
+            {
+                CompetitorId = 1,
+                FirstName = "John",
+                LastName = "Doe"
+            };
+
+            var competitor2 = new Competitor
+            {
+                CompetitorId = 2,
+                FirstName = "Jane",
+                LastName = "Doe"
+            };
+
+            var cit1 = new CompetitorInTeam
+            {
+                Id = 1,
+                CompetitorId = 1,
+                Competitor = competitor1
+            };
+
+            var cit2 = new CompetitorInTeam
+            {
+                Id = 2,
+                CompetitorId = 2,
+                Competitor = competitor2
+            };
+
+            var cie1 = new CompetitorsInEvent
+            {
+                Id = 1,
+                EventId = 100,
+                Event = evt,
+                CompetitorInTeamId = 1,
+                CompetitorInTeam = cit1
+            };
+
+            var cie2 = new CompetitorsInEvent
+            {
+                Id = 2,
+                EventId = 100,
+                Event = evt,
+                CompetitorInTeamId = 2,
+                CompetitorInTeam = cit2
+            };
+
+            var gameEvent1 = new GameCompetitorEvent
+            {
+                Id = 1,
+                EventId = 100,
+                Event = evt,
+                UserId = "user1",
+                TeamName = "Team 1"
+            };
+
+            var gameEvent2 = new GameCompetitorEvent
+            {
+                Id = 2,
+                EventId = 100,
+                Event = evt,
+                UserId = "user2",
+                TeamName = "Team 2"
+            };
+
+            var pick1 = new GameCompetitorEventPick
+            {
+                Id = 1,
+                GameCompetitorEventId = 1,
+                GameCompetitorEvent = gameEvent1,
+                CompetitorsInEventId = 1,
+                CompetitorsInEvent = cie1
+            };
+
+            var pick2 = new GameCompetitorEventPick
+            {
+                Id = 2,
+                GameCompetitorEventId = 2,
+                GameCompetitorEvent = gameEvent2,
+                CompetitorsInEventId = 2,
+                CompetitorsInEvent = cie2
+            };
+
+            gameEvent1.Renners.Add(pick1);
+            gameEvent2.Renners.Add(pick2);
+
+            var result1 = new Result
+            {
+                Id = 1,
+                StageId = 1,
+                Stage = stage,
+                CompetitorInEventId = 1,
+                CompetitorInEvent = cie1,
+                ConfigurationItemId = 1,
+                ConfigurationItem = configItem1
+            };
+
+            var result2 = new Result
+            {
+                Id = 2,
+                StageId = 1,
+                Stage = stage,
+                CompetitorInEventId = 2,
+                CompetitorInEvent = cie2,
+                ConfigurationItemId = 2,
+                ConfigurationItem = configItem2
+            };
+
+            context.Configurations.Add(configuration);
+            context.ConfigurationItems.AddRange(configItem1, configItem2);
+            context.Events.Add(evt);
+            context.Stages.Add(stage);
+
+            context.Competitors.AddRange(competitor1, competitor2);
+            context.CompetitorInTeams.AddRange(cit1, cit2);
+            context.CompetitorsInEvent.AddRange(cie1, cie2);
+
+            context.GameCompetitorsEvent.AddRange(gameEvent1, gameEvent2);
+            context.GameCompetitorEventPicks.AddRange(pick1, pick2);
+
+            context.Results.AddRange(result1, result2);
+
+            await context.SaveChangesAsync();
+
+            // Act
+            await repo.RecalculateEventScoresAsync(100);
+
+            // Assert
+            var deelnemerScores = await context.DeelnemerScores
+                .OrderBy(x => x.GameCompetitorEventId)
+                .ToListAsync();
+
+            deelnemerScores.Should().HaveCount(2);
+
+            deelnemerScores[0].GameCompetitorEventId.Should().Be(1);
+            deelnemerScores[0].TotalScore.Should().Be(10);
+            deelnemerScores[0].LaatsteStageId.Should().Be(1);
+            deelnemerScores[0].LaatsteStageScore.Should().Be(10);
+
+            deelnemerScores[1].GameCompetitorEventId.Should().Be(2);
+            deelnemerScores[1].TotalScore.Should().Be(8);
+            deelnemerScores[1].LaatsteStageId.Should().Be(1);
+            deelnemerScores[1].LaatsteStageScore.Should().Be(8);
+
+            var pickScores = await context.DeelnemerPickScores
+                .OrderBy(x => x.GameCompetitorEventPickId)
+                .ToListAsync();
+
+            pickScores.Should().HaveCount(2);
+
+            pickScores[0].GameCompetitorEventPickId.Should().Be(1);
+            pickScores[0].TotalScore.Should().Be(10);
+
+            pickScores[1].GameCompetitorEventPickId.Should().Be(2);
+            pickScores[1].TotalScore.Should().Be(8);
+        }
+
+        [Fact]
+        public async Task RecalculateEventScoresAsync_Handles_Stage_With_No_Results()
+        {
+            using var context = CreateContext();
+            var repo = new ResultsRepository(context);
+
+            // Arrange
+            var configuration = new Configuration
+            {
+                Id = 1
+            };
+
+            var configItem = new ConfigurationItem
+            {
+                Id = 1,
+                ConfigurationId = 1,
+                Position = 1,
+                Score = 10,
+                Configuration = configuration
+            };
+
+            configuration.ConfigurationItems = new List<ConfigurationItem>
+            {
+                configItem
+            };
+
+            var evt = new Event
+            {
+                EventId = 100,
+                ConfigurationId = 1,
+                Configuration = configuration
+            };
+
+            var stage = new Stage
+            {
+                Id = 1,
+                EventId = 100,
+                Event = evt,
+                StageName = "Etappe zonder uitslag"
+            };
+
+            var gameEvent = new GameCompetitorEvent
+            {
+                Id = 1,
+                EventId = 100,
+                Event = evt,
+                UserId = "user1",
+                TeamName = "Team 1"
+            };
+
+            var pick = new GameCompetitorEventPick
+            {
+                Id = 1,
+                GameCompetitorEventId = 1,
+                GameCompetitorEvent = gameEvent,
+                CompetitorsInEventId = 1
+            };
+
+            gameEvent.Renners.Add(pick);
+
+            context.Configurations.Add(configuration);
+            context.ConfigurationItems.Add(configItem);
+            context.Events.Add(evt);
+            context.Stages.Add(stage);
+
+            context.GameCompetitorsEvent.Add(gameEvent);
+            context.GameCompetitorEventPicks.Add(pick);
+
+            await context.SaveChangesAsync();
+
+            // Act
+            await repo.RecalculateEventScoresAsync(100);
+
+            // Assert
+            var stagePickScore = await context.DeelnemerStagePickScores
+                .SingleAsync();
+
+            stagePickScore.StageId.Should().Be(1);
+            stagePickScore.GameCompetitorEventPickId.Should().Be(1);
+            stagePickScore.Score.Should().Be(0);
+
+            var stagePickSpecialScore = await context.DeelnemerStagePickSpecialScores
+                .SingleAsync();
+
+            stagePickSpecialScore.StageId.Should().Be(1);
+            stagePickSpecialScore.GameCompetitorEventPickId.Should().Be(1);
+            stagePickSpecialScore.Score.Should().Be(0);
+
+            var stageScore = await context.DeelnemerStageScores
+                .SingleAsync();
+
+            stageScore.StageId.Should().Be(1);
+            stageScore.GameCompetitorEventId.Should().Be(1);
+            stageScore.Score.Should().Be(0);
+
+            var pickScore = await context.DeelnemerPickScores
+                .SingleAsync();
+
+            pickScore.TotalScore.Should().Be(0);
+
+            var deelnemerScore = await context.DeelnemerScores
+                .SingleAsync();
+
+            deelnemerScore.TotalScore.Should().Be(0);
+            deelnemerScore.LaatsteStageId.Should().Be(1);
+            deelnemerScore.LaatsteStageScore.Should().Be(0);
+        }
     }
 }

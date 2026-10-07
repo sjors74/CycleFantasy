@@ -30,11 +30,5 @@ namespace CycleManager.Services
         {
             return await _teamRepository.GetTeamYearByIdAsync(teamYearId);
         }
-
-        public async Task ImportScrapedCompetitorsAsync()
-        {
-            //TODO : implement?
-            await Task.CompletedTask;
-        }
     }
 }

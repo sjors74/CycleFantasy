@@ -21,11 +21,10 @@
             List<string> lastNameTokens = new List<string>();
             int i = 0;
 
-            // Start met eerste token in achternaam
+            // Voeg alle tokens behalve het laatste toe aan de achternaam
             lastNameTokens.Add(parts[i]);
             i++;
 
-            // Voeg tokens toe als ze een prefix zijn of als ze na een prefix staan
             while (i < parts.Count - 1)
             {
                 lastNameTokens.Add(parts[i]);
