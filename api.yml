@@ -77,11 +77,11 @@ stages:
         "-reporttypes:Cobertura"
       displayName: 'Merge code coverage'
 
-- task: PublishCodeCoverageResults@2
-  displayName: 'Publish code coverage'
-  inputs:
-    summaryFileLocation: '$(Build.SourcesDirectory)/CodeCoverage/Cobertura.xml'
-    failIfCoverageEmpty: true
+    - task: PublishCodeCoverageResults@2
+      displayName: 'Publish code coverage'
+      inputs:
+        summaryFileLocation: '$(Build.SourcesDirectory)/CodeCoverage/Cobertura.xml'
+        failIfCoverageEmpty: true
 
 - stage: DeployApi
   displayName: Deploy API
