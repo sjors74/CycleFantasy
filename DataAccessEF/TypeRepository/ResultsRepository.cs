@@ -544,6 +544,10 @@ namespace DataAccessEF.TypeRepository
                 context.DeelnemerStagePickScores.Where(x => stageIds.Contains(x.StageId))
             );
 
+            context.DeelnemerStagePickSpecialScores.RemoveRange(
+                context.DeelnemerStagePickSpecialScores.Where(x => stageIds.Contains(x.StageId))
+            );
+
             context.DeelnemerStageScores.RemoveRange(
                 context.DeelnemerStageScores.Where(x => stageIds.Contains(x.StageId))
             );
@@ -663,7 +667,7 @@ namespace DataAccessEF.TypeRepository
             // --- 9. DEELNEMER TOTALS ---
             foreach (var gce in ev.GameCompetitorEvents)
             {
-                var last = context.DeelnemerStageScores
+                var last = context.DeelnemerStageScores.Local
                     .Where(s => s.GameCompetitorEventId == gce.Id)
                     .OrderByDescending(s => s.StageId)
                     .FirstOrDefault();
