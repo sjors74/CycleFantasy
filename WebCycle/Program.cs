@@ -112,6 +112,7 @@ builder.Services.AddScoped<IScraperService, ScraperService>();
 builder.Services.AddScoped<ICyclingFlashScraper, CyclingFlashScraper>();
 builder.Services.AddScoped<ISeasonYearService, SeasonYearService>();
 builder.Services.AddScoped<IRatingService, RatingService>();
+builder.Services.AddScoped<IDelayService, DelayService>();
 
 builder.Services.AddControllers();
 builder.Services.AddHttpClient();

@@ -1,5 +1,4 @@
-﻿using Azure;
-using CycleManager.Domain.Dto;
+﻿using CycleManager.Domain.Dto;
 using CycleManager.Domain.Enums;
 using CycleManager.Domain.Models;
 using CycleManager.Services.Interfaces;
@@ -12,11 +11,13 @@ namespace CycleManager.Services
     {
             private readonly IBrowser _browser;
             private readonly ILogger<PcsScraper> _logger;
+            private readonly IDelayService _delayService;
 
-            public PcsScraper(ILogger<PcsScraper> logger, IBrowser browser)
+            public PcsScraper(ILogger<PcsScraper> logger, IBrowser browser, IDelayService delayService)
             {
                 _logger = logger;
                 _browser = browser;
+                _delayService = delayService;
             }
 
         public async Task<List<int>> ScrapeDropoutBibsAsync(string url)
@@ -637,7 +638,7 @@ namespace CycleManager.Services
                     delaySeconds,
                     questionType);
 
-                await Task.Delay(TimeSpan.FromSeconds(delaySeconds));
+                await _delayService.DelayAsync(TimeSpan.FromSeconds(delaySeconds));
             }
 
             _logger.LogWarning(

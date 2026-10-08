@@ -17,16 +17,18 @@ namespace CycleManager.Services
     {
         private readonly IPcsScraper _pcsScraper;
         private readonly ICyclingFlashScraper _cyclingFlashScraper;
+        private readonly IDelayService _delayService;
         private readonly ScraperSettings _settings;
         private readonly ApplicationDbContext _db;
         private readonly ILogger<ScraperService> _logger;
 
-        public ScraperService(ApplicationDbContext db, IOptions<ScraperSettings> options, IPcsScraper pcsScraper, ICyclingFlashScraper cyclingFlashScraper, ILogger<ScraperService> logger)
+        public ScraperService(ApplicationDbContext db, IOptions<ScraperSettings> options, IPcsScraper pcsScraper, ICyclingFlashScraper cyclingFlashScraper, IDelayService delayService, ILogger<ScraperService> logger)
         {
             _db = db;
             _logger = logger;
             _pcsScraper = pcsScraper;
             _cyclingFlashScraper = cyclingFlashScraper;
+            _delayService = delayService;
             _settings = options.Value;
         }
 
@@ -129,7 +131,7 @@ namespace CycleManager.Services
                 }
 
                 // extra rust tussen classificaties
-                await Task.Delay(TimeSpan.FromSeconds(20));
+                await _delayService.DelayAsync(TimeSpan.FromSeconds(20));
             }
 
             var existingSpecials = await _db.ScrapedSpecialResults

@@ -1,5 +1,6 @@
 ﻿using CycleManager.Domain.Enums;
 using CycleManager.Services;
+using CycleManager.Services.Interfaces;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Playwright;
@@ -14,6 +15,7 @@ namespace CycleManager.Tests.Unit.Services
         private readonly Mock<IPage> _pageMock;
         private readonly Mock<ILogger<PcsScraper>> _loggerMock;
         private readonly PcsScraper _service;
+        private readonly Mock<IDelayService> _delayServiceMock;
 
         public PcsScraperTests()
         {
@@ -21,6 +23,7 @@ namespace CycleManager.Tests.Unit.Services
             _contextMock = new Mock<IBrowserContext>();
             _pageMock = new Mock<IPage>();
             _loggerMock = new Mock<ILogger<PcsScraper>>();
+            _delayServiceMock = new Mock<IDelayService>();
 
             _browserMock
                 .Setup(x => x.NewContextAsync(It.IsAny<BrowserNewContextOptions>()))
@@ -30,9 +33,14 @@ namespace CycleManager.Tests.Unit.Services
                 .Setup(x => x.NewPageAsync())
                 .ReturnsAsync(_pageMock.Object);
 
+            _delayServiceMock
+                .Setup(x => x.DelayAsync(It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
+                .Returns(Task.CompletedTask);
+
             _service = new PcsScraper(
                 _loggerMock.Object,
-                _browserMock.Object);
+                _browserMock.Object,
+                _delayServiceMock.Object);
         }
 
         [Fact]
