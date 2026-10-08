@@ -30,6 +30,9 @@ stages:
     - script: dotnet build WebCycle/WebCycleApi.csproj --configuration $(buildConfiguration) --no-restore
       displayName: 'Build Api'
 
+    - script: dotnet restore CycleManager.Tests.Unit/CycleManager.Tests.Unit.csproj
+      displayName: 'Restore unit tests'
+
     - script: >
         dotnet build CycleManager.Tests.Unit/CycleManager.Tests.Unit.csproj 
         --configuration $(buildConfiguration) 
@@ -44,6 +47,9 @@ stages:
         --collect:"XPlat Code Coverage"
         --settings CodeCoverage.runsettings
       displayName: 'Run unit tests'
+
+    - script: dotnet restore CycleManager.Tests.Integration/CycleManager.Tests.Integration.csproj
+      displayName: 'Restore integration tests'
 
     - script: >
         dotnet build CycleManager.Tests.Integration/CycleManager.Tests.Integration.csproj
