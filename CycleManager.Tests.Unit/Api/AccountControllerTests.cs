@@ -617,5 +617,36 @@ namespace CycleManager.Tests.Unit.Api
             Assert.Contains("Er is een fout opgetreden bij het resetten van het wachtwoord.", errorResponse.Errors);
             Assert.Contains("Database timeout", errorResponse.Errors);
         }
+
+        [Fact]
+        public async Task Register_Returns500_WhenEmailIsMissingAfterUserCreation()
+        {
+            // Arrange
+            var registerDto = new RegisterDto
+            {
+                Email = null!,
+                Password = "Password123!",
+                FirstName = "Jonas",
+                LastName = "Test"
+            };
+
+            _mockUserManager
+                .Setup(u => u.CreateAsync(It.IsAny<ApplicationUser>(), registerDto.Password))
+                .ReturnsAsync(IdentityResult.Success);
+
+            _mockUserManager
+                .Setup(u => u.GenerateEmailConfirmationTokenAsync(It.IsAny<ApplicationUser>()))
+                .ReturnsAsync("token123");
+
+            // Act
+            var result = await _controller.Register(registerDto);
+
+            // Assert
+            var statusCodeResult = Assert.IsType<ObjectResult>(result);
+            Assert.Equal(500, statusCodeResult.StatusCode);
+
+            var errorResponse = Assert.IsType<ErrorResponse>(statusCodeResult.Value);
+            Assert.Contains("Fout bij verzenden van bevestigingsmail.", errorResponse.Errors);
+        }
     }
 }

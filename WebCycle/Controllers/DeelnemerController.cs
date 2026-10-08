@@ -131,8 +131,15 @@ namespace WebCycle.Controllers
 
             foreach (var deelnemer in currentEvent.GameCompetitorEvents)
             {
+
+                if (deelnemer == null)
+                {
+                    continue;
+                }
+
                 var picks = await deelnemerService.GetAllPicks(deelnemer.Id);
-                var picksDto = _mapper.Map<List<CompetitorRankingDto>>(picks ?? new List<GameCompetitorEventPick>());
+                var picksDto = _mapper.Map<List<CompetitorRankingDto>>(
+                    picks ?? new List<GameCompetitorEventPick>());
 
                 foreach (var pick in picksDto)
                 {
@@ -150,11 +157,6 @@ namespace WebCycle.Controllers
                         pick.NormalPoints = 0;
                         pick.SpecialPoints = 0;
                     }
-                }
-
-                if (deelnemer == null)
-                {
-                    continue;
                 }
 
                 result.Add(new DeelnemerMetPicksDto
@@ -224,7 +226,7 @@ namespace WebCycle.Controllers
         {
             var success = await deelnemerService.RenamePoolAsync(dto);
             if (!success)
-                BadRequest();
+                return BadRequest();
 
             return Ok();        
         }
