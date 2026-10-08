@@ -129,6 +129,7 @@ builder.Services.AddScoped<IScrapeOrchestratorService, ScrapeOrchestratorService
 builder.Services.AddScoped<IDropoutOrchestratorService, DropoutOrchestratorService>();
 builder.Services.AddScoped<ISeasonYearService, SeasonYearService>();
 builder.Services.AddScoped<ICyclingFlashScraper, CyclingFlashScraper>();
+builder.Services.AddScoped<IDelayService, DelayService>();
 builder.Services.AddScoped<IRatingService, RatingService>();
 
 builder.Services.AddControllersWithViews(options =>

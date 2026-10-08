@@ -11,7 +11,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
-using ScrapedSpecialResult = CycleManager.Domain.Dto.ScrapedSpecialResult;
 
 namespace CycleManager.Tests.Unit.Services
 {
@@ -20,6 +19,7 @@ namespace CycleManager.Tests.Unit.Services
         private readonly ApplicationDbContext _db;
         private readonly Mock<IPcsScraper> _pcsScraperMock;
         private readonly Mock<ICyclingFlashScraper> _cyclingFlashScraperMock;
+        private readonly Mock<IDelayService> _delayServiceMock;
         private readonly Mock<ILogger<ScraperService>> _loggerMock;
         private readonly ScraperService _service;
 
@@ -33,6 +33,14 @@ namespace CycleManager.Tests.Unit.Services
 
             _pcsScraperMock = new Mock<IPcsScraper>();
             _cyclingFlashScraperMock = new Mock<ICyclingFlashScraper>();
+            _delayServiceMock = new Mock<IDelayService>();
+
+            _delayServiceMock
+                .Setup(x => x.DelayAsync(
+                    It.IsAny<TimeSpan>(),
+                    It.IsAny<CancellationToken>()))
+                .Returns(Task.CompletedTask);
+
             _loggerMock = new Mock<ILogger<ScraperService>>();
 
             _service = new ScraperService(
@@ -40,6 +48,7 @@ namespace CycleManager.Tests.Unit.Services
                 Options.Create(new ScraperSettings()),
                 _pcsScraperMock.Object,
                 _cyclingFlashScraperMock.Object,
+                _delayServiceMock.Object,
                 _loggerMock.Object);
         }
 
@@ -3859,6 +3868,12 @@ namespace CycleManager.Tests.Unit.Services
             results.Should().ContainSingle();
             results[0].CompetitorInEventId.Should().Be(competitorInEvent.Id);
             results[0].SpecialId.Should().Be(configurationSpecial.Id);
+
+            _delayServiceMock.Verify(
+                x => x.DelayAsync(
+                    TimeSpan.FromSeconds(20),
+                    It.IsAny<CancellationToken>()),
+                    Times.Once);
         }
 
         [Fact]

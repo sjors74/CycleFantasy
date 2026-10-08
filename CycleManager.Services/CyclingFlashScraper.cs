@@ -9,12 +9,14 @@ namespace CycleManager.Services
     public class CyclingFlashScraper : ICyclingFlashScraper
     {
         private readonly ILogger<CyclingFlashScraper> _logger;
+        private readonly IDelayService _delayService;
         private const string BaseUrl = "https://cyclingflash.com";
         private const string RankingPath = "cyclingflash-365-ranking";
 
-        public CyclingFlashScraper(ILogger<CyclingFlashScraper> logger)
+        public CyclingFlashScraper(ILogger<CyclingFlashScraper> logger, IDelayService delayService)
         {
             _logger = logger;
+            _delayService = delayService;
         }
 
         public async Task<List<ScrapeCompetitorRating>> ScrapePageResultAsync(
@@ -186,7 +188,7 @@ namespace CycleManager.Services
 
                     if (attempt < maxAttempts)
                     {
-                        await Task.Delay(TimeSpan.FromSeconds(2));
+                        await _delayService.DelayAsync(TimeSpan.FromSeconds(2));
                     }
                 }
                 catch (Exception ex)
@@ -200,7 +202,7 @@ namespace CycleManager.Services
 
                     if (attempt < maxAttempts)
                     {
-                        await Task.Delay(TimeSpan.FromSeconds(2));
+                        await _delayService.DelayAsync(TimeSpan.FromSeconds(2));
                     }
                 }
             }
