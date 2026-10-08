@@ -3,11 +3,7 @@ using DataAccessEF.TypeRepository;
 using Domain.Context;
 using Domain.Models;
 using FluentAssertions;
-using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.DotNet.Scaffolding.Shared.CodeModifier.CodeChange;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace CycleManager.Tests.Integration.DataAccess
 {
