@@ -284,6 +284,27 @@ namespace CycleManager.Tests.Integration.DataAccess
             score.NormalScore.Should().Be(10);
             score.SpecialScore.Should().Be(7);
         }
+
+        [Fact]
+        public async Task GetCompetitorResultsByEventId_ReturnsNull_WhenCompetitorHasNoPicks()
+        {
+            using var context = CreateContext();
+            var repo = new ResultsRepository(context);
+
+            var gameEvent = new Event
+            {
+                EventId = 100
+            };
+
+            context.Events.Add(gameEvent);
+            await context.SaveChangesAsync();
+
+            var result = await repo.GetCompetitorResultsByEventId(
+                eventId: 100,
+                competitorInEventId: 10);
+
+            result.Should().BeNull();
+        }
         #endregion
 
         #region GetCompetitorsInEventAsync Tests
@@ -644,6 +665,102 @@ namespace CycleManager.Tests.Integration.DataAccess
             result.Should().NotBeNull();
             result!.Specials.Should().BeEmpty();
         }
+
+        [Fact]
+        public async Task GetEtappeUitslag_Returns_Special_When_SpecialResult_Has_Valid_Competitor()
+        {
+            using var context = CreateContext();
+            var repo = new ResultsRepository(context);
+
+            var gameEvent = new Event
+            {
+                EventId = 100,
+                ConfigurationId = 1
+            };
+
+            var stage = new Stage
+            {
+                Id = 1,
+                EventId = 100,
+                NoScore = false
+            };
+
+            var competitor = new Competitor
+            {
+                CompetitorId = 1,
+                FirstName = "Test",
+                LastName = "Rider"
+            };
+
+            var team = new Team
+            {
+                TeamId = 1,
+                CurrentTeamName = "Test Team"
+            };
+
+            var teamYear = new TeamYear
+            {
+                TeamYearId = 1,
+                TeamId = 1,
+                Name = "Test Team 2026"
+            };
+
+            var competitorInTeam = new CompetitorInTeam
+            {
+                Id = 1,
+                CompetitorId = 1,
+                TeamYearId = 1
+            };
+
+            var competitorInEvent = new CompetitorsInEvent
+            {
+                Id = 10,
+                EventId = 100,
+                CompetitorInTeamId = 1
+            };
+
+            var special = new ConfigurationItemSpecial
+            {
+                Id = 20,
+                ConfigurationId = 1,
+                Question = QuestionType.GC,
+                Color = "red",
+                Score = 5
+            };
+
+            var specialResult = new SpecialResult
+            {
+                Id = 1,
+                StageId = 1,
+                CompetitorInEventId = 10,
+                SpecialId = 20
+            };
+
+            context.Events.Add(gameEvent);
+            context.Stages.Add(stage);
+            context.Competitors.Add(competitor);
+            context.Teams.Add(team);
+            context.TeamYear.Add(teamYear);
+            context.CompetitorInTeams.Add(competitorInTeam);
+            context.CompetitorsInEvent.Add(competitorInEvent);
+            context.ConfigurationItemSpecials.Add(special);
+            context.SpecialResults.Add(specialResult);
+
+            await context.SaveChangesAsync();
+
+            var result = await repo.GetEtappeUitslag(1);
+
+            result.Should().NotBeNull();
+            result!.Specials.Should().HaveCount(1);
+
+            var specialDto = result.Specials.Single();
+
+            specialDto.Name.Should().Be("GC");
+            specialDto.Color.Should().Be("red");
+            specialDto.CompetitorName.Should().Be("Test Rider");
+            specialDto.TeamName.Should().Be("Test Team 2026");
+            specialDto.Score.Should().Be(5);
+        }
         #endregion
 
         #region GetResultByIdAsync Tests
@@ -924,6 +1041,169 @@ namespace CycleManager.Tests.Integration.DataAccess
             detail.TotalScore.Should().Be(0);
             detail.LastScore.Should().Be(0);
             detail.Specials.Should().BeEmpty();
+        }
+
+        [Fact]
+        public async Task GetPickDetailsAsync_Orders_Picks_By_TotalScore_Descending()
+        {
+            using var context = CreateContext();
+            var repo = new ResultsRepository(context);
+
+            var gameEvent = new Event
+            {
+                EventId = 100
+            };
+
+            var stage = new Stage
+            {
+                Id = 1,
+                EventId = 100
+            };
+
+            var competitor1 = new Competitor
+            {
+                CompetitorId = 1,
+                FirstName = "Low",
+                LastName = "Score"
+            };
+
+            var competitor2 = new Competitor
+            {
+                CompetitorId = 2,
+                FirstName = "High",
+                LastName = "Score"
+            };
+
+            var team1 = new Team { TeamId = 1, CurrentTeamName = "Team 1" };
+            var team2 = new Team { TeamId = 2, CurrentTeamName = "Team 2" };
+
+            var teamYear1 = new TeamYear
+            {
+                TeamYearId = 1,
+                TeamId = 1,
+                Name = "Team 1 2026"
+            };
+
+            var teamYear2 = new TeamYear
+            {
+                TeamYearId = 2,
+                TeamId = 2,
+                Name = "Team 2 2026"
+            };
+
+            var competitorInTeam1 = new CompetitorInTeam
+            {
+                Id = 1,
+                CompetitorId = 1,
+                TeamYearId = 1
+            };
+
+            var competitorInTeam2 = new CompetitorInTeam
+            {
+                Id = 2,
+                CompetitorId = 2,
+                TeamYearId = 2
+            };
+
+            var competitorInEvent1 = new CompetitorsInEvent
+            {
+                Id = 10,
+                EventId = 100,
+                CompetitorInTeamId = 1
+            };
+
+            var competitorInEvent2 = new CompetitorsInEvent
+            {
+                Id = 20,
+                EventId = 100,
+                CompetitorInTeamId = 2
+            };
+
+            var user = new ApplicationUser
+            {
+                Id = "test-user",
+                UserName = "test@example.com",
+                NormalizedUserName = "TEST@EXAMPLE.COM",
+                Email = "test@example.com",
+                NormalizedEmail = "TEST@EXAMPLE.COM",
+                EmailConfirmed = true,
+                FirstName = "Test",
+                LastName = "User"
+            };
+
+            var gameCompetitorEvent = new GameCompetitorEvent
+            {
+                Id = 1,
+                EventId = 100,
+                UserId = "test-user"
+            };
+
+            var pick1 = new GameCompetitorEventPick
+            {
+                Id = 1,
+                GameCompetitorEventId = 1,
+                CompetitorsInEventId = 10
+            };
+
+            var pick2 = new GameCompetitorEventPick
+            {
+                Id = 2,
+                GameCompetitorEventId = 1,
+                CompetitorsInEventId = 20
+            };
+
+            var configItem1 = new ConfigurationItem
+            {
+                Id = 1,
+                Score = 5
+            };
+
+            var configItem2 = new ConfigurationItem
+            {
+                Id = 2,
+                Score = 20
+            };
+
+            var result1 = new Result
+            {
+                Id = 1,
+                StageId = 1,
+                CompetitorInEventId = 10,
+                ConfigurationItemId = 1
+            };
+
+            var result2 = new Result
+            {
+                Id = 2,
+                StageId = 1,
+                CompetitorInEventId = 20,
+                ConfigurationItemId = 2
+            };
+
+            context.Events.Add(gameEvent);
+            context.Stages.Add(stage);
+            context.Competitors.AddRange(competitor1, competitor2);
+            context.Teams.AddRange(team1, team2);
+            context.TeamYear.AddRange(teamYear1, teamYear2);
+            context.CompetitorInTeams.AddRange(competitorInTeam1, competitorInTeam2);
+            context.CompetitorsInEvent.AddRange(competitorInEvent1, competitorInEvent2);
+            context.Users.Add(user);
+            context.GameCompetitorsEvent.Add(gameCompetitorEvent);
+            context.GameCompetitorEventPicks.AddRange(pick1, pick2);
+            context.ConfigurationItems.AddRange(configItem1, configItem2);
+            context.Results.AddRange(result1, result2);
+
+            await context.SaveChangesAsync();
+
+            var result = await repo.GetPickDetailsAsync(100, 1);
+
+            result.Should().HaveCount(2);
+
+            result[0].CompetitorName.Should().Be("High Score");
+            result[0].TotalScore.Should().Be(20);
+
+            result[1].CompetitorName.Should().Be("Low Score");
+            result[1].TotalScore.Should().Be(5);
         }
         #endregion
 
