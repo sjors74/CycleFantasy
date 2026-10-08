@@ -1,4 +1,5 @@
-﻿using CycleManager.Domain.Models;
+﻿using CycleManager.Domain.Enums;
+using CycleManager.Domain.Models;
 using DataAccessEF.TypeRepository;
 using Domain.Context;
 using Domain.Models;
@@ -20,6 +21,7 @@ namespace CycleManager.Tests.Integration.DataAccess
 
         private ApplicationDbContext CreateContext() => new ApplicationDbContext(_options);
 
+        #region AddResultsAsync Tests
         [Fact]
         public async Task AddResultsAsync_AddsResults()
         {
@@ -45,6 +47,607 @@ namespace CycleManager.Tests.Integration.DataAccess
             saved.StageId.Should().Be(1);
         }
 
+        #endregion
+
+        #region DeleteResultAsync Tests
+        [Fact]
+        public async Task DeleteResultAsync_RemovesResult()
+        {
+            using var context = CreateContext();
+            var repo = new ResultsRepository(context);
+
+            var result = new Result { Id = 1 };
+            context.Results.Add(result);
+            await context.SaveChangesAsync();
+
+            await repo.DeleteResultAsync(result);
+
+            (await context.Results.FindAsync(1)).Should().BeNull();
+        }
+
+        [Fact]
+        public async Task DeleteResultAsync_DoesNotThrow_WhenResultNotInDatabase()
+        {
+            using var context = CreateContext();
+            var repo = new ResultsRepository(context);
+
+            var fakeResult = new Result { Id = 99 };
+
+            // Act
+            Func<Task> act = async () => await repo.DeleteResultAsync(fakeResult);
+
+            // Assert
+            await act.Should().NotThrowAsync();
+        }
+
+        #endregion
+
+        #region GetCompetitorFullName Tests
+        [Fact]
+        public async Task GetCompetitorFullName_ReturnsCorrectNameOrEmpty()
+        {
+            using var context = CreateContext();
+            var repo = new ResultsRepository(context);
+
+            context.Competitors.Add(new Competitor { CompetitorId = 1, FirstName = "John", LastName = "Doe" });
+            context.SaveChanges();
+
+            repo.GetCompetitorFullName(1).Should().Be("John Doe");
+            repo.GetCompetitorFullName(999).Should().BeEmpty();
+        }
+
+        [Fact]
+        public void GetCompetitorFullName_ReturnsEmpty_WhenCompetitorHasMissingData()
+        {
+            using var context = CreateContext();
+            var repo = new ResultsRepository(context);
+
+            context.Competitors.AddRange(
+                new Competitor { CompetitorId = 1, FirstName = "OnlyFirst", LastName = "" },
+                new Competitor { CompetitorId = 2, FirstName = "", LastName = "OnlyLast" }
+            );
+            context.SaveChanges();
+
+            repo.GetCompetitorFullName(1).Should().Be("OnlyFirst ");
+            repo.GetCompetitorFullName(2).Should().Be(" OnlyLast");
+            repo.GetCompetitorFullName(999).Should().BeEmpty();
+        }
+
+        #endregion
+
+        #region GetCompetitorLatestScore Tests
+        [Fact]
+        public async Task GetCompetitorLatestScore_ReturnsCorrectScore()
+        {
+            using var context = CreateContext();
+            var repo = new ResultsRepository(context);
+
+            var ci = new ConfigurationItem { Id = 1, Position = 1, Score = 10 };
+            var stage = new Stage { Id = 1, EventId = 1 };
+            var competitor = new Competitor { CompetitorId = 1 };
+            var competitorInTeam = new CompetitorInTeam { CompetitorId = 1, Competitor = competitor };
+            var cie = new CompetitorsInEvent { Id = 1, EventId = 1, CompetitorInTeam = competitorInTeam };
+
+            context.ConfigurationItems.Add(ci);
+            context.Stages.Add(stage);
+            context.Competitors.Add(competitor);
+            context.CompetitorInTeams.Add(competitorInTeam);
+            context.CompetitorsInEvent.Add(cie);
+
+            var result = new Result { Id = 1, StageId = 1, CompetitorInEventId = 1, ConfigurationItemId = 1 };
+            context.Results.Add(result);
+            await context.SaveChangesAsync();
+
+            var latestScore = await repo.GetCompetitorLatestScore(1, 1);
+            latestScore.Should().Be(10);
+        }
+
+        [Fact]
+        public async Task GetCompetitorLatestScore_ReturnsZero_WhenNoResultsExist()
+        {
+            using var context = CreateContext();
+            var repo = new ResultsRepository(context);
+
+            var score = await repo.GetCompetitorLatestScore(1, 1);
+
+            score.Should().Be(0);
+        }
+
+        #endregion
+
+        #region GetCompetitorResult by/for Event Tests
+        [Fact]
+        public async Task GetCompetitorResultsByEventId_CalculatesScore()
+        {
+            using var context = CreateContext();
+            var repo = new ResultsRepository(context);
+
+            // Setup related tables for join
+            var gameEvent = new GameCompetitorEvent { Id = 1, EventId = 1, UserId = "abc" };
+            var gcep = new GameCompetitorEventPick { Id = 1, GameCompetitorEventId = gameEvent.Id, CompetitorsInEventId = 1 };
+            var normalScore = new DeelnemerStagePickScore
+            {
+                Id = Guid.NewGuid(),
+                GameCompetitorEventPickId = gcep.Id,
+                Score = 5,
+            };
+
+            context.GameCompetitorsEvent.Add(gameEvent);
+            context.GameCompetitorEventPicks.Add(gcep);
+            context.DeelnemerStagePickScores.Add(normalScore);
+
+            await context.SaveChangesAsync();
+
+            var score = await repo.GetCompetitorResultsByEventId(1, 1);
+
+            score.Should().NotBeNull();
+            score!.CompetitorInEventId.Should().Be(1);
+            score.NormalScore.Should().Be(5);
+            score.SpecialScore.Should().Be(0);
+        }
+
+        [Fact]
+        public async Task GetCompetitorResultsForEvent_Returns_Special_Only_Competitor()
+        {
+            using var context = CreateContext();
+            var repo = new ResultsRepository(context);
+
+            var gameEvent = new GameCompetitorEvent
+            {
+                Id = 1,
+                EventId = 100,
+                UserId = "user1"
+            };
+
+            var pick = new GameCompetitorEventPick
+            {
+                Id = 1,
+                GameCompetitorEventId = 1,
+                CompetitorsInEventId = 10
+            };
+
+            context.GameCompetitorsEvent.Add(gameEvent);
+            context.GameCompetitorEventPicks.Add(pick);
+
+            context.DeelnemerStagePickSpecialScores.Add(
+                new DeelnemerStagePickSpecialScore
+                {
+                    Id = Guid.NewGuid(),
+                    GameCompetitorEventPickId = 1,
+                    StageId = 1,
+                    Score = 7
+                });
+
+            await context.SaveChangesAsync();
+
+            var result = await repo.GetCompetitorResultsForEvent(100);
+
+            result.Should().HaveCount(1);
+
+            var score = result.Single();
+
+            score.CompetitorInEventId.Should().Be(10);
+            score.NormalScore.Should().Be(0);
+            score.SpecialScore.Should().Be(7);
+        }
+
+        [Fact]
+        public async Task GetCompetitorResultsForEvent_Returns_Normal_And_Special_Score()
+        {
+            using var context = CreateContext();
+            var repo = new ResultsRepository(context);
+
+            var gameEvent = new GameCompetitorEvent
+            {
+                Id = 1,
+                EventId = 100,
+                UserId = "user1"
+            };
+
+            var pick = new GameCompetitorEventPick
+            {
+                Id = 1,
+                GameCompetitorEventId = 1,
+                CompetitorsInEventId = 10
+            };
+
+            context.GameCompetitorsEvent.Add(gameEvent);
+            context.GameCompetitorEventPicks.Add(pick);
+
+            context.DeelnemerStagePickScores.Add(
+                new DeelnemerStagePickScore
+                {
+                    Id = Guid.NewGuid(),
+                    GameCompetitorEventPickId = 1,
+                    StageId = 1,
+                    Score = 10
+                });
+
+            context.DeelnemerStagePickSpecialScores.Add(
+                new DeelnemerStagePickSpecialScore
+                {
+                    Id = Guid.NewGuid(),
+                    GameCompetitorEventPickId = 1,
+                    StageId = 1,
+                    Score = 7
+                });
+
+            await context.SaveChangesAsync();
+
+            var result = await repo.GetCompetitorResultsForEvent(100);
+
+            result.Should().HaveCount(1);
+
+            var score = result.Single();
+
+            score.CompetitorInEventId.Should().Be(10);
+            score.NormalScore.Should().Be(10);
+            score.SpecialScore.Should().Be(7);
+        }
+        #endregion
+
+        #region GetCompetitorsInEventAsync Tests
+        [Fact]
+        public async Task GetCompetitorsInEventAsync_ReturnsCompetitorsWithNavigations()
+        {
+            using var context = CreateContext();
+            var repo = new ResultsRepository(context);
+
+            var competitor = new Competitor { CompetitorId = 1 };
+            var competitorInTeam = new CompetitorInTeam { CompetitorId = 1, Competitor = competitor };
+            var cie = new CompetitorsInEvent { Id = 1, CompetitorInTeam = competitorInTeam, OutOfCompetition = false, EventId = 1 };
+
+            context.Competitors.Add(competitor);
+            context.CompetitorInTeams.Add(competitorInTeam);
+            context.CompetitorsInEvent.Add(cie);
+            await context.SaveChangesAsync();
+
+            var fetched = await repo.GetCompetitorsInEventAsync(1);
+            fetched.Should().HaveCount(1);
+            fetched.First().CompetitorInTeam.Competitor.Should().NotBeNull();
+        }
+        #endregion
+
+        #region GetConfigurationItemsByConfigAsync Tests
+        [Fact]
+        public async Task GetConfigurationItemsByConfigAsync_ReturnsOrderedItems()
+        {
+            using var context = CreateContext();
+            var repo = new ResultsRepository(context);
+
+            context.ConfigurationItems.AddRange(
+                new ConfigurationItem { Id = 2, ConfigurationId = 1, Position = 2 },
+                new ConfigurationItem { Id = 1, ConfigurationId = 1, Position = 1 }
+            );
+            await context.SaveChangesAsync();
+
+            var fetched = await repo.GetConfigurationItemsByConfigAsync(1);
+            fetched.Should().HaveCount(2);
+            fetched.First().Position.Should().Be(1);
+        }
+        #endregion
+
+        #region GetEtappeUitslag Tests
+        [Fact]
+        public async Task GetEtappeUitslag_ReturnsTop15OrNoScore()
+        {
+            using var context = CreateContext();
+            var repo = new ResultsRepository(context);
+
+            var evt = new Event { EventId = 1, ConfigurationId = 1 };
+            var stage = new Stage { Id = 1, EventId = 1, Event = evt, NoScore = true, NoScoreDescription = "No results" };
+            context.Events.Add(evt);
+            context.Stages.Add(stage);
+            await context.SaveChangesAsync();
+
+            var results = await repo.GetEtappeUitslag(1);
+
+            results.Should().NotBeNull();
+            results.Uitslag.Should().NotBeNull();
+            results.Uitslag.Should().HaveCount(1);
+            results.Uitslag.First().NoScore.Should().BeTrue();
+            results.Uitslag.First().NoScoreDescription.Should().Be("No results");
+        }
+
+        [Fact]
+        public async Task GetEtappeUitslag_ReturnsTop15_WhenNoScoreIsFalse()
+        {
+            using var context = CreateContext();
+            var repo = new ResultsRepository(context);
+
+            // Arrange
+            var configuration = new Configuration
+            {
+                Id = 1
+            };
+            var evt = new Event { EventId = 1, ConfigurationId = 1, Configuration = configuration };
+
+            var stage = new Stage { Id = 1, Event = evt, EventId = 1, NoScore = false };
+
+            var competitor = new Competitor { CompetitorId = 1, FirstName = "Jan", LastName = "Jansen" };
+
+            var team = new Team { TeamId = 1, CurrentTeamName = "TeamTest" };
+
+            var seasonYear = new SeasonYear { SeasonYearId = 1, Year = 2024 };
+
+            var teamYear = new TeamYear { TeamYearId = 1, TeamId = 1, SeasonYearId = 1, Team = team, SeasonYear = seasonYear, Name = "TeamTest" };
+
+            var competitorInTeam = new CompetitorInTeam { Id = 1, CompetitorId = 1, Competitor = competitor, TeamYearId = 1, TeamYear = teamYear };
+
+            var cie = new CompetitorsInEvent { Id = 1, EventId = 1, Event = evt, CompetitorInTeamId = 1, CompetitorInTeam = competitorInTeam };
+
+            // Voeg 3 configuratie-items toe (de top 3)
+            var configItems = new List<ConfigurationItem>
+            {
+                new() { Id = 1, ConfigurationId = 1, Position = 1, Score = 10 },
+                new() { Id = 2, ConfigurationId = 1, Position = 2, Score = 8 },
+                new() { Id = 3, ConfigurationId = 1, Position = 3, Score = 6 }
+            };
+
+            // Voeg 3 resultaten toe
+            var results = configItems.Select(ci => new Result
+            {
+                Id = ci.Id,
+                Stage = stage,
+                StageId = stage.Id,
+                CompetitorInEvent = cie,
+                CompetitorInEventId = cie.Id,
+                ConfigurationItem = ci,
+                ConfigurationItemId = ci.Id
+            }).ToList();
+
+            context.Configurations.Add(configuration);
+            context.Events.Add(evt);
+            context.Stages.Add(stage);
+            context.Competitors.Add(competitor);
+            context.Teams.Add(team);
+            context.SeasonYears.Add(seasonYear);
+            context.TeamYear.Add(teamYear);
+            context.CompetitorInTeams.Add(competitorInTeam);
+            context.CompetitorsInEvent.Add(cie);
+            context.ConfigurationItems.AddRange(configItems);
+            context.Results.AddRange(results);
+            await context.SaveChangesAsync();
+
+            // Act
+            var uitslag = await repo.GetEtappeUitslag(1);
+
+            // Assert
+            uitslag.Should().NotBeNull();
+            uitslag.Uitslag.Should().HaveCount(3);
+            uitslag!.Uitslag.First().CompetitorName.Should().Be("Jan Jansen");
+            uitslag.Uitslag.First().TeamName.Should().Be("TeamTest");
+        }
+
+        [Fact]
+        public async Task GetEtappeUitslag_ReturnsNull_WhenStageDoesNotExist()
+        {
+            using var context = CreateContext();
+            var repo = new ResultsRepository(context);
+
+            var result = await repo.GetEtappeUitslag(999);
+
+            result.Should().BeNull();
+        }
+
+        [Fact]
+        public async Task GetEtappeUitslag_Returns_NoScore_Result_When_Stage_Has_NoScore()
+        {
+            using var context = CreateContext();
+            var repo = new ResultsRepository(context);
+
+            var gameEvent = new Event
+            {
+                EventId = 100
+            };
+
+            var stage = new Stage
+            {
+                Id = 1,
+                EventId = 100,
+                NoScore = true,
+                NoScoreDescription = "Rustdag"
+            };
+
+            context.Events.Add(gameEvent);
+            context.Stages.Add(stage);
+
+            await context.SaveChangesAsync();
+
+            var result = await repo.GetEtappeUitslag(1);
+
+            result.Should().NotBeNull();
+            result!.Uitslag.Should().HaveCount(1);
+            result.Specials.Should().BeEmpty();
+
+            var noScoreResult = result.Uitslag.Single();
+
+            noScoreResult.NoScore.Should().BeTrue();
+            noScoreResult.NoScoreDescription.Should().Be("Rustdag");
+        }
+
+        [Fact]
+        public async Task GetEtappeUitslag_Skips_ConfigurationItem_When_No_Result_Exists()
+        {
+            using var context = CreateContext();
+            var repo = new ResultsRepository(context);
+
+            var gameEvent = new Event
+            {
+                EventId = 100
+            };
+
+            var stage = new Stage
+            {
+                Id = 1,
+                EventId = 100,
+                NoScore = false
+            };
+
+            var configItem = new ConfigurationItem
+            {
+                Id = 10,
+                ConfigurationId = 1,
+                Position = 1,
+                Score = 10
+            };
+
+            gameEvent.ConfigurationId = 1;
+
+            context.Events.Add(gameEvent);
+            context.Stages.Add(stage);
+            context.ConfigurationItems.Add(configItem);
+
+            await context.SaveChangesAsync();
+
+            var result = await repo.GetEtappeUitslag(1);
+
+            result.Should().NotBeNull();
+            result!.Uitslag.Should().BeEmpty();
+            result.Specials.Should().BeEmpty();
+        }
+
+        [Fact]
+        public async Task GetEtappeUitslag_Skips_Result_When_Competitor_Is_Missing()
+        {
+            using var context = CreateContext();
+            var repo = new ResultsRepository(context);
+
+            var gameEvent = new Event
+            {
+                EventId = 100,
+                ConfigurationId = 1
+            };
+
+            var stage = new Stage
+            {
+                Id = 1,
+                EventId = 100,
+                NoScore = false
+            };
+
+            var configItem = new ConfigurationItem
+            {
+                Id = 10,
+                ConfigurationId = 1,
+                Position = 1,
+                Score = 10
+            };
+
+            var result = new Result
+            {
+                Id = 1,
+                StageId = 1,
+                CompetitorInEventId = 999,
+                ConfigurationItemId = 10
+            };
+
+            context.Events.Add(gameEvent);
+            context.Stages.Add(stage);
+            context.ConfigurationItems.Add(configItem);
+            context.Results.Add(result);
+
+            await context.SaveChangesAsync();
+
+            var uitslag = await repo.GetEtappeUitslag(1);
+
+            uitslag.Should().NotBeNull();
+            uitslag!.Uitslag.Should().BeEmpty();
+        }
+
+        [Fact]
+        public async Task GetEtappeUitslag_Skips_Special_When_No_SpecialResult_Exists()
+        {
+            using var context = CreateContext();
+            var repo = new ResultsRepository(context);
+
+            var gameEvent = new Event
+            {
+                EventId = 100,
+                ConfigurationId = 1
+            };
+
+            var stage = new Stage
+            {
+                Id = 1,
+                EventId = 100,
+                NoScore = false
+            };
+
+            var special = new ConfigurationItemSpecial
+            {
+                Id = 20,
+                ConfigurationId = 1,
+                Question = QuestionType.GC,
+                Color = "red",
+                Score = 5
+            };
+
+            context.Events.Add(gameEvent);
+            context.Stages.Add(stage);
+            context.ConfigurationItemSpecials.Add(special);
+
+            await context.SaveChangesAsync();
+
+            var result = await repo.GetEtappeUitslag(1);
+
+            result.Should().NotBeNull();
+            result!.Uitslag.Should().BeEmpty();
+            result.Specials.Should().BeEmpty();
+        }
+
+        [Fact]
+        public async Task GetEtappeUitslag_Skips_Special_When_Competitor_Is_Missing()
+        {
+            using var context = CreateContext();
+            var repo = new ResultsRepository(context);
+
+            var gameEvent = new Event
+            {
+                EventId = 100,
+                ConfigurationId = 1
+            };
+
+            var stage = new Stage
+            {
+                Id = 1,
+                EventId = 100,
+                NoScore = false
+            };
+
+            var special = new ConfigurationItemSpecial
+            {
+                Id = 20,
+                ConfigurationId = 1,
+                Question = QuestionType.GC,
+                Color = "red",
+                Score = 5
+            };
+
+            var specialResult = new SpecialResult
+            {
+                Id = 1,
+                StageId = 1,
+                CompetitorInEventId = 999,
+                SpecialId = 20
+            };
+
+            context.Events.Add(gameEvent);
+            context.Stages.Add(stage);
+            context.ConfigurationItemSpecials.Add(special);
+            context.SpecialResults.Add(specialResult);
+
+            await context.SaveChangesAsync();
+
+            var result = await repo.GetEtappeUitslag(1);
+
+            result.Should().NotBeNull();
+            result!.Specials.Should().BeEmpty();
+        }
+        #endregion
+
+        #region GetResultByIdAsync Tests
+
         [Fact]
         public async Task GetResultByIdAsync_ReturnsResultWithIncludes()
         {
@@ -53,7 +656,7 @@ namespace CycleManager.Tests.Integration.DataAccess
 
             var competitor = new Competitor { CompetitorId = 1, FirstName = "John", LastName = "Doe" };
             var team = new Team { TeamId = 1, CurrentTeamName = "TeamA" };
-            var competitorInTeam = new CompetitorInTeam {CompetitorId = 1 };
+            var competitorInTeam = new CompetitorInTeam { CompetitorId = 1 };
             var cie = new CompetitorsInEvent { Id = 1, CompetitorInTeam = competitorInTeam, CompetitorInTeamId = 1 };
             var stage = new Stage { Id = 1, StageName = "Stage1", EventId = 1 };
             var configurationItem = new ConfigurationItem { Id = 1, Position = 1, ConfigurationId = 1 };
@@ -87,51 +690,244 @@ namespace CycleManager.Tests.Integration.DataAccess
             fetched.ConfigurationItem.Should().NotBeNull();
         }
 
+        #endregion
+
+        #region GetPickDetailsAsync Tests
         [Fact]
-        public async Task DeleteResultAsync_RemovesResult()
+        public async Task GetPickDetailsAsync_ReturnsEmptyList_WhenNoPicksExist()
         {
             using var context = CreateContext();
             var repo = new ResultsRepository(context);
 
-            var result = new Result { Id = 1 };
+            var result = await repo.GetPickDetailsAsync(
+                eventId: 100,
+                gameCompetitorEventId: 1);
+
+            result.Should().NotBeNull();
+            result.Should().BeEmpty();
+        }
+
+        [Fact]
+        public async Task GetPickDetailsAsync_Returns_Normal_And_Special_Scores()
+        {
+            using var context = CreateContext();
+            var repo = new ResultsRepository(context);
+
+            var gameEvent = new Event
+            {
+                EventId = 100,
+                ConfigurationId = 1
+            };
+
+            var stage = new Stage
+            {
+                Id = 1,
+                EventId = 100
+            };
+
+            var competitor = new Competitor
+            {
+                CompetitorId = 1,
+                FirstName = "Test",
+                LastName = "Rider"
+            };
+
+            var team = new Team
+            {
+                TeamId = 1,
+                CurrentTeamName = "Test Team"
+            };
+
+            var teamYear = new TeamYear
+            {
+                TeamYearId = 1,
+                TeamId = 1,
+                Name = "Test Team 2026"
+            };
+
+            var competitorInTeam = new CompetitorInTeam
+            {
+                Id = 1,
+                CompetitorId = 1,
+                TeamYearId = 1
+            };
+
+            var competitorInEvent = new CompetitorsInEvent
+            {
+                Id = 10,
+                EventId = 100,
+                CompetitorInTeamId = 1
+            };
+
+            var gameCompetitorEvent = new GameCompetitorEvent
+            {
+                Id = 1,
+                EventId = 100,
+                UserId = "user1"
+            };
+
+            var pick = new GameCompetitorEventPick
+            {
+                Id = 1,
+                GameCompetitorEventId = 1,
+                CompetitorsInEventId = 10
+            };
+
+            var configurationItem = new ConfigurationItem
+            {
+                Id = 20,
+                ConfigurationId = 1,
+                Position = 1,
+                Score = 10
+            };
+
+            var special = new ConfigurationItemSpecial
+            {
+                Id = 30,
+                ConfigurationId = 1,
+                Question = QuestionType.GC,
+                Color = "red",
+                Score = 5
+            };
+
+            var result = new Result
+            {
+                Id = 1,
+                StageId = 1,
+                CompetitorInEventId = 10,
+                ConfigurationItemId = 20
+            };
+
+            var specialResult = new SpecialResult
+            {
+                Id = 1,
+                StageId = 1,
+                CompetitorInEventId = 10,
+                SpecialId = 30
+            };
+
+            context.Events.Add(gameEvent);
+            context.Stages.Add(stage);
+            context.Competitors.Add(competitor);
+            context.Teams.Add(team);
+            context.TeamYear.Add(teamYear);
+            context.CompetitorInTeams.Add(competitorInTeam);
+            context.CompetitorsInEvent.Add(competitorInEvent);
+            context.GameCompetitorsEvent.Add(gameCompetitorEvent);
+            context.GameCompetitorEventPicks.Add(pick);
+            context.ConfigurationItems.Add(configurationItem);
+            context.ConfigurationItemSpecials.Add(special);
             context.Results.Add(result);
+            context.SpecialResults.Add(specialResult);
+
             await context.SaveChangesAsync();
 
-            await repo.DeleteResultAsync(result);
+            var output = await repo.GetPickDetailsAsync(100, 1);
 
-            (await context.Results.FindAsync(1)).Should().BeNull();
+            output.Should().HaveCount(1);
+
+            var detail = output.Single();
+
+            detail.CompetitorInEventId.Should().Be(10);
+            detail.CompetitorName.Should().Be("Test Rider");
+            detail.NormalScore.Should().Be(10);
+            detail.SpecialScore.Should().Be(5);
+            detail.TotalScore.Should().Be(15);
+            detail.LastScore.Should().Be(15);
+
+            detail.Specials.Should().HaveCount(1);
+            detail.Specials.Single().Name.Should().Be("GC");
+            detail.Specials.Single().Score.Should().Be(5);
         }
 
         [Fact]
-        public async Task ResultExistsAsync_ReturnsTrueOrFalse()
+        public async Task GetPickDetailsAsync_Returns_Zero_Scores_When_Pick_Has_No_Results()
         {
             using var context = CreateContext();
             var repo = new ResultsRepository(context);
 
-            context.Results.Add(new Result { Id = 1 });
+            var gameEvent = new Event
+            {
+                EventId = 100,
+                ConfigurationId = 1
+            };
+
+            var competitor = new Competitor
+            {
+                CompetitorId = 1,
+                FirstName = "Test",
+                LastName = "Rider"
+            };
+
+            var team = new Team
+            {
+                TeamId = 1,
+                CurrentTeamName = "Test Team"
+            };
+
+            var teamYear = new TeamYear
+            {
+                TeamYearId = 1,
+                TeamId = 1,
+                Name = "Test Team 2026"
+            };
+
+            var competitorInTeam = new CompetitorInTeam
+            {
+                Id = 1,
+                CompetitorId = 1,
+                TeamYearId = 1
+            };
+
+            var competitorInEvent = new CompetitorsInEvent
+            {
+                Id = 10,
+                EventId = 100,
+                CompetitorInTeamId = 1
+            };
+
+            var gameCompetitorEvent = new GameCompetitorEvent
+            {
+                Id = 1,
+                EventId = 100,
+                UserId = "user1"
+            };
+
+            var pick = new GameCompetitorEventPick
+            {
+                Id = 1,
+                GameCompetitorEventId = 1,
+                CompetitorsInEventId = 10
+            };
+
+            context.Events.Add(gameEvent);
+            context.Competitors.Add(competitor);
+            context.Teams.Add(team);
+            context.TeamYear.Add(teamYear);
+            context.CompetitorInTeams.Add(competitorInTeam);
+            context.CompetitorsInEvent.Add(competitorInEvent);
+            context.GameCompetitorsEvent.Add(gameCompetitorEvent);
+            context.GameCompetitorEventPicks.Add(pick);
+
             await context.SaveChangesAsync();
 
-            (await repo.ResultExistsAsync(1)).Should().BeTrue();
-            (await repo.ResultExistsAsync(999)).Should().BeFalse();
+            var output = await repo.GetPickDetailsAsync(100, 1);
+
+            output.Should().HaveCount(1);
+
+            var detail = output.Single();
+
+            detail.CompetitorInEventId.Should().Be(10);
+            detail.CompetitorName.Should().Be("Test Rider");
+            detail.NormalScore.Should().Be(0);
+            detail.SpecialScore.Should().Be(0);
+            detail.TotalScore.Should().Be(0);
+            detail.LastScore.Should().Be(0);
+            detail.Specials.Should().BeEmpty();
         }
+        #endregion
 
-        [Fact]
-        public async Task GetResultsByStageId_ReturnsCount()
-        {
-            using var context = CreateContext();
-            var repo = new ResultsRepository(context);
-
-            context.Results.AddRange(
-                new Result { Id = 1, StageId = 1 },
-                new Result { Id = 2, StageId = 1 },
-                new Result { Id = 3, StageId = 2 }
-            );
-            await context.SaveChangesAsync();
-
-            var count = await repo.GetResultsByStageId(1);
-            count.Should().Be(2);
-        }
-
+        #region GetResultsByEventId Tests
         [Fact]
         public async Task GetResultsByEventId_ReturnsOrderedResultsWithIncludes()
         {
@@ -218,97 +1014,159 @@ namespace CycleManager.Tests.Integration.DataAccess
             fetched.First().ConfigurationItem.Should().NotBeNull();
         }
 
+        #endregion
+
+        #region GetResultsByStage(Id) Tests
         [Fact]
-        public async Task GetCompetitorFullName_ReturnsCorrectNameOrEmpty()
+        public async Task GetResultsByStageId_ReturnsCount()
         {
             using var context = CreateContext();
             var repo = new ResultsRepository(context);
 
-            context.Competitors.Add(new Competitor { CompetitorId = 1, FirstName = "John", LastName = "Doe" });
-            context.SaveChanges();
-
-            repo.GetCompetitorFullName(1).Should().Be("John Doe");
-            repo.GetCompetitorFullName(999).Should().BeEmpty();
-        }
-
-        [Fact]
-        public async Task GetCompetitorResultsByEventId_CalculatesScore()
-        {
-            using var context = CreateContext();
-            var repo = new ResultsRepository(context);
-
-            // Setup related tables for join
-            var gameEvent = new GameCompetitorEvent { Id = 1, EventId = 1, UserId = "abc" };
-            var gcep = new GameCompetitorEventPick { Id = 1, GameCompetitorEventId = gameEvent.Id, CompetitorsInEventId = 1 };
-            var normalScore = new DeelnemerStagePickScore
-            {
-                Id = Guid.NewGuid(),
-                GameCompetitorEventPickId = gcep.Id,
-                Score = 5,
-            };
-
-            context.GameCompetitorsEvent.Add(gameEvent);
-            context.GameCompetitorEventPicks.Add(gcep);
-            context.DeelnemerStagePickScores.Add(normalScore);
-
+            context.Results.AddRange(
+                new Result { Id = 1, StageId = 1 },
+                new Result { Id = 2, StageId = 1 },
+                new Result { Id = 3, StageId = 2 }
+            );
             await context.SaveChangesAsync();
 
-            var score = await repo.GetCompetitorResultsByEventId(1, 1);
-
-            score.Should().NotBeNull();
-            score!.CompetitorInEventId.Should().Be(1);
-            score.NormalScore.Should().Be(5);
-            score.SpecialScore.Should().Be(0);
+            var count = await repo.GetResultsByStageId(1);
+            count.Should().Be(2);
         }
 
-
         [Fact]
-        public async Task GetCompetitorLatestScore_ReturnsCorrectScore()
+        public async Task GetResultsByStageAsync_ReturnsResultsWithIncludes()
         {
             using var context = CreateContext();
             var repo = new ResultsRepository(context);
 
-            var ci = new ConfigurationItem { Id = 1, Position = 1, Score = 10 };
-            var stage = new Stage { Id = 1, EventId = 1 };
-            var competitor = new Competitor { CompetitorId = 1 };
-            var competitorInTeam = new CompetitorInTeam { CompetitorId = 1, Competitor = competitor };
-            var cie = new CompetitorsInEvent { Id = 1, EventId = 1, CompetitorInTeam = competitorInTeam };
+            var competitor = new Competitor { CompetitorId = 1, FirstName = "John", LastName = "Doe" };
+            var team = new Team { TeamId = 1, CurrentTeamName = "TeamA" };
+            var competitorInTeam = new CompetitorInTeam { CompetitorId = 1 };
+            var competitorsInEvent = new CompetitorsInEvent { Id = 1, CompetitorInTeam = competitorInTeam, EventId = 1 };
+            var stage = new Stage { Id = 1, StageName = "Stage1", EventId = 1 };
+            var configurationItem = new ConfigurationItem { Id = 1, Position = 1, ConfigurationId = 1 };
 
-            context.ConfigurationItems.Add(ci);
-            context.Stages.Add(stage);
             context.Competitors.Add(competitor);
+            context.Teams.Add(team);
             context.CompetitorInTeams.Add(competitorInTeam);
-            context.CompetitorsInEvent.Add(cie);
+            context.CompetitorsInEvent.Add(competitorsInEvent);
+            context.Stages.Add(stage);
+            context.ConfigurationItems.Add(configurationItem);
 
-            var result = new Result { Id = 1, StageId = 1, CompetitorInEventId = 1, ConfigurationItemId = 1 };
+            var result = new Result
+            {
+                Id = 1,
+                StageId = stage.Id,
+                CompetitorInEventId = competitorsInEvent.Id,
+                Stage = stage,
+                CompetitorInEvent = competitorsInEvent,
+                ConfigurationItemId = configurationItem.Id,
+                ConfigurationItem = configurationItem
+            };
             context.Results.Add(result);
             await context.SaveChangesAsync();
 
-            var latestScore = await repo.GetCompetitorLatestScore(1, 1);
-            latestScore.Should().Be(10);
+            var fetched = await repo.GetResultsByStageAsync(1);
+            fetched.Should().NotBeNull();
+            fetched.Should().BeAssignableTo<IEnumerable<Result>>();
+            fetched.Cast<Result>().Should().HaveCount(1);
         }
 
+        #endregion
+
+        #region GetScoreBreakdownByEventIdAsync Tests
         [Fact]
-        public async Task GetEtappeUitslag_ReturnsTop15OrNoScore()
+        public async Task GetScoreBreakdownByEventIdAsync_Returns_Normal_And_Special_Scores()
         {
             using var context = CreateContext();
             var repo = new ResultsRepository(context);
 
-            var evt = new Event { EventId = 1, ConfigurationId = 1 };
-            var stage = new Stage { Id = 1, EventId = 1, Event = evt, NoScore = true, NoScoreDescription = "No results" };
-            context.Events.Add(evt);
-            context.Stages.Add(stage);
+            var gameEvent = new GameCompetitorEvent
+            {
+                Id = 1,
+                EventId = 100,
+                UserId = "user1"
+            };
+
+            var pick = new GameCompetitorEventPick
+            {
+                Id = 1,
+                GameCompetitorEventId = 1,
+                CompetitorsInEventId = 10
+            };
+
+            context.GameCompetitorsEvent.Add(gameEvent);
+            context.GameCompetitorEventPicks.Add(pick);
+
+            context.DeelnemerStagePickScores.AddRange(
+                new DeelnemerStagePickScore
+                {
+                    Id = Guid.NewGuid(),
+                    GameCompetitorEventPickId = 1,
+                    StageId = 1,
+                    Score = 10
+                },
+                new DeelnemerStagePickScore
+                {
+                    Id = Guid.NewGuid(),
+                    GameCompetitorEventPickId = 1,
+                    StageId = 2,
+                    Score = 8
+                });
+
+            context.DeelnemerStagePickSpecialScores.Add(
+                new DeelnemerStagePickSpecialScore
+                {
+                    Id = Guid.NewGuid(),
+                    GameCompetitorEventPickId = 1,
+                    StageId = 1,
+                    Score = 7
+                });
+
             await context.SaveChangesAsync();
 
-            var results = await repo.GetEtappeUitslag(1);
+            var result = await repo.GetScoreBreakdownByEventIdAsync(100);
 
-            results.Should().NotBeNull();
-            results.Uitslag.Should().NotBeNull();
-            results.Uitslag.Should().HaveCount(1);
-            results.Uitslag.First().NoScore.Should().BeTrue();
-            results.Uitslag.First().NoScoreDescription.Should().Be("No results");
+            result.Should().HaveCount(1);
+
+            var breakdown = result.Single();
+
+            breakdown.GameCompetitorEventId.Should().Be(1);
+            breakdown.NormalPoints.Should().Be(18);
+            breakdown.SpecialPoints.Should().Be(7);
         }
 
+        [Fact]
+        public async Task GetScoreBreakdownByEventIdAsync_Returns_Zero_When_Competitor_Has_No_Scores()
+        {
+            using var context = CreateContext();
+            var repo = new ResultsRepository(context);
+
+            var gameEvent = new GameCompetitorEvent
+            {
+                Id = 1,
+                EventId = 100,
+                UserId = "user1"
+            };
+
+            context.GameCompetitorsEvent.Add(gameEvent);
+
+            await context.SaveChangesAsync();
+
+            var result = await repo.GetScoreBreakdownByEventIdAsync(100);
+
+            result.Should().HaveCount(1);
+
+            var breakdown = result.Single();
+
+            breakdown.GameCompetitorEventId.Should().Be(1);
+            breakdown.NormalPoints.Should().Be(0);
+            breakdown.SpecialPoints.Should().Be(0);
+        }
+        #endregion
+
+        #region GetStageByIdAsync Tests
         [Fact]
         public async Task GetStageByIdAsync_ReturnsStageWithEvent()
         {
@@ -326,184 +1184,116 @@ namespace CycleManager.Tests.Integration.DataAccess
             fetched.Event.Should().NotBeNull();
         }
 
+        #endregion
+
+        #region GetTotalScoresByEventIdAsync Tests
         [Fact]
-        public async Task GetResultsByStageAsync_ReturnsResultsWithIncludes()
+        public async Task GetTotalScoresByEventIdAsync_Returns_Scores_For_Event()
         {
             using var context = CreateContext();
             var repo = new ResultsRepository(context);
 
-            var competitor = new Competitor { CompetitorId = 1, FirstName = "John", LastName = "Doe" };
-            var team = new Team { TeamId = 1, CurrentTeamName = "TeamA" };
-            var competitorInTeam = new CompetitorInTeam {CompetitorId = 1 };
-            var competitorsInEvent = new CompetitorsInEvent { Id = 1, CompetitorInTeam = competitorInTeam, EventId = 1 };
-            var stage = new Stage { Id = 1, StageName = "Stage1", EventId = 1 };
-            var configurationItem = new ConfigurationItem { Id = 1, Position = 1, ConfigurationId = 1 };
-
-            context.Competitors.Add(competitor);
-            context.Teams.Add(team);
-            context.CompetitorInTeams.Add(competitorInTeam);
-            context.CompetitorsInEvent.Add(competitorsInEvent);
-            context.Stages.Add(stage);
-            context.ConfigurationItems.Add(configurationItem);
-
-            var result = new Result 
-            { 
-                Id = 1, 
-                StageId = stage.Id, 
-                CompetitorInEventId = competitorsInEvent.Id,
-                Stage = stage,
-                CompetitorInEvent = competitorsInEvent,
-                ConfigurationItemId = configurationItem.Id,
-                ConfigurationItem = configurationItem
-            };
-            context.Results.Add(result);
-            await context.SaveChangesAsync();
-
-            var fetched = await repo.GetResultsByStageAsync(1);
-            fetched.Should().NotBeNull();
-            fetched.Should().BeAssignableTo<IEnumerable<Result>>();
-            fetched.Cast<Result>().Should().HaveCount(1);
-        }
-
-        [Fact]
-        public async Task GetCompetitorsInEventAsync_ReturnsCompetitorsWithNavigations()
-        {
-            using var context = CreateContext();
-            var repo = new ResultsRepository(context);
-
-            var competitor = new Competitor { CompetitorId = 1 };
-            var competitorInTeam = new CompetitorInTeam { CompetitorId = 1, Competitor = competitor };
-            var cie = new CompetitorsInEvent { Id = 1, CompetitorInTeam = competitorInTeam, OutOfCompetition = false, EventId = 1 };
-
-            context.Competitors.Add(competitor);
-            context.CompetitorInTeams.Add(competitorInTeam);
-            context.CompetitorsInEvent.Add(cie);
-            await context.SaveChangesAsync();
-
-            var fetched = await repo.GetCompetitorsInEventAsync(1);
-            fetched.Should().HaveCount(1);
-            fetched.First().CompetitorInTeam.Competitor.Should().NotBeNull();
-        }
-
-        [Fact]
-        public async Task GetConfigurationItemsByConfigAsync_ReturnsOrderedItems()
-        {
-            using var context = CreateContext();
-            var repo = new ResultsRepository(context);
-
-            context.ConfigurationItems.AddRange(
-                new ConfigurationItem { Id = 2, ConfigurationId = 1, Position = 2 },
-                new ConfigurationItem { Id = 1, ConfigurationId = 1, Position = 1 }
-            );
-            await context.SaveChangesAsync();
-
-            var fetched = await repo.GetConfigurationItemsByConfigAsync(1);
-            fetched.Should().HaveCount(2);
-            fetched.First().Position.Should().Be(1);
-        }
-
-        [Fact]
-        public async Task GetEtappeUitslag_ReturnsTop15_WhenNoScoreIsFalse()
-        {
-            using var context = CreateContext();
-            var repo = new ResultsRepository(context);
-
-            // Arrange
-            var configuration = new Configuration
+            var event1 = new Event
             {
-                Id = 1
-            };
-            var evt = new Event { EventId = 1, ConfigurationId = 1, Configuration = configuration };
-
-            var stage = new Stage { Id = 1, Event = evt, EventId = 1, NoScore = false };
-
-            var competitor = new Competitor { CompetitorId = 1, FirstName = "Jan", LastName = "Jansen" };
-
-            var team = new Team { TeamId = 1, CurrentTeamName = "TeamTest" };
-
-            var seasonYear = new SeasonYear { SeasonYearId = 1, Year = 2024 };
-
-            var teamYear = new TeamYear { TeamYearId = 1, TeamId = 1, SeasonYearId = 1, Team = team, SeasonYear = seasonYear, Name = "TeamTest" };
-
-            var competitorInTeam = new CompetitorInTeam { Id = 1, CompetitorId = 1, Competitor = competitor, TeamYearId = 1, TeamYear = teamYear };
-
-            var cie = new CompetitorsInEvent { Id = 1, EventId = 1, Event = evt, CompetitorInTeamId = 1,  CompetitorInTeam = competitorInTeam };
-
-            // Voeg 3 configuratie-items toe (de top 3)
-            var configItems = new List<ConfigurationItem>
-            {
-                new() { Id = 1, ConfigurationId = 1, Position = 1, Score = 10 },
-                new() { Id = 2, ConfigurationId = 1, Position = 2, Score = 8 },
-                new() { Id = 3, ConfigurationId = 1, Position = 3, Score = 6 }
+                EventId = 100
             };
 
-            // Voeg 3 resultaten toe
-            var results = configItems.Select(ci => new Result
+            var gameCompetitorEvent = new GameCompetitorEvent
             {
-                Id = ci.Id,
-                Stage = stage,
-                StageId = stage.Id,
-                CompetitorInEvent = cie,
-                CompetitorInEventId = cie.Id,
-                ConfigurationItem = ci,
-                ConfigurationItemId = ci.Id
-            }).ToList();
+                Id = 1,
+                EventId = 100,
+                UserId = "user1"
+            };
 
-            context.Configurations.Add(configuration);
-            context.Events.Add(evt);
-            context.Stages.Add(stage);
-            context.Competitors.Add(competitor);
-            context.Teams.Add(team);
-            context.SeasonYears.Add(seasonYear);
-            context.TeamYear.Add(teamYear);
-            context.CompetitorInTeams.Add(competitorInTeam);
-            context.CompetitorsInEvent.Add(cie);
-            context.ConfigurationItems.AddRange(configItems);
-            context.Results.AddRange(results);
+            var score = new DeelnemerScore
+            {
+                Id = Guid.NewGuid(),
+                GameCompetitorEventId = 1,
+                TotalScore = 30,
+                LaatsteStageScore = 10,
+                LaatsteStageId = 5
+            };
+
+            context.Events.Add(event1);
+            context.GameCompetitorsEvent.Add(gameCompetitorEvent);
+            context.DeelnemerScores.Add(score);
+
             await context.SaveChangesAsync();
 
-            // Act
-            var uitslag = await repo.GetEtappeUitslag(1);
+            var result = await repo.GetTotalScoresByEventIdAsync(100);
 
-            // Assert
-            uitslag.Should().NotBeNull();
-            uitslag.Uitslag.Should().HaveCount(3);
-            uitslag!.Uitslag.First().CompetitorName.Should().Be("Jan Jansen");
-            uitslag.Uitslag.First().TeamName.Should().Be("TeamTest");
+            result.Should().HaveCount(1);
+
+            var returnedScore = result.Single();
+
+            returnedScore.GameCompetitorEventId.Should().Be(1);
+            returnedScore.TotalScore.Should().Be(30);
+            returnedScore.LaatsteStageScore.Should().Be(10);
+            returnedScore.LaatsteStageId.Should().Be(5);
         }
 
         [Fact]
-        public async Task DeleteResultAsync_DoesNotThrow_WhenResultNotInDatabase()
+        public async Task GetTotalScoresByEventIdAsync_Ignores_Scores_From_Other_Events()
         {
             using var context = CreateContext();
             var repo = new ResultsRepository(context);
 
-            var fakeResult = new Result { Id = 99 };
+            var event1 = new Event
+            {
+                EventId = 100
+            };
 
-            // Act
-            Func<Task> act = async () => await repo.DeleteResultAsync(fakeResult);
+            var event2 = new Event
+            {
+                EventId = 200
+            };
 
-            // Assert
-            await act.Should().NotThrowAsync();
+            var gameCompetitorEvent1 = new GameCompetitorEvent
+            {
+                Id = 1,
+                EventId = 100,
+                UserId = "user1"
+            };
+
+            var gameCompetitorEvent2 = new GameCompetitorEvent
+            {
+                Id = 2,
+                EventId = 200,
+                UserId = "user2"
+            };
+
+            var score1 = new DeelnemerScore
+            {
+                Id = Guid.NewGuid(),
+                GameCompetitorEventId = 1,
+                TotalScore = 30
+            };
+
+            var score2 = new DeelnemerScore
+            {
+                Id = Guid.NewGuid(),
+                GameCompetitorEventId = 2,
+                TotalScore = 50
+            };
+
+            context.Events.AddRange(event1, event2);
+            context.GameCompetitorsEvent.AddRange(
+                gameCompetitorEvent1,
+                gameCompetitorEvent2);
+            context.DeelnemerScores.AddRange(score1, score2);
+
+            await context.SaveChangesAsync();
+
+            var result = await repo.GetTotalScoresByEventIdAsync(100);
+
+            result.Should().HaveCount(1);
+            result.Single().GameCompetitorEventId.Should().Be(1);
+            result.Single().TotalScore.Should().Be(30);
         }
 
-        [Fact]
-        public void GetCompetitorFullName_ReturnsEmpty_WhenCompetitorHasMissingData()
-        {
-            using var context = CreateContext();
-            var repo = new ResultsRepository(context);
+        #endregion
 
-            context.Competitors.AddRange(
-                new Competitor { CompetitorId = 1, FirstName = "OnlyFirst", LastName = "" },
-                new Competitor { CompetitorId = 2, FirstName = "", LastName = "OnlyLast" }
-            );
-            context.SaveChanges();
-
-            repo.GetCompetitorFullName(1).Should().Be("OnlyFirst ");
-            repo.GetCompetitorFullName(2).Should().Be(" OnlyLast");
-            repo.GetCompetitorFullName(999).Should().BeEmpty();
-        }
-
+        #region RecalculateEventScoresAsync Tests
         [Fact]
         public async Task RecalculateEventScoresAsync_Calculates_Normal_And_Special_Scores()
         {
@@ -1837,5 +2627,189 @@ namespace CycleManager.Tests.Integration.DataAccess
             deelnemerScore.LaatsteStageId.Should().Be(1);
             deelnemerScore.LaatsteStageScore.Should().Be(0);
         }
+        #endregion
+
+        #region ResultExistsAsync Tests
+        [Fact]
+        public async Task ResultExistsAsync_ReturnsTrueOrFalse()
+        {
+            using var context = CreateContext();
+            var repo = new ResultsRepository(context);
+
+            context.Results.Add(new Result { Id = 1 });
+            await context.SaveChangesAsync();
+
+            (await repo.ResultExistsAsync(1)).Should().BeTrue();
+            (await repo.ResultExistsAsync(999)).Should().BeFalse();
+        }
+
+        #endregion
+
+        #region SyncResultsAsync Tests
+        [Fact]
+        public async Task SyncResultsAsync_Adds_New_Results_And_SpecialResults()
+        {
+            using var context = CreateContext();
+            var repo = new ResultsRepository(context);
+
+            var stage = new Stage
+            {
+                Id = 1,
+                EventId = 100
+            };
+
+            await context.Stages.AddAsync(stage);
+            await context.SaveChangesAsync();
+
+            var result = new Result
+            {
+                Id = 1,
+                StageId = 1,
+                CompetitorInEventId = 10
+            };
+
+            var specialResult = new SpecialResult
+            {
+                Id = 1,
+                StageId = 1,
+                CompetitorInEventId = 10,
+                SpecialId = 20
+            };
+
+            await repo.SyncResultsAsync(
+                stageId: 1,
+                results: new[] { result },
+                specialResults: new[] { specialResult });
+
+            var savedResult = await context.Results
+                .SingleAsync();
+
+            savedResult.CompetitorInEventId.Should().Be(10);
+            savedResult.StageId.Should().Be(1);
+
+            var savedSpecialResult = await context.SpecialResults
+                .SingleAsync();
+
+            savedSpecialResult.CompetitorInEventId.Should().Be(10);
+            savedSpecialResult.StageId.Should().Be(1);
+            savedSpecialResult.SpecialId.Should().Be(20);
+        }
+
+        [Fact]
+        public async Task SyncResultsAsync_Removes_Results_And_SpecialResults_No_Longer_Present()
+        {
+            using var context = CreateContext();
+            var repo = new ResultsRepository(context);
+
+            var stage = new Stage
+            {
+                Id = 1,
+                EventId = 100
+            };
+
+            var existingResult = new Result
+            {
+                Id = 1,
+                StageId = 1,
+                CompetitorInEventId = 10
+            };
+
+            var existingSpecialResult = new SpecialResult
+            {
+                Id = 1,
+                StageId = 1,
+                CompetitorInEventId = 10,
+                SpecialId = 20
+            };
+
+            context.Stages.Add(stage);
+            context.Results.Add(existingResult);
+            context.SpecialResults.Add(existingSpecialResult);
+
+            await context.SaveChangesAsync();
+
+            // Nieuwe uitslag bevat deze resultaten niet meer.
+            await repo.SyncResultsAsync(
+                stageId: 1,
+                results: Array.Empty<Result>(),
+                specialResults: Array.Empty<SpecialResult>());
+
+            (await context.Results.AnyAsync())
+                .Should().BeFalse();
+
+            (await context.SpecialResults.AnyAsync())
+                .Should().BeFalse();
+        }
+
+        [Fact]
+        public async Task SyncResultsAsync_Keeps_Existing_Results_And_Adds_New_Results()
+        {
+            using var context = CreateContext();
+            var repo = new ResultsRepository(context);
+
+            var stage = new Stage
+            {
+                Id = 1,
+                EventId = 100
+            };
+
+            var existingResult = new Result
+            {
+                Id = 1,
+                StageId = 1,
+                CompetitorInEventId = 10
+            };
+
+            var existingSpecialResult = new SpecialResult
+            {
+                Id = 1,
+                StageId = 1,
+                CompetitorInEventId = 10,
+                SpecialId = 20
+            };
+
+            context.Stages.Add(stage);
+            context.Results.Add(existingResult);
+            context.SpecialResults.Add(existingSpecialResult);
+
+            await context.SaveChangesAsync();
+
+            var newResult = new Result
+            {
+                Id = 2,
+                StageId = 1,
+                CompetitorInEventId = 11
+            };
+
+            var newSpecialResult = new SpecialResult
+            {
+                Id = 2,
+                StageId = 1,
+                CompetitorInEventId = 11,
+                SpecialId = 21
+            };
+
+            await repo.SyncResultsAsync(
+                stageId: 1,
+                results: new[] { existingResult, newResult },
+                specialResults: new[] { existingSpecialResult, newSpecialResult });
+
+            var results = await context.Results
+                .OrderBy(x => x.Id)
+                .ToListAsync();
+
+            results.Should().HaveCount(2);
+            results.Select(x => x.CompetitorInEventId)
+                .Should().BeEquivalentTo(new[] { 10, 11 });
+
+            var specialResults = await context.SpecialResults
+                .OrderBy(x => x.Id)
+                .ToListAsync();
+
+            specialResults.Should().HaveCount(2);
+            specialResults.Select(x => x.SpecialId)
+                .Should().BeEquivalentTo(new[] { 20, 21 });
+        }
+        #endregion
     }
 }
