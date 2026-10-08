@@ -1,4 +1,6 @@
-﻿using CycleManager.Domain.Dto;
+﻿extern alias WebCycleManager;
+
+using CycleManager.Domain.Dto;
 using CycleManager.Domain.Models;
 using Domain.Context;
 using Domain.Dto;
@@ -11,7 +13,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Primitives;
 using System.Net;
 using System.Text.RegularExpressions;
-using WebCycleManager.Controllers;
+using WebCycleManager::WebCycleManager.Controllers;
 
 namespace CycleManager.Tests.Integration.Manager
 {

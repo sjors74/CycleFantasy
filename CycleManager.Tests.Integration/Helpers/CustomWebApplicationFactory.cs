@@ -1,4 +1,6 @@
-﻿using CycleManager.Domain.Models;
+﻿extern alias WebCycleManager;
+
+using CycleManager.Domain.Models;
 using CycleManager.Services.Interfaces;
 using CycleManager.Tests.Integration.Helpers;
 using Domain.Context;
@@ -12,7 +14,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Moq;
 
-public class CustomWebApplicationFactory : WebApplicationFactory<Program>
+public class CustomWebApplicationFactory : WebApplicationFactory<WebCycleManager::Program>
 {
     private readonly string _dbName = $"TestDb_{Guid.NewGuid()}";
 

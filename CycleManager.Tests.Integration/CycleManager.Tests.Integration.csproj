@@ -9,6 +9,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Services\**" />
+    <EmbeddedResource Remove="Services\**" />
+    <None Remove="Services\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="AutoMapper" Version="16.1.1" />
     <PackageReference Include="coverlet.collector" Version="10.1.0">
       <PrivateAssets>all</PrivateAssets>
@@ -31,15 +37,14 @@
 
   <ItemGroup>
     <ProjectReference Include="..\DataAccessEF\DataAccessEF.csproj" />
-    <ProjectReference Include="..\WebCycleManager\WebCycleManager.csproj" />
+    <ProjectReference Include="..\WebCycleManager\WebCycleManager.csproj">
+      <Aliases>WebCycleManager</Aliases>
+    </ProjectReference>
+    <ProjectReference Include="..\WebCycle\WebCycleApi.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <Using Include="Xunit" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Services\" />
   </ItemGroup>
 
 </Project>
