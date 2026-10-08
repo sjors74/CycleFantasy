@@ -212,7 +212,7 @@ namespace WebCycle.Services
                 {
                     for (int pos = 1; pos <= pointsLength; pos++)
                     {
-                        int competitorIndex = (stage.StageOrder - 1) * pointsLength + (pos - 1) % cieCount;
+                        int competitorIndex = ((stage.StageOrder - 1) * pointsLength + (pos - 1)) % cieCount;
                         var cie = cieList[competitorIndex];
                         var ci = context.ConfigurationItems.First(c => c.ConfigurationId == config.Id && c.Position == pos);
                         context.Results.Add(new Result
