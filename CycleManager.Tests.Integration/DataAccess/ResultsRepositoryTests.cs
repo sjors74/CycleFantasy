@@ -547,6 +547,33 @@ namespace CycleManager.Tests.Integration.DataAccess
                 NoScore = false
             };
 
+            var team = new Team
+            {
+                TeamId = 1,
+                CurrentTeamName = "Test Team"
+            };
+
+            var teamYear = new TeamYear
+            {
+                TeamYearId = 1,
+                TeamId = 1,
+                Name = "Test Team 2026"
+            };
+
+            var competitorInTeam = new CompetitorInTeam
+            {
+                Id = 1,
+                CompetitorId = 999, // bestaat niet
+                TeamYearId = 1
+            };
+
+            var competitorInEvent = new CompetitorsInEvent
+            {
+                Id = 10,
+                EventId = 100,
+                CompetitorInTeamId = 1
+            };
+
             var configItem = new ConfigurationItem
             {
                 Id = 10,
@@ -559,12 +586,16 @@ namespace CycleManager.Tests.Integration.DataAccess
             {
                 Id = 1,
                 StageId = 1,
-                CompetitorInEventId = 999,
+                CompetitorInEventId = 10,
                 ConfigurationItemId = 10
             };
 
             context.Events.Add(gameEvent);
             context.Stages.Add(stage);
+            context.Teams.Add(team);
+            context.TeamYear.Add(teamYear);
+            context.CompetitorInTeams.Add(competitorInTeam);
+            context.CompetitorsInEvent.Add(competitorInEvent);
             context.ConfigurationItems.Add(configItem);
             context.Results.Add(result);
 
@@ -649,12 +680,43 @@ namespace CycleManager.Tests.Integration.DataAccess
             {
                 Id = 1,
                 StageId = 1,
-                CompetitorInEventId = 999,
+                CompetitorInEventId = 10,
                 SpecialId = 20
+            };
+
+            var team = new Team
+            {
+                TeamId = 1,
+                CurrentTeamName = "Test Team"
+            };
+
+            var teamYear = new TeamYear
+            {
+                TeamYearId = 1,
+                TeamId = 1,
+                Name = "Test Team 2026"
+            };
+
+            var competitorInTeam = new CompetitorInTeam
+            {
+                Id = 1,
+                CompetitorId = 999,
+                TeamYearId = 1
+            };
+
+            var competitorInEvent = new CompetitorsInEvent
+            {
+                Id = 10,
+                EventId = 100,
+                CompetitorInTeamId = 1
             };
 
             context.Events.Add(gameEvent);
             context.Stages.Add(stage);
+            context.Teams.Add(team);
+            context.TeamYear.Add(teamYear);
+            context.CompetitorInTeams.Add(competitorInTeam);
+            context.CompetitorsInEvent.Add(competitorInEvent);
             context.ConfigurationItemSpecials.Add(special);
             context.SpecialResults.Add(specialResult);
 
@@ -761,6 +823,7 @@ namespace CycleManager.Tests.Integration.DataAccess
             specialDto.TeamName.Should().Be("Test Team 2026");
             specialDto.Score.Should().Be(5);
         }
+
         #endregion
 
         #region GetResultByIdAsync Tests

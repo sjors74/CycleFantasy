@@ -33,6 +33,7 @@ stages:
     - script: >
         dotnet build CycleManager.Tests.Unit/CycleManager.Tests.Unit.csproj 
         --configuration $(buildConfiguration) 
+        --no-restore
       displayName: 'Build unit tests'
 
     - script: >
@@ -47,6 +48,7 @@ stages:
     - script: >
         dotnet build CycleManager.Tests.Integration/CycleManager.Tests.Integration.csproj
         --configuration $(buildConfiguration)
+        --no-restore
       displayName: 'Build integration tests'
 
     - script: >
