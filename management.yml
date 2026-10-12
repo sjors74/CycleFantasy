@@ -4,6 +4,20 @@ trigger:
       - master
       - develop
 
+pr:
+  branches:
+    include:
+      - master
+      - develop
+  paths:
+    include:
+      - ManagementApp/*
+      - CycleManager.Tests.Unit/Manager/*
+      - CycleManager.Tests.Unit/Services/*
+      - CycleManager.Tests.Integration/Manager/*
+      - CycleManager.Tests.Integration/DataAccess/*
+      - CycleManager.Tests.Integration/Helpers/*
+
 pool:
   vmImage: 'ubuntu-latest'
 
@@ -16,6 +30,7 @@ variables:
   containerAppName: 'cyclingapp'
   tag: '$(Build.BuildId)'
   buildConfiguration: 'Release'
+  coverageThreshold: 70
 
 stages:
 
@@ -84,6 +99,47 @@ stages:
         searchFolder: '$(Build.SourcesDirectory)'
         failTaskOnFailedTests: true
         testRunTitle: 'CycleFantasy Management App Tests'
+
+    - script: dotnet tool install --global dotnet-reportgenerator-globaltool
+      displayName: 'Install ReportGenerator'
+
+    - script: >
+        reportgenerator
+        "-reports:$(Build.SourcesDirectory)/**/TestResults/**/coverage.cobertura.xml"
+        "-targetdir:$(Build.SourcesDirectory)/CodeCoverage"
+        "-reporttypes:Cobertura"
+      displayName: 'Merge code coverage'
+
+    - task: PowerShell@2
+      displayName: 'Enforce code coverage threshold'
+      inputs:
+        targetType: 'inline'
+        script: |
+          [xml]$cobertura = Get-Content "$(Build.SourcesDirectory)/CodeCoverage/Cobertura.xml"
+          $lineRate = [double]$cobertura.coverage.'line-rate' * 100
+          $lineRate = [math]::Round($lineRate, 2)
+          Write-Host "Line coverage: $lineRate% (threshold: $(coverageThreshold)%)"
+          if ($lineRate -lt $(coverageThreshold)) {
+            Write-Error "Code coverage $lineRate% is below the required threshold of $(coverageThreshold)%."
+            exit 1
+          }
+
+    - task: PublishCodeCoverageResults@2
+      displayName: 'Publish code coverage'
+      inputs:
+        summaryFileLocation: '$(Build.SourcesDirectory)/CodeCoverage/Cobertura.xml'
+        failIfCoverageEmpty: true
+
+    - task: CopyFiles@2
+      displayName: 'Copy coverage for combined report'
+      inputs:
+        sourceFolder: '$(Build.SourcesDirectory)/CodeCoverage'
+        contents: 'Cobertura.xml'
+        targetFolder: '$(Build.ArtifactStagingDirectory)/coverage-management'
+
+    - publish: '$(Build.ArtifactStagingDirectory)/coverage-management'
+      artifact: coverage-management
+      displayName: 'Publish coverage artifact (Management)'
 
 # =====================================
 # Build docker image
