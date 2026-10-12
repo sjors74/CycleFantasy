@@ -189,7 +189,7 @@ stages:
 
     - publish: '$(Build.ArtifactStagingDirectory)/coverage-api'
       artifact: coverage-api
-      displayName: 'Publish coverage artifact (Api)'
+      displayName: 'Publish coverage artifact (API)'
 
 - stage: DeployApi
   displayName: Deploy API

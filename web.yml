@@ -29,74 +29,20 @@ stages:
 
   jobs:
   - job: WaitForApiBuild
-    displayName: Wait for CycleFantasy-API build on same commit
-    timeoutInMinutes: 30
+    displayName: Wait for CycleFantasy-API build on same PR
+    pool: server
+    timeoutInMinutes: 60
     steps:
 
-    - task: PowerShell@2
-      displayName: 'Poll CycleFantasy-API build status'
+    - task: InvokeRESTAPI@1
+      displayName: 'Poll CycleFantasy-API build status (agentless)'
       inputs:
-        targetType: 'inline'
-        script: |
-          $org = "sjorsstevens74"
-          $project = "CycleFantasy"
-          $apiPipelineName = "CycleFantasy-API"
-          $commit = "$(Build.SourceVersion)"
-          $headers = @{ Authorization = "Bearer $(System.AccessToken)" }
-
-          Write-Host "Looking up definition id for pipeline '$apiPipelineName'..."
-          $defUrl = "https://dev.azure.com/$org/$project/_apis/build/definitions?name=$apiPipelineName&api-version=7.1"
-          $defResult = Invoke-RestMethod -Uri $defUrl -Headers $headers -Method Get
-
-          if ($defResult.count -eq 0) {
-            Write-Error "Could not find pipeline definition named '$apiPipelineName'."
-            exit 1
-          }
-          $defId = $defResult.value[0].id
-          Write-Host "Found definition id: $defId"
-
-          $maxAttempts = 60
-          $delaySeconds = 30
-          $attempt = 0
-          $found = $false
-          $result = $null
-
-          while ($attempt -lt $maxAttempts -and -not $found) {
-            $attempt++
-            $buildsUrl = "https://dev.azure.com/$org/$project/_apis/build/builds?definitions=$defId&`$top=20&queryOrderBy=queueTime-descending&api-version=7.1"
-            $builds = Invoke-RestMethod -Uri $buildsUrl -Headers $headers -Method Get
-
-            $match = $builds.value | Where-Object { $_.sourceVersion -eq $commit } | Select-Object -First 1
-
-            if ($null -eq $match) {
-              Write-Host "Attempt $attempt/$maxAttempts : no CycleFantasy-API build found yet for commit $commit. Waiting $delaySeconds s..."
-              Start-Sleep -Seconds $delaySeconds
-              continue
-            }
-
-            Write-Host "Attempt $attempt/$maxAttempts : found build $($match.buildNumber), status=$($match.status), result=$($match.result)"
-
-            if ($match.status -eq "completed") {
-              $found = $true
-              $result = $match.result
-            } else {
-              Start-Sleep -Seconds $delaySeconds
-            }
-          }
-
-          if (-not $found) {
-            Write-Error "Timed out waiting for CycleFantasy-API build to complete for commit $commit."
-            exit 1
-          }
-
-          if ($result -ne "succeeded") {
-            Write-Error "CycleFantasy-API build did not succeed (result: $result). Blocking WebApp build."
-            exit 1
-          }
-
-          Write-Host "CycleFantasy-API build succeeded. Proceeding with WebApp build."
-      env:
-        SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+        connectionType: 'connectedServiceName'
+        serviceConnection: 'azure-devops-rest-readonly'
+        method: 'GET'
+        urlSuffix: '_apis/build/builds?definitions=4&branchName=refs/pull/$(System.PullRequest.PullRequestId)/merge&$top=1&queryOrderBy=queueTime-descending&api-version=7.1'
+        waitForCompletion: 'true'
+        successCriteria: 'and(eq(root[''count''], 1), eq(root[''value''][0][''status''], ''completed''), eq(root[''value''][0][''result''], ''succeeded''))'
 
 - stage: Build
   displayName: Build WebApp
