@@ -46,7 +46,8 @@ stages:
         --logger "trx;LogFileName=test-results.trx"
         --collect:"XPlat Code Coverage"
         --settings CodeCoverage.runsettings
-      displayName: 'Run unit tests'
+        --filter "FullyQualifiedName~CycleManager.Tests.Unit.Api|FullyQualifiedName~CycleManager.Tests.Unit.Services"
+      displayName: 'Run unit tests (Api + Services)'
 
     - script: dotnet restore CycleManager.Tests.Integration/CycleManager.Tests.Integration.csproj
       displayName: 'Restore integration tests'
@@ -64,7 +65,8 @@ stages:
         --logger "trx;LogFileName=integration-test-results.trx"
         --collect:"XPlat Code Coverage"
         --settings CodeCoverage.runsettings
-      displayName: 'Run integration tests'
+        --filter "FullyQualifiedName~CycleManager.Tests.Integration.Api|FullyQualifiedName~CycleManager.Tests.Integration.DataAccess|FullyQualifiedName~CycleManager.Tests.Integration.Helpers|FullyQualifiedName~CycleManager.Tests.Helpers"
+      displayName: 'Run integration tests (Api + DataAccess + Helpers)'
 
     - task: PublishTestResults@2
       displayName: 'Publish Test Results'

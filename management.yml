@@ -15,8 +15,75 @@ variables:
   resourceGroup: 'rg_cycledb'
   containerAppName: 'cyclingapp'
   tag: '$(Build.BuildId)'
+  buildConfiguration: 'Release'
 
 stages:
+
+# =====================================
+# Build and test Management App
+# =====================================
+
+- stage: BuildAndTest
+  displayName: Build and Test Management App
+
+  jobs:
+  - job: BuildTest
+    displayName: Build and Test Management App
+    steps:
+
+    - checkout: self
+
+    - task: UseDotNet@2
+      inputs:
+        packageType: 'sdk'
+        version: '10.x'
+
+    - script: dotnet restore CycleManager.Tests.Unit/CycleManager.Tests.Unit.csproj
+      displayName: 'Restore unit tests'
+
+    - script: >
+        dotnet build CycleManager.Tests.Unit/CycleManager.Tests.Unit.csproj
+        --configuration $(buildConfiguration)
+        --no-restore
+      displayName: 'Build unit tests'
+
+    - script: >
+        dotnet test CycleManager.Tests.Unit/CycleManager.Tests.Unit.csproj
+        --configuration $(buildConfiguration)
+        --no-build
+        --logger "trx;LogFileName=test-results.trx"
+        --collect:"XPlat Code Coverage"
+        --settings CodeCoverage.runsettings
+        --filter "FullyQualifiedName~CycleManager.Tests.Unit.Manager|FullyQualifiedName~CycleManager.Tests.Unit.Services"
+      displayName: 'Run unit tests (Manager + Services)'
+
+    - script: dotnet restore CycleManager.Tests.Integration/CycleManager.Tests.Integration.csproj
+      displayName: 'Restore integration tests'
+
+    - script: >
+        dotnet build CycleManager.Tests.Integration/CycleManager.Tests.Integration.csproj
+        --configuration $(buildConfiguration)
+        --no-restore
+      displayName: 'Build integration tests'
+
+    - script: >
+        dotnet test CycleManager.Tests.Integration/CycleManager.Tests.Integration.csproj
+        --configuration $(buildConfiguration)
+        --no-build
+        --logger "trx;LogFileName=integration-test-results.trx"
+        --collect:"XPlat Code Coverage"
+        --settings CodeCoverage.runsettings
+        --filter "FullyQualifiedName~CycleManager.Tests.Integration.Manager|FullyQualifiedName~CycleManager.Tests.Integration.DataAccess|FullyQualifiedName~CycleManager.Tests.Integration.Helpers|FullyQualifiedName~CycleManager.Tests.Helpers"
+      displayName: 'Run integration tests (Manager + DataAccess + Helpers)'
+
+    - task: PublishTestResults@2
+      displayName: 'Publish Test Results'
+      inputs:
+        testResultsFormat: 'VSTest'
+        testResultsFiles: '**/*.trx'
+        searchFolder: '$(Build.SourcesDirectory)'
+        failTaskOnFailedTests: true
+        testRunTitle: 'CycleFantasy Management App Tests'
 
 # =====================================
 # Build docker image
@@ -24,6 +91,7 @@ stages:
 
 - stage: Build
   displayName: Build Management Docker Image
+  dependsOn: BuildAndTest
 
   jobs:
   - job: BuildDocker
