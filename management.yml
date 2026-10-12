@@ -9,14 +9,6 @@ pr:
     include:
       - master
       - develop
-  paths:
-    include:
-      - ManagementApp/*
-      - CycleManager.Tests.Unit/Manager/*
-      - CycleManager.Tests.Unit/Services/*
-      - CycleManager.Tests.Integration/Manager/*
-      - CycleManager.Tests.Integration/DataAccess/*
-      - CycleManager.Tests.Integration/Helpers/*
 
 pool:
   vmImage: 'ubuntu-latest'
@@ -42,8 +34,59 @@ stages:
   displayName: Build and Test Management App
 
   jobs:
+  - job: DetectChanges
+    displayName: Detect relevant changes
+    steps:
+    - checkout: self
+      fetchDepth: 0
+
+    - task: PowerShell@2
+      name: detect
+      displayName: 'Check for relevant path changes'
+      inputs:
+        targetType: 'inline'
+        script: |
+          $paths = @(
+            "WebCycleManager/",
+            "CycleManager.Tests.Unit/Manager/",
+            "CycleManager.Tests.Unit/Services/",
+            "CycleManager.Tests.Integration/Manager/",
+            "CycleManager.Tests.Integration/DataAccess/",
+            "CycleManager.Tests.Integration/Helpers/"
+          )
+
+          if ("$(Build.Reason)" -eq "PullRequest") {
+            git fetch origin $(System.PullRequest.TargetBranch) --depth=1 2>$null
+            $diff = git diff --name-only "origin/$(System.PullRequest.TargetBranch)...HEAD"
+          } else {
+            $diff = git diff --name-only HEAD~1 HEAD 2>$null
+          }
+
+          Write-Host "Changed files:`n$diff"
+
+          $relevant = $false
+          foreach ($file in $diff) {
+            foreach ($p in $paths) {
+              if ($file -like "$p*") {
+                $relevant = $true
+                break
+              }
+            }
+            if ($relevant) { break }
+          }
+
+          if (-not $diff) {
+            Write-Host "No diff detected (e.g. first run), defaulting to run."
+            $relevant = $true
+          }
+
+          Write-Host "Relevant changes: $relevant"
+          Write-Host "##vso[task.setvariable variable=shouldRun;isOutput=true]$relevant"
+
   - job: BuildTest
     displayName: Build and Test Management App
+    dependsOn: DetectChanges
+    condition: eq(dependencies.DetectChanges.outputs['detect.shouldRun'], 'True')
     steps:
 
     - checkout: self
