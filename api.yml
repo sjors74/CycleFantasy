@@ -60,7 +60,7 @@ stages:
         --no-build
         --logger "trx;LogFileName=test-results.trx"
         --collect:"XPlat Code Coverage"
-        --settings CodeCoverage.runsettings
+        --settings CodeCoverage.Api.runsettings
         --filter "FullyQualifiedName~CycleManager.Tests.Unit.Api|FullyQualifiedName~CycleManager.Tests.Unit.Services"
       displayName: 'Run unit tests (Api + Services)'
 
@@ -79,7 +79,7 @@ stages:
         --no-build
         --logger "trx;LogFileName=integration-test-results.trx"
         --collect:"XPlat Code Coverage"
-        --settings CodeCoverage.runsettings
+        --settings CodeCoverage.Api.runsettings
         --filter "FullyQualifiedName~CycleManager.Tests.Integration.Api|FullyQualifiedName~CycleManager.Tests.Integration.DataAccess|FullyQualifiedName~CycleManager.Tests.Integration.Helpers|FullyQualifiedName~CycleManager.Tests.Helpers"
       displayName: 'Run integration tests (Api + DataAccess + Helpers)'
 

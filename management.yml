@@ -68,7 +68,7 @@ stages:
         --no-build
         --logger "trx;LogFileName=test-results.trx"
         --collect:"XPlat Code Coverage"
-        --settings CodeCoverage.runsettings
+        --settings CodeCoverage.Management.runsettings
         --filter "FullyQualifiedName~CycleManager.Tests.Unit.Manager|FullyQualifiedName~CycleManager.Tests.Unit.Services"
       displayName: 'Run unit tests (Manager + Services)'
 
@@ -87,7 +87,7 @@ stages:
         --no-build
         --logger "trx;LogFileName=integration-test-results.trx"
         --collect:"XPlat Code Coverage"
-        --settings CodeCoverage.runsettings
+        --settings CodeCoverage.Management.runsettings
         --filter "FullyQualifiedName~CycleManager.Tests.Integration.Manager|FullyQualifiedName~CycleManager.Tests.Integration.DataAccess|FullyQualifiedName~CycleManager.Tests.Integration.Helpers|FullyQualifiedName~CycleManager.Tests.Helpers"
       displayName: 'Run integration tests (Manager + DataAccess + Helpers)'
 
