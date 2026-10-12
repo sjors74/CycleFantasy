@@ -40,7 +40,7 @@ stages:
         connectionType: 'connectedServiceName'
         serviceConnection: 'azure-devops-rest-readonly'
         method: 'GET'
-        urlSuffix: 'CycleFantasy/_apis/build/builds?definitions=4&branchName=refs/pull/$(System.PullRequest.PullRequestId)/merge&$top=1&queryOrderBy=queueTime-descending&api-version=7.1'
+        urlSuffix: '/CycleFantasy/_apis/build/builds?definitions=4&branchName=refs/pull/$(System.PullRequest.PullRequestId)/merge&$top=1&queryOrderBy=queueTime-descending&api-version=7.1'
         waitForCompletion: 'true'
         successCriteria: 'and(eq(root[''count''], 1), eq(root[''value''][0][''status''], ''completed''), eq(root[''value''][0][''result''], ''succeeded''))'
 
