@@ -42,12 +42,16 @@ stages:
             "CycleManager.Tests.Integration/Helpers/"
           )
 
+          $ErrorActionPreference = 'Continue'
+
           if ("$(Build.Reason)" -eq "PullRequest") {
-            git fetch origin $(System.PullRequest.TargetBranch) --depth=1 2>$null
+            git fetch origin $(System.PullRequest.TargetBranch) --depth=1 2>&1 | Out-Null
             $diff = git diff --name-only "origin/$(System.PullRequest.TargetBranch)...HEAD"
           } else {
-            $diff = git diff --name-only HEAD~1 HEAD 2>$null
+            $diff = git diff --name-only HEAD~1 HEAD 2>&1
           }
+
+          $ErrorActionPreference = 'Stop'
 
           Write-Host "Changed files:`n$diff"
 
