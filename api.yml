@@ -87,7 +87,7 @@ stages:
   - job: BuildTest
     displayName: Build and Test API
     dependsOn: DetectChanges
-    condition: eq(dependencies.DetectChanges.outputs['detect.shouldRun'], 'True')
+    condition: and(succeeded(), eq(dependencies.DetectChanges.outputs['detect.shouldRun'], 'True'))
     steps:
 
     - checkout: self

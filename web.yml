@@ -25,7 +25,7 @@ variables:
 stages:
 - stage: WaitForApi
   displayName: Wait for API pipeline (PR only)
-  condition: eq(variables['Build.Reason'], 'PullRequest')
+  condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))
 
   jobs:
   - job: WaitForApiBuild
@@ -48,7 +48,7 @@ stages:
   displayName: Build WebApp
   dependsOn:
   - WaitForApi
-  condition: in(dependencies.WaitForApi.result, 'Succeeded', 'Skipped')
+  condition: and(in(dependencies.WaitForApi.result, 'Succeeded', 'Skipped'), not(canceled()))
 
   jobs:
   - job: BuildWeb

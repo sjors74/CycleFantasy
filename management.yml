@@ -100,7 +100,7 @@ stages:
   - job: BuildTest
     displayName: Build and Test Management App
     dependsOn: DetectChanges
-    condition: eq(dependencies.DetectChanges.outputs['detect.shouldRun'], 'True')
+    condition: and(succeeded(), eq(dependencies.DetectChanges.outputs['detect.shouldRun'], 'True'))
     steps:
 
     - checkout: self
