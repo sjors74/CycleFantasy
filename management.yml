@@ -55,6 +55,11 @@ stages:
             "CycleManager.Tests.Integration/Helpers/"
           )
 
+          $exactFiles = @(
+            "management.yml",
+            "CodeCoverage.Management.runsettings"
+          )
+
           $ErrorActionPreference = 'Continue'
 
           if ("$(Build.Reason)" -eq "PullRequest") {
@@ -77,6 +82,11 @@ stages:
               }
             }
             if ($relevant) { break }
+
+            if ($exactFiles -contains $file) {
+              $relevant = $true
+              break
+            }
           }
 
           if (-not $diff) {
