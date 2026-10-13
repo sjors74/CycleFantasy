@@ -23,44 +23,14 @@ variables:
   buildConfiguration: 'Release'
 
 stages:
-- stage: WaitForApi
-  displayName: Wait for API pipeline (PR only)
-  condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))
-
-  jobs:
-  - job: WaitForApiBuild
-    displayName: Wait for CycleFantasy-API build on same PR
-    pool: server
-    timeoutInMinutes: 60
-    steps:
-
-    - task: InvokeRESTAPI@1
-      displayName: 'Poll CycleFantasy-API build status (agentless, with retry)'
-      retryCountOnTaskFailure: 100
-      inputs:
-        connectionType: 'connectedServiceName'
-        serviceConnection: 'azure-devops-rest-readonly'
-        method: 'GET'
-        urlSuffix: '/CycleFantasy/_apis/build/builds?definitions=4&branchName=refs/pull/$(System.PullRequest.PullRequestNumber)/merge&$top=1&queryOrderBy=queueTime-descending&api-version=7.1'
-        waitForCompletion: 'false'
-        successCriteria: 'and(eq(root[''count''], 1), eq(root[''value''][0][''status''], ''completed''), eq(root[''value''][0][''result''], ''succeeded''))'
-    - script: echo "WaitForApi stage passed (or skipped) - starting WebApp build"
-      displayName: 'Log: WaitForApi passed'
-
 - stage: Build
   displayName: Build WebApp
-  dependsOn:
-  - WaitForApi
-  condition: and(in(dependencies.WaitForApi.result, 'Succeeded', 'Skipped'), not(canceled()))
 
   jobs:
   - job: BuildWeb
     displayName: Build WebApp
 
     steps:
-
-    - script: echo "WaitForApi stage passed (or skipped) - starting WebApp build"
-      displayName: 'Log: WaitForApi passed'
 
     - checkout: self
 
