@@ -44,6 +44,13 @@ stages:
         waitForCompletion: 'true'
         successCriteria: 'and(eq(root[''count''], 1), eq(root[''value''][0][''status''], ''completed''), eq(root[''value''][0][''result''], ''succeeded''))'
 
+    - powershell: |
+        $headers = @{ Authorization = "Bearer $(System.AccessToken)" }
+        $url = "https://dev.azure.com/sjorsstevens74/CycleFantasy/_apis/build/builds?definitions=4&`$top=5&queryOrderBy=queueTime-descending&api-version=7.1"
+        $result = Invoke-RestMethod -Uri $url -Headers $headers
+        $result.value | Select-Object id, status, result, sourceBranch | Format-Table
+      displayName: 'Get recent builds'
+
 - stage: Build
   displayName: Build WebApp
   dependsOn:
