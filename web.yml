@@ -28,8 +28,26 @@ stages:
   condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))
 
   jobs:
+  - job: DebugApiBuilds
+    displayName: 'Debug: list recent API builds'
+    pool:
+      vmImage: 'windows-latest'
+    steps:
+    - task: PowerShell@2
+      displayName: 'List recent API builds'
+      inputs:
+        targetType: 'inline'
+        script: |
+          $headers = @{ Authorization = "Bearer $(System.AccessToken)" }
+          $url = "https://dev.azure.com/sjorsstevens74/CycleFantasy/_apis/build/builds?definitions=4&`$top=5&queryOrderBy=queueTime-descending&api-version=7.1"
+          $result = Invoke-RestMethod -Uri $url -Headers $headers
+          Write-Host "Current PR number: $(System.PullRequest.PullRequestNumber)"
+          Write-Host "Target branch: $(System.PullRequest.TargetBranch)"
+          $result.value | Select-Object id, status, result, sourceBranch, reason | Format-Table -AutoSize
+
   - job: WaitForApiBuild
     displayName: Wait for CycleFantasy-API build on same PR
+    dependsOn: DebugApiBuilds
     pool: server
     timeoutInMinutes: 60
     steps:
@@ -43,13 +61,6 @@ stages:
         urlSuffix: '/CycleFantasy/_apis/build/builds?definitions=4&branchName=refs/pull/$(System.PullRequest.PullRequestNumber)/merge&$top=1&queryOrderBy=queueTime-descending&api-version=7.1'
         waitForCompletion: 'true'
         successCriteria: 'and(eq(root[''count''], 1), eq(root[''value''][0][''status''], ''completed''), eq(root[''value''][0][''result''], ''succeeded''))'
-
-    - powershell: |
-        $headers = @{ Authorization = "Bearer $(System.AccessToken)" }
-        $url = "https://dev.azure.com/sjorsstevens74/CycleFantasy/_apis/build/builds?definitions=4&`$top=5&queryOrderBy=queueTime-descending&api-version=7.1"
-        $result = Invoke-RestMethod -Uri $url -Headers $headers
-        $result.value | Select-Object id, status, result, sourceBranch | Format-Table
-      displayName: 'Get recent builds'
 
 - stage: Build
   displayName: Build WebApp
