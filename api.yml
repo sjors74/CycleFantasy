@@ -13,7 +13,7 @@ pool:
 
 variables:
   buildConfiguration: 'Release'
-  coverageThreshold: 70
+  coverageThreshold: 85
 
 stages:
 

@@ -22,7 +22,7 @@ variables:
   containerAppName: 'cyclingapp'
   tag: '$(Build.BuildId)'
   buildConfiguration: 'Release'
-  coverageThreshold: 70
+  coverageThreshold: 85
 
 stages:
 
