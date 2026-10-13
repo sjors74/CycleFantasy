@@ -1,6 +1,12 @@
 trigger:
 - develop
 
+pr:
+  branches:
+    include:
+      - master
+      - develop
+
 resources:
   pipelines:
   - pipeline: api
@@ -17,14 +23,72 @@ variables:
   buildConfiguration: 'Release'
 
 stages:
+- stage: WaitForApi
+  displayName: Wait for API pipeline (PR only)
+  condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))
+
+  jobs:
+  - job: WaitForApiBuild
+    displayName: Wait for CycleFantasy-API build on same PR
+    pool:
+      vmImage: 'windows-latest'
+    timeoutInMinutes: 60
+    steps:
+    - task: PowerShell@2
+      displayName: 'Poll CycleFantasy-API build status'
+      inputs:
+        targetType: 'inline'
+        script: |
+          $headers = @{ Authorization = "Bearer $(System.AccessToken)" }
+          $url = "https://dev.azure.com/sjorsstevens74/CycleFantasy/_apis/build/builds?definitions=4&branchName=refs/pull/$(System.PullRequest.PullRequestNumber)/merge&`$top=1&queryOrderBy=queueTime-descending&api-version=7.1"
+
+          $maxWaitMinutes = 55
+          $pollIntervalSeconds = 30
+          $elapsed = 0
+
+          while ($true) {
+            $result = Invoke-RestMethod -Uri $url -Headers $headers
+
+            if ($result.count -ge 1) {
+              $build = $result.value[0]
+              Write-Host "Build $($build.id): status=$($build.status) result=$($build.result)"
+
+              if ($build.status -eq 'completed') {
+                if ($build.result -eq 'succeeded') {
+                  Write-Host "API build succeeded. Continuing."
+                  exit 0
+                } else {
+                  Write-Error "API build completed with result '$($build.result)'. Failing."
+                  exit 1
+                }
+              }
+            } else {
+              Write-Host "No matching API build found yet."
+            }
+
+            if ($elapsed -ge ($maxWaitMinutes * 60)) {
+              Write-Error "Timed out waiting for API build."
+              exit 1
+            }
+
+            Start-Sleep -Seconds $pollIntervalSeconds
+            $elapsed += $pollIntervalSeconds
+          }
+
 - stage: Build
   displayName: Build WebApp
-  
+  dependsOn:
+  - WaitForApi
+  condition: and(in(dependencies.WaitForApi.result, 'Succeeded', 'Skipped'), not(canceled()))
+
   jobs:
   - job: BuildWeb
     displayName: Build WebApp
 
     steps:
+
+    - script: echo "WaitForApi stage passed (or skipped) - starting WebApp build"
+      displayName: 'Log: WaitForApi passed'
 
     - checkout: self
 

@@ -4,6 +4,12 @@ trigger:
       - master
       - develop
 
+pr:
+  branches:
+    include:
+      - master
+      - develop
+
 pool:
   vmImage: 'ubuntu-latest'
 
@@ -15,8 +21,182 @@ variables:
   resourceGroup: 'rg_cycledb'
   containerAppName: 'cyclingapp'
   tag: '$(Build.BuildId)'
+  buildConfiguration: 'Release'
+  coverageThreshold: 70
 
 stages:
+
+# =====================================
+# Build and test Management App
+# =====================================
+
+- stage: BuildAndTest
+  displayName: Build and Test Management App
+
+  jobs:
+  - job: DetectChanges
+    displayName: Detect relevant changes
+    steps:
+    - checkout: self
+      fetchDepth: 0
+
+    - task: PowerShell@2
+      name: detect
+      displayName: 'Check for relevant path changes'
+      inputs:
+        targetType: 'inline'
+        script: |
+          $paths = @(
+            "WebCycleManager/",
+            "CycleManager.Tests.Unit/Manager/",
+            "CycleManager.Tests.Unit/Services/",
+            "CycleManager.Tests.Integration/Manager/",
+            "CycleManager.Tests.Integration/DataAccess/",
+            "CycleManager.Tests.Integration/Helpers/"
+          )
+
+          $exactFiles = @(
+            "management.yml",
+            "CodeCoverage.Management.runsettings"
+          )
+
+          $ErrorActionPreference = 'Continue'
+
+          if ("$(Build.Reason)" -eq "PullRequest") {
+            git fetch origin $(System.PullRequest.TargetBranch) --depth=1 2>&1 | Out-Null
+            $diff = git diff --name-only "origin/$(System.PullRequest.TargetBranch)...HEAD"
+          } else {
+            $diff = git diff --name-only HEAD~1 HEAD 2>&1
+          }
+
+          $ErrorActionPreference = 'Stop'
+
+          Write-Host "Changed files:`n$diff"
+
+          $relevant = $false
+          foreach ($file in $diff) {
+            foreach ($p in $paths) {
+              if ($file -like "$p*") {
+                $relevant = $true
+                break
+              }
+            }
+            if ($relevant) { break }
+
+            if ($exactFiles -contains $file) {
+              $relevant = $true
+              break
+            }
+          }
+
+          if (-not $diff) {
+            Write-Host "No diff detected (e.g. first run), defaulting to run."
+            $relevant = $true
+          }
+
+          Write-Host "Relevant changes: $relevant"
+          Write-Host "##vso[task.setvariable variable=shouldRun;isOutput=true]$relevant"
+
+  - job: BuildTest
+    displayName: Build and Test Management App
+    dependsOn: DetectChanges
+    condition: and(succeeded(), eq(dependencies.DetectChanges.outputs['detect.shouldRun'], 'True'))
+    steps:
+
+    - checkout: self
+
+    - task: UseDotNet@2
+      inputs:
+        packageType: 'sdk'
+        version: '10.x'
+
+    - script: dotnet restore CycleManager.Tests.Unit/CycleManager.Tests.Unit.csproj
+      displayName: 'Restore unit tests'
+
+    - script: >
+        dotnet build CycleManager.Tests.Unit/CycleManager.Tests.Unit.csproj
+        --configuration $(buildConfiguration)
+        --no-restore
+      displayName: 'Build unit tests'
+
+    - script: >
+        dotnet test CycleManager.Tests.Unit/CycleManager.Tests.Unit.csproj
+        --configuration $(buildConfiguration)
+        --no-build
+        --logger "trx;LogFileName=test-results.trx"
+        --collect:"XPlat Code Coverage"
+        --settings CodeCoverage.Management.runsettings
+        --filter "FullyQualifiedName~CycleManager.Tests.Unit.Manager|FullyQualifiedName~CycleManager.Tests.Unit.Services"
+      displayName: 'Run unit tests (Manager + Services)'
+
+    - script: dotnet restore CycleManager.Tests.Integration/CycleManager.Tests.Integration.csproj
+      displayName: 'Restore integration tests'
+
+    - script: >
+        dotnet build CycleManager.Tests.Integration/CycleManager.Tests.Integration.csproj
+        --configuration $(buildConfiguration)
+        --no-restore
+      displayName: 'Build integration tests'
+
+    - script: >
+        dotnet test CycleManager.Tests.Integration/CycleManager.Tests.Integration.csproj
+        --configuration $(buildConfiguration)
+        --no-build
+        --logger "trx;LogFileName=integration-test-results.trx"
+        --collect:"XPlat Code Coverage"
+        --settings CodeCoverage.Management.runsettings
+        --filter "FullyQualifiedName~CycleManager.Tests.Integration.Manager|FullyQualifiedName~CycleManager.Tests.Integration.DataAccess|FullyQualifiedName~CycleManager.Tests.Integration.Helpers|FullyQualifiedName~CycleManager.Tests.Helpers"
+      displayName: 'Run integration tests (Manager + DataAccess + Helpers)'
+
+    - task: PublishTestResults@2
+      displayName: 'Publish Test Results'
+      inputs:
+        testResultsFormat: 'VSTest'
+        testResultsFiles: '**/*.trx'
+        searchFolder: '$(Build.SourcesDirectory)'
+        failTaskOnFailedTests: true
+        testRunTitle: 'CycleFantasy Management App Tests'
+
+    - script: dotnet tool install --global dotnet-reportgenerator-globaltool
+      displayName: 'Install ReportGenerator'
+
+    - script: >
+        reportgenerator
+        "-reports:$(Build.SourcesDirectory)/**/TestResults/**/coverage.cobertura.xml"
+        "-targetdir:$(Build.SourcesDirectory)/CodeCoverage"
+        "-reporttypes:Cobertura"
+      displayName: 'Merge code coverage'
+
+    - task: PowerShell@2
+      displayName: 'Enforce code coverage threshold'
+      inputs:
+        targetType: 'inline'
+        script: |
+          [xml]$cobertura = Get-Content "$(Build.SourcesDirectory)/CodeCoverage/Cobertura.xml"
+          $lineRate = [double]$cobertura.coverage.'line-rate' * 100
+          $lineRate = [math]::Round($lineRate, 2)
+          Write-Host "Line coverage: $lineRate% (threshold: $(coverageThreshold)%)"
+          if ($lineRate -lt $(coverageThreshold)) {
+            Write-Error "Code coverage $lineRate% is below the required threshold of $(coverageThreshold)%."
+            exit 1
+          }
+
+    - task: PublishCodeCoverageResults@2
+      displayName: 'Publish code coverage'
+      inputs:
+        summaryFileLocation: '$(Build.SourcesDirectory)/CodeCoverage/Cobertura.xml'
+        failIfCoverageEmpty: true
+
+    - task: CopyFiles@2
+      displayName: 'Copy coverage for combined report'
+      inputs:
+        sourceFolder: '$(Build.SourcesDirectory)/CodeCoverage'
+        contents: 'Cobertura.xml'
+        targetFolder: '$(Build.ArtifactStagingDirectory)/coverage-management'
+
+    - publish: '$(Build.ArtifactStagingDirectory)/coverage-management'
+      artifact: coverage-management
+      displayName: 'Publish coverage artifact (Management)'
 
 # =====================================
 # Build docker image
@@ -24,6 +204,7 @@ stages:
 
 - stage: Build
   displayName: Build Management Docker Image
+  dependsOn: BuildAndTest
 
   jobs:
   - job: BuildDocker
