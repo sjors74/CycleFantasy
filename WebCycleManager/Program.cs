@@ -8,6 +8,7 @@ using Domain.Context;
 using Domain.Interfaces;
 using Domain.Mapping;
 using Hangfire;
+using Hangfire.PostgreSql;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Authorization;
@@ -66,8 +67,8 @@ else
 {
     builder.Services.AddDbContext<ApplicationDbContext>(x =>
     x.UseLazyLoadingProxies(false)
-     .UseSqlServer(connectionString, sqlOptions =>
-        sqlOptions.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery)
+     .UseNpgsql(connectionString, npgsqlOptions =>
+        npgsqlOptions.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery)
     ));
 }
 
@@ -159,8 +160,8 @@ builder.Services.AddHttpClient<IApiClient, ApiClient>((serviceProvider, client) 
 if (!builder.Environment.IsEnvironment("Testing"))
 {
     builder.Services.AddHangfire(config =>
-    config.UseSqlServerStorage(
-        builder.Configuration.GetConnectionString("CycleDb")));
+    config.UsePostgreSqlStorage(options =>
+        options.UseNpgsqlConnection(builder.Configuration.GetConnectionString("CycleDb"))));
 
     builder.Services.AddHangfireServer();
 }
