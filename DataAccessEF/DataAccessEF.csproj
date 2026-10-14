@@ -37,8 +37,4 @@
     <ProjectReference Include="..\Domain\CycleManager.Domain.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Migrations\Internal\" />
-  </ItemGroup>
-
 </Project>
