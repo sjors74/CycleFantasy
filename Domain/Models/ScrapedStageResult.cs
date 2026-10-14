@@ -1,9 +1,11 @@
-﻿using Domain.Models;
+﻿using System.ComponentModel.DataAnnotations;
+using Domain.Models;
 
 namespace CycleManager.Domain.Models
 {
     public class ScrapedStageResult
     {
+        [Key]
         public int Id { get; set; }
         public int EventId { get; set; }
         public int StageId { get; set; }

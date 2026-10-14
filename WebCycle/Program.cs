@@ -18,6 +18,35 @@ using WebCycle.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Debug: Print out the model
+var usePostgres = builder.Configuration.GetValue<bool>("UsePostgres");
+var debugConnectionString = builder.Configuration.GetConnectionString("CycleDb");
+
+var options = new DbContextOptionsBuilder<ApplicationDbContext>();
+
+if (usePostgres)
+{
+    options.UseNpgsql(debugConnectionString);
+}
+else
+{
+    options.UseSqlServer(debugConnectionString);
+}
+
+try
+{
+    using (var context = new ApplicationDbContext(options.Options))
+    {
+        var model = context.Model;
+        Console.WriteLine("? Model built successfully");
+    }
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"? Model building failed: {ex.Message}");
+    Console.WriteLine(ex.StackTrace);
+}
+
 // -------------------
 // Configuration
 // -------------------
@@ -48,13 +77,33 @@ if (builder.Environment.IsEnvironment("Testing"))
 }
 else
 {
+    var useNpgsql = builder.Configuration.GetValue<bool>("UsePostgres");
+
     builder.Services.AddDbContext<ApplicationDbContext>(options =>
-        options.UseLazyLoadingProxies(false)
-               .UseSqlServer(connectionString, sqlOptions =>
-               {
-                   sqlOptions.EnableRetryOnFailure(5, TimeSpan.FromSeconds(10), null);
-                   sqlOptions.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
-               }));
+    {
+        options.UseLazyLoadingProxies(false);
+        
+        if (useNpgsql)
+        {
+            options.UseNpgsql(connectionString, npgsqlOptions =>
+            {
+                npgsqlOptions.EnableRetryOnFailure(5, TimeSpan.FromSeconds(10), null);
+                npgsqlOptions.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
+            });
+        }
+        else
+        {
+            options.UseSqlServer(connectionString, sqlOptions =>
+            {
+                sqlOptions.EnableRetryOnFailure(5, TimeSpan.FromSeconds(10), null);
+                sqlOptions.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
+            });
+        }
+        
+        // Suppress the warning
+        options.ConfigureWarnings(w => 
+            w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
+    });
 }
 
 

@@ -9,6 +9,7 @@ namespace Domain.Models
 
         [Required]
         public int GameCompetitorEventId { get; set; }
+        public virtual GameCompetitorEvent GameCompetitorEvent { get; set; } = null!;
 
         public int TotalScore { get; set; }
 
@@ -17,6 +18,5 @@ namespace Domain.Models
         public int LaatsteStageId { get; set; } 
 
         public DateTime LastUpdated { get; set; } = DateTime.UtcNow;
-
     }
 }

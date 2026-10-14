@@ -1,10 +1,12 @@
-﻿using CycleManager.Domain.Enums;
+﻿using System.ComponentModel.DataAnnotations;
+using CycleManager.Domain.Enums;
 using Domain.Models;
 
 namespace CycleManager.Domain.Models
 {
     public class ScrapedSpecialResult
     {
+        [Key]
         public Guid Id { get; set; }
 
         public int StageId { get; set; }

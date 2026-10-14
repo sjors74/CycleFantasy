@@ -1,7 +1,10 @@
-﻿namespace CycleManager.Domain.Models
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace CycleManager.Domain.Models
 {
     public class ScrapeCompetitorRating
     {
+        [Key]
         public int Id { get; set; }
         public string Source { get; set; } = "CyclingFlash";
         public int RatingCategoryId { get; set; }

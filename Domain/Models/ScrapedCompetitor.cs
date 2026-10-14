@@ -1,7 +1,10 @@
-﻿namespace CycleManager.Domain.Models
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace CycleManager.Domain.Models
 {
     public class ScrapedCompetitor
     {
+        [Key]
         public int Id { get; set; }
         public string RiderName { get; set; } = "";
         public int TeamId { get; set; }

@@ -92,6 +92,12 @@ namespace Domain.Context
                 .HasForeignKey(c => c.EventId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            modelBuilder.Entity<CompetitorsInEvent>()
+                .HasOne(c => c.CompetitorInTeam)
+                .WithMany()
+                .HasForeignKey(c => c.CompetitorInTeamId)
+                .OnDelete(DeleteBehavior.Cascade);
+
             modelBuilder.Entity<GameCompetitorEvent>()
                 .HasOne(g => g.User)
                 .WithMany()
@@ -137,8 +143,10 @@ namespace Domain.Context
                 .IsUnique();
 
             modelBuilder.Entity<DeelnemerScore>()
-                .HasIndex(x => x.GameCompetitorEventId)
-                .IsUnique();
+                .HasOne(ds => ds.GameCompetitorEvent)
+                .WithMany()
+                .HasForeignKey(ds => ds.GameCompetitorEventId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<CompetitorInTeam>()
                 .HasOne(cit => cit.Competitor)
@@ -187,6 +195,22 @@ namespace Domain.Context
             modelBuilder.Entity<RatingScrapeProgress>()
                 .HasIndex(x => x.RatingCategoryId)
                 .IsUnique();
+
+            modelBuilder.Entity<ConfigurationItemSpecial>()
+                .Property(x => x.Question)
+                .HasConversion<int>();
+
+            modelBuilder.Entity<Stage>()
+                .Property(x => x.ScrapeStatus)
+                .HasConversion<int>();
+
+            modelBuilder.Entity<DeelnemerStagePickSpecialScore>()
+                .Property(x => x.QuestionType)
+                .HasConversion<int>();
+
+            modelBuilder.Entity<ScrapedSpecialResult>()
+                .Property(x => x.QuestionType)
+                .HasConversion<int>();
         }
     }
 }
