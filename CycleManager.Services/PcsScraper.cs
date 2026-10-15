@@ -124,6 +124,9 @@ namespace CycleManager.Services
                 if ((await page.TitleAsync()).Contains("Just a moment"))
                 {
                     _logger.LogWarning("Cloudflare challenge still active.");
+                    throw new InvalidOperationException(
+                        "ProCyclingStats blokkeert het scrapen met een Cloudflare-controle ('Just a moment...'). " +
+                        "Probeer het later opnieuw of vanaf een ander netwerk/IP.");
                 }
 
                 var body = await page.Locator("body").InnerTextAsync();
@@ -341,6 +344,13 @@ namespace CycleManager.Services
 
                 // PCS laadt soms nog wat dynamisch in
                 await page.WaitForTimeoutAsync(3000);
+
+                var title = await page.TitleAsync();
+                if (title.Contains("Just a moment"))
+                    throw new InvalidOperationException($"Cloudflare-controle actief bij {url}.");
+                if (!await page.Locator("ul.startlist_v4").First.IsVisibleAsync())
+                    throw new InvalidOperationException(
+                        $"Geen startlijst gevonden op {page.Url} (paginatitel: '{title}'). Controleer EventCode/jaar, of de startlijst is nog niet gepubliceerd.");
 
                 // Wacht op de startlijst-container
                 await page.WaitForSelectorAsync("ul.startlist_v4", new()
