@@ -23,9 +23,8 @@
     <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.3" />
     <PackageVersion Include="Microsoft.Extensions.Caching.Memory" Version="9.0.13" />
     <PackageVersion Include="Microsoft.Extensions.Configuration" Version="9.0.13" />
-
     <!-- Common / shared -->
-    <PackageVersion Include="AutoMapper" Version="16.1.1" />
+    <PackageVersion Include="AutoMapper" Version="16.3.0" />
     <PackageVersion Include="Azure.Identity" Version="1.17.1" />
     <PackageVersion Include="MailKit" Version="4.16.0" />
     <PackageVersion Include="MimeKit" Version="4.16.0" />
@@ -36,21 +35,18 @@
     <PackageVersion Include="Microsoft.Build" Version="17.11.48" />
     <PackageVersion Include="NuGet.Protocol" Version="7.6.0" />
     <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="10.0.13" />
-
     <!-- Hangfire -->
     <PackageVersion Include="Hangfire.Core" Version="1.8.25" />
     <PackageVersion Include="Hangfire.AspNetCore" Version="1.8.25" />
     <PackageVersion Include="Hangfire.SqlServer" Version="1.8.25" />
     <PackageVersion Include="Hangfire.PostgreSql" Version="1.20.12" />
     <PackageVersion Include="Hangfire.MemoryStorage" Version="1.8.1.2" />
-
     <!-- Misc -->
     <PackageVersion Include="HtmlAgilityPack" Version="1.12.1" />
     <PackageVersion Include="Microsoft.Playwright" Version="1.56.0" />
     <PackageVersion Include="Microsoft.Playwright.MSTest" Version="1.49.0" />
     <PackageVersion Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.22.1" />
     <PackageVersion Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="9.0.0" />
-
     <!-- Testing -->
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
     <PackageVersion Include="Microsoft.Testing.Extensions.CodeCoverage" Version="17.12.6" />
